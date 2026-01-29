@@ -9,11 +9,20 @@ from dotenv import load_dotenv
 # --- CẤU HÌNH ---
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+
+# 1. TÍNH NĂNG ĐA KÊNH (MULTIPLE CHANNELS)
+# Đọc danh sách ID từ biến môi trường, cách nhau dấu phẩy
+raw_ids = os.getenv('ALLOWED_CHANNELS', '')
 try:
-    TARGET_CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
-except:
-    print("❌ LỖI: Chưa cấu hình CHANNEL_ID trong file .env")
-    exit()
+    # Chuyển chuỗi "123,456" thành danh sách số [123, 456]
+    ALLOWED_CHANNEL_IDS = [int(x.strip()) for x in raw_ids.split(',') if x.strip().isdigit()]
+    if not ALLOWED_CHANNEL_IDS:
+        print("⚠️ CẢNH BÁO: Biến ALLOWED_CHANNELS đang trống! Bot sẽ không chạy lệnh setup được.")
+    else:
+        print(f"✅ Các kênh được phép hoạt động: {ALLOWED_CHANNEL_IDS}")
+except Exception as e:
+    print(f"❌ Lỗi cấu hình ALLOWED_CHANNELS: {e}")
+    ALLOWED_CHANNEL_IDS = []
 
 # Khởi tạo Bot
 intents = discord.Intents.default()
@@ -48,13 +57,11 @@ def get_outlook_mails(refresh_token, client_id, limit=5):
         return None, f"Lỗi kết nối Token: {str(e)}"
 
     # 2. Gọi Graph API để lấy mail
-    # Thay đổi: Lấy 'body' thay vì 'bodyPreview'
     api_url = f"https://graph.microsoft.com/v1.0/me/messages?$top={limit}&$select=subject,from,body,receivedDateTime"
     
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Content-Type': 'application/json',
-        # QUAN TRỌNG: Yêu cầu trả về dạng Text thay vì HTML để hiển thị đẹp trên Discord
         'Prefer': 'outlook.body-content-type="text"'
     }
 
@@ -66,17 +73,14 @@ def get_outlook_mails(refresh_token, client_id, limit=5):
             
             results = []
             for mail in emails_data:
-                # Lấy nội dung full từ body
                 full_content = mail.get('body', {}).get('content', '')
-                
-                # Nếu nội dung quá ngắn hoặc rỗng
                 if not full_content:
                     full_content = "(Không có nội dung)"
                 
                 results.append({
                     "subject": mail.get('subject', 'Không tiêu đề'),
                     "from": mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown'),
-                    "content": full_content, # Nội dung đầy đủ
+                    "content": full_content,
                     "date": mail.get('receivedDateTime', '')
                 })
             return results, None
@@ -125,34 +129,30 @@ class MailInputModal(Modal):
         if error:
             await interaction.followup.send(f"⚠️ **Thất bại:** {error}", ephemeral=True)
         else:
-            # 1. Kiểm tra hộp thư trống
+            # 2. TÍNH NĂNG GỬI TỪNG TIN NHẮN RIÊNG
             if not emails:
                 await interaction.followup.send(f"📭 **Inbox:** `{email_user}` - Hộp thư trống.", ephemeral=True)
                 return
 
-            # 2. Thông báo tìm thấy bao nhiêu thư
             await interaction.followup.send(f"📬 **Inbox:** `{email_user}` - Hiển thị **{len(emails)}** thư mới nhất:", ephemeral=True)
 
-            # 3. Lặp qua từng email và gửi thành TIN NHẮN RIÊNG
             for i, mail in enumerate(emails, 1):
                 date_str = mail['date'].replace('T', ' ').split('.')[0]
                 content_display = mail['content']
 
-                # Embed Description chứa được 4096 ký tự (nhiều hơn Field rất nhiều)
+                # Cắt nội dung nếu quá dài (cho phép 4000 ký tự)
                 if len(content_display) > 4000:
                     content_display = content_display[:4000] + "\n...[Nội dung quá dài, đã bị cắt bớt]..."
 
-                # Tạo Embed riêng cho từng thư
                 embed = discord.Embed(
                     title=f"#{i} {mail['subject'][:250]}",
-                    description=f"```{content_display}```", # Để nội dung vào đây cho rộng rãi
+                    description=f"```{content_display}```", 
                     color=0x00ff00
                 )
                 
                 embed.add_field(name="👤 Từ", value=f"`{mail['from']}`", inline=True)
                 embed.add_field(name="🕒 Ngày", value=f"`{date_str}`", inline=True)
 
-                # Gửi ngay lập tức (Nằm trong vòng lặp)
                 await interaction.followup.send(embed=embed, ephemeral=True)
 
 # --- VIEW ---
@@ -180,7 +180,10 @@ async def on_ready():
 
 @bot.command()
 async def setup(ctx):
-    if ctx.channel.id != TARGET_CHANNEL_ID: return
+    # 3. KIỂM TRA QUYỀN TRONG DANH SÁCH KÊNH
+    if ctx.channel.id not in ALLOWED_CHANNEL_IDS:
+        # Nếu kênh hiện tại không nằm trong danh sách cho phép thì bỏ qua
+        return
     
     embed = discord.Embed(
         title="**TOOL CHECK MAIL - FULL CONTENT**",
@@ -190,7 +193,10 @@ async def setup(ctx):
     embed.add_field(name="Yêu cầu:", value="`Email|Pass|Refresh_Token|Client_ID|...`", inline=False)
     
     await ctx.send(embed=embed, view=PersistentMailView())
-    await ctx.message.delete()
+    try:
+        await ctx.message.delete()
+    except:
+        pass
 
 if TOKEN:
     bot.run(TOKEN)
