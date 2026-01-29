@@ -1,3 +1,4 @@
+from keep_alive import keep_alive
 import discord
 import requests
 import os
@@ -198,5 +199,6 @@ async def setup(ctx):
     except:
         pass
 
+keep_alive()
 if TOKEN:
     bot.run(TOKEN)
