@@ -3,6 +3,7 @@ import discord
 import requests
 import os
 import asyncio
+import time  # Thêm thư viện này để dùng chức năng sleep
 from discord.ext import commands
 from discord.ui import Button, View, Modal, TextInput
 from dotenv import load_dotenv
@@ -12,13 +13,11 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 # 1. TÍNH NĂNG ĐA KÊNH (MULTIPLE CHANNELS)
-# Đọc danh sách ID từ biến môi trường, cách nhau dấu phẩy
 raw_ids = os.getenv('ALLOWED_CHANNELS', '')
 try:
-    # Chuyển chuỗi "123,456" thành danh sách số [123, 456]
     ALLOWED_CHANNEL_IDS = [int(x.strip()) for x in raw_ids.split(',') if x.strip().isdigit()]
     if not ALLOWED_CHANNEL_IDS:
-        print("⚠️ CẢNH BÁO: Biến ALLOWED_CHANNELS đang trống! Bot sẽ không chạy lệnh setup được.")
+        print("⚠️ CẢNH BÁO: Biến ALLOWED_CHANNELS đang trống!")
     else:
         print(f"✅ Các kênh được phép hoạt động: {ALLOWED_CHANNEL_IDS}")
 except Exception as e:
@@ -32,13 +31,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # --- HÀM XỬ LÝ API MICROSOFT ---
 def get_outlook_mails(refresh_token, client_id, limit=5):
-    """
-    Hàm sử dụng Refresh Token để lấy Access Token,
-    sau đó gọi Graph API để lấy nội dung mail đầy đủ (Text).
-    """
     # 1. Lấy Access Token
     token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-    
     payload = {
         'client_id': client_id,
         'grant_type': 'refresh_token',
@@ -59,7 +53,6 @@ def get_outlook_mails(refresh_token, client_id, limit=5):
 
     # 2. Gọi Graph API để lấy mail
     api_url = f"https://graph.microsoft.com/v1.0/me/messages?$top={limit}&$select=subject,from,body,receivedDateTime"
-    
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Content-Type': 'application/json',
@@ -68,10 +61,8 @@ def get_outlook_mails(refresh_token, client_id, limit=5):
 
     try:
         mail_response = requests.get(api_url, headers=headers)
-        
         if mail_response.status_code == 200:
             emails_data = mail_response.json().get('value', [])
-            
             results = []
             for mail in emails_data:
                 full_content = mail.get('body', {}).get('content', '')
@@ -87,7 +78,6 @@ def get_outlook_mails(refresh_token, client_id, limit=5):
             return results, None
         else:
             return None, f"Lỗi API Mail: {mail_response.status_code}"
-            
     except Exception as e:
         return None, f"Lỗi kết nối API: {str(e)}"
 
@@ -107,7 +97,6 @@ class MailInputModal(Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         raw_data = self.data_input.value.strip()
-        
         try:
             parts = raw_data.split("|")
             if len(parts) < 4:
@@ -117,31 +106,25 @@ class MailInputModal(Modal):
             email_user = parts[0].strip()
             refresh_token = parts[2].strip()
             client_id = parts[3].strip()
-
         except Exception as e:
             await interaction.response.send_message(f"❌ Lỗi xử lý chuỗi: {str(e)}", ephemeral=True)
             return
 
         await interaction.response.defer(ephemeral=True)
-
         loop = asyncio.get_event_loop()
         emails, error = await loop.run_in_executor(None, get_outlook_mails, refresh_token, client_id, self.limit)
 
         if error:
             await interaction.followup.send(f"⚠️ **Thất bại:** {error}", ephemeral=True)
         else:
-            # 2. TÍNH NĂNG GỬI TỪNG TIN NHẮN RIÊNG
             if not emails:
                 await interaction.followup.send(f"📭 **Inbox:** `{email_user}` - Hộp thư trống.", ephemeral=True)
                 return
 
             await interaction.followup.send(f"📬 **Inbox:** `{email_user}` - Hiển thị **{len(emails)}** thư mới nhất:", ephemeral=True)
-
             for i, mail in enumerate(emails, 1):
                 date_str = mail['date'].replace('T', ' ').split('.')[0]
                 content_display = mail['content']
-
-                # Cắt nội dung nếu quá dài (cho phép 4000 ký tự)
                 if len(content_display) > 4000:
                     content_display = content_display[:4000] + "\n...[Nội dung quá dài, đã bị cắt bớt]..."
 
@@ -150,10 +133,8 @@ class MailInputModal(Modal):
                     description=f"```{content_display}```", 
                     color=0x00ff00
                 )
-                
                 embed.add_field(name="👤 Từ", value=f"`{mail['from']}`", inline=True)
                 embed.add_field(name="🕒 Ngày", value=f"`{date_str}`", inline=True)
-
                 await interaction.followup.send(embed=embed, ephemeral=True)
 
 # --- VIEW ---
@@ -181,9 +162,7 @@ async def on_ready():
 
 @bot.command()
 async def setup(ctx):
-    # 3. KIỂM TRA QUYỀN TRONG DANH SÁCH KÊNH
     if ctx.channel.id not in ALLOWED_CHANNEL_IDS:
-        # Nếu kênh hiện tại không nằm trong danh sách cho phép thì bỏ qua
         return
     
     embed = discord.Embed(
@@ -192,13 +171,37 @@ async def setup(ctx):
         color=0xE74C3C
     )
     embed.add_field(name="Yêu cầu:", value="`Email|Pass|Refresh_Token|Client_ID|...`", inline=False)
-    
     await ctx.send(embed=embed, view=PersistentMailView())
     try:
         await ctx.message.delete()
     except:
         pass
 
-keep_alive()
-if TOKEN:
-    bot.run(TOKEN)
+# --- MAIN EXECUTION (CÓ FIX LỖI 429) ---
+if __name__ == "__main__":
+    # Chạy Web Server (Flask) ở luồng riêng
+    keep_alive()
+    
+    if TOKEN:
+        try:
+            print("⏳ Đang khởi động bot...")
+            bot.run(TOKEN)
+        except discord.errors.HTTPException as e:
+            # Bắt lỗi 429 (Too Many Requests)
+            if e.status == 429:
+                print("\n" + "="*40)
+                print("🛑 LỖI RATE LIMIT (429) TỪ DISCORD!")
+                print("Bot sẽ tạm dừng 60 giây để tránh bị ban IP lâu hơn.")
+                print("Lưu ý: Nếu lỗi này lặp lại, hãy đổi Region trên Render.")
+                print("="*40 + "\n")
+                time.sleep(60) # Ngủ 60s để làm nguội IP
+            else:
+                # Các lỗi HTTP khác
+                print(f"❌ Lỗi HTTP: {e}")
+                time.sleep(10)
+        except Exception as e:
+            # Các lỗi hệ thống khác
+            print(f"❌ Lỗi không mong muốn: {e}")
+            time.sleep(10)
+    else:
+        print("❌ LỖI: Chưa tìm thấy DISCORD_TOKEN trong biến môi trường!")
