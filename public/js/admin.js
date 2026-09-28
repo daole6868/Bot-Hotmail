@@ -18,6 +18,37 @@
   }
   $$('[data-date-preview]').forEach((inp) => { datePreview(inp); inp.addEventListener('input', () => datePreview(inp)); inp.addEventListener('change', () => datePreview(inp)); });
 
+  // Mã giảm giá: cảnh báo nếu giờ máy chủ lệch với giờ thiết bị (mã sẽ hiện sai thời điểm)
+  const clk = $('[data-server-now]');
+  if (clk) {
+    const diff = Math.round((Date.now() / 1000 - +clk.dataset.serverNow) / 60);
+    const w = $('.a-clock-warn', clk);
+    if (Math.abs(diff) >= 5 && w) {
+      w.hidden = false;
+      w.textContent = `⚠ Giờ máy chủ đang ${diff > 0 ? 'CHẬM' : 'NHANH'} hơn điện thoại/máy tính của bạn khoảng ${Math.abs(diff) >= 90 ? Math.round(Math.abs(diff) / 60) + ' giờ' : Math.abs(diff) + ' phút'}. `
+        + 'Hãy chỉnh giờ VPS (lệnh: sudo timedatectl set-ntp true) để mã, hạn nạp tiền... chạy đúng giờ.';
+    }
+  }
+  // Giao diện thẻ mã: chọn nhanh kích cỡ + xem trước tỉ lệ
+  const cpf = $('[data-cp-layout]');
+  if (cpf) {
+    const pv = $('[data-cp-preview]', cpf);
+    const upd = () => {
+      const w = +cpf.w.value || 600, h = +cpf.h.value || 350;
+      pv.style.aspectRatio = `${w} / ${h}`;
+      pv.style.maxWidth = w / h < 1 ? `${Math.round(320 * w / h)}px` : '';
+      pv.classList.toggle('vertical', w / h < 1.15);
+    };
+    cpf.addEventListener('input', upd);
+    cpf.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-cp-preset]');
+      if (!b) return;
+      const [w, h] = b.dataset.cpPreset.split('x');
+      cpf.w.value = w; cpf.h.value = h; upd();
+    });
+    upd();
+  }
+
   // ---------------- Bảng dạng thẻ trên điện thoại ----------------
   // Gắn nhãn cột (lấy từ <th>) vào từng ô; CSS ở màn hẹp biến mỗi dòng thành 1 khung "Nhãn ..... Giá trị"
   function labelTables(root) {

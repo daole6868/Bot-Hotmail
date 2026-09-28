@@ -4,7 +4,8 @@
   const short = (n) => n >= 1000000 ? +(n / 1000000).toFixed(1) + 'TR' : n >= 1000 ? Math.round(n / 1000) + 'K' : n + 'đ';
   const day = (ts) => H.fmtDate(ts).slice(0, 10);
 %>
-<div class="coupon-grid">
+<% const L = H.couponLayout(locals.s); %>
+<div class="coupon-grid<%= L.vertical ? ' coupon-grid-v' : '' %>" style="--cp-ar: <%= L.w %> / <%= L.h %>; --cp-cols: <%= L.pc %>; --cp-cols-t: <%= L.tablet %>; --cp-cols-m: <%= L.mobile %>">
   <% coupons.forEach(c => {
        const cond = [];
        if (c.min_order) cond.push('Đơn từ ' + H.money(c.min_order));

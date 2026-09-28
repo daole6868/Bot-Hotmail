@@ -1,4 +1,30 @@
 <%- include('_header') %>
+<div class="a-card a-clock" data-server-now="<%= serverNow %>">
+  <%- I('clock') %> <span>Giờ máy chủ: <b><%= H.fmtDate(serverNow) %></b> (giờ Việt Nam). Mã chỉ hiện khi giờ này đã qua giờ “Bắt đầu”.</span>
+  <b class="a-clock-warn" hidden></b>
+</div>
+<details class="a-card a-cp-layout" <%= query && query.layout ? 'open' : '' %>>
+  <summary><%- I('ticket') %> <b>Giao diện thẻ mã ngoài web</b> <span class="a-muted a-small">Thẻ <%= layout.w %>×<%= layout.h %> · PC <%= layout.pc %> mã/hàng · Điện thoại <%= layout.mobile %> mã/hàng</span></summary>
+  <form method="post" action="/admin/coupons/layout" class="a-cp-layout-form" data-cp-layout>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="a-cp-fields">
+      <div><label>Kích cỡ thẻ (px)</label>
+        <div class="a-size"><input type="number" name="w" min="100" max="4000" value="<%= layout.w %>" required><span class="a-size-x">×</span><input type="number" name="h" min="50" max="4000" value="<%= layout.h %>" required><span class="a-size-unit">px</span></div>
+        <div class="a-chip-row"><% [[600,350,'600×350'],[600,300,'600×300'],[500,500,'Vuông'],[400,500,'Dọc 4:5'],[800,300,'Dài']].forEach(([w,h,l]) => { %><button type="button" class="a-btn a-xs" data-cp-preset="<%= w %>x<%= h %>"><%= l %></button><% }) %></div>
+      </div>
+      <div class="a-row">
+        <div><label>Số mã / hàng trên PC</label><select name="cols_pc"><% [1,2,3,4,5,6].forEach(n => { %><option <%= layout.pc === n ? 'selected' : '' %>><%= n %></option><% }) %></select></div>
+        <div><label>Số mã / hàng trên điện thoại</label><select name="cols_m"><% [1,2,3].forEach(n => { %><option <%= layout.mobile === n ? 'selected' : '' %>><%= n %></option><% }) %></select></div>
+      </div>
+      <p class="a-field-hint">Chỉ cần nhập tỉ lệ Rộng × Cao, thẻ tự co giãn theo màn hình và tự sắp xếp chữ. Thẻ gần vuông hoặc dọc sẽ tự chuyển sang kiểu mức giảm ở trên, thông tin ở dưới.</p>
+      <button class="a-btn a-primary"><%- I('save') %> Lưu giao diện</button>
+    </div>
+    <div class="a-cp-preview-wrap">
+      <label>Xem trước tỉ lệ</label>
+      <div class="a-cp-preview" data-cp-preview style="aspect-ratio: <%= layout.w %> / <%= layout.h %>"><div class="a-cp-v">20%<small>GIẢM</small></div><div class="a-cp-i"><b>GIAM20</b><span>Giảm 20% cho mọi acc</span><i>Sao chép</i></div></div>
+    </div>
+  </form>
+</details>
 <div class="a-grid-side">
   <div class="a-card">
     <h3><%= edit ? 'Sửa mã' : 'Tạo mã giảm giá' %></h3>

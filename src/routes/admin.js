@@ -809,7 +809,22 @@ router.post('/bank/:id/ignore', (req, res) => {
 router.get('/coupons', (req, res) => {
   const coupons = db.prepare('SELECT c.*, g.name AS game_name FROM coupons c LEFT JOIN games g ON g.id = c.game_id ORDER BY c.id DESC').all();
   const edit = req.query.edit ? db.prepare('SELECT * FROM coupons WHERE id = ?').get(toInt(req.query.edit)) : null;
-  res.render('admin/coupons', { title: 'Mã giảm giá', coupons, edit, games: db.prepare('SELECT id, name FROM games ORDER BY sort_order').all() });
+  res.render('admin/coupons', { title: 'Mã giảm giá', coupons, edit, games: db.prepare('SELECT id, name FROM games ORDER BY sort_order').all(),
+    layout: H.couponLayout(getSettings()), serverNow: Math.floor(Date.now() / 1000) });
+});
+
+// Kích cỡ thẻ mã + số mã mỗi hàng ngoài web
+router.post('/coupons/layout', (req, res) => {
+  const w = toInt(req.body.w, 0, 0, 4000), h = toInt(req.body.h, 0, 0, 4000);
+  const pc = toInt(req.body.cols_pc, 0, 0, 6), m = toInt(req.body.cols_m, 0, 0, 3);
+  if (w < 100 || h < 50 || w / h > 6 || h / w > 3) return back(req, res, 'error', 'Kích cỡ không hợp lệ (rộng ≥ 100, cao ≥ 50, tỉ lệ hợp lý)', '/admin/coupons');
+  if (pc < 1 || m < 1) return back(req, res, 'error', 'Số mã mỗi hàng không hợp lệ', '/admin/coupons');
+  setSetting('coupon_size', `${w}x${h}`);
+  setSetting('coupon_cols_pc', String(pc));
+  setSetting('coupon_cols_m', String(m));
+  require('./public').clearCache?.();
+  audit(req, 'coupon_layout', `${w}x${h} ${pc}/${m}`);
+  back(req, res, 'success', `Đã lưu: thẻ ${w}×${h}, PC ${pc} mã/hàng, điện thoại ${m} mã/hàng`, '/admin/coupons');
 });
 
 router.post('/coupons/save', (req, res) => {

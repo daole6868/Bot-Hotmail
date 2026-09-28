@@ -118,8 +118,18 @@ function bannerSize(settings, pos) {
   return m ? { w: +m[1], h: +m[2] } : { w: d[0], h: d[1] };
 }
 
+// Giao diện thẻ mã khuyến mãi: kích cỡ (tỉ lệ) + số mã mỗi hàng, chỉnh ở Admin > Mã giảm giá
+function couponLayout(settings) {
+  const s = settings || {};
+  const m = String(s.coupon_size || '').match(/^(\d{2,4})x(\d{2,4})$/);
+  const w = m ? +m[1] : 600, h = m ? +m[2] : 350;
+  const clamp = (v, d, lo, hi) => { const n = parseInt(v, 10); return n >= lo && n <= hi ? n : d; };
+  const pc = clamp(s.coupon_cols_pc, 4, 1, 6), mobile = clamp(s.coupon_cols_m, 2, 1, 3);
+  return { w, h, pc, mobile, tablet: Math.min(pc, 3), vertical: w / h < 1.15 };
+}
+
 module.exports = {
-  formatDelivered, bannerSize, BANNER_DEFAULT_SIZE,
+  couponLayout, formatDelivered, bannerSize, BANNER_DEFAULT_SIZE,
   slugify, money, fmtDate, fmtDuration, toInputDate, fromInputDate, now, toInt, str, bool,
   paginate, pageUrl, parseJSON, clientIp, escapeCsv,
 };
