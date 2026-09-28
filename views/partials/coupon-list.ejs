@@ -1,18 +1,30 @@
 <% if (coupons && coupons.length) { %>
+<%
+  // "50.000đ" -> "50K" cho gọn trên thẻ nhỏ
+  const short = (n) => n >= 1000000 ? +(n / 1000000).toFixed(1) + 'TR' : n >= 1000 ? Math.round(n / 1000) + 'K' : n + 'đ';
+  const day = (ts) => H.fmtDate(ts).slice(0, 10);
+%>
 <div class="coupon-grid">
-  <% coupons.forEach(c => { %>
-    <div class="coupon">
-      <div class="coupon-value"><%= c.type === 'percent' ? c.value + '%' : H.money(c.value) %><small>GIẢM</small></div>
+  <% coupons.forEach(c => {
+       const cond = [];
+       if (c.min_order) cond.push('Đơn từ ' + H.money(c.min_order));
+       if (c.max_discount && c.type === 'percent') cond.push('Tối đa ' + H.money(c.max_discount));
+       if (c.game_name) cond.push('Chỉ ' + c.game_name);
+       const left = c.usage_limit ? c.usage_limit - c.used_count : null; %>
+    <div class="coupon" data-copy="<%= c.code %>" title="Bấm để sao chép mã <%= c.code %>">
+      <div class="coupon-value">
+        <small>GIẢM</small>
+        <b><%= c.type === 'percent' ? c.value + '%' : short(c.value) %></b>
+        <% if (c.max_discount && c.type === 'percent') { %><small class="coupon-max">tối đa <%= short(c.max_discount) %></small><% } %>
+      </div>
       <div class="coupon-info">
-        <div class="coupon-code"><code><%= c.code %></code><button type="button" class="btn btn-xs btn-ghost" data-copy="<%= c.code %>">Sao chép</button></div>
-        <div class="small"><%= c.description %></div>
-        <div class="muted small">
-          <% if (c.min_order) { %>Đơn từ <%= H.money(c.min_order) %> · <% } %>
-          <% if (c.max_discount && c.type === 'percent') { %>Tối đa <%= H.money(c.max_discount) %> · <% } %>
-          <% if (c.game_name) { %>Chỉ <%= c.game_name %> · <% } %>
-          <% if (c.expires_at) { %>HSD <%= H.fmtDate(c.expires_at) %><% } else { %>Không thời hạn<% } %>
-          <% if (c.usage_limit) { %> · Còn <%= c.usage_limit - c.used_count %> lượt<% } %>
+        <code class="coupon-code"><%= c.code %></code>
+        <div class="coupon-desc"><%= c.description || cond.join(' · ') || 'Áp dụng cho mọi sản phẩm' %></div>
+        <div class="coupon-meta">
+          <span><%- I('clock') %> <%= c.expires_at ? 'HSD ' + day(c.expires_at) : 'Không thời hạn' %></span>
+          <% if (left != null) { %><span class="coupon-left">Còn <%= left %> lượt</span><% } %>
         </div>
+        <span class="coupon-copy"><%- I('copy') %> Sao chép</span>
       </div>
     </div>
   <% }) %>

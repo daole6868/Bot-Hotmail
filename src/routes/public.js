@@ -46,7 +46,7 @@ router.get('/', (req, res) => {
            WHERE c.game_id = g.id AND c.is_active = 1 AND p.status = 'available') AS product_count,
         (SELECT COALESCE(SUM(p.sold_count),0) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id) AS sold
       FROM games g WHERE g.is_active = 1 ORDER BY g.sort_order, g.id`).all(),
-    coupons: publicCoupons(6),
+    coupons: publicCoupons(8),
     recent: db.prepare(`SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
       WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT 10`).all().map((o) => ({ ...o, username: maskName(o.username) })),
     stats: {

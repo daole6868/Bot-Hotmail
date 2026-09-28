@@ -8,6 +8,16 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* bỏ qua */ } },
   };
 
+  // Ô ngày giờ: trình duyệt có thể hiển thị kiểu tháng/ngày -> ghi rõ ngày đã chọn theo kiểu Việt Nam
+  function datePreview(inp) {
+    const out = inp.parentElement.querySelector('[data-date-out]');
+    if (!out) return;
+    if (!out.dataset.empty) out.dataset.empty = out.textContent;
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(inp.value);
+    out.innerHTML = m ? `Đã chọn: <b>ngày ${+m[3]} tháng ${+m[2]} năm ${m[1]}, ${m[4]}:${m[5]}</b>` : out.dataset.empty;
+  }
+  $$('[data-date-preview]').forEach((inp) => { datePreview(inp); inp.addEventListener('input', () => datePreview(inp)); inp.addEventListener('change', () => datePreview(inp)); });
+
   // ---------------- Bảng dạng thẻ trên điện thoại ----------------
   // Gắn nhãn cột (lấy từ <th>) vào từng ô; CSS ở màn hẹp biến mỗi dòng thành 1 khung "Nhãn ..... Giá trị"
   function labelTables(root) {

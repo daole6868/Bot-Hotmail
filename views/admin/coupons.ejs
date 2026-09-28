@@ -22,8 +22,8 @@
         <div><label>Lượt / người</label><input type="number" name="per_user_limit" min="0" value="<%= edit ? edit.per_user_limit : 1 %>"></div>
       </div>
       <div class="a-row a-row-stack">
-        <div><label>Bắt đầu</label><input type="datetime-local" name="starts_at" value="<%= edit ? H.toInputDate(edit.starts_at) : '' %>"></div>
-        <div><label>Hết hạn</label><input type="datetime-local" name="expires_at" value="<%= edit ? H.toInputDate(edit.expires_at) : '' %>"></div>
+        <div><label>Bắt đầu</label><input type="datetime-local" name="starts_at" value="<%= edit ? H.toInputDate(edit.starts_at) : '' %>" data-date-preview><p class="a-field-hint" data-date-out>Để trống = áp dụng ngay</p></div>
+        <div><label>Hết hạn</label><input type="datetime-local" name="expires_at" value="<%= edit ? H.toInputDate(edit.expires_at) : '' %>" data-date-preview><p class="a-field-hint" data-date-out>Để trống = không thời hạn</p></div>
       </div>
       <label class="a-check"><input type="checkbox" name="is_public" <%= !edit || edit.is_public ? 'checked' : '' %>> Hiện mã công khai trên web</label>
       <label class="a-check"><input type="checkbox" name="is_active" <%= !edit || edit.is_active ? 'checked' : '' %>> Kích hoạt</label>
@@ -34,16 +34,20 @@
   <div class="a-card">
     <h3>Danh sách mã (<%= coupons.length %>)</h3>
     <div class="a-table-wrap"><table class="a-table">
-      <thead><tr><th>Mã</th><th>Giảm</th><th>Điều kiện</th><th>Đã dùng</th><th>Thời hạn</th><th>Trạng thái</th><th></th></tr></thead>
+      <thead><tr><th>Mã</th><th>Giảm</th><th>Điều kiện</th><th>Đã dùng</th><th>Thời hạn</th><th>Hiện ngoài web</th><th></th></tr></thead>
       <% const t = Math.floor(Date.now()/1000); %>
-      <% coupons.forEach(c => { const expired = c.expires_at && c.expires_at < t; %>
+      <% coupons.forEach(c => {
+           // Cùng điều kiện với trang Khuyến mãi ngoài web -> biết chính xác vì sao mã không hiện
+           const why = !c.is_active ? ['', 'Không hiện', 'Mã đang tắt'] : c.starts_at && c.starts_at > t ? ['yellow', 'Chưa hiện', 'Bắt đầu ' + H.fmtDate(c.starts_at)]
+             : c.expires_at && c.expires_at < t ? ['red', 'Không hiện', 'Đã hết hạn'] : c.usage_limit != null && c.used_count >= c.usage_limit ? ['red', 'Không hiện', 'Hết lượt dùng']
+             : !c.is_public ? ['', 'Mã ẩn', 'Chỉ ai biết mã mới dùng'] : ['green', 'Đang hiện', '']; %>
         <tr>
           <td><b><%= c.code %></b><div class="a-small a-muted"><%= c.description %></div></td>
           <td><%= c.type === 'percent' ? c.value + '%' : H.money(c.value) %><% if (c.max_discount) { %><div class="a-small a-muted">tối đa <%= H.money(c.max_discount) %></div><% } %></td>
           <td class="a-small">Từ <%= H.money(c.min_order) %><br><%= c.game_name || 'Mọi game' %></td>
           <td><%= c.used_count %><%= c.usage_limit ? '/' + c.usage_limit : '' %></td>
-          <td class="a-small"><%= c.expires_at ? H.fmtDate(c.expires_at) : 'Vô hạn' %></td>
-          <td><%- !c.is_active ? '<span class="a-tag">Tắt</span>' : expired ? '<span class="a-tag red">Hết hạn</span>' : '<span class="a-tag green">Đang chạy</span>' %><%- c.is_public ? ' <span class="a-tag blue">Công khai</span>' : '' %></td>
+          <td class="a-small"><%= c.starts_at ? 'Từ ' + H.fmtDate(c.starts_at) : 'Từ lúc tạo' %><br><%= c.expires_at ? 'Đến ' + H.fmtDate(c.expires_at) : 'Không thời hạn' %></td>
+          <td><span class="a-tag <%= why[0] %>"><%= why[1] %></span><% if (why[2]) { %><div class="a-small a-muted"><%= why[2] %></div><% } %></td>
           <td class="a-actions"><a href="?edit=<%= c.id %>" class="a-btn a-xs">Sửa</a>
             <form method="post" action="/admin/coupons/<%= c.id %>/delete" data-confirm="Xóa mã <%= c.code %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger">Xóa</button></form></td>
         </tr>
