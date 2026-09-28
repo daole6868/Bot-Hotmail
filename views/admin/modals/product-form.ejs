@@ -41,7 +41,7 @@
   <% } %>
 
   <label>Ảnh sản phẩm <small class="a-muted">(tối đa 10 ảnh<%= p.imageList.length ? ', bỏ tick “Giữ” để xóa ảnh cũ' : '' %>)</small></label>
-  <div class="a-hint"><%- I('image') %> <span>Kích thước gợi ý <b>1200 × 750 px</b> (tỉ lệ <b>16:10</b>), JPG/PNG/WEBP ≤ 4MB. Ảnh đầu tiên là ảnh đại diện trên thẻ sản phẩm; ảnh khác tỉ lệ sẽ bị cắt bớt phần thừa cho vừa khung.</span></div>
+  <div class="a-hint"><%- I('image') %> <span>Kích thước gợi ý <b>1500 × 900 px</b> (tỉ lệ <b>5:3</b>), JPG/PNG/WEBP ≤ 4MB. Ảnh đầu tiên là ảnh đại diện trên thẻ sản phẩm; ảnh khác tỉ lệ sẽ bị cắt bớt phần thừa cho vừa khung.</span></div>
   <div class="a-images" data-preview-multi>
     <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>" alt=""><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ</span></label><% }) %>
   </div>

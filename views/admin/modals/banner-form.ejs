@@ -1,5 +1,5 @@
-<% const posName = { main: 'Banner chính (slider)', sidebar_left: 'Sidebar trái', sidebar_right: 'Sidebar phải', popup: 'Popup trang chủ' };
-   const sizeHint = { main: '1200×400', sidebar_left: '300×600', sidebar_right: '300×600', popup: '600×600' }; %>
+<% const posName = { main: 'Banner chính (slider)', strip: 'Dải ảnh chạy (dưới banner)', sidebar_left: 'Sidebar trái', sidebar_right: 'Sidebar phải', popup: 'Popup trang chủ' };
+   const sizeHint = { main: '1200×400', strip: '600×300', sidebar_left: '300×600', sidebar_right: '300×600', popup: '600×600' }; %>
 <form method="post" action="/admin/banners/save" enctype="multipart/form-data" class="a-form" novalidate data-validate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <input type="hidden" name="_back" value="">

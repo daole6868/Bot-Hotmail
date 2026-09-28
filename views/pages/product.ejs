@@ -1,70 +1,101 @@
 <%- include('../partials/header') %>
+<% const soldOut = p.status !== 'available' || (p.type === 'stock' && !p.stock_left); %>
 
-<div class="product-detail">
-  <div class="card gallery" data-gallery>
-    <img class="gallery-main" src="<%= p.imageList[0] || '/img/no-image.svg' %>" alt="<%= p.title %>">
+<div class="pd">
+  <!-- Cột trái: ảnh -->
+  <section class="pd-gallery card" data-gallery>
+    <div class="pd-main">
+      <img class="gallery-main" src="<%= p.imageList[0] || '/img/no-image.svg' %>" alt="<%= p.title %>">
+      <span class="code-tag pd-code">#<%= p.code %></span>
+      <% if (p.discountPercent) { %><span class="ribbon ribbon-right">-<%= p.discountPercent %>%</span><% } %>
+      <% if (p.imageList.length > 1) { %><span class="pd-count"><%- I('image') %> <%= p.imageList.length %> ảnh</span><% } %>
+    </div>
     <% if (p.imageList.length > 1) { %>
       <div class="gallery-thumbs">
         <% p.imageList.forEach((img, i) => { %><img src="<%= img %>" alt="Ảnh <%= i + 1 %>" class="<%= i === 0 ? 'active' : '' %>" loading="lazy"><% }) %>
       </div>
     <% } %>
-  </div>
+  </section>
 
-  <div class="card buy-box">
-    <div class="muted small"><%= p.game_name %> · <%= p.category_name %></div>
-    <h1><%= p.title %></h1>
-    <div class="muted small">Mã: <b>#<%= p.code %></b> · Lượt xem: <%= p.views %> · Đã bán: <%= p.sold_count %></div>
+  <!-- Cột phải: thông tin & mua -->
+  <section class="pd-info card">
+    <div class="pd-tags">
+      <a class="pd-tag" href="/game/<%= p.game_slug %>"><%- I('gamepad') %> <%= p.game_name %></a>
+      <a class="pd-tag" href="/game/<%= p.game_slug %>/<%= p.category_slug %>"><%- I('folder') %> <%= p.category_name %></a>
+    </div>
+    <h1 class="pd-title"><%= p.title %></h1>
+    <div class="pd-meta">
+      <span><%- I('tag') %> Mã <b>#<%= p.code %></b></span>
+      <span><%- I('eye') %> <%= p.views.toLocaleString('vi-VN') %> lượt xem</span>
+      <span><%- I('bag') %> Đã bán <%= p.sold_count.toLocaleString('vi-VN') %></span>
+    </div>
 
-    <div class="price-big">
-      <strong class="price" id="finalPrice" data-price="<%= p.price %>"><%= H.money(p.price) %></strong>
-      <% if (p.old_price && p.old_price > p.price) { %><del><%= H.money(p.old_price) %></del><span class="ribbon static">-<%= p.discountPercent %>%</span><% } %>
+    <div class="pd-price">
+      <div>
+        <div class="pd-price-label">Giá bán</div>
+        <strong class="price" id="finalPrice" data-price="<%= p.price %>"><%= H.money(p.price) %></strong>
+      </div>
+      <% if (p.old_price && p.old_price > p.price) { %>
+        <div class="pd-old"><del><%= H.money(p.old_price) %></del><span class="pd-save">Tiết kiệm <%= H.money(p.old_price - p.price) %></span></div>
+      <% } %>
     </div>
 
     <% if (p.attrList.length) { %>
-      <table class="table attrs-table"><% p.attrList.forEach(a => { %><tr><th><%= a.k %></th><td><%= a.v %></td></tr><% }) %></table>
+      <div class="pd-attrs">
+        <% p.attrList.forEach(a => { %><div class="pd-attr"><span><%= a.k %></span><b><%= a.v %></b></div><% }) %>
+      </div>
     <% } %>
 
-    <% const soldOut = p.status !== 'available' || (p.type === 'stock' && !p.stock_left); %>
     <% if (soldOut) { %>
-      <div class="alert alert-error">Sản phẩm đã bán hoặc hết hàng.</div>
+      <div class="alert alert-error"><%- I('alert') %> Sản phẩm đã bán hoặc hết hàng.</div>
     <% } else { %>
-      <% if (p.type === 'stock') { %><div class="alert alert-info">Kho còn <b><%= p.stock_left %></b> mã. Mã sẽ được giao ngay sau khi thanh toán.</div><% } %>
-      <form method="post" action="/product/<%= p.code %>/buy" data-buy-form data-confirm="Xác nhận mua sản phẩm này?">
+      <% if (p.type === 'stock') { %><div class="pd-stock"><%- I('box') %> Kho còn <b><%= p.stock_left.toLocaleString('vi-VN') %></b> acc · giao ngay sau khi thanh toán</div><% } %>
+      <form method="post" action="/product/<%= p.code %>/buy" class="pd-buy" data-buy-form data-confirm="Xác nhận mua sản phẩm này?">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <label class="label">Mã giảm giá (nếu có)</label>
+        <label class="label" for="couponInput">Mã giảm giá <span class="muted small">(nếu có)</span></label>
         <div class="input-group">
           <input type="text" name="coupon" id="couponInput" maxlength="32" placeholder="Nhập mã KM" autocomplete="off" data-product="<%= p.code %>">
           <button type="button" class="btn btn-ghost" id="couponCheck">Áp dụng</button>
         </div>
         <div class="small" id="couponMsg"></div>
+        <% if (coupons.length) { %>
+          <div class="mini-coupons">
+            <% coupons.slice(0, 4).forEach(c => { %><button type="button" class="chip" data-fill-coupon="<%= c.code %>"><%- I('ticket') %> <%= c.code %></button><% }) %>
+          </div>
+        <% } %>
         <% if (user) { %>
-          <div class="muted small">Số dư của bạn: <b><%= H.money(user.balance) %></b>
-            <% if (user.balance < p.price) { %> · <a href="/user/deposit">Nạp thêm</a><% } %></div>
+          <div class="pd-balance">
+            <span><%- I('card') %> Số dư: <b><%= H.money(user.balance) %></b></span>
+            <% if (user.balance < p.price) { %><a href="/user/deposit">Nạp thêm <%- I('chevron-right') %></a><% } %>
+          </div>
           <button type="submit" class="btn btn-lg btn-block btn-accent"><%- I('cart') %> MUA NGAY</button>
         <% } else { %>
-          <a href="/login" class="btn btn-lg btn-block btn-accent">Đăng nhập để mua</a>
+          <a href="/login" class="btn btn-lg btn-block btn-accent"><%- I('user') %> Đăng nhập để mua</a>
         <% } %>
       </form>
     <% } %>
-    <% if (coupons.length) { %>
-      <div class="mini-coupons">
-        <% coupons.slice(0, 4).forEach(c => { %><button type="button" class="chip" data-fill-coupon="<%= c.code %>"><%- I('ticket') %> <%= c.code %></button><% }) %>
-      </div>
-    <% } %>
-  </div>
+
+    <ul class="pd-policy">
+      <li><%- I('bolt') %> Giao acc tự động ngay sau khi mua</li>
+      <li><%- I('shield') %> Thông tin acc được mã hóa, chỉ bạn xem được</li>
+    </ul>
+  </section>
 </div>
 
 <% if (p.description) { %>
-<section class="section card pad">
-  <h2>Mô tả</h2>
+<section class="section card pad pd-desc">
+  <h2><%- I('list') %> Mô tả</h2>
   <div class="prewrap"><%= p.description %></div>
 </section>
 <% } %>
 
 <% if (related.length) { %>
-<section class="section">
-  <div class="section-head"><h2>Sản phẩm tương tự</h2></div>
-  <div class="product-grid"><% related.forEach(r => { %><%- include('../partials/product-card', { p: r }) %><% }) %></div>
+<section class="section related">
+  <div class="section-head section-head-sub">
+    <div><h2>Tài khoản liên quan</h2><p class="muted small">Có thể bạn quan tâm</p></div>
+    <a href="/game/<%= p.game_slug %>">Xem tất cả <%- I('chevron-right') %></a>
+  </div>
+  <div class="product-grid product-grid-4"><% related.forEach(r => { %><%- include('../partials/product-card', { p: r }) %><% }) %></div>
 </section>
 <% } %>
 

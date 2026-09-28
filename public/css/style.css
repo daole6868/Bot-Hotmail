@@ -346,3 +346,77 @@ select { cursor: pointer; }
   .price-box { align-items: center; text-align: center; }
   .btn-view { width: 100%; }
 }
+
+/* ---------- Ảnh acc tỉ lệ 1500x900 (5:3) ---------- */
+.product-card .thumb { aspect-ratio: 5 / 3; }
+
+/* ---------- Dải ảnh chạy trang chủ (300x150, PC 5 ảnh / ĐT 3 ảnh, chạy phải -> trái) ---------- */
+.img-strip { --gap: 12px; --show: 5; container-type: inline-size; overflow: hidden; margin-bottom: 26px; border-radius: var(--radius);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); }
+.strip-track { display: flex; gap: var(--gap); width: max-content; animation: stripMove calc(var(--n, 10) * 3.2s) linear infinite; }
+.img-strip:hover .strip-track { animation-play-state: paused; }
+.strip-item { flex: 0 0 calc((100cqw - (var(--show) - 1) * var(--gap)) / var(--show)); aspect-ratio: 2 / 1; border-radius: 12px; overflow: hidden; background: var(--card); border: 1px solid var(--border); transition: transform .2s, border-color .2s; }
+.strip-item img { width: 100%; height: 100%; object-fit: cover; user-select: none; }
+.strip-item:hover { transform: translateY(-3px); border-color: var(--primary2); }
+/* Dịch đúng nửa track (1 bản sao + 1 khoảng cách) để vòng lặp liền mạch */
+@keyframes stripMove { to { transform: translateX(calc(-50% - var(--gap) / 2)); } }
+@media (max-width: 720px) { .img-strip { --show: 3; --gap: 8px; } }
+@media (prefers-reduced-motion: reduce) { .strip-track { animation-duration: calc(var(--n, 10) * 8s); } }
+
+/* ---------- Trang chi tiết acc ---------- */
+.pd { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 22px; align-items: start; margin-bottom: 26px; }
+.pd-gallery { padding: 12px; }
+.pd-main { position: relative; border-radius: 12px; overflow: hidden; background: var(--bg2); }
+.pd-main .gallery-main { display: block; width: 100%; aspect-ratio: 5 / 3; object-fit: cover; }
+.pd-code { top: 12px !important; left: 12px; bottom: auto; font-size: .82rem; padding: 4px 10px; font-weight: 700; background: rgba(10, 8, 25, .75); backdrop-filter: blur(4px); }
+.pd-main .ribbon-right { left: auto; right: 12px; top: 12px; }
+.pd-count { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; padding: 4px 10px; border-radius: 99px; background: rgba(10, 8, 25, .7); }
+.pd-gallery .gallery-thumbs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 10px 0 0; overflow: visible; }
+.pd-gallery .gallery-thumbs img { width: 100%; height: auto; aspect-ratio: 5 / 3; border-radius: 8px; opacity: .55; transition: .15s; }
+.pd-gallery .gallery-thumbs img:hover { opacity: .9; }
+.pd-gallery .gallery-thumbs img.active { opacity: 1; border-color: var(--primary2); }
+.pd-info { padding: 22px; display: flex; flex-direction: column; gap: 16px; position: sticky; top: 130px; }
+.pd-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.pd-tag { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 99px; background: var(--card2); border: 1px solid var(--border); color: var(--muted); font-size: .8rem; }
+.pd-tag:hover { color: #fff; border-color: var(--primary2); }
+.pd-title { font-size: 1.45rem; margin: 0; line-height: 1.35; word-break: break-word; }
+.pd-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: .85rem; }
+.pd-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.pd-meta b { color: var(--text); }
+.pd-price { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border-radius: 14px; background: linear-gradient(135deg, rgba(245, 158, 11, .14), rgba(249, 115, 22, .06)); border: 1px solid rgba(245, 158, 11, .35); }
+.pd-price-label { font-size: .78rem; color: var(--muted); margin-bottom: 2px; }
+.pd-price .price { font-size: 2rem; line-height: 1.1; }
+.pd-old { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.pd-old del { font-size: .9rem; }
+.pd-save { font-size: .76rem; font-weight: 700; color: #86efac; }
+.pd-attrs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pd-attr { display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--border); min-width: 0; }
+.pd-attr span { font-size: .74rem; color: var(--muted); }
+.pd-attr b { font-size: .92rem; word-break: break-word; }
+.pd-stock { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; background: rgba(59, 130, 246, .12); border: 1px solid rgba(59, 130, 246, .35); color: #bfdbfe; font-size: .88rem; }
+.pd-buy { display: flex; flex-direction: column; gap: 10px; }
+.pd-buy .label { margin: 0; }
+.pd-buy .input-group { margin: 0; }
+.pd-buy .mini-coupons { margin: 0; }
+#couponMsg:empty { display: none; }
+.pd-balance { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; border-radius: 12px; background: var(--bg2); border: 1px solid var(--border); font-size: .88rem; }
+.pd-balance span, .pd-balance a { display: inline-flex; align-items: center; gap: 6px; }
+.pd-policy { list-style: none; margin: 0; padding: 14px 0 0; border-top: 1px dashed var(--border); display: grid; gap: 8px; color: var(--muted); font-size: .84rem; }
+.pd-policy li { display: flex; align-items: center; gap: 8px; }
+.pd-policy .ico { color: var(--primary2); }
+.pd-desc h2 { display: flex; align-items: center; gap: 8px; }
+.section-head-sub { align-items: flex-end; }
+.section-head-sub p { margin: 2px 0 0; }
+.product-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .product-grid-4 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) {
+  .pd { grid-template-columns: 1fr; }
+  .pd-info { position: static; }
+}
+@media (max-width: 720px) {
+  .product-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pd-info { padding: 16px; }
+  .pd-title { font-size: 1.2rem; }
+  .pd-price .price { font-size: 1.6rem; }
+  .pd-gallery .gallery-thumbs { grid-template-columns: repeat(4, 1fr); }
+}

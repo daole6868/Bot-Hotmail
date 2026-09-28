@@ -834,7 +834,7 @@ router.post('/coupons/:id/delete', (req, res) => {
 });
 
 // ======================= BANNER / SIDEBAR =======================
-const BANNER_POSITIONS = ['main', 'sidebar_left', 'sidebar_right', 'popup'];
+const BANNER_POSITIONS = ['main', 'strip', 'sidebar_left', 'sidebar_right', 'popup'];
 
 router.get('/banners', (req, res) => {
   const banners = db.prepare('SELECT * FROM banners ORDER BY sort_order, id').all();

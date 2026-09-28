@@ -181,11 +181,30 @@ function seedAttributes() {
   setSetting('attributes_seeded', '1');
 }
 
+// Ảnh mẫu cho dải ảnh chạy trang chủ (300x150) - chỉ tạo 1 lần để test, admin thay bằng ảnh thật
+function seedStrip() {
+  if (getSettings().strip_seeded === '1') return;
+  if (db.prepare("SELECT COUNT(*) c FROM banners WHERE position = 'strip'").get().c === 0) {
+    const items = [
+      ['ACC VIP GIÁ RẺ', 'Chỉ từ 50K', '#7c3aed', '#db2777', '/khuyen-mai'],
+      ['NẠP TIỀN 24/7', 'Cộng tiền tự động', '#f59e0b', '#ef4444', '/user/deposit'],
+      ['RANDOM LIÊN QUÂN', 'Thử vận may', '#2563eb', '#7c3aed', '/game/lien-quan-mobile'],
+      ['FREE FIRE', 'Acc nhiều súng', '#f97316', '#dc2626', '/game/free-fire'],
+      ['GENSHIN IMPACT', 'Acc 5 sao', '#0891b2', '#4f46e5', '/game/genshin-impact'],
+      ['MÃ GIẢM GIÁ', 'Săn mã mỗi ngày', '#22c55e', '#0f766e', '/khuyen-mai'],
+    ];
+    const ins = db.prepare("INSERT INTO banners(position, title, image, link, sort_order) VALUES('strip',?,?,?,?)");
+    items.forEach(([t, sub, c1, c2, link], i) => ins.run(t, writeDemo(`strip-${i + 1}.svg`, svgBanner(t, sub, c1, c2, 600, 300)), link, i));
+  }
+  setSetting('strip_seeded', '1');
+}
+
 function runSeed() {
   ensureSettings();
   ensureAdmin();
   seedAttributes();
   if (config.seedCatalog) seedCatalog();
+  seedStrip();
   if (config.seedDemo) seedDemoProducts();
 }
 

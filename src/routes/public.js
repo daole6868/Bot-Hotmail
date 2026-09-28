@@ -39,6 +39,7 @@ const PRODUCT_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.i
 router.get('/', (req, res) => {
   const data = cached('home', 30000, () => ({
     banners: db.prepare("SELECT * FROM banners WHERE position = 'main' AND is_active = 1 ORDER BY sort_order, id").all(),
+    strip: db.prepare("SELECT * FROM banners WHERE position = 'strip' AND is_active = 1 ORDER BY sort_order, id").all(),
     games: db.prepare(`SELECT g.*,
         (SELECT COUNT(*) FROM categories c WHERE c.game_id = g.id AND c.is_active = 1) AS cat_count,
         (SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id
@@ -125,8 +126,9 @@ router.get('/product/:code', (req, res, next) => {
     req.session.viewed.push(p.id);
     db.prepare('UPDATE products SET views = views + 1 WHERE id = ?').run(p.id);
   }
+  // Tài khoản liên quan: ngẫu nhiên các acc cùng game (mọi danh mục), tối đa 8
   const related = db.prepare(`SELECT ${PRODUCT_SELECT} FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
-    WHERE p.category_id = ? AND p.id != ? AND p.status = 'available' ORDER BY RANDOM() LIMIT 4`).all(p.category_id, p.id).map(decorate);
+    WHERE g.id = ? AND p.id != ? AND p.status = 'available' AND c.is_active = 1 ORDER BY RANDOM() LIMIT 8`).all(p.game_id, p.id).map(decorate);
   const coupons = publicCoupons(10).filter((c) => !c.game_id || c.game_id === p.game_id);
   res.render('pages/product', {
     title: p.title, p, related, coupons,

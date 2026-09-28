@@ -196,7 +196,7 @@ CREATE INDEX IF NOT EXISTS idx_ballog_user ON balance_logs(user_id, created_at D
 
 CREATE TABLE IF NOT EXISTS banners (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  position TEXT NOT NULL DEFAULT 'main' CHECK(position IN ('main','sidebar_left','sidebar_right','popup')),
+  position TEXT NOT NULL DEFAULT 'main' CHECK(position IN ('main','sidebar_left','sidebar_right','popup','strip')),
   title TEXT,
   image TEXT NOT NULL,
   link TEXT,
@@ -335,6 +335,23 @@ if (addColumn('categories', 'sale_type', "TEXT NOT NULL DEFAULT 'vip'")) {
        OR id IN (SELECT category_id FROM products WHERE type = 'stock')`);
 }
 db.exec('CREATE INDEX IF NOT EXISTS idx_products_sort ON products(category_id, sort_order)');
+// Thêm vị trí banner 'strip' (dải ảnh chạy ở trang chủ): SQLite không sửa được CHECK -> dựng lại bảng
+{
+  const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'banners'").get()?.sql || '';
+  if (!sql.includes("'strip'")) {
+    db.transaction(() => {
+      db.exec(`CREATE TABLE banners_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        position TEXT NOT NULL DEFAULT 'main' CHECK(position IN ('main','sidebar_left','sidebar_right','popup','strip')),
+        title TEXT, image TEXT NOT NULL, link TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0, is_active INTEGER NOT NULL DEFAULT 1,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()))`);
+      db.exec('INSERT INTO banners_new(id, position, title, image, link, sort_order, is_active, created_at) SELECT id, position, title, image, link, sort_order, is_active, created_at FROM banners');
+      db.exec('DROP TABLE banners');
+      db.exec('ALTER TABLE banners_new RENAME TO banners');
+    })();
+  }
+}
 
 // ---- Helpers ----
 const settingsCache = { data: null, at: 0 };
