@@ -2,14 +2,14 @@
 <%- include('../partials/user-nav') %>
 <div class="card">
   <div class="table-wrap">
-  <table class="table">
+  <table class="table table-cards">
     <thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th><th>Số dư sau</th><th>Nội dung</th></tr></thead>
     <% const tl = { deposit: 'Nạp tiền', purchase: 'Mua hàng', refund: 'Hoàn tiền', admin: 'Điều chỉnh' }; %>
-    <% if (!result.rows.length) { %><tr><td colspan="5" class="center muted">Chưa có biến động</td></tr><% } %>
+    <% if (!result.rows.length) { %><tr><td colspan="5" class="center muted tc-empty">Chưa có biến động</td></tr><% } %>
     <% result.rows.forEach(l => { %>
-      <tr><td class="muted small"><%= H.fmtDate(l.created_at) %></td><td><%= tl[l.type] || l.type %></td>
-        <td class="<%= l.amount >= 0 ? 'plus' : 'minus' %>"><%= l.amount >= 0 ? '+' : '' %><%= H.money(l.amount) %></td>
-        <td><%= H.money(l.balance_after) %></td><td><%= l.note %> <span class="muted small"><%= l.ref %></span></td></tr>
+      <tr><td data-label="Thời gian" class="muted small"><%= H.fmtDate(l.created_at) %></td><td class="tc-head"><b><%= tl[l.type] || l.type %></b></td>
+        <td data-label="Số tiền" class="<%= l.amount >= 0 ? 'plus' : 'minus' %>"><%= l.amount >= 0 ? '+' : '' %><%= H.money(l.amount) %></td>
+        <td data-label="Số dư sau"><%= H.money(l.balance_after) %></td><td data-label="Nội dung"><span><%= l.note %> <span class="muted small"><%= l.ref %></span></span></td></tr>
     <% }) %>
   </table>
   </div>

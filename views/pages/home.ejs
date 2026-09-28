@@ -70,11 +70,11 @@
 <section class="section">
   <div class="section-head"><h2><%- I('bag') %> Giao dịch gần đây</h2></div>
   <div class="card">
-    <table class="table">
+    <table class="table table-cards">
       <thead><tr><th>Khách hàng</th><th>Sản phẩm</th><th>Giá</th><th>Thời gian</th></tr></thead>
       <tbody>
         <% recent.forEach(o => { %>
-          <tr><td><%= o.username %></td><td><%= o.product_title %></td><td class="price"><%= H.money(o.total) %></td><td class="muted"><%= H.fmtDate(o.created_at) %></td></tr>
+          <tr><td class="tc-head"><%= o.username %></td><td class="tc-full"><%= o.product_title %></td><td data-label="Giá" class="price"><%= H.money(o.total) %></td><td data-label="Thời gian" class="muted"><%= H.fmtDate(o.created_at) %></td></tr>
         <% }) %>
       </tbody>
     </table>

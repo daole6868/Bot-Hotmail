@@ -6,7 +6,7 @@
   ['sidebar_right', 'Sidebar phải'],
   ['popup', 'Popup trang chủ'],
 ]; %>
-<p class="a-muted a-small a-page-note"><%- I('image') %> Mỗi phần có kích cỡ hiển thị riêng (Rộng × Cao). Ảnh trên web được cắt theo tỉ lệ này, lấy phần giữa. Khi thêm ảnh sẽ thấy khung <b class="a-green">xanh</b> là phần hiển thị, vùng <b class="a-red">đỏ</b> là phần bị cắt.</p>
+<p class="a-muted a-small a-page-note"><%- I('image') %> <span>Mỗi phần có kích cỡ hiển thị riêng (Rộng × Cao). Ảnh trên web được cắt theo tỉ lệ này, lấy phần giữa. Khi thêm ảnh sẽ thấy khung <b class="a-green">xanh</b> là phần hiển thị, vùng <b class="a-red">đỏ</b> là phần bị cắt.</span></p>
 <% groups.forEach(([pos, label]) => { const list = banners.filter(b => b.position === pos); const sz = sizes[pos]; %>
 <section class="a-card a-card-flush a-banner-sec">
   <div class="a-card-head a-pad">

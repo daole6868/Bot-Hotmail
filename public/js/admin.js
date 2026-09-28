@@ -8,6 +8,43 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* bỏ qua */ } },
   };
 
+  // ---------------- Bảng dạng thẻ trên điện thoại ----------------
+  // Gắn nhãn cột (lấy từ <th>) vào từng ô; CSS ở màn hẹp biến mỗi dòng thành 1 khung "Nhãn ..... Giá trị"
+  function labelTables(root) {
+    $$('table.a-table:not(.a-kv)', root).forEach((tb) => {
+      tb.classList.add('a-cards');
+      const heads = [];
+      $$('thead th', tb).forEach((th) => { const n = +th.colSpan || 1; for (let i = 0; i < n; i++) heads.push(th.textContent.trim()); });
+      $$(':scope > tbody > tr, :scope > tr', tb).forEach((tr) => {
+        if (tr.dataset.lbl || tr.closest('thead')) return;
+        tr.dataset.lbl = '1';
+        let col = 0, titled = false;
+        Array.from(tr.children).forEach((td) => {
+          if (td.tagName !== 'TD') { col += +td.colSpan || 1; return; }
+          const label = td.colSpan > 1 ? '' : (heads[col] || '');
+          col += +td.colSpan || 1;
+          const act = !!$('button, .a-btn, form, .a-switch, input:not([type=hidden])', td);
+          const empty = !td.textContent.trim() && !$('img, svg, input, button', td);
+          if (td.colSpan > 1) td.classList.add('a-cell-full');
+          else if (empty) td.classList.add('a-cell-empty');
+          else if (!titled && !act) { td.classList.add('a-cell-title'); titled = true; }
+          else if (act) { td.classList.add('a-cell-act'); if (!$('.a-cell-act', tr) || td === $('.a-cell-act', tr)) td.classList.add('a-cell-act1'); }
+          else if (label) {
+            td.dataset.label = label;
+            // gói nội dung vào 1 khối để nhiều dòng (VD tên SP + game) dồn về bên phải thay vì bị tách 2 bên
+            const v = document.createElement('div');
+            v.className = 'a-cv';
+            while (td.firstChild) v.appendChild(td.firstChild);
+            td.appendChild(v);
+          }
+        });
+      });
+    });
+  }
+  labelTables(document);
+  new MutationObserver((ms) => { if (ms.some((m) => m.addedNodes.length)) labelTables(document); })
+    .observe(document.body, { childList: true, subtree: true });
+
   function toast(msg, isErr) {
     const t = $('#aToast');
     if (!t) return;

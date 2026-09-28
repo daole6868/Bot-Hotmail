@@ -640,5 +640,7 @@ html[data-theme="dark"] { color-scheme: dark; }
   .table-cards .tc-full .muted { font-weight: 400; }
   .table-cards .tc-action { padding-top: 8px; display: flex; gap: 8px; justify-content: flex-end; }
   .table-cards .tc-empty { text-align: center; }
+  .table-cards tr { display: flex; flex-direction: column; }
+  .table-cards .tc-head { order: -1; }
   .table-wrap:has(.table-cards) { overflow: visible; }
 }
