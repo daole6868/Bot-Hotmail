@@ -1,0 +1,78 @@
+<%- include('../partials/header') %>
+
+<% if (banners.length) { %>
+<section class="slider" data-slider>
+  <div class="slides">
+    <% banners.forEach((b, i) => { %>
+      <a class="slide <%= i === 0 ? 'active' : '' %>" href="<%= b.link || '#' %>"><img src="<%= b.image %>" alt="<%= b.title || 'Banner' %>" <%= i ? 'loading=lazy' : '' %>></a>
+    <% }) %>
+  </div>
+  <% if (banners.length > 1) { %>
+    <button class="slider-nav prev" data-prev aria-label="Trước"><%- I('chevron-left') %></button>
+    <button class="slider-nav next" data-next aria-label="Sau"><%- I('chevron-right') %></button>
+    <div class="dots"><% banners.forEach((b, i) => { %><button data-dot="<%= i %>" class="<%= i === 0 ? 'active' : '' %>" aria-label="Banner <%= i + 1 %>"></button><% }) %></div>
+  <% } %>
+</section>
+<% } %>
+
+<section class="stats-bar">
+  <div><b><%= stats.users.toLocaleString('vi-VN') %></b><span>Thành viên</span></div>
+  <div><b><%= stats.sold.toLocaleString('vi-VN') %></b><span>Đã bán</span></div>
+  <div><b><%= stats.available.toLocaleString('vi-VN') %></b><span>Đang bán</span></div>
+  <div><b>24/7</b><span>Tự động</span></div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2><%- I('gamepad') %> Danh mục game</h2></div>
+  <div class="game-grid">
+    <% games.forEach(g => { %>
+      <a href="/game/<%= g.slug %>" class="card game-card" style="--c: <%= g.color %>">
+        <div class="thumb">
+          <img src="<%= g.image || '/img/no-image.svg' %>" alt="<%= g.name %>" loading="lazy">
+          <% if (g.is_hot) { %><span class="ribbon hot">HOT</span><% } %>
+        </div>
+        <div class="card-body">
+          <h3><%= g.name %></h3>
+          <div class="game-meta">
+            <span><%- I('folder') %> <%= g.cat_count %> danh mục</span>
+            <span><%- I('cart') %> <%= g.product_count %> đang bán</span>
+            <span><%- I('check') %> Đã bán <%= g.sold %></span>
+          </div>
+          <span class="btn btn-block btn-primary">Xem ngay</span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+</section>
+
+<section class="section" id="coupons">
+  <div class="section-head"><h2><%- I('gift') %> Mã khuyến mãi</h2><a href="/khuyen-mai">Xem tất cả <%- I('chevron-right') %></a></div>
+  <%- include('../partials/coupon-list', { coupons }) %>
+</section>
+
+<% if (featured.length) { %>
+<section class="section">
+  <div class="section-head"><h2><%- I('star') %> Acc nổi bật</h2></div>
+  <div class="product-grid">
+    <% featured.forEach(p => { %><%- include('../partials/product-card', { p }) %><% }) %>
+  </div>
+</section>
+<% } %>
+
+<% if (recent.length) { %>
+<section class="section">
+  <div class="section-head"><h2><%- I('bag') %> Giao dịch gần đây</h2></div>
+  <div class="card">
+    <table class="table">
+      <thead><tr><th>Khách hàng</th><th>Sản phẩm</th><th>Giá</th><th>Thời gian</th></tr></thead>
+      <tbody>
+        <% recent.forEach(o => { %>
+          <tr><td><%= o.username %></td><td><%= o.product_title %></td><td class="price"><%= H.money(o.total) %></td><td class="muted"><%= H.fmtDate(o.created_at) %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<% } %>
+
+<%- include('../partials/footer') %>

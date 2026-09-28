@@ -1,0 +1,54 @@
+<%- include('_header') %>
+<div class="a-grid-side">
+  <div class="a-card">
+    <h3><%= edit ? 'Sửa mã' : 'Tạo mã giảm giá' %></h3>
+    <form method="post" action="/admin/coupons/save">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="id" value="<%= edit ? edit.id : '' %>">
+      <label>Mã *</label><input name="code" required maxlength="32" value="<%= edit ? edit.code : '' %>" placeholder="VD: SALE50" style="text-transform:uppercase">
+      <label>Mô tả hiển thị</label><input name="description" maxlength="200" value="<%= edit ? edit.description : '' %>">
+      <div class="a-row">
+        <div><label>Loại</label><select name="type"><option value="percent" <%= edit && edit.type === 'percent' ? 'selected' : '' %>>Phần trăm (%)</option><option value="fixed" <%= edit && edit.type === 'fixed' ? 'selected' : '' %>>Số tiền (đ)</option></select></div>
+        <div><label>Giá trị *</label><input type="number" name="value" required min="1" value="<%= edit ? edit.value : '' %>"></div>
+      </div>
+      <div class="a-row">
+        <div><label>Giảm tối đa (đ)</label><input type="number" name="max_discount" min="0" value="<%= edit ? edit.max_discount || '' : '' %>"></div>
+        <div><label>Đơn tối thiểu (đ)</label><input type="number" name="min_order" min="0" value="<%= edit ? edit.min_order : 0 %>"></div>
+      </div>
+      <label>Áp dụng cho game</label>
+      <select name="game_id"><option value="">Tất cả game</option><% games.forEach(g => { %><option value="<%= g.id %>" <%= edit && edit.game_id === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select>
+      <div class="a-row">
+        <div><label>Tổng lượt dùng</label><input type="number" name="usage_limit" min="0" value="<%= edit ? edit.usage_limit || '' : '' %>" placeholder="Không giới hạn"></div>
+        <div><label>Lượt / người</label><input type="number" name="per_user_limit" min="0" value="<%= edit ? edit.per_user_limit : 1 %>"></div>
+      </div>
+      <div class="a-row">
+        <div><label>Bắt đầu</label><input type="datetime-local" name="starts_at" value="<%= edit ? H.toInputDate(edit.starts_at) : '' %>"></div>
+        <div><label>Hết hạn</label><input type="datetime-local" name="expires_at" value="<%= edit ? H.toInputDate(edit.expires_at) : '' %>"></div>
+      </div>
+      <label class="a-check"><input type="checkbox" name="is_public" <%= !edit || edit.is_public ? 'checked' : '' %>> Hiện mã công khai trên web</label>
+      <label class="a-check"><input type="checkbox" name="is_active" <%= !edit || edit.is_active ? 'checked' : '' %>> Kích hoạt</label>
+      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+      <% if (edit) { %><a href="/admin/coupons" class="a-btn a-ghost">Hủy</a><% } %>
+    </form>
+  </div>
+  <div class="a-card">
+    <h3>Danh sách mã (<%= coupons.length %>)</h3>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Mã</th><th>Giảm</th><th>Điều kiện</th><th>Đã dùng</th><th>Thời hạn</th><th>Trạng thái</th><th></th></tr></thead>
+      <% const t = Math.floor(Date.now()/1000); %>
+      <% coupons.forEach(c => { const expired = c.expires_at && c.expires_at < t; %>
+        <tr>
+          <td><b><%= c.code %></b><div class="a-small a-muted"><%= c.description %></div></td>
+          <td><%= c.type === 'percent' ? c.value + '%' : H.money(c.value) %><% if (c.max_discount) { %><div class="a-small a-muted">tối đa <%= H.money(c.max_discount) %></div><% } %></td>
+          <td class="a-small">Từ <%= H.money(c.min_order) %><br><%= c.game_name || 'Mọi game' %></td>
+          <td><%= c.used_count %><%= c.usage_limit ? '/' + c.usage_limit : '' %></td>
+          <td class="a-small"><%= c.expires_at ? H.fmtDate(c.expires_at) : 'Vô hạn' %></td>
+          <td><%- !c.is_active ? '<span class="a-tag">Tắt</span>' : expired ? '<span class="a-tag red">Hết hạn</span>' : '<span class="a-tag green">Đang chạy</span>' %><%- c.is_public ? ' <span class="a-tag blue">Công khai</span>' : '' %></td>
+          <td class="a-actions"><a href="?edit=<%= c.id %>" class="a-btn a-xs">Sửa</a>
+            <form method="post" action="/admin/coupons/<%= c.id %>/delete" data-confirm="Xóa mã <%= c.code %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger">Xóa</button></form></td>
+        </tr>
+      <% }) %>
+    </table></div>
+  </div>
+</div>
+<%- include('_footer') %>

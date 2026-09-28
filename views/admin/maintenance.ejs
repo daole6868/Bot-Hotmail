@@ -1,0 +1,38 @@
+<%- include('_header') %>
+<% const mb = (b) => (b / 1024 / 1024).toFixed(2) + ' MB'; %>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3><%- I('box') %> Dung lượng dữ liệu</h3>
+    <table class="a-table a-kv">
+      <tr><th>File database</th><td><%= mb(info.size) %> (WAL: <%= mb(info.wal) %>)</td></tr>
+      <% Object.entries(info.counts).forEach(([k, v]) => { %><tr><th><%= k %></th><td><%= v.toLocaleString('vi-VN') %> dòng</td></tr><% }) %>
+      <tr><th>Backup gần nhất</th><td><%= s.last_backup ? H.fmtDate(+s.last_backup) : 'Chưa có' %></td></tr>
+      <tr><th>Bảo trì tự động gần nhất</th><td><%= s.last_maintenance ? H.fmtDate(+s.last_maintenance) : 'Chưa chạy' %></td></tr>
+    </table>
+  </div>
+  <div class="a-card">
+    <h3><%- I('gear') %> Quy tắc tự động (sửa trong .env)</h3>
+    <ul class="a-list">
+      <li>Mỗi 10 phút: hết hạn đơn nạp treo quá <b><%= retention.depositExpireMinutes %> phút</b>, dọn session/IP block hết hạn</li>
+      <li>Xóa nhật ký hoạt động & đăng nhập cũ hơn <b><%= retention.logDays %> ngày</b></li>
+      <li>Xóa đơn nạp hủy/hết hạn cũ hơn <b><%= retention.depositDays %> ngày</b></li>
+      <li>Xóa GD ngân hàng đã khớp cũ hơn <b><%= retention.bankTxnDays %> ngày</b></li>
+      <li>Xóa biến động số dư cũ hơn <b><%= retention.balanceLogDays %> ngày</b></li>
+      <li>Hằng ngày: chuyển đơn hàng & nạp tiền cũ hơn <b><%= retention.archiveDays %> ngày</b> sang bảng lưu trữ (khách vẫn xem được)</li>
+      <li>Hằng ngày: backup DB, giữ <b><%= retention.backupKeep %></b> bản gần nhất; tối ưu chỉ mục</li>
+    </ul>
+    <h3>Chạy thủ công</h3>
+    <div class="a-btn-grid">
+      <% [['light','broom','Dọn dẹp nhanh'],['archive','archive','Lưu trữ dữ liệu cũ'],['backup','save','Backup ngay'],['optimize','bolt','Tối ưu chỉ mục'],['stats','chart','Tính lại thống kê'],['vacuum','compress','VACUUM (thu gọn DB)'],['daily','refresh','Chạy toàn bộ']].forEach(([t, ic, l]) => { %>
+        <form method="post" action="/admin/maintenance/run" data-confirm="Chạy tác vụ: <%= l %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="task" value="<%= t %>"><button class="a-btn <%= t === 'vacuum' ? 'a-danger' : '' %>"><%- I(ic) %> <%= l %></button></form>
+      <% }) %>
+    </div>
+    <p class="a-muted a-small">VACUUM khóa DB vài giây – nên chạy lúc ít khách.</p>
+  </div>
+</div>
+<div class="a-card">
+  <h3>Bản backup</h3>
+  <table class="a-table"><% info.backups.forEach(b => { %><tr><td><%= b.name %></td><td><%= mb(b.size) %></td><td><a href="/admin/maintenance/backup/<%= b.name %>" class="a-btn a-xs"><%- I('download') %> Tải</a></td></tr><% }) %>
+  <% if (!info.backups.length) { %><tr><td class="a-muted">Chưa có bản backup</td></tr><% } %></table>
+</div>
+<%- include('_footer') %>

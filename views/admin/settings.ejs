@@ -1,0 +1,33 @@
+<%- include('_header') %>
+<form method="post" action="/admin/settings" enctype="multipart/form-data" class="a-grid-2">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-card">
+    <h3>Thông tin website</h3>
+    <label>Tên website</label><input name="site_name" value="<%= s.site_name %>" maxlength="100">
+    <label>Slogan</label><input name="site_slogan" value="<%= s.site_slogan %>" maxlength="200">
+    <label>Mô tả SEO</label><textarea name="site_description" rows="2"><%= s.site_description %></textarea>
+    <label>Logo</label><% if (s.logo) { %><img src="<%= s.logo %>" class="a-preview"><% } %><input type="file" name="logo" accept="image/*">
+    <label>Thông báo chạy chữ</label><textarea name="notice" rows="2"><%= s.notice %></textarea>
+    <label>Chân trang</label><input name="footer_text" value="<%= s.footer_text %>">
+    <h3>Liên hệ</h3>
+    <label>Facebook</label><input name="contact_facebook" value="<%= s.contact_facebook %>">
+    <label>Zalo</label><input name="contact_zalo" value="<%= s.contact_zalo %>">
+    <label>Email</label><input name="contact_email" value="<%= s.contact_email %>">
+  </div>
+  <div class="a-card">
+    <h3><%- I('bank') %> Tài khoản ngân hàng nhận tiền</h3>
+    <label>Mã ngân hàng (VietQR: MB, VCB, TCB, ACB, BIDV, VPB, TPB...)</label><input name="bank_code" value="<%= s.bank_code %>">
+    <label>Tên ngân hàng hiển thị</label><input name="bank_name" value="<%= s.bank_name %>">
+    <label>Số tài khoản</label><input name="bank_account" value="<%= s.bank_account %>">
+    <label>Chủ tài khoản (IN HOA, không dấu)</label><input name="bank_owner" value="<%= s.bank_owner %>">
+    <div class="a-row">
+      <div><label>Nạp tối thiểu</label><input type="number" name="deposit_min" value="<%= s.deposit_min %>"></div>
+      <div><label>Nạp tối đa</label><input type="number" name="deposit_max" value="<%= s.deposit_max %>"></div>
+    </div>
+    <h3>Hệ thống</h3>
+    <label class="a-check"><input type="checkbox" name="allow_register" <%= s.allow_register !== '0' ? 'checked' : '' %>> Cho phép đăng ký tài khoản mới</label>
+    <label class="a-check"><input type="checkbox" name="maintenance_mode" <%= s.maintenance_mode === '1' ? 'checked' : '' %>> Bật chế độ bảo trì (chỉ admin truy cập)</label>
+    <button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt</button>
+  </div>
+</form>
+<%- include('_footer') %>

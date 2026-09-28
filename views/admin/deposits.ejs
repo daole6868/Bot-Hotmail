@@ -1,0 +1,33 @@
+<%- include('_header') %>
+<div class="a-card">
+  <form class="a-filter" method="get">
+    <input name="q" value="<%= query.q %>" placeholder="Mã nạp hoặc username">
+    <select name="status"><option value="">-- Trạng thái --</option><% [['pending','Chờ'],['success','Thành công'],['cancelled','Hủy'],['expired','Hết hạn']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select>
+    <button class="a-btn">Lọc</button>
+  </form>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Mã</th><th>Khách</th><th>Yêu cầu</th><th>Thực nhận</th><th>Trạng thái</th><th>Ghi chú</th><th>Tạo lúc</th><th>Xử lý</th></tr></thead>
+    <% const st = { pending: ['yellow','Chờ'], success: ['green','Thành công'], cancelled: ['','Hủy'], expired: ['red','Hết hạn'] }; %>
+    <% result.rows.forEach(d => { %>
+      <tr>
+        <td><b><%= d.code %></b></td><td><a href="/admin/users/<%= d.user_id %>"><%= d.username %></a></td>
+        <td><%= H.money(d.amount) %></td><td><%= d.received ? H.money(d.received) : '' %></td>
+        <td><span class="a-tag <%= st[d.status][0] %>"><%= st[d.status][1] %></span></td>
+        <td class="a-small"><%= d.note || '' %><div class="a-muted"><%= d.bank_txn_id || '' %></div></td>
+        <td class="a-small a-muted"><%= H.fmtDate(d.created_at) %></td>
+        <td class="a-actions">
+          <% if (!d.archived && (d.status === 'pending' || d.status === 'expired')) { %>
+            <form method="post" action="/admin/deposits/<%= d.id %>/approve" class="a-inline-sm" data-confirm="Duyệt cộng tiền cho <%= d.username %>?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="number" name="amount" value="<%= d.amount %>" min="1" class="a-w100">
+              <button class="a-btn a-xs a-primary">Duyệt</button>
+            </form>
+            <form method="post" action="/admin/deposits/<%= d.id %>/cancel" data-confirm="Hủy yêu cầu này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger">Hủy</button></form>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+  </table></div>
+  <%- include('_pagination') %>
+</div>
+<%- include('_footer') %>

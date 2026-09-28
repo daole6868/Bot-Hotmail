@@ -1,0 +1,40 @@
+<%- include('_header') %>
+<% const posName = { main: 'Banner chính (slider)', sidebar_left: 'Sidebar trái', sidebar_right: 'Sidebar phải', popup: 'Popup trang chủ' }; %>
+<div class="a-grid-side">
+  <div class="a-card">
+    <h3><%= edit ? 'Sửa banner' : 'Thêm banner' %></h3>
+    <form method="post" action="/admin/banners/save" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="id" value="<%= edit ? edit.id : '' %>">
+      <label>Vị trí</label>
+      <select name="position"><% Object.entries(posName).forEach(([k, v]) => { %><option value="<%= k %>" <%= edit && edit.position === k ? 'selected' : '' %>><%= v %></option><% }) %></select>
+      <p class="a-muted a-small">Kích thước gợi ý: Banner chính 1200×400 · Sidebar 300×600 · Popup 600×600</p>
+      <label>Ảnh <%= edit ? '' : '*' %></label>
+      <% if (edit) { %><img src="<%= edit.image %>" class="a-preview"><% } %>
+      <input type="file" name="image" accept="image/*" <%= edit ? '' : 'required' %> data-preview>
+      <label>Tiêu đề (alt)</label><input name="title" maxlength="150" value="<%= edit ? edit.title : '' %>">
+      <label>Link khi bấm</label><input name="link" maxlength="300" value="<%= edit ? edit.link : '' %>" placeholder="/game/lien-quan-mobile hoặc https://...">
+      <label>Thứ tự</label><input type="number" name="sort_order" value="<%= edit ? edit.sort_order : 0 %>">
+      <label class="a-check"><input type="checkbox" name="is_active" <%= !edit || edit.is_active ? 'checked' : '' %>> Hiển thị</label>
+      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+      <% if (edit) { %><a href="/admin/banners" class="a-btn a-ghost">Hủy</a><% } %>
+    </form>
+  </div>
+  <div class="a-card">
+    <% Object.entries(posName).forEach(([pos, label]) => { const list = banners.filter(b => b.position === pos); %>
+      <h3><%= label %> (<%= list.length %>)</h3>
+      <div class="a-banner-list">
+        <% if (!list.length) { %><p class="a-muted a-small">Chưa có</p><% } %>
+        <% list.forEach(b => { %>
+          <div class="a-banner-item <%= b.is_active ? '' : 'off' %>">
+            <img src="<%= b.image %>" alt="">
+            <div class="a-small"><b><%= b.title || '(không tiêu đề)' %></b><br><%= b.link || '' %><br>Thứ tự: <%= b.sort_order %> · <%= b.is_active ? 'Hiện' : 'Ẩn' %></div>
+            <div class="a-actions"><a href="?edit=<%= b.id %>" class="a-btn a-xs">Sửa</a>
+              <form method="post" action="/admin/banners/<%= b.id %>/delete" data-confirm="Xóa banner này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger">Xóa</button></form></div>
+          </div>
+        <% }) %>
+      </div>
+    <% }) %>
+  </div>
+</div>
+<%- include('_footer') %>

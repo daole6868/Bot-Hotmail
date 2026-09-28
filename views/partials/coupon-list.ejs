@@ -1,0 +1,22 @@
+<% if (coupons && coupons.length) { %>
+<div class="coupon-grid">
+  <% coupons.forEach(c => { %>
+    <div class="coupon">
+      <div class="coupon-value"><%= c.type === 'percent' ? c.value + '%' : H.money(c.value) %><small>GIẢM</small></div>
+      <div class="coupon-info">
+        <div class="coupon-code"><code><%= c.code %></code><button type="button" class="btn btn-xs btn-ghost" data-copy="<%= c.code %>">Sao chép</button></div>
+        <div class="small"><%= c.description %></div>
+        <div class="muted small">
+          <% if (c.min_order) { %>Đơn từ <%= H.money(c.min_order) %> · <% } %>
+          <% if (c.max_discount && c.type === 'percent') { %>Tối đa <%= H.money(c.max_discount) %> · <% } %>
+          <% if (c.game_name) { %>Chỉ <%= c.game_name %> · <% } %>
+          <% if (c.expires_at) { %>HSD <%= H.fmtDate(c.expires_at) %><% } else { %>Không thời hạn<% } %>
+          <% if (c.usage_limit) { %> · Còn <%= c.usage_limit - c.used_count %> lượt<% } %>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<% } else { %>
+  <p class="muted">Hiện chưa có mã khuyến mãi.</p>
+<% } %>

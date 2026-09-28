@@ -1,0 +1,29 @@
+{
+  "name": "shop-acc-game",
+  "version": "1.0.0",
+  "description": "Website bán Acc game - Node.js + Express + SQLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "reset-admin": "node scripts/reset-admin.js",
+    "backup": "node scripts/backup.js"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "compression": "^1.8.2",
+    "dotenv": "^18.0.4",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "multer": "^2.4.0"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "private": true
+}

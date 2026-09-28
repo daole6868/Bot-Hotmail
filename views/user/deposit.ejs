@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+<%- include('../partials/user-nav') %>
+
+<% if (active) { %>
+<div class="card pad deposit-box" data-deposit-code="<%= active.code %>">
+  <h2>Chuyển khoản để nạp <%= H.money(active.amount) %></h2>
+  <div class="deposit-grid">
+    <div class="qr">
+      <img src="https://img.vietqr.io/image/<%= encodeURIComponent(s.bank_code) %>-<%= encodeURIComponent(s.bank_account) %>-compact2.png?amount=<%= active.amount %>&addInfo=<%= encodeURIComponent(active.code) %>&accountName=<%= encodeURIComponent(s.bank_owner) %>" alt="QR chuyển khoản">
+      <div class="muted small center">Quét mã bằng app ngân hàng</div>
+    </div>
+    <table class="table">
+      <tr><th>Ngân hàng</th><td><b><%= s.bank_name %></b></td></tr>
+      <tr><th>Số tài khoản</th><td><b><%= s.bank_account %></b> <button type="button" class="btn btn-xs btn-ghost" data-copy="<%= s.bank_account %>">Sao chép</button></td></tr>
+      <tr><th>Chủ tài khoản</th><td><b><%= s.bank_owner %></b></td></tr>
+      <tr><th>Số tiền</th><td><b class="price"><%= H.money(active.amount) %></b> <button type="button" class="btn btn-xs btn-ghost" data-copy="<%= active.amount %>">Sao chép</button></td></tr>
+      <tr><th>Nội dung CK</th><td><b class="hl"><%= active.code %></b> <button type="button" class="btn btn-xs btn-ghost" data-copy="<%= active.code %>">Sao chép</button></td></tr>
+    </table>
+  </div>
+  <div class="alert alert-warning"><%- I('alert') %> Ghi <b>ĐÚNG nội dung chuyển khoản <%= active.code %></b> để được cộng tiền tự động. Sai nội dung sẽ phải liên hệ admin.</div>
+  <div class="center" id="depositStatus"><span class="spinner"></span> Đang chờ thanh toán... (trang tự cập nhật)</div>
+</div>
+<% } %>
+
+<% if (!s.bank_account) { %><div class="alert alert-warning"><%- I('alert') %> Shop chưa cấu hình tài khoản ngân hàng nhận tiền.</div><% } %>
+<div class="card pad">
+  <h2>Tạo yêu cầu nạp tiền</h2>
+  <form method="post" action="/user/deposit" class="deposit-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="amount-presets">
+      <% [20000, 50000, 100000, 200000, 500000, 1000000].forEach(a => { %><button type="button" class="chip" data-amount="<%= a %>"><%= H.money(a) %></button><% }) %>
+    </div>
+    <div class="input-group">
+      <input type="number" name="amount" id="amountInput" min="<%= limits.min %>" max="<%= limits.max %>" step="1000" required placeholder="Số tiền (<%= H.money(limits.min) %> - <%= H.money(limits.max) %>)">
+      <button class="btn btn-accent">Tạo mã nạp</button>
+    </div>
+  </form>
+</div>
+
+<% if (pending.length) { %>
+<div class="card pad">
+  <h2>Yêu cầu đang chờ thanh toán</h2>
+  <table class="table">
+    <thead><tr><th>Mã</th><th>Số tiền</th><th>Tạo lúc</th><th></th></tr></thead>
+    <% pending.forEach(d => { %>
+      <tr>
+        <td><b><%= d.code %></b></td><td><%= H.money(d.amount) %></td><td class="muted small"><%= H.fmtDate(d.created_at) %></td>
+        <td class="actions">
+          <a class="btn btn-xs btn-primary" href="/user/deposit?code=<%= d.code %>">Thanh toán</a>
+          <form method="post" action="/user/deposit/<%= d.id %>/cancel" data-confirm="Hủy yêu cầu nạp này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-xs btn-danger">Hủy</button></form>
+        </td>
+      </tr>
+    <% }) %>
+  </table>
+</div>
+<% } %>
+
+<div class="card pad">
+  <h2>Lịch sử nạp</h2>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Mã</th><th>Yêu cầu</th><th>Thực nhận</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
+    <% if (!history.rows.length) { %><tr><td colspan="5" class="center muted">Chưa có giao dịch</td></tr><% } %>
+    <% const dl = { success: 'Thành công', cancelled: 'Đã hủy', expired: 'Hết hạn' }; %>
+    <% history.rows.forEach(d => { %>
+      <tr><td><%= d.code %></td><td><%= H.money(d.amount) %></td><td class="price"><%= d.received ? H.money(d.received) : '—' %></td>
+        <td><span class="status status-<%= d.status %>"><%= dl[d.status] || d.status %></span></td><td class="muted small"><%= H.fmtDate(d.created_at) %></td></tr>
+    <% }) %>
+  </table>
+  </div>
+  <%- include('../partials/pagination', { result: history, query }) %>
+</div>
+<%- include('../partials/footer') %>

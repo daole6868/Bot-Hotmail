@@ -1,0 +1,46 @@
+<%- include('_header') %>
+<% if (!s.bank_account) { %><div class="a-alert a-alert-error"><%- I('alert') %> Chưa cấu hình tài khoản ngân hàng — khách chưa nạp tiền được. <a href="/admin/settings">Cài đặt ngay</a></div><% } %>
+<div class="a-stats">
+  <div class="a-card a-stat"><span>Doanh thu hôm nay</span><b><%= H.money(today.revenue) %></b><small><%= today.orders %> đơn</small></div>
+  <div class="a-card a-stat"><span>Nạp hôm nay</span><b><%= H.money(today.deposits) %></b><small><%= today.deposit_count || 0 %> giao dịch</small></div>
+  <div class="a-card a-stat"><span>Doanh thu 7 ngày</span><b><%= H.money(week.revenue) %></b><small><%= week.orders %> đơn</small></div>
+  <div class="a-card a-stat"><span>Doanh thu 30 ngày</span><b><%= H.money(month.revenue) %></b><small><%= month.orders %> đơn · <%= month.users %> user mới</small></div>
+  <div class="a-card a-stat"><span>Tổng doanh thu</span><b><%= H.money(totals.revenue) %></b><small>Tổng nạp <%= H.money(totals.deposits) %></small></div>
+  <div class="a-card a-stat"><span>Người dùng</span><b><%= counts.users.toLocaleString('vi-VN') %></b><small>Số dư treo <%= H.money(counts.balance) %></small></div>
+  <div class="a-card a-stat"><span>Sản phẩm đang bán</span><b><%= counts.available %></b><small>Đã bán <%= counts.sold %> · <%= counts.games %> game</small></div>
+  <div class="a-card a-stat <%= adminBadges.deposits ? 'warn' : '' %>"><span>Chờ xử lý</span><b><%= adminBadges.deposits %> nạp</b><small><%= adminBadges.bank %> GD bank chưa khớp</small></div>
+</div>
+
+<div class="a-card">
+  <div class="a-card-head"><h3>Doanh thu & Nạp tiền 30 ngày</h3><div class="a-legend"><span class="l1"></span>Doanh thu <span class="l2"></span>Nạp</div></div>
+  <% const maxV = Math.max(1, ...series.map(d => Math.max(d.revenue, d.deposits))); %>
+  <div class="a-chart">
+    <% series.forEach(d => { %>
+      <div class="a-bar-col" title="<%= d.day %>&#10;Doanh thu: <%= H.money(d.revenue) %>&#10;Nạp: <%= H.money(d.deposits) %>&#10;Đơn: <%= d.orders %>">
+        <div class="a-bars"><i class="b1" style="height:<%= (d.revenue / maxV * 100).toFixed(1) %>%"></i><i class="b2" style="height:<%= (d.deposits / maxV * 100).toFixed(1) %>%"></i></div>
+        <small><%= d.day.slice(8) %></small>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<div class="a-grid-2">
+  <div class="a-card">
+    <div class="a-card-head"><h3>Đơn hàng mới</h3><a href="/admin/orders">Tất cả <%- I('chevron-right') %></a></div>
+    <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Mã</th><th>Khách</th><th>SP</th><th>Tổng</th><th>Lúc</th></tr></thead>
+    <% recentOrders.forEach(o => { %><tr><td><a href="/admin/orders/<%= o.id %>"><%= o.order_code %></a></td><td><%= o.username %></td><td class="a-trunc"><%= o.product_title %></td><td><%= H.money(o.total) %></td><td class="a-muted a-small"><%= H.fmtDate(o.created_at) %></td></tr><% }) %>
+    </table></div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-head"><h3>Nạp tiền đang chờ</h3><a href="/admin/deposits?status=pending">Tất cả <%- I('chevron-right') %></a></div>
+    <table class="a-table"><thead><tr><th>Mã</th><th>Khách</th><th>Số tiền</th><th>Lúc</th></tr></thead>
+    <% if (!pendingDeposits.length) { %><tr><td colspan="4" class="a-muted">Không có</td></tr><% } %>
+    <% pendingDeposits.forEach(d => { %><tr><td><%= d.code %></td><td><%= d.username %></td><td><%= H.money(d.amount) %></td><td class="a-muted a-small"><%= H.fmtDate(d.created_at) %></td></tr><% }) %>
+    </table>
+    <% if (lowStock.length) { %>
+      <h3 class="a-mt"><%- I('alert') %> Sản phẩm kho sắp hết</h3>
+      <table class="a-table"><% lowStock.forEach(p => { %><tr><td><a href="/admin/products/<%= p.id %>/edit"><%= p.title %></a></td><td><b class="a-red">Còn <%= p.left_count %></b></td></tr><% }) %></table>
+    <% } %>
+  </div>
+</div>
+<%- include('_footer') %>

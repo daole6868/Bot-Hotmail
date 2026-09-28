@@ -1,0 +1,46 @@
+<% const S2 = locals.s || {}; const NAV2 = locals.nav || { sideRight: [] }; %>
+  </main>
+  <aside class="side side-right">
+    <% NAV2.sideRight.forEach(b => { %>
+      <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= b.image %>" alt="<%= b.title || '' %>" loading="lazy"></a>
+    <% }) %>
+  </aside>
+</div>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <h4><%= S2.site_name %></h4>
+      <p><%= S2.site_description %></p>
+    </div>
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <% if (S2.contact_facebook) { %><li><a href="<%= S2.contact_facebook %>" target="_blank" rel="noopener nofollow">Facebook</a></li><% } %>
+        <% if (S2.contact_zalo) { %><li>Zalo: <%= S2.contact_zalo %></li><% } %>
+        <% if (S2.contact_email) { %><li>Email: <%= S2.contact_email %></li><% } %>
+      </ul>
+    </div>
+    <div>
+      <h4>Chính sách</h4>
+      <ul>
+        <li>Giao acc tự động ngay sau khi mua</li>
+        <li>Nạp tiền ngân hàng tự động 24/7</li>
+        <li>Bảo hành theo mô tả từng sản phẩm</li>
+      </ul>
+    </div>
+  </div>
+  <div class="container footer-bottom"><%= S2.footer_text %></div>
+</footer>
+
+<% if (NAV2.popup && locals.currentPath === '/') { %>
+<div class="popup" id="sitePopup" data-popup-id="<%= NAV2.popup.id %>" hidden>
+  <div class="popup-box">
+    <button class="popup-close" data-close-popup aria-label="Đóng"><%- I('x') %></button>
+    <a href="<%= NAV2.popup.link || '#' %>"><img src="<%= NAV2.popup.image %>" alt="<%= NAV2.popup.title || '' %>"></a>
+  </div>
+</div>
+<% } %>
+<script src="/js/main.js" defer></script>
+</body>
+</html>

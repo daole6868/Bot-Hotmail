@@ -1,0 +1,52 @@
+<%- include('_header') %>
+<div class="a-grid-side">
+  <div class="a-card">
+    <h3><%= edit ? 'Sửa danh mục' : 'Thêm danh mục con' %></h3>
+    <form method="post" action="/admin/categories/save" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="id" value="<%= edit ? edit.id : '' %>">
+      <label>Thuộc game *</label>
+      <select name="game_id" required>
+        <% games.forEach(g => { %><option value="<%= g.id %>" <%= (edit ? edit.game_id : gameId) === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %>
+      </select>
+      <label>Tên danh mục *</label><input name="name" required maxlength="100" value="<%= edit ? edit.name : '' %>" placeholder="VD: Acc VIP, Acc Random, Thẻ kim cương">
+      <label>Slug</label><input name="slug" maxlength="80" value="<%= edit ? edit.slug : '' %>">
+      <label>Ảnh danh mục</label>
+      <% if (edit && edit.image) { %><img src="<%= edit.image %>" class="a-preview"><% } %>
+      <input type="file" name="image" accept="image/*" data-preview>
+      <label>Mô tả</label><textarea name="description" rows="3" maxlength="1000"><%= edit ? edit.description : '' %></textarea>
+      <label>Thứ tự</label><input type="number" name="sort_order" value="<%= edit ? edit.sort_order : 0 %>">
+      <label class="a-check"><input type="checkbox" name="is_active" <%= !edit || edit.is_active ? 'checked' : '' %>> Hiển thị</label>
+      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+      <% if (edit) { %><a href="/admin/categories" class="a-btn a-ghost">Hủy</a><% } %>
+    </form>
+  </div>
+  <div class="a-card">
+    <form class="a-filter" method="get">
+      <select name="game_id" data-autosubmit>
+        <option value="">-- Tất cả game --</option>
+        <% games.forEach(g => { %><option value="<%= g.id %>" <%= gameId === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %>
+      </select>
+      <button class="a-btn">Lọc</button>
+    </form>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Ảnh</th><th>Danh mục</th><th>Game</th><th>Sản phẩm</th><th>TT</th><th>Trạng thái</th><th></th></tr></thead>
+      <% cats.forEach(c => { %>
+        <tr>
+          <td><img src="<%= c.image || '/img/no-image.svg' %>" class="a-thumb"></td>
+          <td><b><%= c.name %></b><div class="a-muted a-small"><%= c.slug %></div></td>
+          <td><%= c.game_name %></td>
+          <td><a href="/admin/products?category_id=<%= c.id %>"><%= c.available_count %>/<%= c.product_count %></a></td>
+          <td><%= c.sort_order %></td>
+          <td><%- c.is_active ? '<span class="a-tag green">Hiện</span>' : '<span class="a-tag">Ẩn</span>' %></td>
+          <td class="a-actions">
+            <a href="/admin/products/new?category_id=<%= c.id %>" class="a-btn a-xs a-primary">+ SP</a>
+            <a href="?edit=<%= c.id %>&game_id=<%= gameId || '' %>" class="a-btn a-xs">Sửa</a>
+            <form method="post" action="/admin/categories/<%= c.id %>/delete" data-confirm="Xóa danh mục '<%= c.name %>'?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger">Xóa</button></form>
+          </td>
+        </tr>
+      <% }) %>
+    </table></div>
+  </div>
+</div>
+<%- include('_footer') %>

@@ -1,0 +1,24 @@
+<%- include('../partials/header') %>
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <h1>Đăng ký tài khoản</h1>
+    <% if (locals.error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <form method="post" action="/register" autocomplete="off">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="label">Tên đăng nhập</label>
+      <input type="text" name="username" value="<%= form.username || '' %>" required pattern="[a-zA-Z0-9_]{4,20}" maxlength="20" placeholder="4-20 ký tự: chữ, số, _">
+      <label class="label">Email (để lấy lại tài khoản)</label>
+      <input type="email" name="email" value="<%= form.email || '' %>" maxlength="100">
+      <label class="label">Mật khẩu</label>
+      <input type="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Ít nhất 8 ký tự, có chữ và số">
+      <label class="label">Nhập lại mật khẩu</label>
+      <input type="password" name="password2" required minlength="8" maxlength="72" autocomplete="new-password">
+      <%- include('../partials/captcha') %>
+      <label class="check"><input type="checkbox" name="agree" value="1" required> Tôi đồng ý với điều khoản sử dụng</label>
+      <button class="btn btn-lg btn-block btn-primary">Đăng ký</button>
+    </form>
+    <p class="center muted">Đã có tài khoản? <a href="/login">Đăng nhập</a></p>
+  </div>
+</div>
+<%- include('../partials/footer') %>

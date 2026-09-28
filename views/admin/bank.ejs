@@ -1,0 +1,39 @@
+<%- include('_header') %>
+<div class="a-card">
+  <h3><%- I('link') %> Cấu hình nạp tự động</h3>
+  <p>Đăng ký webhook tại cổng trung gian (SePay / Casso / script riêng) với thông tin:</p>
+  <table class="a-table a-kv">
+    <tr><th>URL webhook</th><td><code><%= webhookUrl %></code></td></tr>
+    <tr><th>Phương thức</th><td>POST, JSON</td></tr>
+    <tr><th>Xác thực</th><td>Header <code>Authorization: Apikey &lt;BANK_WEBHOOK_TOKEN trong file .env&gt;</code></td></tr>
+  </table>
+  <p class="a-muted a-small">Hệ thống tự đọc nội dung CK có dạng mã nạp (VD: NAPAB12CD) để cộng tiền. Giao dịch trùng mã giao dịch bị bỏ qua (chống cộng 2 lần).</p>
+</div>
+<div class="a-card">
+  <form class="a-filter" method="get">
+    <select name="status"><option value="">-- Tất cả --</option><% [['unmatched','Chưa khớp'],['matched','Đã khớp'],['ignored','Bỏ qua']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select>
+    <button class="a-btn">Lọc</button>
+  </form>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Mã GD</th><th>Số tiền</th><th>Nội dung</th><th>Trạng thái</th><th>Đơn nạp</th><th>Lúc</th><th>Xử lý</th></tr></thead>
+    <% result.rows.forEach(t => { %>
+      <tr>
+        <td class="a-small"><%= t.txn_id %></td><td><b><%= H.money(t.amount) %></b></td><td class="a-small"><%= t.content %></td>
+        <td><%- t.status === 'matched' ? '<span class="a-tag green">Đã khớp</span>' : t.status === 'ignored' ? '<span class="a-tag">Bỏ qua</span>' : '<span class="a-tag yellow">Chưa khớp</span>' %></td>
+        <td><%= t.deposit_code || '' %></td><td class="a-small a-muted"><%= H.fmtDate(t.created_at) %></td>
+        <td class="a-actions">
+          <% if (t.status === 'unmatched') { %>
+            <form method="post" action="/admin/bank/<%= t.id %>/match" class="a-inline-sm" data-confirm="Cộng <%= H.money(t.amount) %> cho mã/username đã nhập?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input name="target" required placeholder="Mã nạp hoặc username" class="a-w150">
+              <button class="a-btn a-xs a-primary">Khớp</button>
+            </form>
+            <form method="post" action="/admin/bank/<%= t.id %>/ignore"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs">Bỏ qua</button></form>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+  </table></div>
+  <%- include('_pagination') %>
+</div>
+<%- include('_footer') %>

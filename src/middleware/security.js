@@ -1,0 +1,170 @@
+'use strict';
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
+const { db, logActivity } = require('../db');
+const { randomToken, safeEqual } = require('../utils/crypto');
+const { clientIp } = require('../utils/helpers');
+const config = require('../config');
+
+// ---------- CSRF (synchronizer token lưu trong session) ----------
+function csrf(req, res, next) {
+  if (!req.session.csrf) req.session.csrf = randomToken(24);
+  res.locals.csrfToken = req.session.csrf;
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  // Form upload ảnh (multipart) chỉ có ở trang admin: router admin tự kiểm tra CSRF sau khi parse form
+  if (req.is('multipart/form-data') && req.path.startsWith('/admin')) return next();
+  if (!verifyCsrf(req)) {
+    logActivity(req.session.userId, 'csrf_fail', req.originalUrl, clientIp(req));
+    return res.status(403).render('errors/error', { code: 403, message: 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ. Vui lòng tải lại trang.' });
+  }
+  next();
+}
+
+function verifyCsrf(req) {
+  const token = req.body?._csrf || req.get('x-csrf-token');
+  return !!token && !!req.session.csrf && safeEqual(token, req.session.csrf);
+}
+
+// ---------- Chặn IP (bảng ip_blocks) ----------
+const blockCache = new Map();
+function ipBlock(req, res, next) {
+  const ip = clientIp(req);
+  const cached = blockCache.get(ip);
+  const nowMs = Date.now();
+  let blocked;
+  if (cached && nowMs - cached.at < 30000) blocked = cached.blocked;
+  else {
+    const row = db.prepare('SELECT expires_at FROM ip_blocks WHERE ip = ?').get(ip);
+    blocked = !!row && (!row.expires_at || row.expires_at * 1000 > nowMs);
+    blockCache.set(ip, { blocked, at: nowMs });
+    if (blockCache.size > 10000) blockCache.clear();
+  }
+  if (blocked) return res.status(403).send('IP của bạn đã bị tạm khóa do hoạt động bất thường.');
+  next();
+}
+
+function blockIp(ip, minutes, reason) {
+  const exp = minutes ? Math.floor(Date.now() / 1000) + minutes * 60 : null;
+  db.prepare(`INSERT INTO ip_blocks(ip, reason, expires_at) VALUES(?,?,?)
+    ON CONFLICT(ip) DO UPDATE SET reason = excluded.reason, expires_at = excluded.expires_at`).run(ip, reason, exp);
+  blockCache.delete(ip);
+}
+function unblockIp(ip) {
+  db.prepare('DELETE FROM ip_blocks WHERE ip = ?').run(ip);
+  blockCache.delete(ip);
+}
+
+// ---------- Rate limit ----------
+function limitHandler(message) {
+  return (req, res) => {
+    logActivity(req.session?.userId, 'rate_limited', req.originalUrl, clientIp(req));
+    if (req.xhr || req.get('accept')?.includes('json')) return res.status(429).json({ ok: false, message });
+    res.status(429).render('errors/error', { code: 429, message });
+  };
+}
+
+const limiters = {
+  global: rateLimit({
+    windowMs: 60 * 1000, limit: 300, standardHeaders: 'draft-7', legacyHeaders: false,
+    handler: limitHandler('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.'),
+  }),
+  login: rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 10, skipSuccessfulRequests: true,
+    keyGenerator: (req) => ipKeyGenerator(req.ip),
+    handler: limitHandler('Đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.'),
+  }),
+  register: rateLimit({
+    windowMs: 60 * 60 * 1000, limit: 5,
+    handler: limitHandler('Bạn đã tạo quá nhiều tài khoản. Thử lại sau 1 giờ.'),
+  }),
+  buy: rateLimit({
+    windowMs: 60 * 1000, limit: 10,
+    keyGenerator: (req) => 'u' + (req.session.userId || ipKeyGenerator(req.ip)),
+    handler: limitHandler('Bạn mua quá nhanh, vui lòng đợi 1 phút.'),
+  }),
+  deposit: rateLimit({
+    windowMs: 10 * 60 * 1000, limit: 6,
+    keyGenerator: (req) => 'u' + (req.session.userId || ipKeyGenerator(req.ip)),
+    handler: limitHandler('Bạn tạo quá nhiều yêu cầu nạp. Vui lòng đợi ít phút.'),
+  }),
+  coupon: rateLimit({
+    windowMs: 60 * 1000, limit: 15,
+    handler: limitHandler('Bạn thử mã quá nhiều lần.'),
+  }),
+  webhook: rateLimit({ windowMs: 60 * 1000, limit: 120 }),
+};
+
+// ---------- Honeypot: form có ô ẩn "website", bot điền vào sẽ bị chặn ----------
+function honeypot(req, res, next) {
+  if (req.body && req.body.website) {
+    const ip = clientIp(req);
+    logActivity(null, 'honeypot', req.originalUrl, ip);
+    blockIp(ip, 60, 'Honeypot bot');
+    return res.status(400).render('errors/error', { code: 400, message: 'Yêu cầu không hợp lệ.' });
+  }
+  next();
+}
+
+// ---------- Nạp user hiện tại ----------
+const userStmt = db.prepare('SELECT id, username, email, role, balance, status, ban_reason, total_deposit, total_spent, created_at FROM users WHERE id = ?');
+function loadUser(req, res, next) {
+  res.locals.user = null;
+  if (req.session.userId) {
+    const u = userStmt.get(req.session.userId);
+    if (!u || u.status === 'banned') {
+      return req.session.regenerate(() => {
+        req.flash('error', u ? `Tài khoản đã bị khóa${u.ban_reason ? ': ' + u.ban_reason : ''}` : 'Phiên đăng nhập không hợp lệ');
+        res.redirect('/login');
+      });
+    }
+    req.user = u;
+    res.locals.user = u;
+  }
+  next();
+}
+
+function requireLogin(req, res, next) {
+  if (!req.user) {
+    req.session.returnTo = req.originalUrl;
+    req.flash('error', 'Vui lòng đăng nhập để tiếp tục');
+    return res.redirect('/login');
+  }
+  next();
+}
+
+const ADMIN_IDLE_MS = 60 * 60 * 1000; // admin không thao tác 60 phút -> tự đăng xuất
+function requireAdmin(req, res, next) {
+  const ip = clientIp(req);
+  if (config.admin.ipWhitelist.length && !config.admin.ipWhitelist.includes(ip)) {
+    logActivity(req.user?.id, 'admin_ip_denied', req.originalUrl, ip);
+    return res.status(404).render('errors/error', { code: 404, message: 'Không tìm thấy trang' });
+  }
+  if (!req.user || req.user.role !== 'admin' || !req.session.isAdmin) {
+    if (req.user) logActivity(req.user.id, 'admin_denied', req.originalUrl, ip);
+    // Trả 404 để không lộ sự tồn tại của trang admin
+    return res.status(404).render('errors/error', { code: 404, message: 'Không tìm thấy trang' });
+  }
+  const last = req.session.adminLastSeen || 0;
+  if (last && Date.now() - last > ADMIN_IDLE_MS) {
+    return req.session.regenerate(() => {
+      req.flash('error', 'Phiên quản trị đã hết hạn, vui lòng đăng nhập lại');
+      res.redirect('/login');
+    });
+  }
+  req.session.adminLastSeen = Date.now();
+  next();
+}
+
+// ---------- Flash message đơn giản ----------
+function flash(req, res, next) {
+  req.flash = (type, msg) => {
+    req.session.flash = req.session.flash || [];
+    req.session.flash.push({ type, msg });
+  };
+  res.locals.flashes = req.session.flash || [];
+  delete req.session.flash;
+  next();
+}
+
+module.exports = {
+  csrf, verifyCsrf, ipBlock, blockIp, unblockIp, limiters, honeypot, loadUser, requireLogin, requireAdmin, flash,
+};

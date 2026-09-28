@@ -1,0 +1,80 @@
+<%
+  const S = locals.s || {};
+  const NAV = locals.nav || { games: [], sideLeft: [], sideRight: [] };
+  const U = locals.user;
+  const pageTitle = locals.title ? `${locals.title} | ${S.site_name || 'ShopAcc'}` : `${S.site_name || 'ShopAcc'} - ${S.site_slogan || ''}`;
+%><!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= pageTitle %></title>
+  <meta name="description" content="<%= S.site_description || '' %>">
+  <meta name="csrf-token" content="<%= locals.csrfToken || '' %>">
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <button class="icon-btn menu-toggle" data-toggle="#mobileNav" aria-label="Menu"><%- I('menu') %></button>
+    <a href="/" class="logo">
+      <% if (S.logo) { %><img src="<%= S.logo %>" alt="<%= S.site_name %>"><% } else { %><span class="logo-mark"><%- I('gamepad') %></span><% } %>
+      <span><%= S.site_name || 'ShopAcc' %></span>
+    </a>
+    <form class="search" action="/search" method="get">
+      <input type="search" name="q" placeholder="Tìm acc, game, mã sản phẩm..." value="<%= locals.q || '' %>" maxlength="60">
+      <button type="submit" aria-label="Tìm"><%- I('search') %></button>
+    </form>
+    <nav class="top-actions">
+      <a href="/khuyen-mai" class="hide-sm"><%- I('gift') %> Khuyến mãi</a>
+      <% if (U) { %>
+        <a href="/user/deposit" class="btn btn-sm btn-accent"><%- I('card') %> <%= H.money(U.balance) %></a>
+        <div class="dropdown">
+          <button class="btn btn-sm btn-ghost" data-toggle="#userMenu"><%- I('user') %> <%= U.username %> <%- I('caret-down') %></button>
+          <div class="dropdown-menu" id="userMenu">
+            <% if (U.role === 'admin') { %><a href="/admin"><%- I('gear') %> Trang quản trị</a><% } %>
+            <a href="/user">Tài khoản</a>
+            <a href="/user/orders">Lịch sử mua</a>
+            <a href="/user/deposit">Nạp tiền</a>
+            <a href="/user/balance">Biến động số dư</a>
+            <a href="/user/password">Đổi mật khẩu</a>
+            <form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>"><button type="submit">Đăng xuất</button></form>
+          </div>
+        </div>
+      <% } else { %>
+        <a href="/login" class="btn btn-sm btn-ghost">Đăng nhập</a>
+        <a href="/register" class="btn btn-sm btn-primary">Đăng ký</a>
+      <% } %>
+    </nav>
+  </div>
+  <nav class="catbar" id="mobileNav">
+    <div class="container catbar-inner">
+      <a href="/" class="<%= locals.currentPath === '/' ? 'active' : '' %>"><%- I('home') %> Trang chủ</a>
+      <% NAV.games.forEach(g => { %>
+        <a href="/game/<%= g.slug %>" class="<%= (locals.currentPath || '').startsWith('/game/' + g.slug) ? 'active' : '' %>"><%= g.name %><% if (g.is_hot) { %> <span class="badge-hot">HOT</span><% } %></a>
+      <% }) %>
+      <a href="/user/deposit"><%- I('card') %> Nạp tiền</a>
+    </div>
+  </nav>
+</header>
+
+<% if (S.notice) { %>
+<div class="notice"><div class="container"><div class="marquee"><span><%= S.notice %></span></div></div></div>
+<% } %>
+
+<div class="container layout">
+  <aside class="side side-left">
+    <% NAV.sideLeft.forEach(b => { %>
+      <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= b.image %>" alt="<%= b.title || '' %>" loading="lazy"></a>
+    <% }) %>
+  </aside>
+  <main class="main">
+    <% if (locals.breadcrumb) { %>
+      <nav class="breadcrumb"><a href="/">Trang chủ</a><% breadcrumb.forEach(b => { %> <span><%- I('chevron-right') %></span> <% if (b.url) { %><a href="<%= b.url %>"><%= b.name %></a><% } else { %><strong><%= b.name %></strong><% } %><% }) %></nav>
+    <% } %>
+    <% (locals.flashes || []).forEach(f => { %>
+      <div class="alert alert-<%= f.type %>"><%= f.msg %></div>
+    <% }) %>
