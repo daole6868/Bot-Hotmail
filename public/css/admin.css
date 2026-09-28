@@ -339,3 +339,32 @@ select { cursor: pointer; }
   select option::checkmark { color: var(--primary); }
 }
 @media (max-width: 800px) { .a-choice { grid-template-columns: 1fr; } }
+
+/* ---------- Gợi ý / chip / thuộc tính sản phẩm ---------- */
+.a-hint { display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; margin: 2px 0 8px; background: #f3f7ff; border: 1px solid #dde7fb; border-radius: 12px; font-size: .8rem; color: #45507a; line-height: 1.5; }
+.a-hint .ico { color: var(--primary); margin-top: 2px; }
+.a-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.a-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; background: #eef2fb; color: #3b4468; font-size: .78rem; font-weight: 500; }
+.a-chip-more { background: var(--primary-l); color: var(--primary); font-weight: 700; }
+.a-chip-attr { padding: 5px 6px 5px 12px; background: var(--primary-l); color: #2a3a6b; font-size: .84rem; }
+.a-chip-attr b { font-weight: 700; }
+.a-chip-attr button { border: 0; background: rgba(61, 111, 230, .12); color: var(--primary); width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; margin-left: 2px; }
+.a-chip-attr button .ico { width: 13px; height: 13px; }
+.a-chip-attr button:hover { background: var(--red); color: #fff; }
+.a-attr-section { margin-top: 16px; border: 1px solid #dfe6f6; border-radius: 14px; background: #fbfcff; }
+.a-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; }
+.a-attr-body { padding: 0 14px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.a-attr-body .a-chips:empty { display: none; }
+.a-attr-body[hidden] { display: none; }
+
+/* Cửa sổ chọn thuộc tính (nổi giữa modal) */
+.a-modal-box { position: relative; }
+.a-picker { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(16, 22, 50, .35); border-radius: 20px; animation: aFade .12s ease; }
+.a-picker[hidden] { display: none; }
+.a-picker-box { width: 100%; max-width: 400px; background: #fff; border-radius: 18px; padding: 16px 18px 18px; box-shadow: 0 24px 60px rgba(16, 22, 50, .3); animation: aPop .15s ease; }
+.a-picker-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.a-picker-head b { font-size: 1rem; }
+.a-picker-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+select:disabled { background: #f5f6fa; color: #9aa1bb; cursor: not-allowed; }
+.a-picker-error { color: var(--red); font-size: .78rem; font-weight: 600; margin-top: 8px; }
+.a-picker-error[hidden] { display: none; }

@@ -169,6 +169,58 @@
     if (rm) rm.parentElement.remove();
   });
 
+  // ---------------- Thuộc tính sản phẩm (công tắc + cửa sổ chọn) ----------------
+  const X_ICON = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  function attrData(form) {
+    const sec = $('[data-attr-section]', form);
+    try { return JSON.parse(sec.dataset.attrs || '[]'); } catch (e) { return []; }
+  }
+  function addAttrChip(form, k, v) {
+    const chips = $('[data-attr-chips]', form);
+    // Mỗi thuộc tính chỉ 1 giá trị: chọn lại thì thay giá trị cũ
+    $$('.a-chip-attr', chips).forEach((c) => { if ($('input[name=attr_k]', c).value === k) c.remove(); });
+    const chip = document.createElement('span');
+    chip.className = 'a-chip a-chip-attr';
+    const b = document.createElement('b'); b.textContent = k + ':';
+    chip.append(b, document.createTextNode(' ' + v));
+    const ik = document.createElement('input'); ik.type = 'hidden'; ik.name = 'attr_k'; ik.value = k;
+    const iv = document.createElement('input'); iv.type = 'hidden'; iv.name = 'attr_v'; iv.value = v;
+    const rm = document.createElement('button'); rm.type = 'button'; rm.setAttribute('data-attr-remove', ''); rm.setAttribute('aria-label', 'Bỏ'); rm.innerHTML = X_ICON;
+    chip.append(ik, iv, rm);
+    chips.appendChild(chip);
+  }
+  function closePicker(form) { const pk = $('[data-attr-picker]', form); if (pk) pk.hidden = true; }
+
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    const form = t.closest('form');
+    if (!form) return;
+    if (t.closest('[data-attr-open]')) {
+      const pk = $('[data-attr-picker]', form);
+      $('[data-attr-name]', pk).value = '';
+      const vs = $('[data-attr-value]', pk);
+      vs.innerHTML = '<option value="">-- Chọn thuộc tính trước --</option>';
+      vs.disabled = true;
+      $('[data-attr-error]', pk).hidden = true;
+      pk.hidden = false;
+      $('[data-attr-name]', pk).focus();
+      return;
+    }
+    if (t.closest('[data-attr-close]')) { closePicker(form); return; }
+    if (t.closest('[data-attr-add]')) {
+      const pk = $('[data-attr-picker]', form);
+      const k = $('[data-attr-name]', pk).value;
+      const v = $('[data-attr-value]', pk).value;
+      const err = $('[data-attr-error]', pk);
+      if (!k || !v) { err.textContent = !k ? 'Vui lòng chọn thuộc tính' : 'Vui lòng chọn giá trị'; err.hidden = false; return; }
+      addAttrChip(form, k, v);
+      closePicker(form);
+      return;
+    }
+    const rm = t.closest('[data-attr-remove]');
+    if (rm) { rm.closest('.a-chip-attr').remove(); }
+  });
+
   // ---------------- Sự kiện change ----------------
   document.addEventListener('change', async (e) => {
     const t = e.target;
@@ -200,6 +252,30 @@
     if (t.matches('input[name=ids][form=bulkForm]')) { updateBulk(); return; }
 
     if (t.matches('[data-autosubmit]')) { t.form.submit(); return; }
+
+    // Bật/tắt thuộc tính: tắt thì không gửi thuộc tính (sản phẩm lưu không có thuộc tính)
+    if (t.matches('[data-attr-toggle]')) {
+      const f = t.closest('form');
+      const body = $('[data-attr-body]', f);
+      body.hidden = !t.checked;
+      $$('input[name=attr_k], input[name=attr_v]', body).forEach((i) => { i.disabled = !t.checked; });
+      if (!t.checked) closePicker(f);
+      return;
+    }
+    // Chọn thuộc tính -> nạp danh sách giá trị của thuộc tính đó
+    if (t.matches('[data-attr-name]')) {
+      const f = t.closest('form');
+      const vs = $('[data-attr-value]', f);
+      const a = attrData(f).find((x) => x.n === t.value);
+      vs.innerHTML = '';
+      const first = document.createElement('option');
+      first.value = ''; first.textContent = a ? '-- Chọn giá trị --' : '-- Chọn thuộc tính trước --';
+      vs.appendChild(first);
+      (a ? a.v : []).forEach((v) => { const o = document.createElement('option'); o.value = v; o.textContent = v; vs.appendChild(o); });
+      vs.disabled = !a;
+      $('[data-attr-error]', f).hidden = true;
+      return;
+    }
 
     // Đổi loại sản phẩm -> ẩn/hiện ô tương ứng
     if (t.matches('[data-type-select]')) {
@@ -269,7 +345,7 @@
     if (t.matches('[data-count-lines]')) {
       const n = t.value.split(/\r?\n/).filter((l) => l.trim()).length;
       const out = $('[data-line-count]', t.closest('form') || document);
-      if (out) out.textContent = n.toLocaleString('vi-VN') + ' acc';
+      if (out) out.textContent = n.toLocaleString('vi-VN') + ' ' + (t.dataset.countUnit || 'acc');
     }
   });
 

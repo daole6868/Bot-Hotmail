@@ -13,7 +13,7 @@
   </div>
 
   <label>Tên sản phẩm <%- R %></label>
-  <input name="title" required maxlength="200" value="<%= p.title || '' %>" placeholder="<%= isVip ? 'VD: Acc 80 tướng 120 skin rank Cao Thủ' : 'VD: Random Liên Quân 20K' %>" autofocus>
+  <input name="title" required maxlength="200" value="<%= p.title || '' %>" autofocus>
   <div class="a-row a-row-3">
     <div><label>Giá bán (đ) <%- R %></label><input type="number" name="price" required min="0" value="<%= p.price ?? '' %>" placeholder="0"></div>
     <div><label>Giá gốc <small class="a-muted">(gạch ngang)</small></label><input type="number" name="old_price" min="0" value="<%= p.old_price || '' %>"></div>
@@ -41,18 +41,43 @@
   <% } %>
 
   <label>Ảnh sản phẩm <small class="a-muted">(tối đa 10 ảnh<%= p.imageList.length ? ', bỏ tick “Giữ” để xóa ảnh cũ' : '' %>)</small></label>
+  <div class="a-hint"><%- I('image') %> <span>Kích thước gợi ý <b>1200 × 750 px</b> (tỉ lệ <b>16:10</b>), JPG/PNG/WEBP ≤ 4MB. Ảnh đầu tiên là ảnh đại diện trên thẻ sản phẩm; ảnh khác tỉ lệ sẽ bị cắt bớt phần thừa cho vừa khung.</span></div>
   <div class="a-images" data-preview-multi>
     <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>" alt=""><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ</span></label><% }) %>
   </div>
   <input type="file" name="images" accept="image/*" multiple data-preview-multi-input>
 
-  <label>Thuộc tính hiển thị <small class="a-muted">(Rank, Skin, Tướng...)</small></label>
-  <div data-attr-list>
-    <% (p.attrList.length ? p.attrList : [{k:'',v:''}]).forEach(a => { %>
-      <div class="a-attr"><input name="attr_k" placeholder="Tên" value="<%= a.k %>"><input name="attr_v" placeholder="Giá trị" value="<%= a.v %>"><button type="button" class="a-icon-btn a-icon-danger" data-remove-attr aria-label="Xóa"><%- I('x') %></button></div>
-    <% }) %>
+  <div class="a-attr-section" data-attr-section data-attrs="<%= JSON.stringify(attrs.map(a => ({ n: a.name, v: a.values }))) %>">
+    <div class="a-toggle-row">
+      <div><b>Thuộc tính hiển thị</b><div class="a-muted a-small">Rank, Server, Số skin... hiện trên thẻ và trang sản phẩm</div></div>
+      <label class="a-switch"><input type="checkbox" data-attr-toggle <%= p.attrList.length ? 'checked' : '' %>><span></span></label>
+    </div>
+    <div class="a-attr-body" data-attr-body <%= p.attrList.length ? '' : 'hidden' %>>
+      <div class="a-chips" data-attr-chips>
+        <% p.attrList.forEach(a => { %>
+          <span class="a-chip a-chip-attr"><b><%= a.k %>:</b> <%= a.v %><input type="hidden" name="attr_k" value="<%= a.k %>"><input type="hidden" name="attr_v" value="<%= a.v %>"><button type="button" data-attr-remove aria-label="Bỏ"><%- I('x') %></button></span>
+        <% }) %>
+      </div>
+      <button type="button" class="a-btn a-soft a-sm" data-attr-open><%- I('plus') %> Thêm thuộc tính</button>
+      <% if (!attrs.length) { %><p class="a-muted a-small">Chưa có thuộc tính nào. Tạo trước ở mục <a href="/admin/attributes" target="_blank">Thuộc tính</a>.</p><% } %>
+    </div>
   </div>
-  <button type="button" class="a-btn a-ghost a-sm" data-add-attr><%- I('plus') %> Thêm thuộc tính</button>
+
+  <!-- Cửa sổ chọn thuộc tính + giá trị -->
+  <div class="a-picker" data-attr-picker hidden>
+    <div class="a-picker-box">
+      <div class="a-picker-head"><b>Thêm thuộc tính</b><button type="button" class="a-icon-btn" data-attr-close aria-label="Đóng"><%- I('x') %></button></div>
+      <label>Thuộc tính</label>
+      <select data-attr-name><option value="">-- Chọn thuộc tính --</option><% attrs.forEach(a => { %><option value="<%= a.name %>"><%= a.name %></option><% }) %></select>
+      <label>Giá trị</label>
+      <select data-attr-value disabled><option value="">-- Chọn thuộc tính trước --</option></select>
+      <div class="a-picker-error" data-attr-error hidden></div>
+      <div class="a-picker-foot">
+        <button type="button" class="a-btn a-ghost" data-attr-close>Hủy</button>
+        <button type="button" class="a-btn a-soft" data-attr-add><%- I('plus') %> Thêm</button>
+      </div>
+    </div>
+  </div>
 
   <label>Mô tả</label>
   <textarea name="description" rows="3" maxlength="5000"><%= p.description || '' %></textarea>

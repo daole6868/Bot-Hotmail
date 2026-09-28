@@ -45,9 +45,6 @@ router.get('/', (req, res) => {
            WHERE c.game_id = g.id AND c.is_active = 1 AND p.status = 'available') AS product_count,
         (SELECT COALESCE(SUM(p.sold_count),0) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id) AS sold
       FROM games g WHERE g.is_active = 1 ORDER BY g.sort_order, g.id`).all(),
-    featured: db.prepare(`SELECT ${PRODUCT_SELECT} FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
-      WHERE p.is_featured = 1 AND p.status = 'available' AND c.is_active = 1 AND g.is_active = 1
-      ORDER BY p.created_at DESC LIMIT 8`).all().map(decorate),
     coupons: publicCoupons(6),
     recent: db.prepare(`SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
       WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT 10`).all().map((o) => ({ ...o, username: maskName(o.username) })),
@@ -57,7 +54,11 @@ router.get('/', (req, res) => {
       available: db.prepare("SELECT COUNT(*) c FROM products WHERE status = 'available'").get().c,
     },
   }));
-  res.render('pages/home', { title: null, ...data });
+  // Acc nổi bật: xáo trộn ngẫu nhiên, tối đa 12, khác nhau mỗi lần tải trang / mỗi user
+  const featured = db.prepare(`SELECT ${PRODUCT_SELECT} FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
+    WHERE p.is_featured = 1 AND p.status = 'available' AND c.is_active = 1 AND g.is_active = 1
+    ORDER BY RANDOM() LIMIT 12`).all().map(decorate);
+  res.render('pages/home', { title: null, ...data, featured });
 });
 
 // ================= CẤP 2: DANH MỤC CON TRONG GAME =================
@@ -97,7 +98,7 @@ router.get('/game/:slug/:cat', (req, res, next) => {
     select: PRODUCT_SELECT,
     from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
     where: 'WHERE ' + where.join(' AND '), params, order: 'ORDER BY ' + order,
-    page: toInt(req.query.page, 1, 1), perPage: 16,
+    page: toInt(req.query.page, 1, 1), perPage: 12,
   });
   result.rows.forEach(decorate);
   const siblings = db.prepare('SELECT name, slug FROM categories WHERE game_id = ? AND is_active = 1 ORDER BY sort_order, id').all(game.id);
@@ -172,7 +173,7 @@ router.get('/search', (req, res) => {
       from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
       where: "WHERE p.status = 'available' AND c.is_active = 1 AND g.is_active = 1 AND (p.title LIKE ? OR p.code LIKE ? OR g.name LIKE ? OR c.name LIKE ?)",
       params: [`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`],
-      order: 'ORDER BY p.id DESC', page: toInt(req.query.page, 1, 1), perPage: 16,
+      order: 'ORDER BY p.id DESC', page: toInt(req.query.page, 1, 1), perPage: 12,
     });
     result.rows.forEach(decorate);
   }
