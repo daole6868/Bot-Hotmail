@@ -20,9 +20,9 @@
         <div class="card-body">
           <h3><%= c.name %></h3>
           <% if (c.description) { %><p class="muted small"><%= c.description %></p><% } %>
-          <div class="game-meta">
-            <span><%- I('cart') %> Còn <%= c.product_count %></span>
-            <span><%- I('check') %> Đã bán <%= c.sold %></span>
+          <div class="stat-boxes">
+            <div class="stat-box"><span class="stat-label"><%- I('cart') %> Đang bán</span><b><%= c.product_count.toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã bán</span><b><%= c.sold.toLocaleString('vi-VN') %></b></div>
           </div>
           <div class="price-row">
             <span class="muted small">Chỉ từ</span>

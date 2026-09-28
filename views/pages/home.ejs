@@ -33,10 +33,9 @@
         </div>
         <div class="card-body">
           <h3><%= g.name %></h3>
-          <div class="game-meta">
-            <span><%- I('folder') %> <%= g.cat_count %> danh mục</span>
-            <span><%- I('cart') %> <%= g.product_count %> đang bán</span>
-            <span><%- I('check') %> Đã bán <%= g.sold %></span>
+          <div class="stat-boxes">
+            <div class="stat-box"><span class="stat-label"><%- I('cart') %> Đang bán</span><b><%= g.product_count.toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã bán</span><b><%= g.sold.toLocaleString('vi-VN') %></b></div>
           </div>
           <span class="btn btn-block btn-primary">Xem ngay</span>
         </div>

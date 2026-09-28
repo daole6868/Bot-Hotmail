@@ -1,45 +1,39 @@
 <%- include('_header') %>
-<div class="a-grid-side">
-  <div class="a-card">
-    <h3><%= edit ? 'Sửa game' : 'Thêm game mới' %></h3>
-    <form method="post" action="/admin/games/save" enctype="multipart/form-data">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="id" value="<%= edit ? edit.id : '' %>">
-      <label>Tên game *</label><input name="name" required maxlength="100" value="<%= edit ? edit.name : '' %>">
-      <label>Slug (URL) <small class="a-muted">để trống tự tạo</small></label><input name="slug" maxlength="80" value="<%= edit ? edit.slug : '' %>">
-      <label>Ảnh thẻ game (JPG/PNG/WEBP ≤4MB)</label>
-      <% if (edit && edit.image) { %><img src="<%= edit.image %>" class="a-preview"><% } %>
-      <input type="file" name="image" accept="image/*" data-preview>
-      <label>Mô tả</label><textarea name="description" rows="3" maxlength="1000"><%= edit ? edit.description : '' %></textarea>
-      <div class="a-row">
-        <div><label>Màu chủ đạo</label><input type="color" name="color" value="<%= edit ? edit.color : '#6d28d9' %>"></div>
-        <div><label>Thứ tự</label><input type="number" name="sort_order" value="<%= edit ? edit.sort_order : 0 %>"></div>
-      </div>
-      <label class="a-check"><input type="checkbox" name="is_active" <%= !edit || edit.is_active ? 'checked' : '' %>> Hiển thị</label>
-      <label class="a-check"><input type="checkbox" name="is_hot" <%= edit && edit.is_hot ? 'checked' : '' %>> Gắn nhãn HOT</label>
-      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
-      <% if (edit) { %><a href="/admin/games" class="a-btn a-ghost">Hủy</a><% } %>
-    </form>
+<div class="a-card a-card-flush">
+  <div class="a-card-head a-pad">
+    <div>
+      <h3>Danh sách game</h3>
+      <p class="a-muted a-small">Bấm mũi tên để đổi thứ tự hiển thị ngoài trang chủ. Tắt công tắc để ẩn game.</p>
+    </div>
+    <button type="button" class="a-btn a-primary" data-modal-url="/admin/games/form" data-modal-title="Thêm game"><%- I('plus') %> Thêm game</button>
   </div>
-  <div class="a-card">
-    <h3>Danh sách game (<%= games.length %>)</h3>
-    <div class="a-table-wrap"><table class="a-table">
-      <thead><tr><th>Ảnh</th><th>Tên</th><th>Danh mục</th><th>SP</th><th>TT</th><th>Trạng thái</th><th></th></tr></thead>
-      <% games.forEach(g => { %>
+  <div class="a-table-wrap">
+    <table class="a-table a-table-lg">
+      <thead><tr><th class="a-w-move"></th><th>Game</th><th class="a-num">Danh mục</th><th class="a-num">Sản phẩm</th><th class="a-center">Hiển thị</th><th class="a-right">Thao tác</th></tr></thead>
+      <tbody>
+      <% if (!games.length) { %><tr><td colspan="6" class="a-empty">Chưa có game nào. Bấm “Thêm game” để bắt đầu.</td></tr><% } %>
+      <% games.forEach((g, i) => { %>
         <tr>
-          <td><img src="<%= g.image || '/img/no-image.svg' %>" class="a-thumb"></td>
-          <td><b><%= g.name %></b><% if (g.is_hot) { %> <span class="a-tag red">HOT</span><% } %><div class="a-muted a-small">/game/<%= g.slug %></div></td>
-          <td><a href="/admin/categories?game_id=<%= g.id %>"><%= g.cat_count %> danh mục</a></td>
-          <td><%= g.product_count %></td>
-          <td><%= g.sort_order %></td>
-          <td><%- g.is_active ? '<span class="a-tag green">Hiện</span>' : '<span class="a-tag">Ẩn</span>' %></td>
-          <td class="a-actions">
-            <a href="?edit=<%= g.id %>" class="a-btn a-xs">Sửa</a>
-            <form method="post" action="/admin/games/<%= g.id %>/delete" data-confirm="Xóa game '<%= g.name %>' và toàn bộ danh mục, sản phẩm chưa bán?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger">Xóa</button></form>
+          <td><%- include('partials/move', { kind: 'games', id: g.id, first: i === 0, last: i === games.length - 1 }) %></td>
+          <td>
+            <div class="a-item">
+              <%- include('partials/thumb', { img: g.image, name: g.name, color: g.color, size: '' }) %>
+              <div><b><%= g.name %></b> <% if (g.is_hot) { %><span class="a-tag red">HOT</span><% } %><div class="a-muted a-small a-trunc"><%= g.description || '/game/' + g.slug %></div></div>
+            </div>
+          </td>
+          <td class="a-num"><a href="/admin/categories#game-<%= g.id %>"><%= g.cat_count %></a></td>
+          <td class="a-num"><a href="/admin/products#game-<%= g.id %>"><%= g.product_count.toLocaleString('vi-VN') %></a></td>
+          <td class="a-center"><%- include('partials/switch', { kind: 'games', id: g.id, on: g.is_active, disabled: false }) %></td>
+          <td class="a-right">
+            <div class="a-actions">
+              <button type="button" class="a-icon-btn" data-modal-url="/admin/games/form?id=<%= g.id %>" data-modal-title="Sửa game" title="Sửa"><%- I('edit') %></button>
+              <form method="post" action="/admin/games/<%= g.id %>/delete" data-confirm="Xóa game “<%= g.name %>” cùng toàn bộ danh mục và sản phẩm chưa bán?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+            </div>
           </td>
         </tr>
       <% }) %>
-    </table></div>
+      </tbody>
+    </table>
   </div>
 </div>
 <%- include('_footer') %>

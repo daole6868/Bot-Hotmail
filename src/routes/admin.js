@@ -51,7 +51,12 @@ router.use((req, res, next) => {
 const fileOf = (req, field) => (req.files || []).find((f) => f.fieldname === field);
 const filesOf = (req, field) => (req.files || []).filter((f) => f.fieldname === field);
 const audit = (req, action, detail) => logActivity(req.user.id, action, detail, clientIp(req));
-const back = (req, res, type, msg, url) => { if (msg) req.flash(type, msg); res.redirect(url || req.get('referer') || '/admin'); };
+// Quay lại trang đang đứng (form trong modal gửi kèm _back), chỉ chấp nhận đường dẫn nội bộ /admin
+const safeBack = (req) => {
+  const b = String(req.body?._back || '');
+  return /^\/admin(\/|\?|$)/.test(b) ? b : null;
+};
+const back = (req, res, type, msg, url) => { if (msg) req.flash(type, msg); res.redirect(safeBack(req) || url || req.get('referer') || '/admin'); };
 
 // ======================= DASHBOARD =======================
 router.get('/', (req, res) => {
@@ -85,13 +90,71 @@ router.get('/', (req, res) => {
   });
 });
 
+// ======================= SẮP XẾP & BẬT/TẮT HIỂN THỊ (dùng chung) =======================
+const SORTABLE = {
+  games: { table: 'games', group: null, order: 'sort_order, id' },
+  categories: { table: 'categories', group: 'game_id', order: 'sort_order, id' },
+  products: { table: 'products', group: 'category_id', order: 'sort_order, id DESC' },
+  banners: { table: 'banners', group: 'position', order: 'sort_order, id' },
+};
+
+function moveItem(kind, id, dir) {
+  const s = SORTABLE[kind];
+  const row = db.prepare(`SELECT * FROM ${s.table} WHERE id = ?`).get(id);
+  if (!row) return false;
+  const ids = db.prepare(`SELECT id FROM ${s.table} ${s.group ? `WHERE ${s.group} = ?` : ''} ORDER BY ${s.order}`)
+    .all(...(s.group ? [row[s.group]] : [])).map((r) => r.id);
+  const i = ids.indexOf(id);
+  const j = dir === 'up' ? i - 1 : i + 1;
+  if (i < 0 || j < 0 || j >= ids.length) return false;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  const upd = db.prepare(`UPDATE ${s.table} SET sort_order = ? WHERE id = ?`);
+  db.transaction(() => ids.forEach((x, k) => upd.run(k, x)))();
+  return true;
+}
+
+function toggleItem(kind, id) {
+  if (kind === 'products') {
+    const p = db.prepare('SELECT status FROM products WHERE id = ?').get(id);
+    if (!p || p.status === 'sold') return { ok: false, message: 'Sản phẩm đã bán, không thể bật/tắt' };
+    const next = p.status === 'available' ? 'hidden' : 'available';
+    db.prepare('UPDATE products SET status = ?, updated_at = unixepoch() WHERE id = ?').run(next, id);
+    return { ok: true, active: next === 'available' };
+  }
+  const t = SORTABLE[kind].table;
+  const r = db.prepare(`UPDATE ${t} SET is_active = 1 - is_active WHERE id = ?`).run(id);
+  if (!r.changes) return { ok: false, message: 'Không tìm thấy' };
+  return { ok: true, active: !!db.prepare(`SELECT is_active FROM ${t} WHERE id = ?`).get(id).is_active };
+}
+
+for (const kind of Object.keys(SORTABLE)) {
+  router.post(`/${kind}/:id/move`, (req, res) => {
+    const ok = moveItem(kind, toInt(req.params.id), req.body.dir === 'up' ? 'up' : 'down');
+    if (req.get('x-csrf-token')) return res.json({ ok });
+    back(req, res, ok ? 'success' : 'error', ok ? null : 'Không thể di chuyển');
+  });
+  router.post(`/${kind}/:id/toggle`, (req, res) => {
+    const r = toggleItem(kind, toInt(req.params.id));
+    if (r.ok) audit(req, `${kind}_toggle`, `${req.params.id} -> ${r.active ? 'hiện' : 'ẩn'}`);
+    if (req.get('x-csrf-token')) return res.json(r);
+    back(req, res, r.ok ? 'success' : 'error', r.ok ? null : r.message);
+  });
+}
+
+// Nội dung form trong modal (trả về HTML không có layout)
+const modal = (res, view, data) => res.render('admin/modals/' + view, data);
+
 // ======================= GAME (CẤP 1) =======================
 router.get('/games', (req, res) => {
   const games = db.prepare(`SELECT g.*, (SELECT COUNT(*) FROM categories c WHERE c.game_id = g.id) AS cat_count,
     (SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id) AS product_count
     FROM games g ORDER BY g.sort_order, g.id`).all();
-  const edit = req.query.edit ? db.prepare('SELECT * FROM games WHERE id = ?').get(toInt(req.query.edit)) : null;
-  res.render('admin/games', { title: 'Danh mục game', games, edit });
+  res.render('admin/games', { title: 'Game', games });
+});
+
+router.get('/games/form', (req, res) => {
+  const g = req.query.id ? db.prepare('SELECT * FROM games WHERE id = ?').get(toInt(req.query.id)) : null;
+  modal(res, 'game-form', { g });
 });
 
 router.post('/games/save', (req, res) => {
@@ -108,24 +171,26 @@ router.post('/games/save', (req, res) => {
     if (!saved) return back(req, res, 'error', 'File ảnh không hợp lệ');
     if (old?.image) removeImage(old.image);
     image = saved;
+  } else if (old && req.body.remove_image) {
+    removeImage(old.image);
+    image = null;
   }
-  const data = [name, slug, image, str(req.body.description, 1000), str(req.body.color, 20) || '#6d28d9',
-    toInt(req.body.sort_order), bool(req.body.is_active), bool(req.body.is_hot)];
+  const data = [name, slug, image, str(req.body.description, 1000), str(req.body.color, 20) || '#6d28d9', bool(req.body.is_active), bool(req.body.is_hot)];
   if (old) {
-    db.prepare('UPDATE games SET name=?, slug=?, image=?, description=?, color=?, sort_order=?, is_active=?, is_hot=? WHERE id=?').run(...data, id);
-    audit(req, 'game_update', name);
+    db.prepare('UPDATE games SET name=?, slug=?, image=?, description=?, color=?, is_active=?, is_hot=? WHERE id=?').run(...data, id);
   } else {
-    db.prepare('INSERT INTO games(name, slug, image, description, color, sort_order, is_active, is_hot) VALUES(?,?,?,?,?,?,?,?)').run(...data);
-    audit(req, 'game_create', name);
+    const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM games').get().n;
+    db.prepare('INSERT INTO games(name, slug, image, description, color, is_active, is_hot, sort_order) VALUES(?,?,?,?,?,?,?,?)').run(...data, next);
   }
-  back(req, res, 'success', 'Đã lưu game', '/admin/games');
+  audit(req, old ? 'game_update' : 'game_create', name);
+  back(req, res, 'success', old ? 'Đã cập nhật game' : 'Đã thêm game', '/admin/games');
 });
 
 router.post('/games/:id/delete', (req, res) => {
   const g = db.prepare('SELECT * FROM games WHERE id = ?').get(toInt(req.params.id));
   if (!g) return back(req, res, 'error', 'Không tìm thấy');
   const sold = db.prepare("SELECT COUNT(*) c FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = ? AND p.status = 'sold'").get(g.id).c;
-  if (sold && req.body.force !== '1') return back(req, res, 'error', `Game có ${sold} sản phẩm đã bán. Hãy ẩn game thay vì xóa.`);
+  if (sold) return back(req, res, 'error', `Game có ${sold} sản phẩm đã bán. Hãy tắt hiển thị thay vì xóa.`);
   db.prepare('DELETE FROM games WHERE id = ?').run(g.id);
   removeImage(g.image);
   audit(req, 'game_delete', g.name);
@@ -134,15 +199,21 @@ router.post('/games/:id/delete', (req, res) => {
 
 // ======================= DANH MỤC CON (CẤP 2) =======================
 router.get('/categories', (req, res) => {
-  const games = db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all();
-  const gameId = toInt(req.query.game_id, 0);
-  const cats = db.prepare(`SELECT c.*, g.name AS game_name,
+  const games = db.prepare(`SELECT g.id, g.name, g.image, g.color, g.is_active,
+    (SELECT COUNT(*) FROM categories c WHERE c.game_id = g.id) AS cat_count FROM games g ORDER BY g.sort_order, g.id`).all();
+  const cats = db.prepare(`SELECT c.*,
       (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count,
-      (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS available_count
-    FROM categories c JOIN games g ON g.id = c.game_id ${gameId ? 'WHERE c.game_id = ?' : ''} ORDER BY g.sort_order, c.sort_order, c.id`)
-    .all(...(gameId ? [gameId] : []));
-  const edit = req.query.edit ? db.prepare('SELECT * FROM categories WHERE id = ?').get(toInt(req.query.edit)) : null;
-  res.render('admin/categories', { title: 'Danh mục con', games, cats, gameId, edit });
+      (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS available_count,
+      (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price
+    FROM categories c ORDER BY c.sort_order, c.id`).all();
+  games.forEach((g) => { g.cats = cats.filter((c) => c.game_id === g.id); });
+  res.render('admin/categories', { title: 'Danh mục', games });
+});
+
+router.get('/categories/form', (req, res) => {
+  const c = req.query.id ? db.prepare('SELECT * FROM categories WHERE id = ?').get(toInt(req.query.id)) : null;
+  const games = db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all();
+  modal(res, 'category-form', { c, games, gameId: c ? c.game_id : toInt(req.query.game_id) });
 });
 
 router.post('/categories/save', (req, res) => {
@@ -160,19 +231,27 @@ router.post('/categories/save', (req, res) => {
     if (!saved) return back(req, res, 'error', 'File ảnh không hợp lệ');
     if (old?.image) removeImage(old.image);
     image = saved;
+  } else if (old && req.body.remove_image) {
+    removeImage(old.image);
+    image = null;
   }
-  const data = [gameId, name, slug, image, str(req.body.description, 1000), toInt(req.body.sort_order), bool(req.body.is_active)];
-  if (old) db.prepare('UPDATE categories SET game_id=?, name=?, slug=?, image=?, description=?, sort_order=?, is_active=? WHERE id=?').run(...data, id);
-  else db.prepare('INSERT INTO categories(game_id, name, slug, image, description, sort_order, is_active) VALUES(?,?,?,?,?,?,?)').run(...data);
+  const data = [gameId, name, slug, image, str(req.body.description, 1000), bool(req.body.is_active)];
+  if (old) {
+    db.prepare('UPDATE categories SET game_id=?, name=?, slug=?, image=?, description=?, is_active=? WHERE id=?').run(...data, id);
+  } else {
+    const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM categories WHERE game_id = ?').get(gameId).n;
+    db.prepare('INSERT INTO categories(game_id, name, slug, image, description, is_active, sort_order) VALUES(?,?,?,?,?,?,?)').run(...data, next);
+  }
   audit(req, old ? 'category_update' : 'category_create', name);
-  back(req, res, 'success', 'Đã lưu danh mục', '/admin/categories?game_id=' + gameId);
+  back(req, res, 'success', old ? 'Đã cập nhật danh mục' : 'Đã thêm danh mục', '/admin/categories');
 });
 
 router.post('/categories/:id/delete', (req, res) => {
   const c = db.prepare('SELECT * FROM categories WHERE id = ?').get(toInt(req.params.id));
   if (!c) return back(req, res, 'error', 'Không tìm thấy');
   const sold = db.prepare("SELECT COUNT(*) n FROM products WHERE category_id = ? AND status = 'sold'").get(c.id).n;
-  if (sold) return back(req, res, 'error', `Danh mục có ${sold} sản phẩm đã bán. Hãy ẩn thay vì xóa.`);
+  if (sold) return back(req, res, 'error', `Danh mục có ${sold} sản phẩm đã bán. Hãy tắt hiển thị thay vì xóa.`);
+  db.prepare('SELECT images FROM products WHERE category_id = ?').all(c.id).forEach((r) => H.parseJSON(r.images, []).forEach(removeImage));
   db.prepare('DELETE FROM categories WHERE id = ?').run(c.id);
   removeImage(c.image);
   audit(req, 'category_delete', c.name);
@@ -181,44 +260,86 @@ router.post('/categories/:id/delete', (req, res) => {
 
 // ======================= SẢN PHẨM (CẤP 3) =======================
 function categoryOptions() {
-  return db.prepare('SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id ORDER BY g.sort_order, c.sort_order').all();
+  return db.prepare('SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id ORDER BY g.sort_order, c.sort_order, c.id').all();
 }
 
-router.get('/products', (req, res) => {
-  const q = {
-    q: str(req.query.q, 60), category_id: toInt(req.query.category_id, 0),
-    status: ['available', 'sold', 'hidden'].includes(req.query.status) ? req.query.status : '',
-    type: ['account', 'stock'].includes(req.query.type) ? req.query.type : '',
-  };
+const PRODUCT_ROW_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.images, p.status, p.views, p.sold_count, p.is_featured,
+  p.created_at, p.category_id, c.name AS category_name, g.name AS game_name,
+  (CASE WHEN p.type = 'stock' THEN (SELECT COUNT(*) FROM product_stock s WHERE s.product_id = p.id AND s.is_sold = 0) END) AS stock_left`;
+
+function productFilter(req) {
+  const q = str(req.query.q, 60);
+  const status = ['available', 'sold', 'hidden'].includes(req.query.status) ? req.query.status : '';
   const where = [];
   const params = [];
-  if (q.q) { where.push('(p.title LIKE ? OR p.code LIKE ?)'); params.push(`%${q.q}%`, `%${q.q}%`); }
-  if (q.category_id) { where.push('p.category_id = ?'); params.push(q.category_id); }
-  if (q.status) { where.push('p.status = ?'); params.push(q.status); }
-  if (q.type) { where.push('p.type = ?'); params.push(q.type); }
+  if (q) { where.push('(p.title LIKE ? OR p.code LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
+  if (status) { where.push('p.status = ?'); params.push(status); }
+  return { q, status, where, params };
+}
+
+// Trang sản phẩm: Game -> Danh mục (sản phẩm tải khi mở danh mục, phân trang => chịu được hàng nghìn acc)
+router.get('/products', (req, res) => {
+  const f = productFilter(req);
+  const query = { q: f.q, status: f.status };
+  if (f.q) {
+    const result = paginate(db, {
+      select: PRODUCT_ROW_SELECT,
+      from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
+      where: 'WHERE ' + f.where.join(' AND '), params: f.params,
+      order: 'ORDER BY p.id DESC', page: toInt(req.query.page, 1, 1), perPage: 50,
+    });
+    return res.render('admin/products', { title: 'Sản phẩm', query, result, games: null });
+  }
+  const statusSql = f.status ? ' AND p.status = ?' : '';
+  const sp = f.status ? [f.status] : [];
+  const games = db.prepare('SELECT id, name, image, color FROM games ORDER BY sort_order, id').all();
+  const cats = db.prepare(`SELECT c.id, c.game_id, c.name, c.image,
+      (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id${statusSql}) AS product_count,
+      (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price
+    FROM categories c ORDER BY c.sort_order, c.id`).all(...sp);
+  games.forEach((g) => {
+    g.cats = cats.filter((c) => c.game_id === g.id);
+    g.product_count = g.cats.reduce((a, c) => a + c.product_count, 0);
+  });
+  res.render('admin/products', { title: 'Sản phẩm', query, result: null, games });
+});
+
+// Danh sách sản phẩm của 1 danh mục (HTML, tải bằng JS)
+router.get('/products/rows', (req, res) => {
+  const f = productFilter(req);
+  const categoryId = toInt(req.query.category_id);
   const result = paginate(db, {
-    select: `p.*, c.name AS category_name, g.name AS game_name,
-      (SELECT COUNT(*) FROM product_stock s WHERE s.product_id = p.id AND s.is_sold = 0) AS stock_left`,
+    select: PRODUCT_ROW_SELECT,
     from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
-    where: where.length ? 'WHERE ' + where.join(' AND ') : '', params,
-    order: 'ORDER BY p.id DESC', page: toInt(req.query.page, 1, 1), perPage: 25,
+    where: 'WHERE ' + ['p.category_id = ?', ...f.where].join(' AND '), params: [categoryId, ...f.params],
+    order: 'ORDER BY p.sort_order, p.id DESC', page: toInt(req.query.page, 1, 1), perPage: 50,
   });
-  res.render('admin/products', { title: 'Sản phẩm', result, query: q, categories: categoryOptions() });
+  res.render('admin/partials/product-rows', { rows: result.rows, result, categoryId, showCategory: false, sortable: !f.status });
 });
 
-router.get('/products/new', (req, res) => {
-  res.render('admin/product-form', {
-    title: 'Thêm sản phẩm', p: { type: 'account', status: 'available', attrList: [], imageList: [], category_id: toInt(req.query.category_id) },
-    categories: categoryOptions(), stock: null,
-  });
-});
-
-router.get('/products/:id/edit', (req, res, next) => {
-  const p = db.prepare('SELECT * FROM products WHERE id = ?').get(toInt(req.params.id));
-  if (!p) return next();
+function loadProductForForm(id) {
+  const p = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+  if (!p) return null;
   p.attrList = H.parseJSON(p.attributes, []);
   p.imageList = H.parseJSON(p.images, []);
   p.credentials = decrypt(p.credentials_enc);
+  if (p.type === 'stock') p.stockLeft = db.prepare('SELECT COUNT(*) c FROM product_stock WHERE product_id = ? AND is_sold = 0').get(p.id).c;
+  return p;
+}
+
+router.get('/products/form', (req, res) => {
+  const p = req.query.id ? loadProductForForm(toInt(req.query.id))
+    : { type: 'account', status: 'available', attrList: [], imageList: [], category_id: toInt(req.query.category_id) };
+  if (!p) return res.status(404).send('<p>Không tìm thấy sản phẩm</p>');
+  modal(res, 'product-form', { p, categories: categoryOptions() });
+});
+
+router.get('/products/new', (req, res) => res.redirect('/admin/products'));
+
+// Trang riêng để quản lý kho mã (thẻ game / acc random)
+router.get('/products/:id/edit', (req, res, next) => {
+  const p = loadProductForForm(toInt(req.params.id));
+  if (!p) return next();
   let stock = null;
   if (p.type === 'stock') {
     stock = paginate(db, {
@@ -226,7 +347,7 @@ router.get('/products/:id/edit', (req, res, next) => {
       order: 'ORDER BY is_sold, id DESC', page: toInt(req.query.page, 1, 1), perPage: 50,
     });
     stock.rows.forEach((s) => { s.data = decrypt(s.data_enc); });
-    stock.left = db.prepare('SELECT COUNT(*) c FROM product_stock WHERE product_id = ? AND is_sold = 0').get(p.id).c;
+    stock.left = p.stockLeft;
   }
   res.render('admin/product-form', { title: 'Sửa sản phẩm', p, categories: categoryOptions(), stock, query: {} });
 });
@@ -255,7 +376,7 @@ router.post('/products/save', (req, res) => {
     return back(req, res, 'error', 'Vui lòng nhập tên, giá và chọn danh mục');
   }
   const type = old ? old.type : (req.body.type === 'stock' ? 'stock' : 'account');
-  let code = str(req.body.code, 20).toUpperCase().replace(/[^A-Z0-9]/g, '') || old?.code || randomCode(8);
+  const code = str(req.body.code, 20).toUpperCase().replace(/[^A-Z0-9]/g, '') || old?.code || randomCode(8);
   if (db.prepare('SELECT id FROM products WHERE code = ? AND id != ?').get(code, id)) return back(req, res, 'error', 'Mã sản phẩm đã tồn tại');
 
   // Ảnh: giữ ảnh cũ được tick, thêm ảnh mới
@@ -271,7 +392,7 @@ router.post('/products/save', (req, res) => {
   }
   images = images.slice(0, 10);
 
-  let status = ['available', 'sold', 'hidden'].includes(req.body.status) ? req.body.status : 'available';
+  const status = ['available', 'sold', 'hidden'].includes(req.body.status) ? req.body.status : 'available';
   const oldPrice = toInt(req.body.old_price, 0, 0) || null;
   const credRaw = String(req.body.credentials || '').slice(0, 5000).trim();
   let credEnc = old?.credentials_enc || null;
@@ -290,13 +411,34 @@ router.post('/products/save', (req, res) => {
     pid = db.prepare(`INSERT INTO products(category_id, code, title, price, old_price, images, attributes, description, credentials_enc, status, is_featured, type)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(...data, type).lastInsertRowid;
   }
-  let msg = 'Đã lưu sản phẩm';
+  let msg = old ? 'Đã cập nhật sản phẩm' : 'Đã thêm sản phẩm';
   if (type === 'stock' && req.body.stock_lines) {
     const r = addStockLines(pid, req.body.stock_lines);
     msg += `. Thêm ${r.added} mã vào kho${r.dup ? `, bỏ qua ${r.dup} mã trùng` : ''}`;
   }
   audit(req, old ? 'product_update' : 'product_create', `${code} ${title}`);
-  back(req, res, 'success', msg, `/admin/products/${pid}/edit`);
+  back(req, res, 'success', msg, '/admin/products');
+});
+
+router.post('/products/:id/duplicate', (req, res) => {
+  const p = db.prepare('SELECT * FROM products WHERE id = ?').get(toInt(req.params.id));
+  if (!p) return back(req, res, 'error', 'Không tìm thấy');
+  // Bản sao ở trạng thái ẩn, không sao chép thông tin đăng nhập / kho mã (tránh bán trùng 1 acc)
+  db.prepare(`INSERT INTO products(category_id, code, title, type, price, old_price, images, attributes, description, status, sort_order)
+    VALUES(?,?,?,?,?,?,?,?,?,'hidden',?)`).run(p.category_id, randomCode(8), p.title + ' (bản sao)', p.type, p.price, p.old_price,
+    '[]', p.attributes, p.description, p.sort_order);
+  audit(req, 'product_duplicate', p.code);
+  back(req, res, 'success', 'Đã nhân bản (đang ẩn). Hãy sửa, thêm ảnh và thông tin đăng nhập rồi bật hiển thị.');
+});
+
+router.post('/products/:id/delete', (req, res) => {
+  const p = db.prepare('SELECT * FROM products WHERE id = ?').get(toInt(req.params.id));
+  if (!p) return back(req, res, 'error', 'Không tìm thấy');
+  if (p.status === 'sold' || p.sold_count > 0) return back(req, res, 'error', 'Sản phẩm đã có đơn bán, hãy tắt hiển thị thay vì xóa');
+  H.parseJSON(p.images, []).forEach(removeImage);
+  db.prepare('DELETE FROM products WHERE id = ?').run(p.id);
+  audit(req, 'product_delete', p.code);
+  back(req, res, 'success', 'Đã xóa sản phẩm');
 });
 
 router.post('/products/:id/stock', (req, res) => {
@@ -323,15 +465,19 @@ router.post('/products/bulk', (req, res) => {
   else if (action === 'feature') n = db.prepare(`UPDATE products SET is_featured = 1 WHERE id IN (${ph})`).run(...ids).changes;
   else if (action === 'unfeature') n = db.prepare(`UPDATE products SET is_featured = 0 WHERE id IN (${ph})`).run(...ids).changes;
   else if (action === 'delete') {
-    const rows = db.prepare(`SELECT id, images FROM products WHERE status != 'sold' AND id IN (${ph})`).all(...ids);
+    const rows = db.prepare(`SELECT id, images FROM products WHERE status != 'sold' AND sold_count = 0 AND id IN (${ph})`).all(...ids);
     rows.forEach((r) => H.parseJSON(r.images, []).forEach(removeImage));
-    n = db.prepare(`DELETE FROM products WHERE status != 'sold' AND id IN (${ph})`).run(...ids).changes;
+    n = db.prepare(`DELETE FROM products WHERE status != 'sold' AND sold_count = 0 AND id IN (${ph})`).run(...ids).changes;
   }
   audit(req, 'product_bulk_' + action, ids.join(','));
   back(req, res, 'success', `Đã xử lý ${n} sản phẩm`);
 });
 
-// Nhập nhiều acc cùng lúc: mỗi dòng "tên|giá|thông tin đăng nhập"
+// Nhập nhiều acc cùng lúc vào 1 danh mục: mỗi dòng "tên|giá|thông tin đăng nhập"
+router.get('/products/import-form', (req, res) => {
+  modal(res, 'import-form', { categories: categoryOptions(), categoryId: toInt(req.query.category_id) });
+});
+
 router.post('/products/import', (req, res) => {
   const categoryId = toInt(req.body.category_id);
   if (!db.prepare('SELECT 1 FROM categories WHERE id = ?').get(categoryId)) return back(req, res, 'error', 'Chọn danh mục');
@@ -577,16 +723,23 @@ router.post('/coupons/:id/delete', (req, res) => {
 });
 
 // ======================= BANNER / SIDEBAR =======================
+const BANNER_POSITIONS = ['main', 'sidebar_left', 'sidebar_right', 'popup'];
+
 router.get('/banners', (req, res) => {
-  const banners = db.prepare('SELECT * FROM banners ORDER BY position, sort_order, id').all();
-  const edit = req.query.edit ? db.prepare('SELECT * FROM banners WHERE id = ?').get(toInt(req.query.edit)) : null;
-  res.render('admin/banners', { title: 'Banner & Sidebar', banners, edit });
+  const banners = db.prepare('SELECT * FROM banners ORDER BY sort_order, id').all();
+  res.render('admin/banners', { title: 'Banner & Sidebar', banners });
+});
+
+router.get('/banners/form', (req, res) => {
+  const b = req.query.id ? db.prepare('SELECT * FROM banners WHERE id = ?').get(toInt(req.query.id)) : null;
+  const position = b ? b.position : (BANNER_POSITIONS.includes(req.query.position) ? req.query.position : 'main');
+  modal(res, 'banner-form', { b, position });
 });
 
 router.post('/banners/save', (req, res) => {
   const id = toInt(req.body.id);
   const old = id ? db.prepare('SELECT * FROM banners WHERE id = ?').get(id) : null;
-  const position = ['main', 'sidebar_left', 'sidebar_right', 'popup'].includes(req.body.position) ? req.body.position : 'main';
+  const position = BANNER_POSITIONS.includes(req.body.position) ? req.body.position : 'main';
   let image = old?.image;
   const f = fileOf(req, 'image');
   if (f) {
@@ -595,25 +748,47 @@ router.post('/banners/save', (req, res) => {
     if (old?.image) removeImage(old.image);
     image = saved;
   }
-  if (!image) return back(req, res, 'error', 'Vui lòng chọn ảnh');
+  if (!image) return back(req, res, 'error', 'Vui lòng chọn ảnh banner');
   let link = str(req.body.link, 300);
   if (link && !/^(\/(?!\/)|https?:\/\/)/i.test(link)) link = ''; // chặn javascript: URL
-  const data = [position, str(req.body.title, 150), image, link, toInt(req.body.sort_order), bool(req.body.is_active)];
-  if (old) db.prepare('UPDATE banners SET position=?, title=?, image=?, link=?, sort_order=?, is_active=? WHERE id=?').run(...data, id);
-  else db.prepare('INSERT INTO banners(position, title, image, link, sort_order, is_active) VALUES(?,?,?,?,?,?)').run(...data);
-  audit(req, 'banner_save', position);
-  back(req, res, 'success', 'Đã lưu banner', '/admin/banners');
+  const data = [position, str(req.body.title, 150), image, link, bool(req.body.is_active)];
+  if (old) {
+    db.prepare('UPDATE banners SET position=?, title=?, image=?, link=?, is_active=? WHERE id=?').run(...data, id);
+  } else {
+    const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM banners WHERE position = ?').get(position).n;
+    db.prepare('INSERT INTO banners(position, title, image, link, is_active, sort_order) VALUES(?,?,?,?,?,?)').run(...data, next);
+  }
+  audit(req, old ? 'banner_update' : 'banner_create', position);
+  back(req, res, 'success', old ? 'Đã cập nhật banner' : 'Đã thêm banner', '/admin/banners');
 });
 
 router.post('/banners/:id/delete', (req, res) => {
   const b = db.prepare('SELECT * FROM banners WHERE id = ?').get(toInt(req.params.id));
-  if (b) { db.prepare('DELETE FROM banners WHERE id = ?').run(b.id); removeImage(b.image); }
+  if (b) { db.prepare('DELETE FROM banners WHERE id = ?').run(b.id); removeImage(b.image); audit(req, 'banner_delete', b.position); }
   back(req, res, 'success', 'Đã xóa banner', '/admin/banners');
 });
 
+// ======================= FOOTER =======================
+const FOOTER_KEYS = ['footer_about_title', 'footer_about_text', 'footer_col1_title', 'footer_col1_links', 'footer_col2_title',
+  'footer_col2_links', 'footer_col3_title', 'footer_col3_links', 'social_facebook', 'social_zalo', 'social_tiktok',
+  'social_youtube', 'social_telegram', 'footer_text'];
+
+router.get('/footer', (req, res) => res.render('admin/footer', { title: 'Footer', s: getSettings() }));
+
+router.post('/footer', (req, res) => {
+  for (const k of FOOTER_KEYS) {
+    let v = str(req.body[k], 3000);
+    // Link mạng xã hội chỉ nhận http(s)
+    if (k.startsWith('social_') && v && !/^https?:\/\//i.test(v)) v = k === 'social_zalo' && /^\d{8,12}$/.test(v) ? `https://zalo.me/${v}` : '';
+    setSetting(k, v);
+  }
+  audit(req, 'footer_update');
+  back(req, res, 'success', 'Đã lưu footer', '/admin/footer');
+});
+
 // ======================= CÀI ĐẶT =======================
-const SETTING_KEYS = ['site_name', 'site_slogan', 'site_description', 'notice', 'contact_facebook', 'contact_zalo', 'contact_email',
-  'bank_code', 'bank_name', 'bank_account', 'bank_owner', 'deposit_min', 'deposit_max', 'footer_text'];
+const SETTING_KEYS = ['site_name', 'site_slogan', 'site_description', 'notice',
+  'bank_code', 'bank_name', 'bank_account', 'bank_owner', 'deposit_min', 'deposit_max'];
 
 router.get('/settings', (req, res) => res.render('admin/settings', { title: 'Cài đặt', s: getSettings() }));
 

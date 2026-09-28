@@ -1,0 +1,42 @@
+<%- include('_header') %>
+<form method="post" action="/admin/footer" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('layers') %> Cột giới thiệu</h3>
+      <label>Tiêu đề <small class="a-muted">(trống = tên shop)</small></label>
+      <input name="footer_about_title" maxlength="100" value="<%= s.footer_about_title %>">
+      <label>Nội dung</label>
+      <textarea name="footer_about_text" rows="4" maxlength="1000"><%= s.footer_about_text %></textarea>
+
+      <h3 class="a-mt"><%- I('globe') %> Mạng xã hội <small class="a-muted a-small">(để trống = ẩn)</small></h3>
+      <div class="a-row">
+        <div><label>Facebook</label><input name="social_facebook" value="<%= s.social_facebook %>" placeholder="https://facebook.com/..."></div>
+        <div><label>Zalo (link hoặc số điện thoại)</label><input name="social_zalo" value="<%= s.social_zalo %>" placeholder="https://zalo.me/09..."></div>
+      </div>
+      <div class="a-row">
+        <div><label>TikTok</label><input name="social_tiktok" value="<%= s.social_tiktok %>" placeholder="https://tiktok.com/@..."></div>
+        <div><label>YouTube</label><input name="social_youtube" value="<%= s.social_youtube %>" placeholder="https://youtube.com/@..."></div>
+      </div>
+      <label>Telegram</label><input name="social_telegram" value="<%= s.social_telegram %>" placeholder="https://t.me/...">
+
+      <h3 class="a-mt">Dòng bản quyền (cuối trang)</h3>
+      <input name="footer_text" maxlength="300" value="<%= s.footer_text %>">
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('list') %> Các cột liên kết</h3>
+      <p class="a-muted a-small">Mỗi dòng một mục, dạng <code>Tên hiển thị | link</code>. Không có link thì chỉ ghi chữ. Để trống tiêu đề = ẩn cột.</p>
+      <% [1, 2, 3].forEach(n => { %>
+        <div class="a-footer-col">
+          <label>Cột <%= n + 1 %> – Tiêu đề</label>
+          <input name="footer_col<%= n %>_title" maxlength="100" value="<%= s['footer_col' + n + '_title'] %>">
+          <label>Các mục</label>
+          <textarea name="footer_col<%= n %>_links" rows="4" maxlength="2000" placeholder="Hướng dẫn mua acc | /huong-dan&#10;Zalo: 09xxxxxxxx"><%= s['footer_col' + n + '_links'] %></textarea>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+  <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu footer</button> <a href="/" target="_blank" class="a-btn a-ghost"><%- I('globe') %> Xem ngoài web</a></div>
+</form>
+<%- include('_footer') %>

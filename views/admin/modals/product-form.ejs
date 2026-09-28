@@ -1,0 +1,63 @@
+<form method="post" action="/admin/products/save" enctype="multipart/form-data" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= p.id || '' %>">
+
+  <div class="a-row">
+    <div>
+      <label>Danh mục *</label>
+      <select name="category_id" required><% categories.forEach(c => { %><option value="<%= c.id %>" <%= p.category_id === c.id ? 'selected' : '' %>><%= c.game_name %> › <%= c.name %></option><% }) %></select>
+    </div>
+    <div>
+      <label>Loại <% if (p.id) { %><small class="a-muted">(không đổi được)</small><% } %></label>
+      <select name="type" <%= p.id ? 'disabled' : '' %> data-type-select>
+        <option value="account" <%= p.type === 'account' ? 'selected' : '' %>>Acc game (bán 1 lần)</option>
+        <option value="stock" <%= p.type === 'stock' ? 'selected' : '' %>>Thẻ / Acc random (kho nhiều mã)</option>
+      </select>
+    </div>
+  </div>
+
+  <label>Tên sản phẩm *</label>
+  <input name="title" required maxlength="200" value="<%= p.title || '' %>" autofocus>
+  <div class="a-row a-row-3">
+    <div><label>Giá bán (đ) *</label><input type="number" name="price" required min="0" value="<%= p.price ?? '' %>"></div>
+    <div><label>Giá gốc (gạch ngang)</label><input type="number" name="old_price" min="0" value="<%= p.old_price || '' %>"></div>
+    <div><label>Mã SP <small class="a-muted">trống = tự tạo</small></label><input name="code" maxlength="20" value="<%= p.code || '' %>"></div>
+  </div>
+  <div class="a-row">
+    <div><label>Trạng thái</label>
+      <select name="status"><% [['available','Đang bán'],['hidden','Ẩn'],['sold','Đã bán']].forEach(([v,l]) => { %><option value="<%= v %>" <%= p.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select></div>
+    <div class="a-check-cell"><label class="a-check"><input type="checkbox" name="is_featured" <%= p.is_featured ? 'checked' : '' %>> Nổi bật (nhãn Hot, hiện trang chủ)</label></div>
+  </div>
+
+  <label>Ảnh sản phẩm <small class="a-muted">(tối đa 10 ảnh, bỏ tick “Giữ” để xóa ảnh cũ)</small></label>
+  <div class="a-images" data-preview-multi>
+    <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>" alt=""><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ</span></label><% }) %>
+  </div>
+  <input type="file" name="images" accept="image/*" multiple data-preview-multi-input>
+
+  <label>Thuộc tính hiển thị <small class="a-muted">(Rank, Skin, Tướng...)</small></label>
+  <div data-attr-list>
+    <% (p.attrList.length ? p.attrList : [{k:'',v:''}]).forEach(a => { %>
+      <div class="a-attr"><input name="attr_k" placeholder="Tên" value="<%= a.k %>"><input name="attr_v" placeholder="Giá trị" value="<%= a.v %>"><button type="button" class="a-icon-btn a-icon-danger" data-remove-attr aria-label="Xóa"><%- I('x') %></button></div>
+    <% }) %>
+  </div>
+  <button type="button" class="a-btn a-ghost a-sm" data-add-attr><%- I('plus') %> Thêm thuộc tính</button>
+
+  <label>Mô tả</label>
+  <textarea name="description" rows="3" maxlength="5000"><%= p.description || '' %></textarea>
+
+  <div data-type-account <%= p.type === 'stock' ? 'hidden' : '' %>>
+    <label><%- I('key') %> Thông tin giao cho khách <small class="a-muted">(mã hóa AES-256, chỉ người mua xem được)</small></label>
+    <textarea name="credentials" rows="3" placeholder="Tài khoản: ...&#10;Mật khẩu: ..."><%= p.credentials || '' %></textarea>
+  </div>
+  <div data-type-stock <%= p.type !== 'stock' ? 'hidden' : '' %>>
+    <label><%- I('box') %> Thêm mã vào kho <% if (p.id) { %><small class="a-muted">(đang còn <%= p.stockLeft %> mã · <a href="/admin/products/<%= p.id %>/edit">quản lý kho</a>)</small><% } %></label>
+    <textarea name="stock_lines" rows="4" placeholder="Mỗi dòng 1 mã / 1 acc. Tự bỏ qua dòng trùng."></textarea>
+  </div>
+
+  <div class="a-modal-foot">
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= p.id ? 'Lưu thay đổi' : 'Thêm sản phẩm' %></button>
+  </div>
+</form>

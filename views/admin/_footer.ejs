@@ -1,5 +1,17 @@
   </div>
 </div>
+
+<!-- Modal dùng chung: form thêm / sửa được tải vào đây -->
+<div class="a-modal" id="aModal" hidden>
+  <div class="a-modal-box" role="dialog" aria-modal="true" aria-labelledby="aModalTitle">
+    <div class="a-modal-head">
+      <h3 id="aModalTitle"></h3>
+      <button type="button" class="a-icon-btn" data-modal-close aria-label="Đóng"><%- I('x') %></button>
+    </div>
+    <div class="a-modal-body" id="aModalBody"></div>
+  </div>
+</div>
+<div class="a-toast" id="aToast" hidden></div>
 <script src="/js/admin.js" defer></script>
 </body>
 </html>

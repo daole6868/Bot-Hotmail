@@ -1,0 +1,31 @@
+<form method="post" action="/admin/games/save" enctype="multipart/form-data" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= g ? g.id : '' %>">
+  <div class="a-upload-row">
+    <div class="a-upload-preview" data-preview-box>
+      <% if (g && g.image) { %><img src="<%= g.image %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có ảnh</span><% } %>
+    </div>
+    <div class="a-grow">
+      <label>Ảnh thẻ game <small class="a-muted">(JPG/PNG/WEBP ≤ 4MB, gợi ý 400×250)</small></label>
+      <input type="file" name="image" accept="image/*" data-preview-input>
+      <% if (g && g.image) { %><label class="a-check"><input type="checkbox" name="remove_image" value="1"> Xóa ảnh hiện tại</label><% } %>
+    </div>
+  </div>
+  <label>Tên game *</label>
+  <input name="name" required maxlength="100" value="<%= g ? g.name : '' %>" placeholder="VD: Liên Quân Mobile" autofocus>
+  <label>Mô tả ngắn</label>
+  <input name="description" maxlength="1000" value="<%= g ? g.description : '' %>" placeholder="VD: MOBA 5v5 phổ biến nhất Việt Nam">
+  <div class="a-row">
+    <div><label>Đường dẫn (slug) <small class="a-muted">để trống tự tạo</small></label><input name="slug" maxlength="80" value="<%= g ? g.slug : '' %>"></div>
+    <div><label>Màu chủ đạo</label><input type="color" name="color" value="<%= g ? g.color : '#4f7df0' %>"></div>
+  </div>
+  <div class="a-row">
+    <label class="a-check"><input type="checkbox" name="is_active" <%= !g || g.is_active ? 'checked' : '' %>> Hiển thị</label>
+    <label class="a-check"><input type="checkbox" name="is_hot" <%= g && g.is_hot ? 'checked' : '' %>> Gắn nhãn HOT</label>
+  </div>
+  <div class="a-modal-foot">
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= g ? 'Lưu thay đổi' : 'Thêm game' %></button>
+  </div>
+</form>

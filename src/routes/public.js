@@ -84,14 +84,14 @@ router.get('/game/:slug/:cat', (req, res, next) => {
     q: str(req.query.q, 60),
     min: toInt(req.query.min, 0, 0),
     max: toInt(req.query.max, 0, 0),
-    sort: ['new', 'price_asc', 'price_desc', 'popular'].includes(req.query.sort) ? req.query.sort : 'new',
+    sort: ['default', 'new', 'price_asc', 'price_desc', 'popular'].includes(req.query.sort) ? req.query.sort : 'default',
   };
   const where = ["p.category_id = ?", "p.status = 'available'"];
   const params = [category.id];
   if (q.q) { where.push('(p.title LIKE ? OR p.code LIKE ?)'); params.push(`%${q.q}%`, `%${q.q}%`); }
   if (q.min) { where.push('p.price >= ?'); params.push(q.min); }
   if (q.max) { where.push('p.price <= ?'); params.push(q.max); }
-  const order = { new: 'p.id DESC', price_asc: 'p.price ASC', price_desc: 'p.price DESC', popular: 'p.sold_count DESC, p.views DESC' }[q.sort];
+  const order = { default: 'p.sort_order, p.id DESC', new: 'p.id DESC', price_asc: 'p.price ASC', price_desc: 'p.price DESC', popular: 'p.sold_count DESC, p.views DESC' }[q.sort];
 
   const result = paginate(db, {
     select: PRODUCT_SELECT,

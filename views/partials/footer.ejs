@@ -7,28 +7,40 @@
   </aside>
 </div>
 
+<%
+  // Cột liên kết do admin nhập: mỗi dòng "Tên | link"; chỉ nhận link nội bộ, http(s), mailto, tel
+  const footerCols = [1, 2, 3].map(n => ({
+    title: S2['footer_col' + n + '_title'],
+    items: String(S2['footer_col' + n + '_links'] || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+      const i = l.lastIndexOf('|');
+      const text = (i > 0 ? l.slice(0, i) : l).trim();
+      let url = i > 0 ? l.slice(i + 1).trim() : '';
+      if (url && !/^(\/(?!\/)|https?:\/\/|mailto:|tel:)/i.test(url)) url = '';
+      return { text, url };
+    }),
+  })).filter(c => c.title);
+  const socials = [['facebook', 'Facebook'], ['zalo', 'Zalo'], ['tiktok', 'TikTok'], ['youtube', 'YouTube'], ['telegram', 'Telegram']]
+    .filter(([k]) => S2['social_' + k]);
+%>
 <footer class="footer">
-  <div class="container footer-grid">
-    <div>
-      <h4><%= S2.site_name %></h4>
-      <p><%= S2.site_description %></p>
+  <div class="container footer-grid" style="--cols: <%= footerCols.length %>">
+    <div class="footer-about">
+      <h4><%= S2.footer_about_title || S2.site_name %></h4>
+      <p><%= S2.footer_about_text || S2.site_description %></p>
+      <% if (socials.length) { %>
+        <div class="socials">
+          <% socials.forEach(([k, label]) => { %><a href="<%= S2['social_' + k] %>" target="_blank" rel="noopener nofollow" class="social social-<%= k %>" aria-label="<%= label %>" title="<%= label %>"><%- I('s-' + k) %></a><% }) %>
+        </div>
+      <% } %>
     </div>
-    <div>
-      <h4>Hỗ trợ</h4>
-      <ul>
-        <% if (S2.contact_facebook) { %><li><a href="<%= S2.contact_facebook %>" target="_blank" rel="noopener nofollow">Facebook</a></li><% } %>
-        <% if (S2.contact_zalo) { %><li>Zalo: <%= S2.contact_zalo %></li><% } %>
-        <% if (S2.contact_email) { %><li>Email: <%= S2.contact_email %></li><% } %>
-      </ul>
-    </div>
-    <div>
-      <h4>Chính sách</h4>
-      <ul>
-        <li>Giao acc tự động ngay sau khi mua</li>
-        <li>Nạp tiền ngân hàng tự động 24/7</li>
-        <li>Bảo hành theo mô tả từng sản phẩm</li>
-      </ul>
-    </div>
+    <% footerCols.forEach(c => { %>
+      <div>
+        <h4><%= c.title %></h4>
+        <ul>
+          <% c.items.forEach(it => { %><li><% if (it.url) { %><a href="<%= it.url %>"<%- /^https?:/i.test(it.url) ? ' target="_blank" rel="noopener nofollow"' : '' %>><%= it.text %></a><% } else { %><%= it.text %><% } %></li><% }) %>
+        </ul>
+      </div>
+    <% }) %>
   </div>
   <div class="container footer-bottom"><%= S2.footer_text %></div>
 </footer>

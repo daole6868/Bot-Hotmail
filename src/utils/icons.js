@@ -63,6 +63,12 @@ const PATHS = {
   trash: '<path d="M4 6.5h16M9.5 6.5V4h5v2.5M6 6.5l1 14h10l1-14"/><path d="M10 10.5v6M14 10.5v6"/>',
   layers: '<path d="M12 3 21 8l-9 5-9-5 9-5Z"/><path d="m3 12.5 9 5 9-5M3 17l9 5 9-5"/>',
   trophy: '<path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0V4Z"/><path d="M7.5 6H4.5a3 3 0 0 0 3 4.5M16.5 6h3a3 3 0 0 1-3 4.5M12 13.5V17M8.5 20.5h7M9.5 17h5l.5 3.5H9l.5-3.5Z"/>',
+  // Mạng xã hội (vẽ lại dạng nét, không dùng logo gốc)
+  's-facebook': '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M15.5 8H14a2 2 0 0 0-2 2v11M9.5 13h5.5"/>',
+  's-zalo': '<path d="M12 3.5c5 0 9 3.4 9 7.7s-4 7.7-9 7.7c-1 0-2-.1-2.9-.4L5 20.5l1-3.6c-1.9-1.4-3-3.4-3-5.7 0-4.3 4-7.7 9-7.7Z"/><path d="M8 9h3.5L8 13.5h3.5M14 9v4.5h2.5"/>',
+  's-tiktok': '<path d="M14 3.5v11.2a3.8 3.8 0 1 1-3.8-3.8"/><path d="M14 3.5c.4 2.6 2.2 4.4 5 4.6"/>',
+  's-youtube': '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10 9.2 5 2.8-5 2.8V9.2Z"/>',
+  's-telegram': '<path d="M21 4 3 11.2l6.2 2.1L18 7l-6.8 7.6v5.4l3.3-3.7 3.9 2.9L21 4Z"/>',
 };
 
 function I(name, cls = '') {

@@ -284,3 +284,26 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
 .pagination .ico { width: 18px; height: 18px; }
 .user-nav a, .catbar a, .dropdown-menu a { display: inline-flex; align-items: center; gap: 6px; }
 .dropdown-menu a { display: flex; }
+
+/* ---------- Ô thống kê trên thẻ game / danh mục (đủ chỗ cho số hàng nghìn) ---------- */
+.stat-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.stat-box { min-width: 0; background: rgba(124, 58, 237, .1); border: 1px solid rgba(168, 85, 247, .28); border-radius: 10px; padding: 7px 9px; text-align: center; }
+.stat-box.sold { background: rgba(34, 197, 94, .08); border-color: rgba(34, 197, 94, .28); }
+.stat-label { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: .72rem; color: var(--muted); white-space: nowrap; }
+.stat-label .ico { width: 13px; height: 13px; }
+.stat-box b { display: block; font-size: clamp(.9rem, 2.4vw, 1.05rem); line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; color: #e9e3ff; }
+.stat-box.sold b { color: #86efac; }
+.game-card h3, .cat-card h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Footer tùy chỉnh ---------- */
+.footer-grid { grid-template-columns: 1.6fr repeat(var(--cols, 2), 1fr); }
+.footer a { color: var(--muted); }
+.footer a:hover { color: #fff; }
+.socials { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.social { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--card2); border: 1px solid var(--border); color: #fff !important; transition: .15s; }
+.social .ico { width: 20px; height: 20px; }
+.social:hover { transform: translateY(-2px); }
+.social-facebook:hover { background: #1877f2; } .social-zalo:hover { background: #0068ff; } .social-tiktok:hover { background: #111; }
+.social-youtube:hover { background: #ff0033; } .social-telegram:hover { background: #229ed9; }
+@media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-about { grid-column: 1 / -1; } }
+@media (max-width: 520px) { .footer-grid { grid-template-columns: 1fr; } .stat-label { font-size: .66rem; } .stat-box { padding: 6px 4px; } }

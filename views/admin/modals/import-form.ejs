@@ -1,0 +1,12 @@
+<form method="post" action="/admin/products/import" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <label>Danh mục</label>
+  <select name="category_id" required><% categories.forEach(c => { %><option value="<%= c.id %>" <%= categoryId === c.id ? 'selected' : '' %>><%= c.game_name %> › <%= c.name %></option><% }) %></select>
+  <label>Danh sách acc <small class="a-muted">mỗi dòng: <code>Tên sản phẩm|Giá|Thông tin đăng nhập</code>, dùng <code>\n</code> để xuống dòng trong thông tin</small></label>
+  <textarea name="lines" rows="8" required placeholder="Acc VIP 50 skin|150000|TK: abc123\nMK: 123456"></textarea>
+  <div class="a-modal-foot">
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('inbox') %> Nhập</button>
+  </div>
+</form>

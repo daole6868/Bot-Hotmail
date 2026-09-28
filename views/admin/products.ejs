@@ -1,54 +1,62 @@
 <%- include('_header') %>
-<div class="a-toolbar">
-  <a href="/admin/products/new" class="a-btn a-primary">+ Thêm sản phẩm</a>
-  <button class="a-btn" data-toggle-el="#importBox"><%- I('inbox') %> Nhập nhiều acc</button>
-</div>
-<div class="a-card" id="importBox" hidden>
-  <h3>Nhập nhiều acc cùng lúc</h3>
-  <form method="post" action="/admin/products/import">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <label>Danh mục</label>
-    <select name="category_id" required><% categories.forEach(c => { %><option value="<%= c.id %>"><%= c.game_name %> <%- I('chevron-right') %> <%= c.name %></option><% }) %></select>
-    <label>Mỗi dòng: <code>Tên sản phẩm|Giá|Thông tin đăng nhập</code> (dùng <code>\n</code> để xuống dòng trong thông tin)</label>
-    <textarea name="lines" rows="6" placeholder="Acc VIP 50 skin|150000|TK: abc123\nMK: 123456"></textarea>
-    <button class="a-btn a-primary">Nhập</button>
-  </form>
-</div>
-
-<div class="a-card">
+<div class="a-card a-toolbar-card">
   <form class="a-filter" method="get">
-    <input name="q" value="<%= query.q %>" placeholder="Tên hoặc mã SP">
-    <select name="category_id"><option value="">-- Danh mục --</option><% categories.forEach(c => { %><option value="<%= c.id %>" <%= query.category_id === c.id ? 'selected' : '' %>><%= c.game_name %> <%- I('chevron-right') %> <%= c.name %></option><% }) %></select>
-    <select name="status"><option value="">-- Trạng thái --</option><% [['available','Đang bán'],['sold','Đã bán'],['hidden','Ẩn']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select>
-    <select name="type"><option value="">-- Loại --</option><option value="account" <%= query.type === 'account' ? 'selected' : '' %>>Acc</option><option value="stock" <%= query.type === 'stock' ? 'selected' : '' %>>Thẻ/Kho mã</option></select>
+    <div class="a-search"><%- I('search') %><input name="q" value="<%= query.q %>" placeholder="Tìm theo tên hoặc mã sản phẩm..."></div>
+    <select name="status" data-autosubmit>
+      <option value="">Mọi trạng thái</option>
+      <% [['available','Đang bán'],['hidden','Đang ẩn'],['sold','Đã bán']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %>
+    </select>
     <button class="a-btn">Lọc</button>
+    <% if (query.q || query.status) { %><a class="a-btn a-ghost" href="/admin/products">Xóa lọc</a><% } %>
   </form>
-
-  <form method="post" action="/admin/products/bulk" id="bulkForm" data-confirm="Thực hiện thao tác với các sản phẩm đã chọn?">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <div class="a-bulk">
-      <select name="action" required><option value="">-- Thao tác hàng loạt --</option><option value="hide">Ẩn</option><option value="show">Hiện</option><option value="feature">Đánh dấu nổi bật</option><option value="unfeature">Bỏ nổi bật</option><option value="delete">Xóa (trừ SP đã bán)</option></select>
-      <button class="a-btn">Áp dụng</button>
-    </div>
-    <div class="a-table-wrap"><table class="a-table">
-      <thead><tr><th><input type="checkbox" data-check-all></th><th>Ảnh</th><th>Mã / Tên</th><th>Danh mục</th><th>Loại</th><th>Giá</th><th>Trạng thái</th><th>Xem/Bán</th><th></th></tr></thead>
-      <% if (!result.rows.length) { %><tr><td colspan="9" class="a-muted">Không có sản phẩm</td></tr><% } %>
-      <% const sl = { available: ['green','Đang bán'], sold: ['blue','Đã bán'], hidden: ['','Ẩn'] }; %>
-      <% result.rows.forEach(p => { const imgs = H.parseJSON(p.images, []); %>
-        <tr>
-          <td><input type="checkbox" name="ids" value="<%= p.id %>"></td>
-          <td><img src="<%= imgs[0] || '/img/no-image.svg' %>" class="a-thumb"></td>
-          <td><b>#<%= p.code %></b> <% if (p.is_featured) { %><span class="a-tag yellow"><%- I('star') %></span><% } %><div class="a-trunc"><%= p.title %></div></td>
-          <td class="a-small"><%= p.game_name %> <%- I('chevron-right') %> <%= p.category_name %></td>
-          <td><%- p.type === 'stock' ? `<span class="a-tag purple">Kho: ${p.stock_left}</span>` : 'Acc' %></td>
-          <td><b><%= H.money(p.price) %></b><% if (p.old_price) { %><div class="a-muted a-small"><del><%= H.money(p.old_price) %></del></div><% } %></td>
-          <td><span class="a-tag <%= sl[p.status][0] %>"><%= sl[p.status][1] %></span></td>
-          <td class="a-small"><%= p.views %> / <%= p.sold_count %></td>
-          <td class="a-actions"><a href="/admin/products/<%= p.id %>/edit" class="a-btn a-xs">Sửa</a><a href="/product/<%= p.code %>" target="_blank" class="a-btn a-xs a-ghost">Xem</a></td>
-        </tr>
-      <% }) %>
-    </table></div>
-  </form>
-  <%- include('_pagination') %>
 </div>
+
+<!-- Thao tác hàng loạt: ô chọn trong bảng gắn vào form này qua thuộc tính form="bulkForm" -->
+<form method="post" action="/admin/products/bulk" id="bulkForm" class="a-bulk-bar" data-confirm="Thực hiện thao tác với các sản phẩm đã chọn?" hidden>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <span><b data-bulk-count>0</b> sản phẩm đã chọn</span>
+  <select name="action" required><option value="">-- Chọn thao tác --</option><option value="show">Bật hiển thị</option><option value="hide">Ẩn</option><option value="feature">Đánh dấu nổi bật</option><option value="unfeature">Bỏ nổi bật</option><option value="delete">Xóa (trừ SP đã bán)</option></select>
+  <button class="a-btn a-primary">Áp dụng</button>
+</form>
+
+<% if (result) { %>
+  <div class="a-card a-card-flush">
+    <div class="a-card-head a-pad"><h3>Kết quả tìm kiếm “<%= query.q %>”</h3><span class="a-muted a-small"><%= result.total.toLocaleString('vi-VN') %> sản phẩm</span></div>
+    <%- include('partials/product-rows', { rows: result.rows, result, categoryId: 0, showCategory: true, sortable: false }) %>
+    <div class="a-pad"><%- include('_pagination') %></div>
+  </div>
+<% } else { %>
+  <% if (!games.length) { %><div class="a-card a-empty">Chưa có game. <a href="/admin/games">Thêm game trước</a>.</div><% } %>
+  <% games.forEach(g => { %>
+  <section class="a-acc" id="game-<%= g.id %>" data-acc="prod-game-<%= g.id %>">
+    <div class="a-acc-head">
+      <button type="button" class="a-acc-toggle" data-acc-toggle>
+        <%- include('partials/thumb', { img: g.image, name: g.name, color: g.color, size: 'sm' }) %>
+        <span class="a-acc-title"><b><%= g.name %></b><small><%= g.cats.length %> danh mục · <%= g.product_count.toLocaleString('vi-VN') %> sản phẩm</small></span>
+        <span class="a-chevron"><%- I('caret-down') %></span>
+      </button>
+    </div>
+    <div class="a-acc-body a-acc-nested">
+      <% if (!g.cats.length) { %><div class="a-empty">Game chưa có danh mục. <a href="/admin/categories#game-<%= g.id %>">Thêm danh mục</a></div><% } %>
+      <% g.cats.forEach(c => { %>
+      <section class="a-acc a-acc-sub" id="cat-<%= c.id %>" data-acc="prod-cat-<%= c.id %>"
+               data-rows-url="/admin/products/rows?category_id=<%= c.id %><%= query.status ? '&status=' + query.status : '' %>">
+        <div class="a-acc-head">
+          <button type="button" class="a-acc-toggle" data-acc-toggle>
+            <span class="a-folder"><%- I('folder') %></span>
+            <span class="a-acc-title"><b><%= c.name %></b><small><%= c.product_count.toLocaleString('vi-VN') %> sản phẩm<%= c.min_price != null ? ' · từ ' + H.money(c.min_price) : '' %></small></span>
+            <span class="a-chevron"><%- I('caret-down') %></span>
+          </button>
+          <div class="a-actions">
+            <button type="button" class="a-btn a-ghost a-sm" data-modal-url="/admin/products/import-form?category_id=<%= c.id %>" data-modal-title="Nhập nhiều acc – <%= c.name %>" title="Nhập nhiều acc"><%- I('inbox') %> <span class="a-hide-sm">Nhập nhiều</span></button>
+            <button type="button" class="a-btn a-soft a-sm" data-modal-url="/admin/products/form?category_id=<%= c.id %>" data-modal-title="Thêm sản phẩm – <%= c.name %>"><%- I('plus') %> Thêm sản phẩm</button>
+          </div>
+        </div>
+        <div class="a-acc-body" data-rows><div class="a-loading">Đang tải...</div></div>
+      </section>
+      <% }) %>
+    </div>
+  </section>
+  <% }) %>
+<% } %>
 <%- include('_footer') %>

@@ -13,6 +13,7 @@
   <input type="number" name="min" value="<%= query.min || '' %>" placeholder="Giá từ" min="0">
   <input type="number" name="max" value="<%= query.max || '' %>" placeholder="Giá đến" min="0">
   <select name="sort">
+    <option value="default" <%= query.sort === 'default' ? 'selected' : '' %>>Mặc định</option>
     <option value="new" <%= query.sort === 'new' ? 'selected' : '' %>>Mới nhất</option>
     <option value="price_asc" <%= query.sort === 'price_asc' ? 'selected' : '' %>>Giá tăng dần</option>
     <option value="price_desc" <%= query.sort === 'price_desc' ? 'selected' : '' %>>Giá giảm dần</option>

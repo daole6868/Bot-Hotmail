@@ -6,13 +6,13 @@
     <label>Tên website</label><input name="site_name" value="<%= s.site_name %>" maxlength="100">
     <label>Slogan</label><input name="site_slogan" value="<%= s.site_slogan %>" maxlength="200">
     <label>Mô tả SEO</label><textarea name="site_description" rows="2"><%= s.site_description %></textarea>
-    <label>Logo</label><% if (s.logo) { %><img src="<%= s.logo %>" class="a-preview"><% } %><input type="file" name="logo" accept="image/*">
+    <label>Logo</label>
+    <div class="a-upload-row">
+      <div class="a-upload-preview" data-preview-box><% if (s.logo) { %><img src="<%= s.logo %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có logo</span><% } %></div>
+      <div class="a-grow"><input type="file" name="logo" accept="image/*" data-preview-input><p class="a-muted a-small">Nên dùng ảnh nền trong suốt, cao khoảng 80px.</p></div>
+    </div>
     <label>Thông báo chạy chữ</label><textarea name="notice" rows="2"><%= s.notice %></textarea>
-    <label>Chân trang</label><input name="footer_text" value="<%= s.footer_text %>">
-    <h3>Liên hệ</h3>
-    <label>Facebook</label><input name="contact_facebook" value="<%= s.contact_facebook %>">
-    <label>Zalo</label><input name="contact_zalo" value="<%= s.contact_zalo %>">
-    <label>Email</label><input name="contact_email" value="<%= s.contact_email %>">
+    <p class="a-muted a-small">Thông tin liên hệ, mạng xã hội và chân trang sửa ở mục <a href="/admin/footer">Footer</a>.</p>
   </div>
   <div class="a-card">
     <h3><%- I('bank') %> Tài khoản ngân hàng nhận tiền</h3>

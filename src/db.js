@@ -312,6 +312,13 @@ CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires);
 
 db.exec(SCHEMA);
 
+// ---- Nâng cấp DB cũ (thêm cột mới nếu chưa có) ----
+function addColumn(table, col, def) {
+  if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+}
+addColumn('products', 'sort_order', 'INTEGER NOT NULL DEFAULT 0');
+db.exec('CREATE INDEX IF NOT EXISTS idx_products_sort ON products(category_id, sort_order)');
+
 // ---- Helpers ----
 const settingsCache = { data: null, at: 0 };
 
