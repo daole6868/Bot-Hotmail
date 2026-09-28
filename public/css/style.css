@@ -625,3 +625,20 @@ html[data-theme="dark"] { color-scheme: dark; }
 @media (max-width: 720px) { .logo img { height: 34px; max-width: 150px; } }
 .cd-over { color: var(--t-red); }
 [data-countdown] { font-variant-numeric: tabular-nums; }
+
+/* Bảng dạng thẻ trên điện thoại: mỗi dòng thành 1 khung, cột thành "Nhãn ....... Giá trị" */
+@media (max-width: 640px) {
+  .table-cards thead { display: none; }
+  .table-cards, .table-cards tbody, .table-cards tr, .table-cards td { display: block; width: 100%; }
+  .table-cards tr { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  .table-cards tr:last-child { border-bottom: 0; }
+  .table-cards td { padding: 3px 0; border: 0; }
+  .table-cards td[data-label] { display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: right; }
+  .table-cards td[data-label]::before { content: attr(data-label); color: var(--muted); font-size: .82rem; font-weight: 500; text-align: left; flex-shrink: 0; }
+  .table-cards .tc-head { font-size: .95rem; word-break: break-all; }
+  .table-cards .tc-full { padding-bottom: 6px; font-weight: 600; }
+  .table-cards .tc-full .muted { font-weight: 400; }
+  .table-cards .tc-action { padding-top: 8px; display: flex; gap: 8px; justify-content: flex-end; }
+  .table-cards .tc-empty { text-align: center; }
+  .table-wrap:has(.table-cards) { overflow: visible; }
+}

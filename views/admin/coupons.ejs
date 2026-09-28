@@ -21,7 +21,7 @@
         <div><label>Tổng lượt dùng</label><input type="number" name="usage_limit" min="0" value="<%= edit ? edit.usage_limit || '' : '' %>" placeholder="Không giới hạn"></div>
         <div><label>Lượt / người</label><input type="number" name="per_user_limit" min="0" value="<%= edit ? edit.per_user_limit : 1 %>"></div>
       </div>
-      <div class="a-row">
+      <div class="a-row a-row-stack">
         <div><label>Bắt đầu</label><input type="datetime-local" name="starts_at" value="<%= edit ? H.toInputDate(edit.starts_at) : '' %>"></div>
         <div><label>Hết hạn</label><input type="datetime-local" name="expires_at" value="<%= edit ? H.toInputDate(edit.expires_at) : '' %>"></div>
       </div>

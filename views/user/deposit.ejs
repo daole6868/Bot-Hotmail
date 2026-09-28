@@ -41,13 +41,13 @@
 <% if (pending.length) { %>
 <div class="card pad">
   <h2>Yêu cầu đang chờ thanh toán</h2>
-  <table class="table">
+  <table class="table table-cards">
     <thead><tr><th>Mã</th><th>Số tiền</th><th>Tạo lúc</th><th>Còn lại</th><th></th></tr></thead>
     <% pending.forEach(d => { %>
       <tr>
-        <td><b><%= d.code %></b></td><td><%= H.money(d.amount) %></td><td class="muted small"><%= H.fmtDate(d.created_at) %></td>
-        <td class="small"><b data-countdown="<%= d.expires_at %>" data-now="<%= now %>">…</b></td>
-        <td class="actions">
+        <td class="tc-head"><b><%= d.code %></b></td><td data-label="Số tiền"><%= H.money(d.amount) %></td><td data-label="Tạo lúc" class="muted small"><%= H.fmtDate(d.created_at) %></td>
+        <td data-label="Còn lại" class="small"><b data-countdown="<%= d.expires_at %>" data-now="<%= now %>">…</b></td>
+        <td class="actions tc-action">
           <a class="btn btn-xs btn-primary" href="/user/deposit?code=<%= d.code %>">Thanh toán</a>
           <form method="post" action="/user/deposit/<%= d.id %>/cancel" data-confirm="Hủy yêu cầu nạp này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-xs btn-danger">Hủy</button></form>
         </td>
@@ -61,13 +61,13 @@
 <div class="card pad">
   <h2>Lịch sử nạp</h2>
   <div class="table-wrap">
-  <table class="table">
+  <table class="table table-cards">
     <thead><tr><th>Mã</th><th>Yêu cầu</th><th>Thực nhận</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
-    <% if (!history.rows.length) { %><tr><td colspan="5" class="center muted">Chưa có giao dịch</td></tr><% } %>
+    <% if (!history.rows.length) { %><tr><td colspan="5" class="center muted tc-empty">Chưa có giao dịch</td></tr><% } %>
     <% const dl = { success: 'Thành công', cancelled: 'Đã hủy', expired: 'Đã hủy (quá hạn)' }; %>
     <% history.rows.forEach(d => { %>
-      <tr><td><%= d.code %></td><td><%= H.money(d.amount) %></td><td class="price"><%= d.received ? H.money(d.received) : '—' %></td>
-        <td><span class="status status-<%= d.status %>"><%= dl[d.status] || d.status %></span></td><td class="muted small"><%= H.fmtDate(d.created_at) %></td></tr>
+      <tr><td class="tc-head"><%= d.code %></td><td data-label="Yêu cầu"><%= H.money(d.amount) %></td><td data-label="Thực nhận" class="price"><%= d.received ? H.money(d.received) : '—' %></td>
+        <td data-label="Trạng thái"><span class="status status-<%= d.status %>"><%= dl[d.status] || d.status %></span></td><td data-label="Thời gian" class="muted small"><%= H.fmtDate(d.created_at) %></td></tr>
     <% }) %>
   </table>
   </div>

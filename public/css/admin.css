@@ -41,7 +41,7 @@ h3 .ico { color: var(--primary); }
 .a-top-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .a-top-right form { margin: 0; }
 .a-menu { display: none; }
-.a-content { padding: 24px 28px 48px; max-width: 1400px; }
+.a-content { padding: 24px 28px 48px; }
 
 /* ---------- Card ---------- */
 .a-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 18px; box-shadow: var(--shadow); min-width: 0; }
@@ -91,8 +91,10 @@ input[type=color] { height: 44px; padding: 4px; cursor: pointer; }
 input[type=file] { padding: 8px; background: #f8f9fd; border-style: dashed; cursor: pointer; }
 .a-check { display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; }
 .a-check-cell { display: flex; align-items: flex-end; }
-.a-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.a-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+.a-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.a-row > * { min-width: 0; }
+.a-form input, .a-card input, .a-card select, .a-card textarea { min-width: 0; max-width: 100%; }
+.a-row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .a-grow { flex: 1; min-width: 0; }
 .a-form > label:first-of-type { margin-top: 0; }
 .a-upload-row { display: flex; gap: 14px; align-items: center; margin-top: 4px; }
@@ -432,3 +434,4 @@ select:disabled { background: #f5f6fa; color: #9aa1bb; cursor: not-allowed; }
 .a-task-help b svg { width: 16px; height: 16px; }
 .a-task-help p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 .a-task-help .a-tag { margin-left: auto; font-weight: 500; }
+.a-row.a-row-stack { grid-template-columns: minmax(0, 1fr); gap: 0; }

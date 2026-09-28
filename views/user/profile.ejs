@@ -17,10 +17,10 @@
 <div class="card pad">
   <h2>Đơn hàng gần đây</h2>
   <% if (!recentOrders.length) { %><p class="muted">Bạn chưa mua sản phẩm nào.</p><% } else { %>
-  <table class="table">
+  <table class="table table-cards">
     <thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Tổng</th><th>Thời gian</th></tr></thead>
     <% recentOrders.forEach(o => { %>
-      <tr><td><a href="/user/orders/<%= o.order_code %>"><%= o.order_code %></a></td><td><%= o.product_title %></td><td><%= H.money(o.total) %></td><td class="muted"><%= H.fmtDate(o.created_at) %></td></tr>
+      <tr><td class="tc-head"><a href="/user/orders/<%= o.order_code %>"><%= o.order_code %></a></td><td class="tc-full"><%= o.product_title %></td><td data-label="Tổng" class="price"><%= H.money(o.total) %></td><td data-label="Thời gian" class="muted"><%= H.fmtDate(o.created_at) %></td></tr>
     <% }) %>
   </table><% } %>
 </div>
