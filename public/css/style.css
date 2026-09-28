@@ -408,7 +408,7 @@ select { cursor: pointer; }
 .pd-main .gallery-main { display: block; width: 100%; aspect-ratio: 5 / 3; object-fit: cover; }
 .pd-code { top: 12px !important; left: 12px; bottom: auto; font-size: .82rem; padding: 4px 10px; font-weight: 700; background: rgba(10, 8, 25, .75); backdrop-filter: blur(4px); }
 .pd-main .ribbon-right { left: auto; right: 12px; top: 12px; }
-.pd-count { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; padding: 4px 10px; border-radius: 99px; background: rgba(10, 8, 25, .7); }
+.pd-count { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; padding: 4px 10px; border-radius: 99px; background: rgba(10, 8, 25, .7); color: #fff; }
 .pd-gallery .gallery-thumbs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 10px 0 0; overflow: visible; }
 .pd-gallery .gallery-thumbs img { width: 100%; height: auto; aspect-ratio: 5 / 3; border-radius: calc(8px * var(--rk)); opacity: .55; transition: .15s; }
 .pd-gallery .gallery-thumbs img:hover { opacity: .9; }
@@ -728,4 +728,20 @@ body.no-scroll { overflow: hidden; }
 @media (max-width: 560px) {
   .bc-modal { align-items: flex-end; padding: 0; }
   .bc-box { max-width: none; border-radius: calc(22px * var(--rk)) calc(22px * var(--rk)) 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+}
+/* Nhãn trên ảnh acc (mã acc, còn N acc, % giảm): nền tối cố định nên chữ luôn trắng, kể cả chế độ sáng */
+.code-tag, .pd-code { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.type-tag { color: var(--on-primary, #fff); }
+.ribbon { color: #fff; }
+.product-card .code-tag, .product-card .type-tag, .product-card .ribbon { line-height: 1.35; white-space: nowrap; max-width: calc(100% - 16px); overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 720px) {
+  /* Điện thoại: nhãn nhỏ gọn để không che ảnh */
+  .product-card .code-tag, .product-card .type-tag, .product-card .ribbon { font-size: 10px; padding: 2px 6px; border-radius: calc(5px * var(--rk)); letter-spacing: 0; }
+  .product-card .code-tag, .product-card .ribbon-right { top: 6px; }
+  .product-card .code-tag { left: 6px; }
+  .product-card .ribbon-right { right: 6px; }
+  .product-card .type-tag { right: 6px; bottom: 6px; }
+  .pd-code { font-size: 11px; padding: 3px 8px; top: 8px !important; left: 8px; }
+  .pd-main .ribbon-right { top: 8px; right: 8px; font-size: 11px; padding: 3px 8px; }
+  .pd-count { font-size: 11px; padding: 3px 8px; }
 }
