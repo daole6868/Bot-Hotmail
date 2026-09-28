@@ -34,7 +34,7 @@ app.use(helmet({
       'frame-src': ['https://challenges.cloudflare.com'],
       'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      'img-src': ["'self'", 'data:', 'https://img.vietqr.io'],
+      'img-src': ["'self'", 'data:', 'blob:', 'https://img.vietqr.io'], // blob: để xem trước ảnh trước khi upload
       'form-action': ["'self'"],
       'frame-ancestors': ["'none'"],
       'upgrade-insecure-requests': config.isProd ? [] : null,
