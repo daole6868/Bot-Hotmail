@@ -12,6 +12,7 @@
   <meta name="description" content="<%= S.site_description || '' %>">
   <meta name="csrf-token" content="<%= locals.csrfToken || '' %>">
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <script src="/js/theme-init.js?v=<%= locals.assetV || 1 %>"></script>
   <link rel="stylesheet" href="/css/fonts.css?v=<%= locals.assetV || 1 %>">
   <link rel="stylesheet" href="/css/style.css?v=<%= locals.assetV || 1 %>">
 </head>
@@ -28,6 +29,7 @@
       <button type="submit" aria-label="Tìm"><%- I('search') %></button>
     </form>
     <nav class="top-actions">
+      <button type="button" class="icon-round" data-ui-open title="Cài đặt giao diện" aria-label="Cài đặt giao diện"><%- I('palette') %></button>
       <a href="/khuyen-mai" class="hide-sm"><%- I('gift') %> Khuyến mãi</a>
       <% if (U) { %>
         <a href="/user/deposit" class="btn btn-sm btn-accent"><%- I('card') %> <%= H.money(U.balance) %></a>
@@ -40,6 +42,8 @@
             <a href="/user/deposit">Nạp tiền</a>
             <a href="/user/balance">Biến động số dư</a>
             <a href="/user/password">Đổi mật khẩu</a>
+            <button type="button" data-ui-open><%- I('palette') %> Cài đặt giao diện</button>
+            <div class="dd-sep"></div>
             <form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>"><button type="submit">Đăng xuất</button></form>
           </div>
         </div>
@@ -65,7 +69,8 @@
 <% } %>
 
 <div class="container layout">
-  <aside class="side side-left">
+  <% const bzL = H.bannerSize(S, 'sidebar_left'); %>
+  <aside class="side side-left" style="--ar: <%= bzL.w %> / <%= bzL.h %>">
     <% NAV.sideLeft.forEach(b => { %>
       <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= b.image %>" alt="<%= b.title || '' %>" loading="lazy"></a>
     <% }) %>

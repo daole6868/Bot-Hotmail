@@ -838,13 +838,26 @@ const BANNER_POSITIONS = ['main', 'strip', 'sidebar_left', 'sidebar_right', 'pop
 
 router.get('/banners', (req, res) => {
   const banners = db.prepare('SELECT * FROM banners ORDER BY sort_order, id').all();
-  res.render('admin/banners', { title: 'Banner & Sidebar', banners });
+  const st = getSettings();
+  const sizes = Object.fromEntries(BANNER_POSITIONS.map((p) => [p, H.bannerSize(st, p)]));
+  res.render('admin/banners', { title: 'Banner & Sidebar', banners, sizes });
+});
+
+// Lưu kích cỡ hiển thị của 1 vị trí banner (tự ghi nhớ cho lần sau)
+router.post('/banners/size', (req, res) => {
+  const pos = BANNER_POSITIONS.includes(req.body.position) ? req.body.position : null;
+  const w = toInt(req.body.w, 0, 0, 4000);
+  const h = toInt(req.body.h, 0, 0, 4000);
+  const ok = !!pos && w >= 50 && h >= 50;
+  if (ok) { setSetting('banner_size_' + pos, `${w}x${h}`); audit(req, 'banner_size', `${pos} ${w}x${h}`); }
+  if (req.get('x-csrf-token')) return res.json(ok ? { ok, w, h } : { ok, message: 'Kích cỡ phải từ 50 đến 4000 px' });
+  back(req, res, ok ? 'success' : 'error', ok ? 'Đã lưu kích cỡ' : 'Kích cỡ không hợp lệ', '/admin/banners');
 });
 
 router.get('/banners/form', (req, res) => {
   const b = req.query.id ? db.prepare('SELECT * FROM banners WHERE id = ?').get(toInt(req.query.id)) : null;
   const position = b ? b.position : (BANNER_POSITIONS.includes(req.query.position) ? req.query.position : 'main');
-  modal(res, 'banner-form', { b, position });
+  modal(res, 'banner-form', { b, position, size: H.bannerSize(getSettings(), position) });
 });
 
 router.post('/banners/save', (req, res) => {

@@ -188,6 +188,53 @@
     setTimeout(check, 5000);
   }
 
+  // ---------------- Cài đặt giao diện ----------------
+  const uiBox = $('#uiSettings');
+  const T = window.UI_THEME;
+  if (uiBox && T) {
+    const accentBox = $('[data-ui-group="accent"]', uiBox);
+    const bgBox = $('[data-ui-group="bg"]', uiBox);
+    const makeSwatch = (group, key, name, color) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ui-swatch';
+      b.setAttribute('role', 'radio');
+      b.dataset.value = key;
+      b.title = name;
+      b.setAttribute('aria-label', name);
+      b.style.setProperty('--sw', color);
+      return b;
+    };
+    Object.keys(T.ACCENTS).forEach((k) => accentBox.appendChild(makeSwatch('accent', k, T.ACCENTS[k][0], T.ACCENTS[k][2])));
+    Object.keys(T.BGS).forEach((k) => bgBox.appendChild(makeSwatch('bg', k, T.BGS[k][0], T.BGS[k][1])));
+
+    const render = () => {
+      const u = T.get();
+      $$('[data-ui-group]', uiBox).forEach((g) => {
+        $$('[data-value]', g).forEach((b) => b.setAttribute('aria-checked', String(b.dataset.value === u[g.dataset.uiGroup])));
+      });
+      $('[data-ui-name="accent"]', uiBox).textContent = T.ACCENTS[u.accent][0];
+      $('[data-ui-name="bg"]', uiBox).textContent = T.BGS[u.bg][0];
+    };
+    const openUI = () => { render(); uiBox.hidden = false; $('[aria-checked="true"]', uiBox)?.focus(); };
+    const closeUI = () => { uiBox.hidden = true; };
+
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('[data-ui-open]')) {
+        e.preventDefault();
+        $$('.dropdown-menu.open').forEach((m) => m.classList.remove('open'));
+        openUI();
+        return;
+      }
+      if (uiBox.hidden) return;
+      if (e.target === uiBox || e.target.closest('[data-ui-close]')) { closeUI(); return; }
+      if (e.target.closest('[data-ui-reset]')) { T.reset(); render(); toast('Đã khôi phục giao diện mặc định'); return; }
+      const opt = e.target.closest('[data-ui-group] [data-value]');
+      if (opt) { T.set({ [opt.closest('[data-ui-group]').dataset.uiGroup]: opt.dataset.value }); render(); }
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !uiBox.hidden) closeUI(); });
+  }
+
   // Popup trang chủ (hiện 1 lần / 12h)
   const popup = $('#sitePopup');
   function closePopup() {

@@ -1,37 +1,44 @@
 <%- include('_header') %>
 <% const groups = [
-  ['main', 'Banner chính (slider trang chủ)', '1200×400'],
-  ['strip', 'Dải ảnh chạy (dưới banner chính)', '600×300'],
-  ['sidebar_left', 'Sidebar trái', '300×600'],
-  ['sidebar_right', 'Sidebar phải', '300×600'],
-  ['popup', 'Popup trang chủ', '600×600'],
+  ['main', 'Banner chính (slider trang chủ)'],
+  ['strip', 'Dải ảnh chạy (dưới banner chính)'],
+  ['sidebar_left', 'Sidebar trái'],
+  ['sidebar_right', 'Sidebar phải'],
+  ['popup', 'Popup trang chủ'],
 ]; %>
-<% groups.forEach(([pos, label, size]) => { const list = banners.filter(b => b.position === pos); %>
-<section class="a-card a-card-flush">
+<p class="a-muted a-small a-page-note"><%- I('image') %> Mỗi phần có kích cỡ hiển thị riêng (Rộng × Cao). Ảnh trên web được cắt theo tỉ lệ này, lấy phần giữa. Khi thêm ảnh sẽ thấy khung <b class="a-green">xanh</b> là phần hiển thị, vùng <b class="a-red">đỏ</b> là phần bị cắt.</p>
+<% groups.forEach(([pos, label]) => { const list = banners.filter(b => b.position === pos); const sz = sizes[pos]; %>
+<section class="a-card a-card-flush a-banner-sec">
   <div class="a-card-head a-pad">
-    <div><h3><%= label %> <span class="a-count"><%= list.length %></span></h3><p class="a-muted a-small">Kích thước gợi ý <%= size %> px<%= pos === 'popup' ? ' · chỉ hiện popup đầu tiên đang bật' : '' %></p></div>
-    <button type="button" class="a-btn a-soft" data-modal-url="/admin/banners/form?position=<%= pos %>" data-modal-title="Thêm – <%= label %>"><%- I('plus') %> Thêm banner</button>
+    <div>
+      <h3><%= label %> <span class="a-count"><%= list.length %></span></h3>
+      <p class="a-muted a-small">Tỉ lệ hiển thị <b data-ratio-text="<%= pos %>"><%= sz.w %> × <%= sz.h %></b><%= pos === 'popup' ? ' · chỉ hiện popup đầu tiên đang bật' : '' %></p>
+    </div>
+    <div class="a-head-actions">
+      <form class="a-size" data-size-form="<%= pos %>" title="Kích cỡ hiển thị (px), tự lưu khi thay đổi">
+        <span class="a-size-label"><%- I('compress') %> Kích cỡ</span>
+        <input type="number" name="w" min="50" max="4000" value="<%= sz.w %>" aria-label="Rộng (px)">
+        <span class="a-size-x">×</span>
+        <input type="number" name="h" min="50" max="4000" value="<%= sz.h %>" aria-label="Cao (px)">
+        <span class="a-size-unit">px</span>
+      </form>
+      <button type="button" class="a-btn a-soft" data-modal-url="/admin/banners/form?position=<%= pos %>" data-modal-title="Thêm – <%= label %>"><%- I('plus') %> Thêm banner</button>
+    </div>
   </div>
-  <div class="a-table-wrap">
-    <table class="a-table">
-      <tbody>
-      <% if (!list.length) { %><tr><td class="a-empty">Chưa có banner ở vị trí này.</td></tr><% } %>
-      <% list.forEach((b, i) => { %>
-        <tr class="<%= b.is_active ? '' : 'a-row-off' %>">
-          <td class="a-w-move"><%- include('partials/move', { kind: 'banners', id: b.id, first: i === 0, last: i === list.length - 1 }) %></td>
-          <td><div class="a-item">
-            <img src="<%= b.image %>" alt="" class="a-banner-thumb <%= pos.startsWith('sidebar') ? 'tall' : '' %>" loading="lazy">
-            <div class="a-minw0"><b><%= b.title || '(không tiêu đề)' %></b><div class="a-muted a-small a-trunc"><%= b.link || 'Không có link' %></div></div>
-          </div></td>
-          <td class="a-center"><%- include('partials/switch', { kind: 'banners', id: b.id, on: b.is_active, disabled: false }) %></td>
-          <td class="a-right"><div class="a-actions">
-            <button type="button" class="a-icon-btn" data-modal-url="/admin/banners/form?id=<%= b.id %>" data-modal-title="Sửa banner" title="Sửa"><%- I('edit') %></button>
-            <form method="post" action="/admin/banners/<%= b.id %>/delete" data-confirm="Xóa banner này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
-          </div></td>
-        </tr>
-      <% }) %>
-      </tbody>
-    </table>
+  <div class="a-banner-rows">
+    <% if (!list.length) { %><div class="a-empty">Chưa có banner ở vị trí này.</div><% } %>
+    <% list.forEach((b, i) => { %>
+      <div class="a-banner-row <%= b.is_active ? '' : 'a-row-off' %>">
+        <%- include('partials/move', { kind: 'banners', id: b.id, first: i === 0, last: i === list.length - 1 }) %>
+        <div class="a-banner-img"><img src="<%= b.image %>" alt="" loading="lazy"></div>
+        <div class="a-minw0 a-grow"><b><%= b.title || '(không tiêu đề)' %></b><div class="a-muted a-small a-trunc"><%= b.link || 'Không có link' %></div></div>
+        <%- include('partials/switch', { kind: 'banners', id: b.id, on: b.is_active, disabled: false }) %>
+        <div class="a-actions">
+          <button type="button" class="a-icon-btn" data-modal-url="/admin/banners/form?id=<%= b.id %>" data-modal-title="Sửa – <%= label %>" title="Sửa"><%- I('edit') %></button>
+          <form method="post" action="/admin/banners/<%= b.id %>/delete" data-confirm="Xóa banner này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+        </div>
+      </div>
+    <% }) %>
   </div>
 </section>
 <% }) %>

@@ -221,6 +221,54 @@
     if (rm) { rm.closest('.a-chip-attr').remove(); }
   });
 
+  // ---------------- Banner: khung xanh (hiển thị) / đỏ (bị cắt) theo tỉ lệ của phần ----------------
+  function updateCrop(img) {
+    const box = img.closest('[data-crop]');
+    if (!box || !img.naturalWidth) return;
+    const [w, h] = (box.dataset.ratio || '1/1').split('/').map(Number);
+    const target = w / h;
+    const ir = img.naturalWidth / img.naturalHeight;
+    const keep = $('[data-crop-keep]', box);
+    let kw = 100, kh = 100;
+    if (ir > target) kw = (target / ir) * 100; else kh = (ir / target) * 100;
+    Object.assign(keep.style, { width: kw + '%', height: kh + '%', left: (100 - kw) / 2 + '%', top: (100 - kh) / 2 + '%' });
+    const cut = 100 - Math.min(kw, kh);
+    const info = $('[data-crop-info]', box);
+    if (info) {
+      info.textContent = 'Ảnh gốc ' + img.naturalWidth + '×' + img.naturalHeight +
+        (cut < 0.5 ? ' · vừa khít, không bị cắt' : ' · bị cắt ' + Math.round(cut) + '% ' + (kw < 100 ? 'chiều ngang' : 'chiều dọc'));
+    }
+    $('[data-crop-stage]', box).hidden = false;
+    $('[data-crop-empty]', box).hidden = true;
+    $('[data-crop-legend]', box).hidden = false;
+  }
+  // 'load' không nổi bọt -> bắt ở pha capture (ảnh nằm trong modal tải bằng JS)
+  document.addEventListener('load', (e) => { if (e.target.matches && e.target.matches('[data-crop-img]')) updateCrop(e.target); }, true);
+  const cropObserver = new MutationObserver(() => $$('[data-crop-img]').forEach((i) => { if (i.complete && i.naturalWidth) updateCrop(i); }));
+  if (modalBody) cropObserver.observe(modalBody, { childList: true });
+
+  // Kích cỡ từng phần banner: tự lưu khi thay đổi
+  let sizeTimer;
+  document.addEventListener('input', (e) => {
+    const f = e.target.closest('[data-size-form]');
+    if (!f) return;
+    clearTimeout(sizeTimer);
+    sizeTimer = setTimeout(async () => {
+      const w = +f.elements.w.value, h = +f.elements.h.value;
+      if (!(w >= 50 && h >= 50)) return;
+      try {
+        const r = await post('/admin/banners/size', { position: f.dataset.sizeForm, w, h });
+        if (!r.ok) throw new Error(r.message);
+        const t = $(`[data-ratio-text="${f.dataset.sizeForm}"]`);
+        if (t) t.textContent = r.w + ' × ' + r.h;
+        f.classList.add('saved');
+        setTimeout(() => f.classList.remove('saved'), 1200);
+        toast('Đã lưu kích cỡ ' + r.w + ' × ' + r.h);
+      } catch (err) { toast(err.message || 'Không lưu được kích cỡ', true); }
+    }, 600);
+  });
+  document.addEventListener('submit', (e) => { if (e.target.matches('[data-size-form]')) e.preventDefault(); }, true);
+
   // ---------------- Sự kiện change ----------------
   document.addEventListener('change', async (e) => {
     const t = e.target;
@@ -288,6 +336,13 @@
     if (t.classList.contains('a-invalid')) {
       t.classList.remove('a-invalid');
       if (t.nextElementSibling?.classList.contains('a-field-error')) t.nextElementSibling.remove();
+    }
+    // Banner: chọn ảnh -> hiện toàn bộ ảnh + khung cắt
+    if (t.matches('input[type=file][data-crop-input]')) {
+      const f = t.files[0];
+      const img = $('[data-crop-img]', t.closest('form') || document);
+      if (f && img) img.src = URL.createObjectURL(f);
+      return;
     }
     // Xem trước 1 ảnh
     if (t.matches('input[type=file][data-preview-input]')) {

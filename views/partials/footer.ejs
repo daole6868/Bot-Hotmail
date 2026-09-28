@@ -1,6 +1,7 @@
 <% const S2 = locals.s || {}; const NAV2 = locals.nav || { sideRight: [] }; %>
   </main>
-  <aside class="side side-right">
+  <% const bzR = H.bannerSize(S2, 'sidebar_right'); %>
+  <aside class="side side-right" style="--ar: <%= bzR.w %> / <%= bzR.h %>">
     <% NAV2.sideRight.forEach(b => { %>
       <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= b.image %>" alt="<%= b.title || '' %>" loading="lazy"></a>
     <% }) %>
@@ -47,12 +48,14 @@
 
 <% if (NAV2.popup && locals.currentPath === '/') { %>
 <div class="popup" id="sitePopup" data-popup-id="<%= NAV2.popup.id %>" hidden>
-  <div class="popup-box">
+  <% const bzP = H.bannerSize(S2, 'popup'); %>
+  <div class="popup-box" style="--ar: <%= bzP.w %> / <%= bzP.h %>">
     <button class="popup-close" data-close-popup aria-label="Đóng"><%- I('x') %></button>
     <a href="<%= NAV2.popup.link || '#' %>"><img src="<%= NAV2.popup.image %>" alt="<%= NAV2.popup.title || '' %>"></a>
   </div>
 </div>
 <% } %>
+<%- include('ui-settings') %>
 <script src="/js/main.js?v=<%= locals.assetV || 1 %>" defer></script>
 </body>
 </html>

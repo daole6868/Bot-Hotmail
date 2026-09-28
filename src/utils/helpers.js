@@ -103,8 +103,16 @@ function formatDelivered(text) {
   return [`Tài khoản: ${m[1]}`, `Mật khẩu: ${m[2]}`, m[3] ? `Ghi chú: ${m[3]}` : ''].filter(Boolean).join('\n');
 }
 
+// Kích cỡ hiển thị từng vị trí banner (admin chỉnh ở trang Banner, lưu trong settings)
+const BANNER_DEFAULT_SIZE = { main: [1200, 400], strip: [600, 300], sidebar_left: [300, 600], sidebar_right: [300, 600], popup: [600, 600] };
+function bannerSize(settings, pos) {
+  const d = BANNER_DEFAULT_SIZE[pos] || [1200, 400];
+  const m = String((settings || {})['banner_size_' + pos] || '').match(/^(\d{2,4})x(\d{2,4})$/);
+  return m ? { w: +m[1], h: +m[2] } : { w: d[0], h: d[1] };
+}
+
 module.exports = {
-  formatDelivered,
+  formatDelivered, bannerSize, BANNER_DEFAULT_SIZE,
   slugify, money, fmtDate, toInputDate, fromInputDate, now, toInt, str, bool,
   paginate, pageUrl, parseJSON, clientIp, escapeCsv,
 };

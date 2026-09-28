@@ -1,7 +1,8 @@
 <%- include('../partials/header') %>
+<% const bzMain = H.bannerSize(s, 'main'), bzStrip = H.bannerSize(s, 'strip'); %>
 
 <% if (banners.length) { %>
-<section class="slider" data-slider>
+<section class="slider" data-slider style="--ar: <%= bzMain.w %> / <%= bzMain.h %>">
   <div class="slides">
     <% banners.forEach((b, i) => { %>
       <a class="slide <%= i === 0 ? 'active' : '' %>" href="<%= b.link || '#' %>"><img src="<%= b.image %>" alt="<%= b.title || 'Banner' %>" <%= i ? 'loading=lazy' : '' %>></a>
@@ -20,7 +21,7 @@
   let loop = [];
   while (loop.length < 10) loop = loop.concat(strip);
 %>
-<section class="img-strip" data-strip aria-label="Ảnh nổi bật">
+<section class="img-strip" data-strip aria-label="Ảnh nổi bật" style="--ar: <%= bzStrip.w %> / <%= bzStrip.h %>">
   <div class="strip-track" style="--n: <%= loop.length %>">
     <% [0, 1].forEach(copy => { loop.forEach(b => { %>
       <a class="strip-item" href="<%= b.link || '#' %>" <%- copy ? 'aria-hidden="true" tabindex="-1"' : '' %>><img src="<%= b.image %>" alt="<%= copy ? '' : (b.title || '') %>" draggable="false"></a>
