@@ -7,8 +7,8 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
   <title><%= title %> | Admin <%= s.site_name %></title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/fonts.css">
-  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/fonts.css?v=<%= locals.assetV || 1 %>">
+  <link rel="stylesheet" href="/css/admin.css?v=<%= locals.assetV || 1 %>">
 </head>
 <body class="admin">
 <% const B = locals.adminBadges || {}; const P = locals.path || ''; const act = (p) => (p === '/' ? P === '/' : P.startsWith(p)) ? 'active' : ''; %>

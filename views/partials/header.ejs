@@ -12,8 +12,8 @@
   <meta name="description" content="<%= S.site_description || '' %>">
   <meta name="csrf-token" content="<%= locals.csrfToken || '' %>">
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/fonts.css">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/fonts.css?v=<%= locals.assetV || 1 %>">
+  <link rel="stylesheet" href="/css/style.css?v=<%= locals.assetV || 1 %>">
 </head>
 <body>
 <header class="topbar">

@@ -21,6 +21,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('trust proxy', config.trustProxy);
 app.disable('x-powered-by');
+// Mã phiên bản file tĩnh: đổi mỗi lần khởi động lại -> trình duyệt tự tải CSS/JS mới sau khi cập nhật code
+app.locals.assetV = Date.now().toString(36);
 
 // ---------- Bảo mật HTTP headers ----------
 app.use(helmet({
