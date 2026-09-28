@@ -52,6 +52,7 @@
   // Xác nhận trước khi submit + chống bấm 2 lần
   document.addEventListener('submit', (e) => {
     const f = e.target;
+    if (e.defaultPrevented) return; // đã bị chặn (VD đang mở popup xác nhận mua)
     if (f.dataset.confirm && !confirm(f.dataset.confirm)) { e.preventDefault(); return; }
     if (f.dataset.submitting) { e.preventDefault(); return; }
     f.dataset.submitting = '1';
@@ -163,6 +164,63 @@
         msg.textContent = 'Lỗi kết nối';
       } finally { cBtn.disabled = false; }
     });
+  }
+
+  // Popup xác nhận mua: kiểm tra mã KM + số dư trước khi gửi đơn
+  const bc = $('#buyConfirm');
+  const buyForm = $('[data-buy-form]');
+  if (bc && buyForm) {
+    const fmt = (n) => n.toLocaleString('vi-VN') + 'đ';
+    const balance = +bc.dataset.balance, price = +bc.dataset.price;
+    const okBtn = $('[data-bc-ok]', bc), topup = $('[data-bc-topup]', bc), err = $('[data-bc-err]', bc);
+    let sending = false;
+    const close = () => { bc.hidden = true; document.body.classList.remove('no-scroll'); };
+    const render = (discount, code, errMsg) => {
+      const total = price - discount;
+      $('.bc-coupon', bc).hidden = !discount;
+      $('[data-bc-code]', bc).textContent = code || '';
+      $('[data-bc-discount]', bc).textContent = '-' + fmt(discount);
+      $('[data-bc-total]', bc).textContent = fmt(total);
+      const after = balance - total;
+      const aEl = $('[data-bc-after]', bc);
+      aEl.textContent = fmt(after);
+      aEl.classList.toggle('bc-neg', after < 0);
+      let msg = errMsg || '';
+      if (after < 0) msg = (msg ? msg + ' ' : '') + `Số dư chưa đủ, cần nạp thêm ${fmt(-after)}.`;
+      err.hidden = !msg;
+      err.textContent = msg;
+      okBtn.hidden = after < 0 || !!errMsg;
+      topup.hidden = after >= 0;
+      $('span', okBtn).textContent = 'Xác nhận mua · ' + fmt(total);
+    };
+    buyForm.addEventListener('submit', async (e) => {
+      if (sending) return;
+      e.preventDefault();
+      const code = ($('#couponInput')?.value || '').trim();
+      render(0, '', code ? 'Đang kiểm tra mã giảm giá...' : '');
+      okBtn.hidden = true;
+      bc.hidden = false;
+      document.body.classList.add('no-scroll');
+      if (!code) { render(0, ''); okBtn.focus(); return; }
+      try {
+        const r = await fetch('/api/coupon/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, Accept: 'application/json' },
+          body: JSON.stringify({ code, product: $('#couponInput').dataset.product }),
+        });
+        const j = await r.json();
+        if (j.ok) render(j.discount, code.toUpperCase());
+        else render(0, '', `Mã “${code}” không dùng được: ${j.message}. Hãy xóa hoặc đổi mã rồi bấm Mua lại.`);
+      } catch (x) { render(0, '', 'Lỗi kết nối, vui lòng thử lại.'); }
+    });
+    okBtn.addEventListener('click', () => {
+      sending = true;
+      okBtn.disabled = true;
+      $('span', okBtn).textContent = 'Đang xử lý...';
+      buyForm.requestSubmit ? buyForm.requestSubmit() : buyForm.submit();
+    });
+    bc.addEventListener('click', (e) => { if (e.target === bc || e.target.closest('[data-bc-close]')) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !bc.hidden) close(); });
   }
 
   // Đếm ngược hạn thanh toán đơn nạp (theo giờ máy chủ, bù lệch giờ máy khách)

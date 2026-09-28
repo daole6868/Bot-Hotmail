@@ -684,3 +684,48 @@ html[data-theme="dark"] { color-scheme: dark; }
 .coupon-grid-v .coupon-desc { font-size: clamp(10px, 4.6cqw, 15px); }
 .coupon-grid-v .coupon-meta { font-size: clamp(9px, 4cqw, 13px); }
 .coupon-grid-v .coupon-copy { font-size: clamp(10px, 4.2cqw, 14px); }
+
+/* ---------- Popup xác nhận mua ---------- */
+body.no-scroll { overflow: hidden; }
+.bc-modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(8, 6, 20, .66); backdrop-filter: blur(4px); animation: bcFade .15s ease; }
+.bc-modal[hidden] { display: none; }
+.bc-box { width: 100%; max-width: 440px; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: calc(20px * var(--rk)); box-shadow: 0 30px 80px rgba(0, 0, 0, .45); padding: 20px; animation: bcPop .18s ease; }
+@keyframes bcFade { from { opacity: 0; } }
+@keyframes bcPop { from { opacity: 0; transform: translateY(12px) scale(.97); } }
+.bc-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.bc-head h3 { margin: 0; font-size: 1.12rem; }
+.bc-head p { margin: 2px 0 0; color: var(--muted); font-size: .84rem; }
+.bc-icon { flex: 0 0 auto; width: 42px; height: 42px; border-radius: calc(12px * var(--rk)); display: grid; place-items: center; background: linear-gradient(135deg, var(--primary), var(--primary2)); color: var(--on-primary, #fff); }
+.bc-icon .ico { width: 22px; height: 22px; }
+.bc-x { margin-left: auto; flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+.bc-x:hover { color: var(--text); border-color: var(--primary); }
+.bc-product { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: calc(14px * var(--rk)); background: color-mix(in srgb, var(--primary) 7%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border)); }
+.bc-product img { width: 86px; aspect-ratio: 5 / 3; object-fit: cover; border-radius: calc(10px * var(--rk)); flex: 0 0 auto; background: var(--bg2); }
+.bc-product div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bc-product b { font-size: .95rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bc-product span { color: var(--muted); font-size: .8rem; }
+.bc-product .bc-code { color: var(--primary); font-weight: 700; }
+.bc-lines, .bc-wallet { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; font-size: .92rem; }
+.bc-lines > div, .bc-wallet > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.bc-lines > div[hidden] { display: none; }
+.bc-lines span, .bc-wallet span { color: var(--muted); }
+.bc-lines em { font-style: normal; font-weight: 700; color: var(--primary); margin-left: 4px; }
+.bc-minus { color: #22c55e; }
+.bc-total { padding-top: 10px; border-top: 1px dashed var(--border); }
+.bc-total span { color: var(--text) !important; font-weight: 700; }
+.bc-total b { font-size: 1.35rem; color: var(--accent); }
+.bc-wallet { padding: 10px 12px; border-radius: calc(12px * var(--rk)); background: var(--bg2); font-size: .86rem; gap: 6px; }
+.bc-wallet .bc-neg { color: var(--t-red, #f87171); }
+.bc-note { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: .8rem; color: var(--muted); line-height: 1.45; }
+.bc-note .ico { flex: 0 0 auto; width: 16px; height: 16px; color: var(--primary); margin-top: 1px; }
+.bc-err { color: var(--t-red, #f87171); background: rgba(239, 68, 68, .1); border: 1px solid rgba(239, 68, 68, .3); padding: 8px 10px; border-radius: calc(10px * var(--rk)); }
+.bc-err[hidden] { display: none; }
+.bc-actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: 18px; }
+.bc-actions .btn { justify-content: center; }
+.bc-actions [hidden] { display: none; }
+.pd-coupon-rule { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.pd-coupon-rule .ico { width: 14px; height: 14px; }
+@media (max-width: 560px) {
+  .bc-modal { align-items: flex-end; padding: 0; }
+  .bc-box { max-width: none; border-radius: calc(22px * var(--rk)) calc(22px * var(--rk)) 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+}
