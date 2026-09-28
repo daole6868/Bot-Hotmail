@@ -77,14 +77,64 @@
     if (slides.length > 1) auto();
   }
 
-  // Gallery sản phẩm
+  // Gallery sản phẩm + xem ảnh phóng to (lightbox)
   const gal = $('[data-gallery]');
   if (gal) {
     const main = $('.gallery-main', gal);
-    $$('.gallery-thumbs img', gal).forEach((t) => t.addEventListener('click', () => {
+    const thumbs = $$('.gallery-thumbs img', gal);
+    let cur = 0;
+    thumbs.forEach((t, i) => t.addEventListener('click', () => {
+      cur = i;
       main.src = t.src;
-      $$('.gallery-thumbs img', gal).forEach((x) => x.classList.toggle('active', x === t));
+      thumbs.forEach((x) => x.classList.toggle('active', x === t));
     }));
+
+    const lb = $('#lightbox');
+    if (lb && main.hasAttribute('data-zoom')) {
+      let imgs = [];
+      try { imgs = JSON.parse(lb.dataset.images || '[]'); } catch (e) { imgs = []; }
+      const lbImg = $('.lb-img', lb);
+      const count = $('[data-lb-count]', lb);
+      let idx = 0;
+      const show = (i) => {
+        idx = (i + imgs.length) % imgs.length;
+        lbImg.src = imgs[idx];
+        if (count) count.textContent = imgs.length > 1 ? (idx + 1) + ' / ' + imgs.length : '';
+      };
+      const open = () => {
+        if (!imgs.length) return;
+        show(cur);
+        lb.hidden = false;
+        document.body.classList.add('lb-open');
+      };
+      const close = () => {
+        lb.hidden = true;
+        document.body.classList.remove('lb-open');
+        main.focus({ preventScroll: true });
+      };
+      main.addEventListener('click', open);
+      main.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+      lb.addEventListener('click', (e) => {
+        if (e.target.closest('[data-lb-close]') || e.target === lb) close();
+        else if (e.target.closest('[data-lb-prev]')) show(idx - 1);
+        else if (e.target.closest('[data-lb-next]')) show(idx + 1);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (lb.hidden) return;
+        if (e.key === 'Escape') close();
+        else if (e.key === 'ArrowLeft') show(idx - 1);
+        else if (e.key === 'ArrowRight') show(idx + 1);
+      });
+      // Vuốt trái/phải trên điện thoại để chuyển ảnh
+      let sx = null;
+      lb.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+      lb.addEventListener('touchend', (e) => {
+        if (sx === null || imgs.length < 2) return;
+        const dx = e.changedTouches[0].clientX - sx;
+        if (Math.abs(dx) > 40) show(idx + (dx < 0 ? 1 : -1));
+        sx = null;
+      });
+    }
   }
 
   // Kiểm tra mã giảm giá

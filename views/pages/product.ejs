@@ -5,7 +5,8 @@
   <!-- Cột trái: ảnh -->
   <section class="pd-gallery card" data-gallery>
     <div class="pd-main">
-      <img class="gallery-main" src="<%= p.imageList[0] || '/img/no-image.svg' %>" alt="<%= p.title %>">
+      <img class="gallery-main" src="<%= p.imageList[0] || '/img/no-image.svg' %>" alt="<%= p.title %>" <%- p.imageList.length ? 'data-zoom tabindex="0" role="button" aria-label="Phóng to ảnh"' : '' %>>
+      <% if (p.imageList.length) { %><span class="pd-zoom-hint" aria-hidden="true"><%- I('search') %></span><% } %>
       <span class="code-tag pd-code">#<%= p.code %></span>
       <% if (p.discountPercent) { %><span class="ribbon ribbon-right">-<%= p.discountPercent %>%</span><% } %>
       <% if (p.imageList.length > 1) { %><span class="pd-count"><%- I('image') %> <%= p.imageList.length %> ảnh</span><% } %>
@@ -77,10 +78,22 @@
 
     <ul class="pd-policy">
       <li><%- I('bolt') %> Giao acc tự động ngay sau khi mua</li>
-      <li><%- I('shield') %> Thông tin acc được mã hóa, chỉ bạn xem được</li>
     </ul>
   </section>
 </div>
+
+<% if (p.imageList.length) { %>
+<!-- Xem ảnh phóng to -->
+<div class="lightbox" id="lightbox" data-images="<%= JSON.stringify(p.imageList) %>" hidden>
+  <button type="button" class="lb-btn lb-close" data-lb-close aria-label="Đóng"><%- I('x') %></button>
+  <% if (p.imageList.length > 1) { %>
+    <button type="button" class="lb-btn lb-prev" data-lb-prev aria-label="Ảnh trước"><%- I('chevron-left') %></button>
+    <button type="button" class="lb-btn lb-next" data-lb-next aria-label="Ảnh sau"><%- I('chevron-right') %></button>
+  <% } %>
+  <img class="lb-img" alt="<%= p.title %>">
+  <div class="lb-count" data-lb-count></div>
+</div>
+<% } %>
 
 <% if (p.description) { %>
 <section class="section card pad pd-desc">
