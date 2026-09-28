@@ -3,12 +3,13 @@
   <form class="a-filter" method="get">
     <div class="a-search"><%- I('search') %><input name="q" value="<%= query.q %>" placeholder="Tìm theo tên hoặc mã sản phẩm..."></div>
     <select name="status" data-autosubmit>
-      <option value="">Mọi trạng thái</option>
-      <% [['available','Đang bán'],['hidden','Đang ẩn'],['sold','Đã bán']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %>
+      <option value="">Chưa bán (đang bán + đang ẩn)</option>
+      <% [['available','Đang bán'],['hidden','Đang ẩn'],['sold','Đã bán (tra cứu)']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %>
     </select>
     <button class="a-btn">Lọc</button>
     <% if (query.q || query.status) { %><a class="a-btn a-ghost" href="/admin/products">Xóa lọc</a><% } %>
   </form>
+  <p class="a-field-hint a-mb0">Acc VIP đã bán tự rời khỏi danh sách này. Tra cứu lại ở <a href="/admin/orders">Đơn hàng</a> (có đủ tên acc, giá, khách mua và thông tin đã giao) hoặc chọn lọc “Đã bán”.</p>
 </div>
 
 <!-- Thao tác hàng loạt: ô chọn trong bảng gắn vào form này qua thuộc tính form="bulkForm" -->

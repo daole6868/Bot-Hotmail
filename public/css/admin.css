@@ -500,3 +500,4 @@ select:disabled { background: #f5f6fa; color: #9aa1bb; cursor: not-allowed; }
   .a-card { padding: 18px 16px; }
   .a-type-badge { vertical-align: middle; }
 }
+.a-mb0 { margin: 8px 0 0 !important; }

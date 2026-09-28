@@ -147,7 +147,7 @@ const modal = (res, view, data) => res.render('admin/modals/' + view, data);
 // ======================= GAME (CẤP 1) =======================
 router.get('/games', (req, res) => {
   const games = db.prepare(`SELECT g.*, (SELECT COUNT(*) FROM categories c WHERE c.game_id = g.id) AS cat_count,
-    (SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id) AS product_count
+    (SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id AND p.status != 'sold') AS product_count
     FROM games g ORDER BY g.sort_order, g.id`).all();
   res.render('admin/games', { title: 'Game', games });
 });
@@ -202,7 +202,7 @@ router.get('/categories', (req, res) => {
   const games = db.prepare(`SELECT g.id, g.name, g.image, g.color, g.is_active,
     (SELECT COUNT(*) FROM categories c WHERE c.game_id = g.id) AS cat_count FROM games g ORDER BY g.sort_order, g.id`).all();
   const cats = db.prepare(`SELECT c.*,
-      (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count,
+      (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.status != 'sold') AS product_count,
       (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS available_count,
       (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price
     FROM categories c ORDER BY c.sort_order, c.id`).all();
@@ -281,6 +281,9 @@ function productFilter(req) {
   const params = [];
   if (q) { where.push('(p.title LIKE ? OR p.code LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
   if (status) { where.push('p.status = ?'); params.push(status); }
+  // Acc VIP đã bán không còn là hàng trong kho -> ẩn khỏi danh sách mặc định (vẫn tra cứu được ở Đơn hàng
+  // hoặc chọn lọc "Đã bán"); khi tìm theo tên/mã thì vẫn ra để tra cứu
+  else if (!q) where.push("p.status != 'sold'");
   return { q, status, where, params };
 }
 
@@ -297,7 +300,7 @@ router.get('/products', (req, res) => {
     });
     return res.render('admin/products', { title: 'Sản phẩm', query, result, games: null });
   }
-  const statusSql = f.status ? ' AND p.status = ?' : '';
+  const statusSql = f.status ? ' AND p.status = ?' : " AND p.status != 'sold'";
   const sp = f.status ? [f.status] : [];
   const games = db.prepare('SELECT id, name, image, color FROM games ORDER BY sort_order, id').all();
   const cats = db.prepare(`SELECT c.id, c.game_id, c.name, c.image, c.sale_type,
