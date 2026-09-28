@@ -132,6 +132,8 @@ router.get('/product/:code', (req, res, next) => {
   const coupons = publicCoupons(10).filter((c) => !c.game_id || c.game_id === p.game_id);
   res.render('pages/product', {
     title: p.title, p, related, coupons,
+    metaDesc: (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 200) || `${p.title} - ${p.game_name} · ${p.category_name}`,
+    metaImage: p.imageList[0] || null,
     breadcrumb: [
       { name: p.game_name, url: `/game/${p.game_slug}` },
       { name: p.category_name, url: `/game/${p.game_slug}/${p.category_slug}` },

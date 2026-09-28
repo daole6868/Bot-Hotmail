@@ -91,7 +91,7 @@ app.use((req, res, next) => {
     };
   }
   Object.assign(res.locals, {
-    s: getSettings(), H, I, turnstileSiteKey: config.turnstile.siteKey, nav: navCache, currentPath: req.path, query: {}, breadcrumb: null, layoutAdmin: false, user: null,
+    s: getSettings(), H, I, baseUrl: config.baseUrl, currentUrl: req.originalUrl, turnstileSiteKey: config.turnstile.siteKey, nav: navCache, currentPath: req.path, query: {}, breadcrumb: null, layoutAdmin: false, user: null,
   });
   next();
 });

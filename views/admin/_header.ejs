@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="csrf-token" content="<%= csrfToken %>">
-  <title><%= title %> | Admin <%= s.site_name %></title>
+  <title><%= title %> | Admin <%= s.site_name || 'ShopAcc' %></title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/fonts.css?v=<%= locals.assetV || 1 %>">
   <link rel="stylesheet" href="/css/admin.css?v=<%= locals.assetV || 1 %>">
@@ -13,7 +13,10 @@
 <body class="admin">
 <% const B = locals.adminBadges || {}; const P = locals.path || ''; const act = (p) => (p === '/' ? P === '/' : P.startsWith(p)) ? 'active' : ''; %>
 <aside class="a-side" id="aSide">
-  <a href="/admin" class="a-logo"><span class="a-logo-mark"><%- I('gamepad') %></span><span><%= s.site_name || 'ShopAcc' %><small>Quản trị</small></span></a>
+  <a href="/admin" class="a-logo <%= s.logo ? 'has-img' : '' %>">
+    <% if (s.logo) { %><img src="<%= s.logo %>" alt="<%= s.site_name || 'Logo' %>"><small>Quản trị</small>
+    <% } else { %><span class="a-logo-mark"><%- I('gamepad') %></span><span><%= s.site_name || 'ShopAcc' %><small>Quản trị</small></span><% } %>
+  </a>
   <nav>
     <div class="a-group">Tổng quan</div>
     <a href="/admin" class="<%= act('/') %>"><%- I('chart') %> Dashboard</a>
@@ -31,7 +34,8 @@
     <div class="a-group">Giao diện</div>
     <a href="/admin/banners" class="<%= act('/banners') %>"><%- I('image') %> Banner & Sidebar</a>
     <a href="/admin/footer" class="<%= act('/footer') %>"><%- I('layers') %> Footer</a>
-    <a href="/admin/settings" class="<%= act('/settings') %>"><%- I('tools') %> Cài đặt</a>
+    <a href="/admin/settings" class="<%= P === '/settings' ? 'active' : '' %>"><%- I('tools') %> Cài đặt thông tin</a>
+    <a href="/admin/settings/bank" class="<%= act('/settings/bank') %>"><%- I('bank') %> Cài đặt bank</a>
     <div class="a-group">Hệ thống</div>
     <a href="/admin/security" class="<%= act('/security') %>"><%- I('shield') %> Bảo mật</a>
     <a href="/admin/logs" class="<%= act('/logs') %>"><%- I('list') %> Nhật ký</a>

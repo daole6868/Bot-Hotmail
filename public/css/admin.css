@@ -402,3 +402,22 @@ select:disabled { background: #f5f6fa; color: #9aa1bb; cursor: not-allowed; }
   .a-banner-img img { max-width: 100%; height: auto; max-height: 120px; }
   .a-head-actions { width: 100%; }
 }
+
+/* ---------- Cài đặt thông tin ---------- */
+.a-field-hint { margin: 6px 0 0; font-size: .78rem; color: var(--muted); line-height: 1.5; }
+.a-field-hint b { color: #3b4468; }
+.a-mt0 { margin-top: 0 !important; margin-bottom: 4px; }
+.a-logo-preview img { object-fit: contain; background: repeating-conic-gradient(#eef1f7 0% 25%, #fff 0% 50%) 50% / 12px 12px; }
+.a-share-card { display: flex; flex-direction: column; border: 1px solid #c9dbf7; border-radius: 12px; overflow: hidden; background: #eef5ff; max-width: 420px; }
+.a-share-img { aspect-ratio: 1200 / 630; background: #dfe8f6; }
+.a-share-img[hidden] { display: none; }
+.a-share-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.a-share-body { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 4px; }
+.a-share-url { color: #2563eb; font-size: .82rem; word-break: break-all; }
+.a-share-body b { font-size: .9rem; color: #1c2340; }
+.a-share-body p { margin: 0; font-size: .82rem; color: #3b4468; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.a-share-host { font-size: .8rem; color: #2563eb; }
+/* Logo ở thanh bên admin */
+.a-logo.has-img { flex-direction: column; align-items: flex-start; gap: 4px; }
+.a-logo.has-img img { max-height: 44px; max-width: 190px; width: auto; object-fit: contain; }
+.a-logo.has-img small { display: block; font-weight: 500; font-size: .72rem; color: var(--side-text); }

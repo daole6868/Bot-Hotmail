@@ -911,19 +911,44 @@ router.post('/footer', (req, res) => {
 });
 
 // ======================= CÀI ĐẶT =======================
-const SETTING_KEYS = ['site_name', 'site_slogan', 'site_description', 'notice',
-  'bank_code', 'bank_name', 'bank_account', 'bank_owner', 'deposit_min', 'deposit_max'];
+// --- Cài đặt thông tin: tên, logo, SEO, ảnh chia sẻ link, thông báo, hệ thống ---
+const INFO_KEYS = ['site_name', 'site_slogan', 'site_description', 'seo_title', 'notice'];
 
-router.get('/settings', (req, res) => res.render('admin/settings', { title: 'Cài đặt', s: getSettings() }));
+router.get('/settings', (req, res) => res.render('admin/settings', { title: 'Cài đặt thông tin', s: getSettings(), baseUrl: config.baseUrl }));
 
 router.post('/settings', (req, res) => {
-  for (const k of SETTING_KEYS) if (req.body[k] !== undefined) setSetting(k, str(req.body[k], 2000));
+  for (const k of INFO_KEYS) if (req.body[k] !== undefined) setSetting(k, str(req.body[k], k === 'site_description' ? 300 : 2000));
   setSetting('maintenance_mode', bool(req.body.maintenance_mode));
   setSetting('allow_register', bool(req.body.allow_register));
-  const logo = fileOf(req, 'logo');
-  if (logo) { const saved = saveImage(logo, 'site'); if (saved) setSetting('logo', saved); }
+  const st = getSettings();
+  for (const [field, key, folder] of [['logo', 'logo', 'site'], ['og_image', 'og_image', 'site']]) {
+    const f = fileOf(req, field);
+    if (f) {
+      const saved = saveImage(f, folder);
+      if (!saved) return back(req, res, 'error', 'File ảnh không hợp lệ', '/admin/settings');
+      if (st[key]) removeImage(st[key]);
+      setSetting(key, saved);
+    } else if (req.body['remove_' + field] && st[key]) {
+      removeImage(st[key]);
+      setSetting(key, '');
+    }
+  }
   audit(req, 'settings_update');
-  back(req, res, 'success', 'Đã lưu cài đặt', '/admin/settings');
+  back(req, res, 'success', 'Đã lưu cài đặt thông tin', '/admin/settings');
+});
+
+// --- Cài đặt bank: tài khoản nhận tiền, hạn mức nạp ---
+const BANK_KEYS = ['bank_code', 'bank_name', 'bank_account', 'bank_owner', 'deposit_min', 'deposit_max'];
+
+router.get('/settings/bank', (req, res) => res.render('admin/settings-bank', {
+  title: 'Cài đặt bank', s: getSettings(), webhookUrl: config.baseUrl + '/api/bank/webhook',
+}));
+
+router.post('/settings/bank', (req, res) => {
+  for (const k of BANK_KEYS) if (req.body[k] !== undefined) setSetting(k, str(req.body[k], 200));
+  setSetting('bank_owner', str(req.body.bank_owner, 100).toUpperCase());
+  audit(req, 'settings_bank_update');
+  back(req, res, 'success', 'Đã lưu cài đặt bank', '/admin/settings/bank');
 });
 
 // ======================= NHẬT KÝ & BẢO MẬT =======================

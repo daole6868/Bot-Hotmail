@@ -1,5 +1,5 @@
 <%- include('_header') %>
-<% if (!s.bank_account) { %><div class="a-alert a-alert-error"><%- I('alert') %> Chưa cấu hình tài khoản ngân hàng — khách chưa nạp tiền được. <a href="/admin/settings">Cài đặt ngay</a></div><% } %>
+<% if (!s.bank_account) { %><div class="a-alert a-alert-error"><%- I('alert') %> Chưa cấu hình tài khoản ngân hàng — khách chưa nạp tiền được. <a href="/admin/settings/bank">Cài đặt bank ngay</a></div><% } %>
 <div class="a-stats">
   <div class="a-card a-stat"><span>Doanh thu hôm nay</span><b><%= H.money(today.revenue) %></b><small><%= today.orders %> đơn</small></div>
   <div class="a-card a-stat"><span>Nạp hôm nay</span><b><%= H.money(today.deposits) %></b><small><%= today.deposit_count || 0 %> giao dịch</small></div>

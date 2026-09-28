@@ -2,14 +2,27 @@
   const S = locals.s || {};
   const NAV = locals.nav || { games: [], sideLeft: [], sideRight: [] };
   const U = locals.user;
-  const pageTitle = locals.title ? `${locals.title} | ${S.site_name || 'ShopAcc'}` : `${S.site_name || 'ShopAcc'} - ${S.site_slogan || ''}`;
+  const siteName = S.site_name || 'ShopAcc';
+  const pageTitle = locals.title ? `${locals.title} | ${siteName}` : (S.seo_title || (siteName + (S.site_slogan ? ' - ' + S.site_slogan : '')));
+  // Khung xem trước khi chia sẻ link (Zalo, Facebook...) và mô tả trên Google
+  const base = String(locals.baseUrl || '').replace(/\/$/, '');
+  const abs = (u) => !u ? '' : /^https?:\/\//.test(u) ? u : base + u;
+  const metaDesc = String(locals.metaDesc || S.site_description || '').slice(0, 300);
+  const metaImage = abs(locals.metaImage || S.og_image || S.logo);
 %><!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= pageTitle %></title>
-  <meta name="description" content="<%= S.site_description || '' %>">
+  <meta name="description" content="<%= metaDesc %>">
+  <meta property="og:type" content="<%= locals.metaImage ? 'product' : 'website' %>">
+  <meta property="og:site_name" content="<%= siteName %>">
+  <meta property="og:title" content="<%= pageTitle %>">
+  <meta property="og:description" content="<%= metaDesc %>">
+  <meta property="og:url" content="<%= base + (locals.currentUrl || '/') %>">
+  <% if (metaImage) { %><meta property="og:image" content="<%= metaImage %>">
+  <meta name="twitter:card" content="summary_large_image"><% } %>
   <meta name="csrf-token" content="<%= locals.csrfToken || '' %>">
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <script src="/js/theme-init.js?v=<%= locals.assetV || 1 %>"></script>
@@ -21,8 +34,7 @@
   <div class="container topbar-inner">
     <button class="icon-btn menu-toggle" data-toggle="#mobileNav" aria-label="Menu"><%- I('menu') %></button>
     <a href="/" class="logo">
-      <% if (S.logo) { %><img src="<%= S.logo %>" alt="<%= S.site_name %>"><% } else { %><span class="logo-mark"><%- I('gamepad') %></span><% } %>
-      <span><%= S.site_name || 'ShopAcc' %></span>
+      <% if (S.logo) { %><img src="<%= S.logo %>" alt="<%= siteName %>"><% } else { %><span class="logo-mark"><%- I('gamepad') %></span><span><%= siteName %></span><% } %>
     </a>
     <form class="search" action="/search" method="get">
       <input type="search" name="q" placeholder="Tìm acc, game, mã sản phẩm..." value="<%= locals.q || '' %>" maxlength="60">

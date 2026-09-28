@@ -617,3 +617,9 @@ html[data-theme="dark"] { color-scheme: dark; }
 .strip-item { aspect-ratio: var(--ar, 2 / 1); }
 .side-banner img { width: 100%; aspect-ratio: var(--ar, 1 / 2); object-fit: cover; }
 .popup-box img { width: 100%; aspect-ratio: var(--ar, 1 / 1); object-fit: cover; }
+
+/* ---------- Logo thay cho tên shop ---------- */
+.logo img { height: 40px; width: auto; max-width: 200px; object-fit: contain; }
+.footer-logo { display: inline-block; margin-bottom: 10px; }
+.footer-logo img { max-height: 48px; max-width: 220px; width: auto; object-fit: contain; }
+@media (max-width: 720px) { .logo img { height: 34px; max-width: 150px; } }

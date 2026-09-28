@@ -1,0 +1,29 @@
+<%- include('_header') %>
+<form method="post" action="/admin/settings/bank" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('bank') %> Tài khoản ngân hàng nhận tiền</h3>
+      <label>Mã ngân hàng <small class="a-muted">(VietQR: MB, VCB, TCB, ACB, BIDV, VPB, TPB...)</small></label>
+      <input name="bank_code" value="<%= s.bank_code %>" maxlength="20">
+      <label>Tên ngân hàng hiển thị</label>
+      <input name="bank_name" value="<%= s.bank_name %>" maxlength="100">
+      <label>Số tài khoản</label>
+      <input name="bank_account" value="<%= s.bank_account %>" maxlength="40">
+      <label>Chủ tài khoản <small class="a-muted">(IN HOA, không dấu)</small></label>
+      <input name="bank_owner" value="<%= s.bank_owner %>" maxlength="100" style="text-transform:uppercase">
+      <p class="a-field-hint">Hiện ở trang Nạp tiền của khách (kèm mã QR). Để trống số tài khoản thì khách chưa nạp được.</p>
+    </div>
+    <div class="a-card">
+      <h3><%- I('card') %> Hạn mức nạp</h3>
+      <div class="a-row">
+        <div><label>Nạp tối thiểu (đ)</label><input type="number" name="deposit_min" min="1000" value="<%= s.deposit_min %>"></div>
+        <div><label>Nạp tối đa (đ)</label><input type="number" name="deposit_max" min="1000" value="<%= s.deposit_max %>"></div>
+      </div>
+      <h3 class="a-mt"><%- I('link') %> Nạp tự động (webhook)</h3>
+      <p class="a-field-hint a-mt0">Khai báo ở SePay / Casso: URL <code><%= webhookUrl %></code>, header <code>Authorization: Apikey &lt;BANK_WEBHOOK_TOKEN trong .env&gt;</code>. Xem giao dịch ở mục <a href="/admin/bank">GD ngân hàng</a>.</p>
+    </div>
+  </div>
+  <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt bank</button></div>
+</form>
+<%- include('_footer') %>

@@ -347,8 +347,13 @@
     // Xem trước 1 ảnh
     if (t.matches('input[type=file][data-preview-input]')) {
       const f = t.files[0];
-      const box = $('[data-preview-box]', t.closest('form') || document);
+      // Lấy khung xem trước gần nhất (1 form có thể có nhiều ô chọn ảnh)
+      const box = $('[data-preview-box]', t.closest('.a-upload-row') || t.closest('form') || document);
       if (f && box) box.innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`;
+      if (f && t.dataset.share === 'img') {
+        const si = $('[data-share-img]');
+        if (si) { si.hidden = false; si.innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`; }
+      }
       return;
     }
     // Xem trước nhiều ảnh sản phẩm
@@ -391,6 +396,16 @@
     }
     return true;
   }
+  // Cài đặt thông tin: xem trước khung chia sẻ link khi đang gõ
+  document.addEventListener('input', (e) => {
+    const f = e.target.closest('[data-share-form]');
+    if (!f || !e.target.dataset.share) return;
+    const v = (k) => (($(`[data-share="${k}"]`, f) || {}).value || '').trim();
+    const title = v('title') || ((v('name') || 'ShopAcc') + (v('slogan') ? ' - ' + v('slogan') : ''));
+    $('[data-share-out="title"]', f).textContent = title;
+    $('[data-share-out="desc"]', f).textContent = v('desc');
+  });
+
   document.addEventListener('input', (e) => {
     const t = e.target;
     if (t.classList.contains('a-invalid')) {

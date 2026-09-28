@@ -26,7 +26,8 @@
 <footer class="footer">
   <div class="container footer-grid" style="--cols: <%= footerCols.length %>">
     <div class="footer-about">
-      <h4><%= S2.footer_about_title || S2.site_name %></h4>
+      <% if (S2.footer_about_title || !S2.logo) { %><h4><%= S2.footer_about_title || S2.site_name || 'ShopAcc' %></h4>
+      <% } else { %><a href="/" class="footer-logo"><img src="<%= S2.logo %>" alt="<%= S2.site_name || 'Logo' %>"></a><% } %>
       <p><%= S2.footer_about_text || S2.site_description %></p>
       <% if (socials.length) { %>
         <div class="socials">
