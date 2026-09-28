@@ -9,6 +9,7 @@ read -rsp "Mật khẩu admin (>= 8 ký tự, có chữ và số): " AP; echo
 read -rp "Email admin: " AE
 cp .env.example .env
 sed -i "s#^NODE_ENV=.*#NODE_ENV=production#" .env
+sed -i "s#^PORT=.*#PORT=3200#" .env
 sed -i "s#^BASE_URL=.*#BASE_URL=https://gachaz.online#" .env
 sed -i "s#^TRUST_PROXY=.*#TRUST_PROXY=true#" .env
 sed -i "s#^SESSION_SECRET=.*#SESSION_SECRET=$(rnd 32)#" .env

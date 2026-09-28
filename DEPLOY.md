@@ -57,7 +57,7 @@ ufw allow OpenSSH
 ufw allow 'Nginx Full'
 ufw enable
 ```
-Không mở port 3000 ra ngoài – chỉ Nginx được gọi vào.
+Không mở port 3200 ra ngoài – chỉ Nginx được gọi vào.
 
 ## 8. Vào web
 - Web: https://gachaz.online
