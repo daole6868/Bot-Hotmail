@@ -209,6 +209,10 @@
       return;
     }
 
+    if (t.classList.contains('a-invalid')) {
+      t.classList.remove('a-invalid');
+      if (t.nextElementSibling?.classList.contains('a-field-error')) t.nextElementSibling.remove();
+    }
     // Xem trước 1 ảnh
     if (t.matches('input[type=file][data-preview-input]')) {
       const f = t.files[0];
@@ -229,9 +233,50 @@
     }
   });
 
+  // ---------------- Kiểm tra ô bắt buộc trước khi gửi ----------------
+  function validateForm(f) {
+    $$('.a-field-error', f).forEach((el) => el.remove());
+    $$('.a-invalid', f).forEach((el) => el.classList.remove('a-invalid'));
+    let first = null;
+    $$('[required]', f).forEach((el) => {
+      if (el.disabled || el.closest('[hidden]') || el.type === 'radio' || el.type === 'checkbox') return;
+      let msg = '';
+      if (el.type === 'file') { if (!el.files.length) msg = 'Vui lòng chọn ảnh'; }
+      else if (!String(el.value || '').trim()) msg = el.tagName === 'SELECT' ? 'Vui lòng chọn một mục' : 'Vui lòng nhập thông tin này';
+      else if (el.type === 'number' && el.min !== '' && Number(el.value) < Number(el.min)) msg = 'Giá trị không hợp lệ';
+      if (!msg) return;
+      el.classList.add('a-invalid');
+      const d = document.createElement('div');
+      d.className = 'a-field-error';
+      d.textContent = msg;
+      el.insertAdjacentElement('afterend', d);
+      first = first || el;
+    });
+    if (first) {
+      first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      first.focus({ preventScroll: true });
+      toast('Vui lòng điền đủ các ô bắt buộc (*)', true);
+      return false;
+    }
+    return true;
+  }
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t.classList.contains('a-invalid')) {
+      t.classList.remove('a-invalid');
+      if (t.nextElementSibling?.classList.contains('a-field-error')) t.nextElementSibling.remove();
+    }
+    if (t.matches('[data-count-lines]')) {
+      const n = t.value.split(/\r?\n/).filter((l) => l.trim()).length;
+      const out = $('[data-line-count]', t.closest('form') || document);
+      if (out) out.textContent = n.toLocaleString('vi-VN') + ' acc';
+    }
+  });
+
   // ---------------- Xác nhận & chống gửi 2 lần ----------------
   document.addEventListener('submit', (e) => {
     const f = e.target;
+    if (f.hasAttribute('data-validate') && !validateForm(f)) { e.preventDefault(); return; }
     if (f.dataset.confirm && !confirm(f.dataset.confirm)) { e.preventDefault(); return; }
     if (f.dataset.submitting) { e.preventDefault(); return; }
     if (f.method.toLowerCase() === 'post') {

@@ -1,4 +1,4 @@
-<form method="post" action="/admin/games/save" enctype="multipart/form-data" class="a-form">
+<form method="post" action="/admin/games/save" enctype="multipart/form-data" class="a-form" novalidate data-validate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <input type="hidden" name="_back" value="">
   <input type="hidden" name="id" value="<%= g ? g.id : '' %>">
@@ -12,7 +12,7 @@
       <% if (g && g.image) { %><label class="a-check"><input type="checkbox" name="remove_image" value="1"> Xóa ảnh hiện tại</label><% } %>
     </div>
   </div>
-  <label>Tên game *</label>
+  <label>Tên game <span class="req">*</span></label>
   <input name="name" required maxlength="100" value="<%= g ? g.name : '' %>" placeholder="VD: Liên Quân Mobile" autofocus>
   <label>Mô tả ngắn</label>
   <input name="description" maxlength="1000" value="<%= g ? g.description : '' %>" placeholder="VD: MOBA 5v5 phổ biến nhất Việt Nam">
@@ -25,6 +25,7 @@
     <label class="a-check"><input type="checkbox" name="is_hot" <%= g && g.is_hot ? 'checked' : '' %>> Gắn nhãn HOT</label>
   </div>
   <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><span class="req">*</span> là thông tin bắt buộc</span>
     <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
     <button class="a-btn a-primary"><%- I('save') %> <%= g ? 'Lưu thay đổi' : 'Thêm game' %></button>
   </div>

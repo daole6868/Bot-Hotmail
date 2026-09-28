@@ -1,12 +1,12 @@
 <% const posName = { main: 'Banner chính (slider)', sidebar_left: 'Sidebar trái', sidebar_right: 'Sidebar phải', popup: 'Popup trang chủ' };
    const sizeHint = { main: '1200×400', sidebar_left: '300×600', sidebar_right: '300×600', popup: '600×600' }; %>
-<form method="post" action="/admin/banners/save" enctype="multipart/form-data" class="a-form">
+<form method="post" action="/admin/banners/save" enctype="multipart/form-data" class="a-form" novalidate data-validate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <input type="hidden" name="_back" value="">
   <input type="hidden" name="id" value="<%= b ? b.id : '' %>">
   <label>Vị trí</label>
   <select name="position"><% Object.entries(posName).forEach(([k, v]) => { %><option value="<%= k %>" <%= position === k ? 'selected' : '' %>><%= v %> – gợi ý <%= sizeHint[k] %></option><% }) %></select>
-  <label>Ảnh <%= b ? '' : '*' %></label>
+  <label>Ảnh <%- b ? '' : '<span class="req">*</span>' %></label>
   <div class="a-upload-preview a-upload-wide <%= position.startsWith('sidebar') ? 'tall' : '' %>" data-preview-box>
     <% if (b) { %><img src="<%= b.image %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chọn ảnh để xem trước</span><% } %>
   </div>
@@ -17,6 +17,7 @@
   <input name="link" maxlength="300" value="<%= b ? b.link : '' %>" placeholder="/game/lien-quan-mobile hoặc https://...">
   <label class="a-check"><input type="checkbox" name="is_active" <%= !b || b.is_active ? 'checked' : '' %>> Hiển thị</label>
   <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><span class="req">*</span> là thông tin bắt buộc</span>
     <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
     <button class="a-btn a-primary"><%- I('save') %> <%= b ? 'Lưu thay đổi' : 'Thêm banner' %></button>
   </div>

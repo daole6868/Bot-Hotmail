@@ -4,17 +4,17 @@
   <input type="hidden" name="id" value="<%= p.id || '' %>">
   <div class="a-card">
     <h3>Thông tin sản phẩm</h3>
-    <label>Danh mục *</label>
+    <label>Danh mục <span class="req">*</span></label>
     <select name="category_id" required><% categories.forEach(c => { %><option value="<%= c.id %>" <%= p.category_id === c.id ? 'selected' : '' %>><%= c.game_name %> <%- I('chevron-right') %> <%= c.name %></option><% }) %></select>
     <label>Loại sản phẩm <% if (p.id) { %><small class="a-muted">(không đổi được sau khi tạo)</small><% } %></label>
     <select name="type" <%= p.id ? 'disabled' : '' %> data-type-select>
       <option value="account" <%= p.type === 'account' ? 'selected' : '' %>>Acc game (mỗi acc bán 1 lần)</option>
       <option value="stock" <%= p.type === 'stock' ? 'selected' : '' %>>Thẻ game / Acc random (kho nhiều mã)</option>
     </select>
-    <label>Tên sản phẩm *</label><input name="title" required maxlength="200" value="<%= p.title || '' %>">
+    <label>Tên sản phẩm <span class="req">*</span></label><input name="title" required maxlength="200" value="<%= p.title || '' %>">
     <label>Mã sản phẩm <small class="a-muted">để trống tự tạo</small></label><input name="code" maxlength="20" value="<%= p.code || '' %>">
     <div class="a-row">
-      <div><label>Giá bán (đ) *</label><input type="number" name="price" required min="0" value="<%= p.price ?? '' %>"></div>
+      <div><label>Giá bán (đ) <span class="req">*</span></label><input type="number" name="price" required min="0" value="<%= p.price ?? '' %>"></div>
       <div><label>Giá gốc (gạch ngang)</label><input type="number" name="old_price" min="0" value="<%= p.old_price || '' %>"></div>
     </div>
     <div class="a-row">

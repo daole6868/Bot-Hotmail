@@ -1,24 +1,23 @@
 <a href="/product/<%= p.code %>" class="card product-card">
   <div class="thumb">
     <img src="<%= p.imageList[0] || '/img/no-image.svg' %>" alt="<%= p.title %>" loading="lazy">
-    <% if (p.discountPercent) { %><span class="ribbon">-<%= p.discountPercent %>%</span><% } %>
     <span class="code-tag">#<%= p.code %></span>
-    <% if (p.type === 'stock') { %><span class="type-tag"><%= p.stock_left > 0 ? 'Còn ' + p.stock_left : 'Hết hàng' %></span><% } %>
+    <% if (p.discountPercent) { %><span class="ribbon ribbon-right">-<%= p.discountPercent %>%</span><% } %>
+    <% if (p.type === 'stock') { %><span class="type-tag"><%= p.stock_left > 0 ? 'Còn ' + p.stock_left.toLocaleString('vi-VN') + ' acc' : 'Hết hàng' %></span><% } %>
   </div>
   <div class="card-body">
-    <div class="muted small"><%= p.game_name %> · <%= p.category_name %></div>
-    <h3 class="product-title"><%= p.title %></h3>
+    <h3 class="product-title" title="<%= p.title %>"><%= p.title %></h3>
     <% if (p.attrList.length) { %>
       <ul class="attrs">
         <% p.attrList.slice(0, 4).forEach(a => { %><li><span><%= a.k %></span><b><%= a.v %></b></li><% }) %>
       </ul>
     <% } %>
-    <div class="price-row">
-      <div>
+    <div class="buy-row">
+      <div class="price-box">
         <% if (p.old_price && p.old_price > p.price) { %><del><%= H.money(p.old_price) %></del><% } %>
         <strong class="price"><%= H.money(p.price) %></strong>
       </div>
-      <span class="btn btn-sm btn-primary">Xem</span>
+      <span class="btn btn-primary btn-view">Xem ngay</span>
     </div>
   </div>
 </a>

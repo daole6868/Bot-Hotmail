@@ -307,3 +307,42 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
 .social-youtube:hover { background: #ff0033; } .social-telegram:hover { background: #229ed9; }
 @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-about { grid-column: 1 / -1; } }
 @media (max-width: 520px) { .footer-grid { grid-template-columns: 1fr; } .stat-label { font-size: .66rem; } .stat-box { padding: 6px 4px; } }
+
+/* ---------- Ô bắt buộc ---------- */
+.req { color: #f87171; font-weight: 800; margin-left: 2px; }
+
+/* ---------- Ô chọn (select): danh sách xổ xuống cách 1 khoảng nhỏ, bo góc ---------- */
+select { cursor: pointer; }
+@supports (appearance: base-select) {
+  select, ::picker(select) { appearance: base-select; }
+  select { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  select::picker-icon { color: var(--muted); transition: rotate .2s; }
+  select:open { border-color: var(--primary2); box-shadow: 0 0 0 3px rgba(168, 85, 247, .2); }
+  select:open::picker-icon { rotate: 180deg; }
+  ::picker(select) {
+    margin-block: 6px; padding: 6px; border: 1px solid var(--border); border-radius: 14px;
+    background: var(--card); box-shadow: 0 18px 44px rgba(0, 0, 0, .45); max-height: min(360px, 60vh); overflow-y: auto;
+  }
+  select option { padding: 9px 12px; border-radius: 10px; color: var(--text); gap: 8px; }
+  select option:hover, select option:focus-visible { background: var(--card2); outline: none; }
+  select option:checked { background: rgba(124, 58, 237, .25); color: #fff; font-weight: 700; }
+  select option::checkmark { color: var(--primary2); }
+}
+
+/* ---------- Thẻ sản phẩm: mã góc trên trái, giá trong khung + nút Xem ngay ---------- */
+.product-card { display: flex !important; flex-direction: column; }
+.product-card .card-body { display: flex; flex-direction: column; flex: 1; }
+.product-card .code-tag { top: 10px; left: 10px; bottom: auto; background: rgba(10, 8, 25, .72); backdrop-filter: blur(4px); font-weight: 700; letter-spacing: .3px; }
+.product-card .ribbon-right { left: auto; right: 10px; }
+.product-card .product-title { font-size: 1rem; font-weight: 700; margin: 0 0 10px; min-height: 2.6em; }
+.product-card .attrs { margin-bottom: 12px; }
+.buy-row { margin-top: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: stretch; }
+.price-box { min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 6px 12px; border-radius: 10px; background: rgba(245, 158, 11, .1); border: 1px solid rgba(245, 158, 11, .35); }
+.price-box .price { font-size: 1.05rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.price-box del { font-size: .74rem; margin: 0; line-height: 1.2; }
+.btn-view { padding: 8px 14px; font-size: .88rem; border-radius: 10px; }
+@media (max-width: 720px) {
+  .buy-row { grid-template-columns: 1fr; }
+  .price-box { align-items: center; text-align: center; }
+  .btn-view { width: 100%; }
+}

@@ -5,11 +5,11 @@
     <form method="post" action="/admin/coupons/save">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="id" value="<%= edit ? edit.id : '' %>">
-      <label>Mã *</label><input name="code" required maxlength="32" value="<%= edit ? edit.code : '' %>" placeholder="VD: SALE50" style="text-transform:uppercase">
+      <label>Mã <span class="req">*</span></label><input name="code" required maxlength="32" value="<%= edit ? edit.code : '' %>" placeholder="VD: SALE50" style="text-transform:uppercase">
       <label>Mô tả hiển thị</label><input name="description" maxlength="200" value="<%= edit ? edit.description : '' %>">
       <div class="a-row">
         <div><label>Loại</label><select name="type"><option value="percent" <%= edit && edit.type === 'percent' ? 'selected' : '' %>>Phần trăm (%)</option><option value="fixed" <%= edit && edit.type === 'fixed' ? 'selected' : '' %>>Số tiền (đ)</option></select></div>
-        <div><label>Giá trị *</label><input type="number" name="value" required min="1" value="<%= edit ? edit.value : '' %>"></div>
+        <div><label>Giá trị <span class="req">*</span></label><input type="number" name="value" required min="1" value="<%= edit ? edit.value : '' %>"></div>
       </div>
       <div class="a-row">
         <div><label>Giảm tối đa (đ)</label><input type="number" name="max_discount" min="0" value="<%= edit ? edit.max_discount || '' : '' %>"></div>

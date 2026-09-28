@@ -212,6 +212,7 @@ router.get('/categories', (req, res) => {
 
 router.get('/categories/form', (req, res) => {
   const c = req.query.id ? db.prepare('SELECT * FROM categories WHERE id = ?').get(toInt(req.query.id)) : null;
+  if (c) c.product_count = db.prepare('SELECT COUNT(*) n FROM products WHERE category_id = ?').get(c.id).n;
   const games = db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all();
   modal(res, 'category-form', { c, games, gameId: c ? c.game_id : toInt(req.query.game_id) });
 });
@@ -235,12 +236,18 @@ router.post('/categories/save', (req, res) => {
     removeImage(old.image);
     image = null;
   }
-  const data = [gameId, name, slug, image, str(req.body.description, 1000), bool(req.body.is_active)];
+  const saleType = req.body.sale_type === 'reroll' ? 'reroll' : 'vip';
+  if (old && old.sale_type !== saleType) {
+    // Không cho đổi loại khi đã có sản phẩm (acc VIP và kho acc Reroll lưu khác nhau)
+    const n = db.prepare('SELECT COUNT(*) c FROM products WHERE category_id = ?').get(old.id).c;
+    if (n) return back(req, res, 'error', `Danh mục đã có ${n} sản phẩm, không thể đổi loại VIP/Reroll. Hãy tạo danh mục mới.`);
+  }
+  const data = [gameId, name, slug, image, str(req.body.description, 1000), bool(req.body.is_active), saleType];
   if (old) {
-    db.prepare('UPDATE categories SET game_id=?, name=?, slug=?, image=?, description=?, is_active=? WHERE id=?').run(...data, id);
+    db.prepare('UPDATE categories SET game_id=?, name=?, slug=?, image=?, description=?, is_active=?, sale_type=? WHERE id=?').run(...data, id);
   } else {
     const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM categories WHERE game_id = ?').get(gameId).n;
-    db.prepare('INSERT INTO categories(game_id, name, slug, image, description, is_active, sort_order) VALUES(?,?,?,?,?,?,?)').run(...data, next);
+    db.prepare('INSERT INTO categories(game_id, name, slug, image, description, is_active, sale_type, sort_order) VALUES(?,?,?,?,?,?,?,?)').run(...data, next);
   }
   audit(req, old ? 'category_update' : 'category_create', name);
   back(req, res, 'success', old ? 'Đã cập nhật danh mục' : 'Đã thêm danh mục', '/admin/categories');
@@ -293,7 +300,7 @@ router.get('/products', (req, res) => {
   const statusSql = f.status ? ' AND p.status = ?' : '';
   const sp = f.status ? [f.status] : [];
   const games = db.prepare('SELECT id, name, image, color FROM games ORDER BY sort_order, id').all();
-  const cats = db.prepare(`SELECT c.id, c.game_id, c.name, c.image,
+  const cats = db.prepare(`SELECT c.id, c.game_id, c.name, c.image, c.sale_type,
       (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id${statusSql}) AS product_count,
       (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price
     FROM categories c ORDER BY c.sort_order, c.id`).all(...sp);
@@ -327,11 +334,36 @@ function loadProductForForm(id) {
   return p;
 }
 
+const categoryInfo = (id) => db.prepare(`SELECT c.id, c.name, c.sale_type, g.name AS game_name
+  FROM categories c JOIN games g ON g.id = c.game_id WHERE c.id = ?`).get(id);
+
+// Tách "Tài khoản: x / Mật khẩu: y / phần còn lại" để sửa trong 2 ô riêng
+function splitCredentials(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  const pick = (re) => {
+    const i = lines.findIndex((l) => re.test(l));
+    if (i < 0) return '';
+    const v = lines[i].replace(re, '').trim();
+    lines.splice(i, 1);
+    return v;
+  };
+  const user = pick(/^\s*(tài khoản|tai khoan|tk|user(name)?|account)\s*[:：]\s*/i);
+  const pass = pick(/^\s*(mật khẩu|mat khau|mk|pass(word)?)\s*[:：]\s*/i);
+  return { user, pass, extra: lines.join('\n').trim() };
+}
+function joinCredentials(user, pass, extra) {
+  return [`Tài khoản: ${user}`, `Mật khẩu: ${pass}`, extra].filter(Boolean).join('\n');
+}
+
 router.get('/products/form', (req, res) => {
   const p = req.query.id ? loadProductForForm(toInt(req.query.id))
-    : { type: 'account', status: 'available', attrList: [], imageList: [], category_id: toInt(req.query.category_id) };
-  if (!p) return res.status(404).send('<p>Không tìm thấy sản phẩm</p>');
-  modal(res, 'product-form', { p, categories: categoryOptions() });
+    : { status: 'available', attrList: [], imageList: [], category_id: toInt(req.query.category_id) };
+  if (!p) return res.status(404).send('<p class="a-empty">Không tìm thấy sản phẩm</p>');
+  const cat = categoryInfo(p.category_id);
+  if (!cat) return res.status(404).send('<p class="a-empty">Không tìm thấy danh mục</p>');
+  if (!p.id) p.type = cat.sale_type === 'reroll' ? 'stock' : 'account';
+  if (p.type === 'account') Object.assign(p, splitCredentials(p.credentials));
+  modal(res, 'product-form', { p, cat });
 });
 
 router.get('/products/new', (req, res) => res.redirect('/admin/products'));
@@ -375,7 +407,9 @@ router.post('/products/save', (req, res) => {
   if (!title || price < 0 || !db.prepare('SELECT 1 FROM categories WHERE id = ?').get(categoryId)) {
     return back(req, res, 'error', 'Vui lòng nhập tên, giá và chọn danh mục');
   }
-  const type = old ? old.type : (req.body.type === 'stock' ? 'stock' : 'account');
+  const cat = categoryInfo(categoryId);
+  // Loại sản phẩm do loại danh mục quyết định: VIP -> acc bán 1 lần, Reroll -> kho nhiều acc
+  const type = old ? old.type : (cat.sale_type === 'reroll' ? 'stock' : 'account');
   const code = str(req.body.code, 20).toUpperCase().replace(/[^A-Z0-9]/g, '') || old?.code || randomCode(8);
   if (db.prepare('SELECT id FROM products WHERE code = ? AND id != ?').get(code, id)) return back(req, res, 'error', 'Mã sản phẩm đã tồn tại');
 
@@ -394,12 +428,22 @@ router.post('/products/save', (req, res) => {
 
   const status = ['available', 'sold', 'hidden'].includes(req.body.status) ? req.body.status : 'available';
   const oldPrice = toInt(req.body.old_price, 0, 0) || null;
-  const credRaw = String(req.body.credentials || '').slice(0, 5000).trim();
   let credEnc = old?.credentials_enc || null;
   if (type === 'account') {
+    let credRaw;
+    if (req.body.acc_user !== undefined || req.body.acc_pass !== undefined) {
+      const user = str(req.body.acc_user, 200);
+      const pass = str(req.body.acc_pass, 200);
+      if (!user || !pass) return back(req, res, 'error', 'Vui lòng nhập đủ Tài khoản và Mật khẩu của acc');
+      credRaw = joinCredentials(user, pass, String(req.body.acc_extra || '').slice(0, 3000).trim());
+    } else {
+      credRaw = String(req.body.credentials || '').slice(0, 5000).trim(); // trang quản lý kho cũ
+    }
     if (credRaw && credRaw !== decrypt(old?.credentials_enc)) credEnc = encrypt(credRaw);
     if (!credRaw) credEnc = null;
     if (!credEnc && status === 'available') return back(req, res, 'error', 'Acc cần nhập thông tin đăng nhập để giao cho khách');
+  } else if (!old && !String(req.body.stock_lines || '').trim()) {
+    return back(req, res, 'error', 'Vui lòng nhập ít nhất 1 acc (mỗi dòng: tài khoản | mật khẩu)');
   }
   const data = [categoryId, code, title, price, oldPrice, JSON.stringify(images), JSON.stringify(parseAttrs(req.body)),
     str(req.body.description, 5000), credEnc, status, bool(req.body.is_featured)];
@@ -475,12 +519,16 @@ router.post('/products/bulk', (req, res) => {
 
 // Nhập nhiều acc cùng lúc vào 1 danh mục: mỗi dòng "tên|giá|thông tin đăng nhập"
 router.get('/products/import-form', (req, res) => {
-  modal(res, 'import-form', { categories: categoryOptions(), categoryId: toInt(req.query.category_id) });
+  const cat = categoryInfo(toInt(req.query.category_id));
+  if (!cat) return res.status(404).send('<p class="a-empty">Không tìm thấy danh mục</p>');
+  modal(res, 'import-form', { cat });
 });
 
 router.post('/products/import', (req, res) => {
   const categoryId = toInt(req.body.category_id);
-  if (!db.prepare('SELECT 1 FROM categories WHERE id = ?').get(categoryId)) return back(req, res, 'error', 'Chọn danh mục');
+  const icat = categoryInfo(categoryId);
+  if (!icat) return back(req, res, 'error', 'Không tìm thấy danh mục');
+  if (icat.sale_type !== 'vip') return back(req, res, 'error', 'Nhập nhiều acc chỉ dùng cho danh mục VIP. Với Reroll, hãy thêm acc vào kho của sản phẩm.');
   const lines = String(req.body.lines || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 2000);
   const ins = db.prepare(`INSERT INTO products(category_id, code, title, price, credentials_enc, type) VALUES(?,?,?,?,?,'account')`);
   let ok = 0, bad = 0;
@@ -489,7 +537,10 @@ router.post('/products/import', (req, res) => {
       const [title, price, ...cred] = l.split('|');
       const pr = toInt(price, -1);
       if (!title || pr < 0 || !cred.join('|').trim()) { bad++; continue; }
-      ins.run(categoryId, randomCode(8), str(title, 200), pr, encrypt(cred.join('|').trim().replace(/\\n/g, '\n')));
+      // "Tên|Giá|Tài khoản|Mật khẩu|Ghi chú..." -> lưu dạng Tài khoản / Mật khẩu như form thêm lẻ
+      const [u, pw, ...rest] = cred.map((x) => x.trim());
+      const text = pw ? joinCredentials(u, pw, rest.join(' | ')) : cred.join('|').trim().replace(/\\n/g, '\n');
+      ins.run(categoryId, randomCode(8), str(title, 200), pr, encrypt(text));
       ok++;
     }
   })();
@@ -543,7 +594,7 @@ router.get('/orders/:id', (req, res, next) => {
   const archived = req.query.archived === '1';
   const o = db.prepare(`SELECT o.*, u.username, u.email FROM ${archived ? 'orders_archive' : 'orders'} o LEFT JOIN users u ON u.id = o.user_id WHERE o.id = ?`).get(toInt(req.params.id));
   if (!o) return next();
-  o.delivered = decrypt(o.delivered_enc);
+  o.delivered = require('../utils/helpers').formatDelivered(decrypt(o.delivered_enc));
   o.archived = archived;
   res.render('admin/order-detail', { title: 'Đơn ' + o.order_code, o });
 });

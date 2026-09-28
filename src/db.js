@@ -314,9 +314,17 @@ db.exec(SCHEMA);
 
 // ---- Nâng cấp DB cũ (thêm cột mới nếu chưa có) ----
 function addColumn(table, col, def) {
-  if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+  if (db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col)) return false;
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+  return true;
 }
 addColumn('products', 'sort_order', 'INTEGER NOT NULL DEFAULT 0');
+// Loại danh mục: vip = mỗi acc bán 1 lần ; reroll = 1 sản phẩm chứa nhiều acc, mua nhiều lần tới khi hết
+if (addColumn('categories', 'sale_type', "TEXT NOT NULL DEFAULT 'vip'")) {
+  db.exec(`UPDATE categories SET sale_type = 'reroll'
+    WHERE name LIKE '%Random%' OR name LIKE '%Reroll%' OR name LIKE '%Reg Giá Rẻ%'
+       OR id IN (SELECT category_id FROM products WHERE type = 'stock')`);
+}
 db.exec('CREATE INDEX IF NOT EXISTS idx_products_sort ON products(category_id, sort_order)');
 
 // ---- Helpers ----

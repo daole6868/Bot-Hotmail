@@ -32,7 +32,7 @@ router.get('/orders', (req, res) => {
 router.get('/orders/:code', (req, res, next) => {
   const o = db.prepare('SELECT * FROM v_orders WHERE order_code = ? AND user_id = ?').get(str(req.params.code, 30), req.user.id);
   if (!o) return next();
-  o.delivered = decrypt(o.delivered_enc);
+  o.delivered = require('../utils/helpers').formatDelivered(decrypt(o.delivered_enc));
   res.set('Cache-Control', 'no-store');
   res.render('user/order-detail', { title: `Đơn hàng ${o.order_code}`, o, tab: 'orders' });
 });

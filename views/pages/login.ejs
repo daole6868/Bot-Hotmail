@@ -6,9 +6,9 @@
     <form method="post" action="/login" autocomplete="on">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-      <label class="label">Tên đăng nhập hoặc Email</label>
+      <label class="label">Tên đăng nhập hoặc Email <span class="req">*</span></label>
       <input type="text" name="username" value="<%= form.username || '' %>" required maxlength="100" autofocus autocomplete="username">
-      <label class="label">Mật khẩu</label>
+      <label class="label">Mật khẩu <span class="req">*</span></label>
       <input type="password" name="password" required maxlength="128" autocomplete="current-password">
       <% if (needCaptcha) { %>
       <%- include('../partials/captcha') %>

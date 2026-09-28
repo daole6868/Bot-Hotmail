@@ -1,13 +1,27 @@
-<form method="post" action="/admin/categories/save" enctype="multipart/form-data" class="a-form">
+<% const R = '<span class="req" title="Bắt buộc">*</span>'; const type = c ? c.sale_type : 'vip'; const locked = c && c.product_count > 0; %>
+<form method="post" action="/admin/categories/save" enctype="multipart/form-data" class="a-form" novalidate data-validate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <input type="hidden" name="_back" value="">
   <input type="hidden" name="id" value="<%= c ? c.id : '' %>">
-  <label>Thuộc game *</label>
+  <label>Thuộc game <%- R %></label>
   <select name="game_id" required>
     <% games.forEach(g => { %><option value="<%= g.id %>" <%= gameId === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %>
   </select>
-  <label>Tên danh mục *</label>
-  <input name="name" required maxlength="100" value="<%= c ? c.name : '' %>" placeholder="VD: Acc VIP, Acc Random, Thẻ kim cương" autofocus>
+  <label>Tên danh mục <%- R %></label>
+  <input name="name" required maxlength="100" value="<%= c ? c.name : '' %>" placeholder="VD: Acc VIP Full Skin, Random 20K" autofocus>
+
+  <label>Loại danh mục <%- R %> <% if (locked) { %><small class="a-muted">(đã có <%= c.product_count %> sản phẩm nên không đổi được)</small><% } %></label>
+  <div class="a-choice">
+    <label class="a-choice-item <%= locked && type !== 'vip' ? 'is-disabled' : '' %>">
+      <input type="radio" name="sale_type" value="vip" <%= type === 'vip' ? 'checked' : '' %> <%= locked && type !== 'vip' ? 'disabled' : '' %>>
+      <span class="a-choice-box"><span class="a-type-badge vip"><%- I('star') %> VIP</span><b>Mua 1 lần</b><small>Mỗi sản phẩm là 1 acc riêng (tài khoản + mật khẩu), bán xong là hết.</small></span>
+    </label>
+    <label class="a-choice-item <%= locked && type !== 'reroll' ? 'is-disabled' : '' %>">
+      <input type="radio" name="sale_type" value="reroll" <%= type === 'reroll' ? 'checked' : '' %> <%= locked && type !== 'reroll' ? 'disabled' : '' %>>
+      <span class="a-choice-box"><span class="a-type-badge reroll"><%- I('refresh') %> Reroll</span><b>Mua nhiều lần</b><small>Mỗi sản phẩm chứa nhiều acc, khách mua liên tục tới khi hết acc trong kho.</small></span>
+    </label>
+  </div>
+
   <label>Mô tả</label>
   <input name="description" maxlength="1000" value="<%= c ? c.description : '' %>">
   <label>Đường dẫn (slug) <small class="a-muted">để trống tự tạo</small></label>
@@ -24,6 +38,7 @@
   </div>
   <label class="a-check"><input type="checkbox" name="is_active" <%= !c || c.is_active ? 'checked' : '' %>> Hiển thị</label>
   <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><%- R %> là thông tin bắt buộc</span>
     <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
     <button class="a-btn a-primary"><%- I('save') %> <%= c ? 'Lưu thay đổi' : 'Thêm danh mục' %></button>
   </div>

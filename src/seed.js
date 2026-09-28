@@ -128,7 +128,7 @@ function seedCatalog() {
 
   const slug = (x) => require('./utils/helpers').slugify(x);
   const insGame = db.prepare('INSERT INTO games(name, slug, image, color, sort_order, is_hot, description) VALUES(?,?,?,?,?,?,?)');
-  const insCat = db.prepare('INSERT INTO categories(game_id, name, slug, image, sort_order, description) VALUES(?,?,?,?,?,?)');
+  const insCat = db.prepare('INSERT INTO categories(game_id, name, slug, image, sort_order, description, sale_type) VALUES(?,?,?,?,?,?,?)');
   db.transaction(() => {
     CATALOG.forEach((g, gi) => {
       const gs = slug(g.name);
@@ -136,7 +136,8 @@ function seedCatalog() {
         g.c[0], gi, g.hot, `Mua bán acc ${g.name} uy tín, giá tốt, giao acc tự động.`).lastInsertRowid;
       g.cats.forEach((cn, ci) => {
         const cs = slug(cn);
-        insCat.run(gid, cn, cs, writeDemo(`cat-${gs}-${cs}.svg`, svgGame(cn, g.c[1], g.c[0], g.glyph, 400, 220)), ci, `${cn} - ${g.name}`);
+        insCat.run(gid, cn, cs, writeDemo(`cat-${gs}-${cs}.svg`, svgGame(cn, g.c[1], g.c[0], g.glyph, 400, 220)), ci, `${cn} - ${g.name}`,
+          /Random|Reroll|Reg Giá Rẻ/.test(cn) ? 'reroll' : 'vip');
       });
     });
   })();
@@ -146,19 +147,19 @@ function seedCatalog() {
 function seedDemoProducts() {
   if (db.prepare('SELECT COUNT(*) c FROM products').get().c > 0) return;
   console.log('[seed] SEED_DEMO=true -> tạo sản phẩm thử nghiệm');
-  const cats = db.prepare('SELECT c.id, c.name, c.image FROM categories c').all();
+  const cats = db.prepare('SELECT c.id, c.name, c.image, c.sale_type FROM categories c').all();
   const insProd = db.prepare(`INSERT INTO products(category_id, code, title, type, price, images, attributes, description, credentials_enc)
     VALUES(?,?,?,?,?,?,?,?,?)`);
   const insStock = db.prepare('INSERT INTO product_stock(product_id, data_enc, data_hash) VALUES(?,?,?)');
   db.transaction(() => {
     for (const c of cats) {
-      const isStock = /Random/.test(c.name);
+      const isStock = c.sale_type === 'reroll';
       for (let i = 1; i <= 3; i++) {
         const code = randomCode(8);
         const pid = insProd.run(c.id, code, `[TEST] ${c.name} #${code}`, isStock ? 'stock' : 'account', 10000 * i,
           JSON.stringify([c.image]), JSON.stringify([{ k: 'Ghi chú', v: 'Sản phẩm thử nghiệm' }]), 'Sản phẩm thử nghiệm.',
-          isStock ? null : encrypt(`TK: test_${code.toLowerCase()}\nMK: ${randomCode(10)}`)).lastInsertRowid;
-        if (isStock) for (let k = 0; k < 5; k++) { const d = `TEST-${randomCode(12)}`; insStock.run(pid, encrypt(d), sha256(d)); }
+          isStock ? null : encrypt(`Tài khoản: test_${code.toLowerCase()}\nMật khẩu: ${randomCode(10)}`)).lastInsertRowid;
+        if (isStock) for (let k = 0; k < 5; k++) { const d = `test_${randomCode(8).toLowerCase()} | ${randomCode(10)}`; insStock.run(pid, encrypt(d), sha256(d)); }
       }
     }
     db.prepare("INSERT INTO coupons(code, description, type, value, max_discount, is_public) VALUES('TEST10','Mã thử nghiệm 10%','percent',10,50000,1)").run();

@@ -95,7 +95,16 @@ function escapeCsv(v) {
   return /[",\n]/.test(safe) ? '"' + safe.replace(/"/g, '""') + '"' : safe;
 }
 
+// Acc Reroll lưu dạng "tài khoản | mật khẩu" -> hiển thị rõ ràng cho khách
+function formatDelivered(text) {
+  const t = String(text || '').trim();
+  const m = !t.includes('\n') && t.match(/^(.+?)\s*\|\s*(.+?)(?:\s*\|\s*(.+))?$/);
+  if (!m) return t;
+  return [`Tài khoản: ${m[1]}`, `Mật khẩu: ${m[2]}`, m[3] ? `Ghi chú: ${m[3]}` : ''].filter(Boolean).join('\n');
+}
+
 module.exports = {
+  formatDelivered,
   slugify, money, fmtDate, toInputDate, fromInputDate, now, toInt, str, bool,
   paginate, pageUrl, parseJSON, clientIp, escapeCsv,
 };
