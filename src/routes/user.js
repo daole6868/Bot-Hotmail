@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const { db, logActivity, getSettings } = require('../db');
 const { requireLogin, limiters } = require('../middleware/security');
 const { createDeposit, cancelDeposit, limits } = require('../services/deposit');
+const maintenance = require('../services/maintenance');
 const { decrypt } = require('../utils/crypto');
 const { paginate, toInt, str, clientIp } = require('../utils/helpers');
 const SQLiteStore = require('../session-store');
@@ -39,18 +40,24 @@ router.get('/orders/:code', (req, res, next) => {
 
 // ---------- Nạp tiền ----------
 router.get('/deposit', (req, res) => {
+  maintenance.expireDeposits(); // đơn quá thời gian chờ -> hủy ngay, không đợi lịch chạy
   const s = getSettings();
+  const expireSec = maintenance.depositExpireMinutes() * 60;
   const pending = db.prepare("SELECT * FROM deposits WHERE user_id = ? AND status = 'pending' ORDER BY id DESC").all(req.user.id);
   const history = paginate(db, {
     select: '*', from: 'v_deposits', where: "WHERE user_id = ? AND status != 'pending'", params: [req.user.id],
     order: 'ORDER BY created_at DESC', page: toInt(req.query.page, 1, 1), perPage: 10,
   });
   const active = req.query.code ? pending.find((d) => d.code === req.query.code) : null;
-  res.render('user/deposit', { title: 'Nạp tiền', s, pending, history, active, limits: limits(), query: {}, tab: 'deposit' });
+  pending.forEach((d) => { d.expires_at = d.created_at + expireSec; });
+  res.set('Cache-Control', 'no-store');
+  res.render('user/deposit', { title: 'Nạp tiền', s, pending, history, active, limits: limits(), query: {}, tab: 'deposit',
+    expireMinutes: expireSec / 60, now: Math.floor(Date.now() / 1000) });
 });
 
 router.post('/deposit', limiters.deposit, (req, res) => {
   const amount = toInt(req.body.amount, 0, 0);
+  maintenance.expireDeposits(); // không tái sử dụng đơn đã quá hạn
   const r = createDeposit(req.user.id, amount);
   if (!r.ok) {
     req.flash('error', r.message);
@@ -61,6 +68,7 @@ router.post('/deposit', limiters.deposit, (req, res) => {
 });
 
 router.post('/deposit/:id/cancel', (req, res) => {
+  maintenance.expireDeposits();
   const ok = cancelDeposit(toInt(req.params.id), req.user.id);
   req.flash(ok ? 'success' : 'error', ok ? 'Đã hủy yêu cầu nạp' : 'Không thể hủy yêu cầu này');
   res.redirect('/user/deposit');
@@ -68,6 +76,7 @@ router.post('/deposit/:id/cancel', (req, res) => {
 
 // Trạng thái đơn nạp (trang nạp tự kiểm tra định kỳ)
 router.get('/deposit/:code/status', (req, res) => {
+  maintenance.expireDeposits();
   const d = db.prepare('SELECT status, received FROM deposits WHERE code = ? AND user_id = ?').get(str(req.params.code, 20), req.user.id);
   res.json(d ? { ok: true, status: d.status, received: d.received } : { ok: false });
 });

@@ -128,6 +128,9 @@
     const t = e.target;
     if (t.closest('[data-toggle-side]')) $('#aSide').classList.toggle('open');
 
+    const si = t.closest('[data-set-input]');
+    if (si) { const inp = $(`[name="${si.dataset.setInput}"]`, si.form || document); if (inp) { inp.value = si.dataset.value; inp.dispatchEvent(new Event('input', { bubbles: true })); } return; }
+
     const mo = t.closest('[data-modal-url]');
     if (mo) { e.preventDefault(); openModal(mo.dataset.modalUrl, mo.dataset.modalTitle); return; }
     if (t.closest('[data-modal-close]')) { closeModal(); return; }

@@ -2,12 +2,12 @@
 <div class="a-card">
   <form class="a-filter" method="get">
     <input name="q" value="<%= query.q %>" placeholder="Mã nạp hoặc username">
-    <select name="status"><option value="">-- Trạng thái --</option><% [['pending','Chờ'],['success','Thành công'],['cancelled','Hủy'],['expired','Hết hạn']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select>
+    <select name="status"><option value="">-- Trạng thái --</option><% [['pending','Chờ'],['success','Thành công'],['cancelled','Hủy'],['expired','Quá hạn (tự hủy)']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select>
     <button class="a-btn">Lọc</button>
   </form>
   <div class="a-table-wrap"><table class="a-table">
     <thead><tr><th>Mã</th><th>Khách</th><th>Yêu cầu</th><th>Thực nhận</th><th>Trạng thái</th><th>Ghi chú</th><th>Tạo lúc</th><th>Xử lý</th></tr></thead>
-    <% const st = { pending: ['yellow','Chờ'], success: ['green','Thành công'], cancelled: ['','Hủy'], expired: ['red','Hết hạn'] }; %>
+    <% const st = { pending: ['yellow','Chờ'], success: ['green','Thành công'], cancelled: ['','Hủy'], expired: ['red','Quá hạn'] }; %>
     <% result.rows.forEach(d => { %>
       <tr>
         <td><b><%= d.code %></b></td><td><a href="/admin/users/<%= d.user_id %>"><%= d.username %></a></td>

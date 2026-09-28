@@ -23,6 +23,13 @@ function fmtDate(ts) {
   return `${p(d.getUTCDate())}/${p(d.getUTCMonth() + 1)}/${d.getUTCFullYear()} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
 }
 
+// 90 -> "1 giờ 30 phút", 1440 -> "1 ngày"
+function fmtDuration(minutes) {
+  const m = Math.max(0, Math.round(Number(minutes) || 0));
+  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+  return [d && d + ' ngày', h && h + ' giờ', mm && mm + ' phút'].filter(Boolean).join(' ') || '0 phút';
+}
+
 // "2026-09-28T10:00" (giờ VN) <-> unix
 function toInputDate(ts) {
   if (!ts) return '';
@@ -113,6 +120,6 @@ function bannerSize(settings, pos) {
 
 module.exports = {
   formatDelivered, bannerSize, BANNER_DEFAULT_SIZE,
-  slugify, money, fmtDate, toInputDate, fromInputDate, now, toInt, str, bool,
+  slugify, money, fmtDate, fmtDuration, toInputDate, fromInputDate, now, toInt, str, bool,
   paginate, pageUrl, parseJSON, clientIp, escapeCsv,
 };

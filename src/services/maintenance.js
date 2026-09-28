@@ -15,8 +15,15 @@ const config = require('../config');
 const DAY = 86400;
 const nowS = () => Math.floor(Date.now() / 1000);
 
+// Thời gian chờ thanh toán đơn nạp (phút): chỉnh ở Admin > Cài đặt bank, mặc định lấy từ .env
+function depositExpireMinutes() {
+  const v = parseInt(getSettings().deposit_expire_minutes, 10);
+  return v >= 5 && v <= 10080 ? v : config.retention.depositExpireMinutes;
+}
+
+// Đơn nạp quá thời gian chờ -> chuyển 'expired' (hiện cho khách là "Đã hủy (quá hạn)", không thao tác được nữa)
 function expireDeposits() {
-  const cutoff = nowS() - config.retention.depositExpireMinutes * 60;
+  const cutoff = nowS() - depositExpireMinutes() * 60;
   return db.prepare("UPDATE deposits SET status = 'expired' WHERE status = 'pending' AND created_at < ?").run(cutoff).changes;
 }
 
@@ -66,7 +73,7 @@ function archive() {
 }
 
 function backup() {
-  const name = `shop-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.db`;
+  const name = `shop-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 23)}.db`;
   const dest = path.join(config.paths.backups, name);
   return db.backup(dest).then(() => {
     const files = fs.readdirSync(config.paths.backups).filter((f) => f.endsWith('.db')).sort();
@@ -78,10 +85,16 @@ function backup() {
   });
 }
 
+const dbFile = () => path.join(config.paths.data, 'shop.db');
+const fileSize = (f) => (fs.existsSync(f) ? fs.statSync(f).size : 0);
+
+/** Trả về dung lượng (file DB + WAL) trước/sau để admin thấy hiệu quả */
 function optimize(vacuum = false) {
+  const before = fileSize(dbFile()) + fileSize(dbFile() + '-wal');
   db.pragma('wal_checkpoint(TRUNCATE)');
   db.pragma('optimize');
-  if (vacuum) db.exec('VACUUM');
+  if (vacuum) { db.exec('VACUUM'); db.pragma('wal_checkpoint(TRUNCATE)'); }
+  return { before, after: fileSize(dbFile()) + fileSize(dbFile() + '-wal') };
 }
 
 /** Tính lại toàn bộ thống kê ngày từ dữ liệu gốc (dùng khi cần đối soát) */
@@ -101,6 +114,7 @@ function rebuildStats() {
       SELECT date(created_at, 'unixepoch', ${tz}) d, COUNT(*) FROM users GROUP BY d
       ON CONFLICT(day) DO UPDATE SET new_users = excluded.new_users`);
   })();
+  return db.prepare('SELECT COUNT(*) c FROM daily_stats').get().c;
 }
 
 function dbInfo() {
@@ -152,6 +166,8 @@ function startScheduler() {
   setTimeout(tick, 5000);
   timer = setInterval(tick, 10 * 60 * 1000); // 10 phút
   timer.unref();
+  // Hết hạn đơn nạp cần chính xác theo phút -> kiểm tra riêng mỗi phút (câu lệnh rất nhẹ)
+  setInterval(() => { try { expireDeposits(); } catch (e) { console.error('[maintenance] expire', e.message); } }, 60 * 1000).unref();
 }
 
-module.exports = { runLight, runDaily, archive, backup, optimize, rebuildStats, dbInfo, startScheduler, expireDeposits };
+module.exports = { runLight, runDaily, archive, backup, optimize, rebuildStats, dbInfo, startScheduler, expireDeposits, depositExpireMinutes };

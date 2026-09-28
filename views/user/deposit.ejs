@@ -2,7 +2,7 @@
 <%- include('../partials/user-nav') %>
 
 <% if (active) { %>
-<div class="card pad deposit-box" data-deposit-code="<%= active.code %>">
+<div class="card pad deposit-box" data-deposit-code="<%= active.code %>" data-expires="<%= active.expires_at %>" data-now="<%= now %>">
   <h2>Chuyển khoản để nạp <%= H.money(active.amount) %></h2>
   <div class="deposit-grid">
     <div class="qr">
@@ -18,6 +18,7 @@
     </table>
   </div>
   <div class="alert alert-warning"><%- I('alert') %> Ghi <b>ĐÚNG nội dung chuyển khoản <%= active.code %></b> để được cộng tiền tự động. Sai nội dung sẽ phải liên hệ admin.</div>
+  <div class="alert alert-info"><%- I('clock') %> Mã nạp có hiệu lực <b><%= H.fmtDuration(expireMinutes) %></b> – còn lại <b data-countdown="<%= active.expires_at %>" data-now="<%= now %>">…</b>. Quá thời gian mà chưa chuyển khoản, yêu cầu sẽ tự <b>hủy</b>.</div>
   <div class="center" id="depositStatus"><span class="spinner"></span> Đang chờ thanh toán... (trang tự cập nhật)</div>
 </div>
 <% } %>
@@ -41,10 +42,11 @@
 <div class="card pad">
   <h2>Yêu cầu đang chờ thanh toán</h2>
   <table class="table">
-    <thead><tr><th>Mã</th><th>Số tiền</th><th>Tạo lúc</th><th></th></tr></thead>
+    <thead><tr><th>Mã</th><th>Số tiền</th><th>Tạo lúc</th><th>Còn lại</th><th></th></tr></thead>
     <% pending.forEach(d => { %>
       <tr>
         <td><b><%= d.code %></b></td><td><%= H.money(d.amount) %></td><td class="muted small"><%= H.fmtDate(d.created_at) %></td>
+        <td class="small"><b data-countdown="<%= d.expires_at %>" data-now="<%= now %>">…</b></td>
         <td class="actions">
           <a class="btn btn-xs btn-primary" href="/user/deposit?code=<%= d.code %>">Thanh toán</a>
           <form method="post" action="/user/deposit/<%= d.id %>/cancel" data-confirm="Hủy yêu cầu nạp này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-xs btn-danger">Hủy</button></form>
@@ -52,6 +54,7 @@
       </tr>
     <% }) %>
   </table>
+  <p class="muted small">Mỗi yêu cầu có hiệu lực <%= H.fmtDuration(expireMinutes) %>. Hết thời gian mà chưa chuyển khoản sẽ tự chuyển sang <b>Đã hủy (quá hạn)</b> và không thao tác được nữa.</p>
 </div>
 <% } %>
 
@@ -61,7 +64,7 @@
   <table class="table">
     <thead><tr><th>Mã</th><th>Yêu cầu</th><th>Thực nhận</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
     <% if (!history.rows.length) { %><tr><td colspan="5" class="center muted">Chưa có giao dịch</td></tr><% } %>
-    <% const dl = { success: 'Thành công', cancelled: 'Đã hủy', expired: 'Hết hạn' }; %>
+    <% const dl = { success: 'Thành công', cancelled: 'Đã hủy', expired: 'Đã hủy (quá hạn)' }; %>
     <% history.rows.forEach(d => { %>
       <tr><td><%= d.code %></td><td><%= H.money(d.amount) %></td><td class="price"><%= d.received ? H.money(d.received) : '—' %></td>
         <td><span class="status status-<%= d.status %>"><%= dl[d.status] || d.status %></span></td><td class="muted small"><%= H.fmtDate(d.created_at) %></td></tr>

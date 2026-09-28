@@ -198,7 +198,7 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
 .status { font-size: .78rem; padding: 3px 9px; border-radius: 99px; font-weight: 600; white-space: nowrap; }
 .status-completed, .status-success { background: rgba(34, 197, 94, .15); color: var(--t-green); }
 .status-refunded, .status-cancelled { background: rgba(239, 68, 68, .15); color: var(--t-red); }
-.status-expired { background: rgba(148, 163, 184, .15); color: #cbd5e1; }
+.status-expired { background: rgba(239, 68, 68, .15); color: var(--t-red); }
 .status-pending { background: rgba(245, 158, 11, .15); color: var(--t-yellow); }
 
 /* ---------- Pagination ---------- */
@@ -623,3 +623,5 @@ html[data-theme="dark"] { color-scheme: dark; }
 .footer-logo { display: inline-block; margin-bottom: 10px; }
 .footer-logo img { max-height: 48px; max-width: 220px; width: auto; object-fit: contain; }
 @media (max-width: 720px) { .logo img { height: 34px; max-width: 150px; } }
+.cd-over { color: var(--t-red); }
+[data-countdown] { font-variant-numeric: tabular-nums; }

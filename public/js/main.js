@@ -165,13 +165,50 @@
     });
   }
 
+  // Đếm ngược hạn thanh toán đơn nạp (theo giờ máy chủ, bù lệch giờ máy khách)
+  const cds = $$('[data-countdown]');
+  let depExpired = false;
+  if (cds.length) {
+    const skew = Math.floor(Date.now() / 1000) - (+cds[0].dataset.now || 0);
+    const fmt = (s) => {
+      const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
+      const p = (n) => String(n).padStart(2, '0');
+      return (d ? d + ' ngày ' : '') + (d || h ? p(h) + ':' : '') + p(m) + ':' + p(x);
+    };
+    const tick = () => {
+      const t = Math.floor(Date.now() / 1000) - skew;
+      let alive = 0;
+      cds.forEach((el) => {
+        const left = (+el.dataset.countdown) - t;
+        if (left > 0) { el.textContent = fmt(left); alive++; return; }
+        if (el.dataset.done) return;
+        el.dataset.done = '1';
+        el.textContent = '00:00';
+        el.classList.add('cd-over');
+        const row = el.closest('tr');
+        const act = row && $('.actions', row);
+        if (act) act.innerHTML = '<span class="status status-expired">Đã hủy (quá hạn)</span>';
+        const box = el.closest('[data-deposit-code]');
+        if (box) {
+          depExpired = true;
+          $$('.qr, .deposit-grid .table', box).forEach((n) => { n.style.opacity = '.35'; n.style.pointerEvents = 'none'; });
+          const al = el.closest('.alert');
+          if (al) { al.className = 'alert alert-error'; al.textContent = 'Yêu cầu nạp đã quá thời gian chờ và bị hủy. Không chuyển khoản vào mã này nữa, vui lòng tạo yêu cầu mới.'; }
+          $('#depositStatus').textContent = '';
+        }
+      });
+      if (alive) setTimeout(tick, 1000);
+    };
+    tick();
+  }
+
   // Trang nạp tiền: tự kiểm tra trạng thái mỗi 5 giây
   const dep = $('[data-deposit-code]');
   if (dep) {
     const code = dep.dataset.depositCode;
     let tries = 0;
     const check = async () => {
-      if (++tries > 180) return; // tối đa 15 phút
+      if (depExpired || ++tries > 720) return; // tối đa 1 giờ
       try {
         const r = await fetch('/user/deposit/' + encodeURIComponent(code) + '/status', { headers: { Accept: 'application/json' } });
         const j = await r.json();
@@ -181,7 +218,7 @@
           setTimeout(() => { location.href = '/user/deposit'; }, 1800);
           return;
         }
-        if (j.ok && j.status !== 'pending') { $('#depositStatus').textContent = 'Yêu cầu nạp đã ' + (j.status === 'expired' ? 'hết hạn' : 'bị hủy'); return; }
+        if (j.ok && j.status !== 'pending') { $('#depositStatus').textContent = 'Yêu cầu nạp đã ' + (j.status === 'expired' ? 'quá thời gian chờ và bị hủy. Vui lòng tạo yêu cầu mới.' : 'bị hủy'); return; }
       } catch (e) { /* thử lại */ }
       setTimeout(check, 5000);
     };

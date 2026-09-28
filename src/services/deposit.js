@@ -95,6 +95,7 @@ function normalizeWebhook(body) {
 
 function processBankTransactions(body) {
   const txns = normalizeWebhook(body);
+  require('./maintenance').expireDeposits(); // đơn quá thời gian chờ phải được đánh dấu trước khi khớp tiền
   const re = new RegExp(config.depositPrefix + '[0-9A-Z]{6}');
   const results = [];
   for (const t of txns) {
@@ -105,7 +106,9 @@ function processBankTransactions(body) {
     let status = 'unmatched';
     let depositId = null;
     if (m) {
-      const d = db.prepare("SELECT id FROM deposits WHERE code = ? AND status IN ('pending','expired')").get(m[0]);
+      // Đơn đã quá hạn: chỉ tự cộng nếu admin bật "cộng tiền khi khách chuyển muộn"; nếu tắt, GD nằm ở mục chưa khớp để admin xử lý
+      const lateOk = getSettings().deposit_late_credit !== '0';
+      const d = db.prepare(`SELECT id FROM deposits WHERE code = ? AND status IN ('pending'${lateOk ? ", 'expired'" : ''})`).get(m[0]);
       if (d) {
         const r = completeDeposit(d.id, Math.floor(t.amount), { txnId: t.txnId, note: 'Webhook ngân hàng' });
         if (r.ok) { status = 'matched'; depositId = d.id; }

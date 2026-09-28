@@ -1,33 +1,55 @@
 <%- include('_header') %>
-<% const mb = (b) => (b / 1024 / 1024).toFixed(2) + ' MB'; %>
-<div class="a-grid-2">
+<% const mb = (b) => (b / 1024 / 1024).toFixed(2) + ' MB';
+   const tableNames = { users: 'Người dùng', products: 'Sản phẩm', product_stock: 'Kho tài khoản', orders: 'Đơn hàng', orders_archive: 'Đơn hàng (lưu trữ)',
+     deposits: 'Đơn nạp', deposits_archive: 'Đơn nạp (lưu trữ)', bank_transactions: 'GD ngân hàng', balance_logs: 'Biến động số dư',
+     activity_logs: 'Nhật ký hoạt động', login_logs: 'Nhật ký đăng nhập', sessions: 'Phiên đăng nhập' };
+   const tasks = [
+     ['light', 'broom', 'Dọn dẹp nhanh', 'Hủy ngay các đơn nạp quá thời gian chờ; xóa nhật ký, đơn nạp hủy, GD bank đã khớp, biến động số dư đã quá hạn giữ; xóa phiên đăng nhập và IP bị chặn đã hết hạn.', 'An toàn, chạy lúc nào cũng được'],
+     ['archive', 'archive', 'Lưu trữ dữ liệu cũ', 'Chuyển đơn hàng và đơn nạp thành công cũ hơn ' + retention.archiveDays + ' ngày sang bảng lưu trữ để bảng chính nhẹ, web nhanh. Khách và admin vẫn xem được lịch sử.', 'An toàn'],
+     ['backup', 'save', 'Backup ngay', 'Tạo 1 bản sao toàn bộ database vào thư mục backups (tải về ở bảng bên dưới). Chỉ giữ ' + retention.backupKeep + ' bản mới nhất, bản cũ tự xóa.', 'Nên chạy trước khi sửa lớn'],
+     ['optimize', 'bolt', 'Tối ưu chỉ mục', 'Gộp file nhật ký ghi (WAL) vào DB và cập nhật thống kê chỉ mục để tìm kiếm/lọc nhanh hơn.', 'An toàn, rất nhanh'],
+     ['stats', 'chart', 'Tính lại thống kê', 'Tính lại số liệu doanh thu, đơn hàng, nạp tiền, người dùng mới theo ngày (biểu đồ Tổng quan) từ dữ liệu gốc. Dùng khi số liệu bị lệch.', 'An toàn'],
+     ['vacuum', 'compress', 'VACUUM (thu gọn DB)', 'Sắp xếp lại và thu nhỏ file database sau khi xóa nhiều dữ liệu. Khóa DB vài giây, khách có thể phải chờ.', 'Chạy lúc ít khách'],
+     ['daily', 'refresh', 'Chạy toàn bộ', 'Chạy lần lượt: Dọn dẹp nhanh → Lưu trữ dữ liệu cũ → Tối ưu chỉ mục → Backup. Giống tác vụ tự động hằng ngày.', 'Mất vài giây'],
+   ]; %>
+<div class="a-grid-3">
   <div class="a-card">
     <h3><%- I('box') %> Dung lượng dữ liệu</h3>
     <table class="a-table a-kv">
       <tr><th>File database</th><td><%= mb(info.size) %> (WAL: <%= mb(info.wal) %>)</td></tr>
-      <% Object.entries(info.counts).forEach(([k, v]) => { %><tr><th><%= k %></th><td><%= v.toLocaleString('vi-VN') %> dòng</td></tr><% }) %>
+      <% Object.entries(info.counts).forEach(([k, v]) => { %><tr><th><%= tableNames[k] || k %></th><td><%= v.toLocaleString('vi-VN') %> dòng</td></tr><% }) %>
       <tr><th>Backup gần nhất</th><td><%= s.last_backup ? H.fmtDate(+s.last_backup) : 'Chưa có' %></td></tr>
       <tr><th>Bảo trì tự động gần nhất</th><td><%= s.last_maintenance ? H.fmtDate(+s.last_maintenance) : 'Chưa chạy' %></td></tr>
     </table>
   </div>
   <div class="a-card">
-    <h3><%- I('gear') %> Quy tắc tự động (sửa trong .env)</h3>
+    <h3><%- I('gear') %> Quy tắc tự động</h3>
     <ul class="a-list">
-      <li>Mỗi 10 phút: hết hạn đơn nạp treo quá <b><%= retention.depositExpireMinutes %> phút</b>, dọn session/IP block hết hạn</li>
+      <li>Mỗi phút: hủy đơn nạp chờ quá <b><%= H.fmtDuration(expireMinutes) %></b> (sửa ở <a href="/admin/settings/bank">Cài đặt bank</a>)</li>
+      <li>Mỗi 10 phút: dọn session / IP block hết hạn</li>
       <li>Xóa nhật ký hoạt động & đăng nhập cũ hơn <b><%= retention.logDays %> ngày</b></li>
-      <li>Xóa đơn nạp hủy/hết hạn cũ hơn <b><%= retention.depositDays %> ngày</b></li>
+      <li>Xóa đơn nạp hủy/quá hạn cũ hơn <b><%= retention.depositDays %> ngày</b></li>
       <li>Xóa GD ngân hàng đã khớp cũ hơn <b><%= retention.bankTxnDays %> ngày</b></li>
       <li>Xóa biến động số dư cũ hơn <b><%= retention.balanceLogDays %> ngày</b></li>
       <li>Hằng ngày: chuyển đơn hàng & nạp tiền cũ hơn <b><%= retention.archiveDays %> ngày</b> sang bảng lưu trữ (khách vẫn xem được)</li>
       <li>Hằng ngày: backup DB, giữ <b><%= retention.backupKeep %></b> bản gần nhất; tối ưu chỉ mục</li>
     </ul>
+    <p class="a-muted a-small">Số ngày giữ dữ liệu sửa trong file .env trên VPS.</p>
     <h3>Chạy thủ công</h3>
     <div class="a-btn-grid">
-      <% [['light','broom','Dọn dẹp nhanh'],['archive','archive','Lưu trữ dữ liệu cũ'],['backup','save','Backup ngay'],['optimize','bolt','Tối ưu chỉ mục'],['stats','chart','Tính lại thống kê'],['vacuum','compress','VACUUM (thu gọn DB)'],['daily','refresh','Chạy toàn bộ']].forEach(([t, ic, l]) => { %>
+      <% tasks.forEach(([t, ic, l]) => { %>
         <form method="post" action="/admin/maintenance/run" data-confirm="Chạy tác vụ: <%= l %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="task" value="<%= t %>"><button class="a-btn <%= t === 'vacuum' ? 'a-danger' : '' %>"><%- I(ic) %> <%= l %></button></form>
       <% }) %>
     </div>
-    <p class="a-muted a-small">VACUUM khóa DB vài giây – nên chạy lúc ít khách.</p>
+  </div>
+  <div class="a-card">
+    <h3><%- I('info') %> Tác dụng các nút</h3>
+    <div class="a-task-help">
+      <% tasks.forEach(([t, ic, l, desc, note]) => { %>
+        <div><b><%- I(ic) %> <%= l %> <span class="a-tag <%= t === 'vacuum' ? 'red' : 'green' %>"><%= note %></span></b><p><%= desc %></p></div>
+      <% }) %>
+    </div>
+    <p class="a-muted a-small">Không nút nào xóa sản phẩm, tài khoản khách hay số dư. Sau khi chạy, kết quả hiện ở thông báo đầu trang.</p>
   </div>
 </div>
 <div class="a-card">

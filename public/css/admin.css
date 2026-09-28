@@ -421,3 +421,14 @@ select:disabled { background: #f5f6fa; color: #9aa1bb; cursor: not-allowed; }
 .a-logo.has-img { flex-direction: column; align-items: flex-start; gap: 4px; }
 .a-logo.has-img img { max-height: 44px; max-width: 190px; width: auto; object-fit: contain; }
 .a-logo.has-img small { display: block; font-weight: 500; font-size: .72rem; color: var(--side-text); }
+
+.a-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; }
+.a-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start; }
+@media (max-width: 1280px) { .a-grid-3 { grid-template-columns: 1fr 1fr; } .a-grid-3 > :last-child { grid-column: 1 / -1; } }
+@media (max-width: 800px) { .a-grid-3 { grid-template-columns: 1fr; } }
+.a-task-help { display: grid; gap: 10px; }
+.a-task-help > div { padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; }
+.a-task-help b { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.a-task-help b svg { width: 16px; height: 16px; }
+.a-task-help p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.a-task-help .a-tag { margin-left: auto; font-weight: 500; }

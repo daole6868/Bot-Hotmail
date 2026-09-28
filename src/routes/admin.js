@@ -942,11 +942,19 @@ const BANK_KEYS = ['bank_code', 'bank_name', 'bank_account', 'bank_owner', 'depo
 
 router.get('/settings/bank', (req, res) => res.render('admin/settings-bank', {
   title: 'Cài đặt bank', s: getSettings(), webhookUrl: config.baseUrl + '/api/bank/webhook',
+  expireMinutes: maintenance.depositExpireMinutes(),
+  pendingCount: db.prepare("SELECT COUNT(*) c FROM deposits WHERE status = 'pending'").get().c,
 }));
 
 router.post('/settings/bank', (req, res) => {
   for (const k of BANK_KEYS) if (req.body[k] !== undefined) setSetting(k, str(req.body[k], 200));
   setSetting('bank_owner', str(req.body.bank_owner, 100).toUpperCase());
+  // Thời gian chờ nạp: 5 phút – 7 ngày
+  const expMin = toInt(req.body.deposit_expire_minutes, 0, 0);
+  if (expMin < 5 || expMin > 10080) return back(req, res, 'error', 'Thời gian chờ nạp phải từ 5 đến 10080 phút (7 ngày)', '/admin/settings/bank');
+  setSetting('deposit_expire_minutes', String(expMin));
+  setSetting('deposit_late_credit', req.body.deposit_late_credit ? '1' : '0');
+  maintenance.expireDeposits(); // áp dụng ngay cho các đơn đang chờ
   audit(req, 'settings_bank_update');
   back(req, res, 'success', 'Đã lưu cài đặt bank', '/admin/settings/bank');
 });
@@ -992,19 +1000,32 @@ router.post('/security/unblock', (req, res) => {
 
 // ======================= BẢO TRÌ DỮ LIỆU =======================
 router.get('/maintenance', (req, res) => {
-  res.render('admin/maintenance', { title: 'Bảo trì dữ liệu', info: maintenance.dbInfo(), s: getSettings(), retention: config.retention });
+  res.render('admin/maintenance', { title: 'Bảo trì dữ liệu', info: maintenance.dbInfo(), s: getSettings(), retention: config.retention,
+    expireMinutes: maintenance.depositExpireMinutes() });
 });
 
 router.post('/maintenance/run', async (req, res) => {
   const task = req.body.task;
-  let msg = '';
-  if (task === 'light') msg = 'Dọn dẹp: ' + JSON.stringify(maintenance.runLight());
-  else if (task === 'archive') msg = 'Lưu trữ: ' + JSON.stringify(maintenance.archive());
-  else if (task === 'backup') msg = 'Đã backup: ' + (await maintenance.backup());
-  else if (task === 'optimize') { maintenance.optimize(false); msg = 'Đã tối ưu chỉ mục'; }
-  else if (task === 'vacuum') { maintenance.optimize(true); msg = 'Đã VACUUM (thu gọn file DB)'; }
-  else if (task === 'stats') { maintenance.rebuildStats(); msg = 'Đã tính lại thống kê'; }
-  else if (task === 'daily') msg = 'Hoàn tất: ' + JSON.stringify(await maintenance.runDaily());
+  const mb = (b) => (b / 1024 / 1024).toFixed(2) + ' MB';
+  const lightMsg = (r) => `hủy ${r.expired} đơn nạp quá hạn; xóa ${r.activityLogs + r.loginLogs} nhật ký cũ, ${r.deadDeposits} đơn nạp hủy cũ, `
+    + `${r.bankTxns} GD bank cũ, ${r.balanceLogs} biến động số dư cũ, ${r.sessions} phiên hết hạn, ${r.ipBlocks} IP hết hạn chặn`;
+  const archMsg = (r) => `chuyển ${r.orders} đơn hàng và ${r.deposits} đơn nạp cũ sang lưu trữ`;
+  let msg;
+  try {
+    if (task === 'light') msg = 'Dọn dẹp nhanh xong: ' + lightMsg(maintenance.runLight());
+    else if (task === 'archive') msg = 'Lưu trữ xong: ' + archMsg(maintenance.archive());
+    else if (task === 'backup') msg = 'Đã tạo bản backup ' + (await maintenance.backup());
+    else if (task === 'optimize') { const r = maintenance.optimize(false); msg = `Đã tối ưu chỉ mục (dung lượng ${mb(r.before)} → ${mb(r.after)})`; }
+    else if (task === 'vacuum') { const r = maintenance.optimize(true); msg = `Đã VACUUM, thu gọn file DB ${mb(r.before)} → ${mb(r.after)}`; }
+    else if (task === 'stats') msg = `Đã tính lại thống kê cho ${maintenance.rebuildStats()} ngày`;
+    else if (task === 'daily') {
+      const r = await maintenance.runDaily();
+      msg = `Chạy toàn bộ xong: ${lightMsg(r.light)}; ${archMsg(r.archived)}; tối ưu chỉ mục; backup ${r.backup}`;
+    } else return back(req, res, 'error', 'Tác vụ không hợp lệ', '/admin/maintenance');
+  } catch (e) {
+    console.error('[maintenance]', task, e);
+    return back(req, res, 'error', 'Lỗi khi chạy tác vụ: ' + e.message, '/admin/maintenance');
+  }
   audit(req, 'maintenance_' + task, msg.slice(0, 300));
   back(req, res, 'success', msg, '/admin/maintenance');
 });
