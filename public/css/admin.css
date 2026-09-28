@@ -284,11 +284,16 @@ body.a-modal-open { overflow: hidden; }
   .a-menu { display: inline-flex; }
   .a-top { padding: 10px 14px; }
   .a-hide-sm { display: none; }
-  .a-content { padding: 14px; }
+  .a-content { padding: 16px; }
   .a-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
   .a-row, .a-row-3 { grid-template-columns: 1fr; }
-  .a-acc-head { flex-wrap: wrap; }
-  .a-acc-head > .a-btn, .a-acc-head > .a-actions { margin-left: 46px; }
+  .a-acc-head { flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+  .a-acc-toggle { flex: 1 1 100%; gap: 12px; padding: 0; }
+  .a-acc-title b { font-size: 1rem; line-height: 1.35; }
+  .a-acc-title b, .a-acc-title small { display: block; white-space: normal; word-break: break-word; }
+  .a-acc-title small { margin-top: 2px; }
+  .a-acc-head > .a-btn, .a-acc-head > .a-actions { margin-left: 0; flex: 1 1 100%; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .a-acc-head > .a-btn { flex: 0 0 auto; margin-left: auto; }
   .a-modal { padding: 0; align-items: flex-end; }
   .a-modal-box { max-height: 92vh; border-radius: 20px 20px 0 0; }
   .a-upload-row { flex-direction: column; align-items: stretch; }
@@ -482,3 +487,16 @@ select:disabled { background: #f5f6fa; color: #9aa1bb; cursor: not-allowed; }
   .a-banner-row > .a-actions { grid-area: act; }
 }
 .a-nowrap { white-space: nowrap; }
+
+@media (max-width: 800px) {
+  /* Cây Game > Danh mục > Sản phẩm: thụt cấp rõ ràng, không sát lề */
+  .a-acc { border-radius: 16px; }
+  .a-acc-nested { padding: 12px 10px; }
+  .a-acc-sub .a-acc-head { padding: 12px; }
+  .a-acc-body > .a-table-wrap, .a-acc-body[data-rows] { padding: 4px 14px 8px; }
+  .a-acc-sub > .a-acc-body[data-rows] { padding: 4px 12px 8px; }
+  .a-cards .a-cell-act:last-child { margin-left: auto; }
+  .a-acc-body .a-cards tr { padding: 12px 0; }
+  .a-card { padding: 18px 16px; }
+  .a-type-badge { vertical-align: middle; }
+}
