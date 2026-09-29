@@ -201,6 +201,22 @@
   $$('.otp-input').forEach((inp) => inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 6); }));
 
   // Popup xác nhận mua: kiểm tra mã KM + số dư trước khi gửi đơn
+  // Nạp tiền: đang có đơn chờ -> hỏi trước khi tạo mã mới (đồng ý = hủy đơn cũ)
+  const depForm = $('form[data-has-pending]'), dr = $('#depReplace');
+  if (depForm && dr) {
+    const close = () => { dr.hidden = true; document.body.classList.remove('no-scroll'); };
+    depForm.addEventListener('submit', (e) => {
+      if (depForm.elements.replace.value === '1') return;
+      e.preventDefault();
+      dr.hidden = false; document.body.classList.add('no-scroll');
+      $('[data-dr-ok]', dr).focus();
+    });
+    $('[data-dr-ok]', dr).addEventListener('click', () => { close(); depForm.elements.replace.value = '1'; depForm.requestSubmit(); });
+    $$('[data-dr-close]', dr).forEach((b) => b.addEventListener('click', close));
+    dr.addEventListener('click', (e) => { if (e.target === dr) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !dr.hidden) close(); });
+  }
+
   const bc = $('#buyConfirm');
   const buyForm = $('[data-buy-form]');
   if (bc && buyForm) {

@@ -4,7 +4,6 @@ const { randomCode } = require('../utils/crypto');
 const { money } = require('../utils/helpers');
 const config = require('../config');
 
-const MAX_PENDING = 3;
 
 function limits() {
   const s = getSettings();
@@ -14,18 +13,20 @@ function limits() {
   };
 }
 
-function createDeposit(userId, amount) {
+/** Mỗi user chỉ có 1 mã nạp chờ thanh toán. replace = true -> hủy mã cũ (không cộng tiền nữa) rồi tạo mã mới */
+function createDeposit(userId, amount, { replace = false } = {}) {
   const st = getSettings();
   if (!st.bank_account || !st.bank_code) return { ok: false, message: 'Shop chưa cấu hình tài khoản ngân hàng nhận tiền. Vui lòng liên hệ admin.' };
   const { min, max } = limits();
   if (!Number.isInteger(amount) || amount < min || amount > max) {
     return { ok: false, message: `Số tiền nạp từ ${money(min)} đến ${money(max)}` };
   }
-  // Tái sử dụng yêu cầu đang chờ cùng số tiền, tránh spam tạo đơn
-  const same = db.prepare("SELECT * FROM deposits WHERE user_id = ? AND status = 'pending' AND amount = ? ORDER BY id DESC LIMIT 1").get(userId, amount);
-  if (same) return { ok: true, deposit: same };
+  return createTx(userId, amount, replace);
+}
+const createTx = db.transaction((userId, amount, replace) => {
   const pending = db.prepare("SELECT COUNT(*) n FROM deposits WHERE user_id = ? AND status = 'pending'").get(userId).n;
-  if (pending >= MAX_PENDING) return { ok: false, message: `Bạn đang có ${pending} yêu cầu nạp chưa thanh toán. Hãy thanh toán hoặc hủy bớt.` };
+  if (pending && !replace) return { ok: false, pending: true, message: 'Bạn có đơn nạp chưa thanh toán. Nếu tạo mã mới đơn nạp cũ sẽ bị hủy.' };
+  if (pending) db.prepare("UPDATE deposits SET status = 'cancelled' WHERE user_id = ? AND status = 'pending'").run(userId);
 
   let code;
   for (let i = 0; i < 5; i++) {
@@ -34,7 +35,7 @@ function createDeposit(userId, amount) {
   }
   const id = db.prepare('INSERT INTO deposits(user_id, code, amount) VALUES(?,?,?)').run(userId, code, amount).lastInsertRowid;
   return { ok: true, deposit: db.prepare('SELECT * FROM deposits WHERE id = ?').get(id) };
-}
+});
 
 /** Cộng tiền cho 1 đơn nạp. Idempotent: chỉ cộng khi đơn còn pending/expired. */
 const completeTx = db.transaction((depositId, received, { txnId = null, adminId = null, note = null } = {}) => {

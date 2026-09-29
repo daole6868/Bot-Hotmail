@@ -136,7 +136,7 @@ router.get('/deposit', (req, res) => {
 router.post('/deposit', limiters.deposit, (req, res) => {
   const amount = toInt(req.body.amount, 0, 0);
   maintenance.expireDeposits(); // không tái sử dụng đơn đã quá hạn
-  const r = createDeposit(req.user.id, amount);
+  const r = createDeposit(req.user.id, amount, { replace: req.body.replace === '1' });
   if (!r.ok) {
     req.flash('error', r.message);
     return res.redirect('/user/deposit');

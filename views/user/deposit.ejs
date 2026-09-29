@@ -26,8 +26,8 @@
 <% if (!s.bank_account) { %><div class="alert alert-warning"><%- I('alert') %> Shop chưa cấu hình tài khoản ngân hàng nhận tiền.</div><% } %>
 <div class="card pad">
   <h2>Tạo yêu cầu nạp tiền</h2>
-  <form method="post" action="/user/deposit" class="deposit-form">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <form method="post" action="/user/deposit" class="deposit-form" <%= pending.length ? 'data-has-pending' : '' %>>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="replace" value="">
     <div class="amount-presets">
       <% [20000, 50000, 100000, 200000, 500000, 1000000].forEach(a => { %><button type="button" class="chip" data-amount="<%= a %>"><%= H.money(a) %></button><% }) %>
     </div>
@@ -73,4 +73,18 @@
   </div>
   <%- include('../partials/pagination', { result: history, query }) %>
 </div>
+<% if (pending.length) { %>
+<div class="bc-modal" id="depReplace" hidden>
+  <div class="bc-box" role="dialog" aria-modal="true" aria-labelledby="drTitle">
+    <div class="bc-head">
+      <span class="bc-icon"><%- I('alert') %></span>
+      <div><h3 id="drTitle">Bạn có đơn nạp chưa thanh toán</h3><p>Nếu tạo mã mới đơn nạp cũ sẽ bị hủy.</p></div>
+    </div>
+    <div class="bc-actions">
+      <button type="button" class="btn btn-ghost" data-dr-close>Hủy</button>
+      <button type="button" class="btn btn-accent" data-dr-ok>Đồng ý</button>
+    </div>
+  </div>
+</div>
+<% } %>
 <%- include('../partials/footer') %>
