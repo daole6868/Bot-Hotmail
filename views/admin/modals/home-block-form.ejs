@@ -1,0 +1,64 @@
+<form method="post" action="/admin/home-blocks/save" enctype="multipart/form-data" class="a-form" novalidate data-validate data-hb-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= b ? b.id : '' %>">
+
+  <div class="a-form-context">
+    <span class="a-folder"><%- I(info.icon) %></span>
+    <div class="a-minw0"><small class="a-muted">Loại khối</small><b><%= info.name %></b></div>
+  </div>
+
+  <label>Tiêu đề <% if (type === 'banner') { %><small class="a-muted">(để bạn dễ nhận biết)</small><% } %></label>
+  <input name="title" maxlength="120" value="<%= b ? b.title : '' %>" placeholder="<%= type === 'banner' ? 'VD: Banner giữa trang' : info.name %>">
+
+  <% if (type === 'banner') { %>
+    <label class="a-check"><input type="checkbox" name="show_title" value="1" <%= settings.show_title ? 'checked' : '' %>> Hiện tiêu đề phía trên khối ngoài web</label>
+
+    <div class="a-row">
+      <div><label>Kích cỡ mỗi ảnh (Rộng × Cao, px)</label>
+        <div class="a-size"><input type="number" name="w" min="100" max="4000" value="<%= settings.w || 1200 %>" data-hb-w><span class="a-size-x">×</span><input type="number" name="h" min="50" max="4000" value="<%= settings.h || 400 %>" data-hb-h><span class="a-size-unit">px</span></div>
+      </div>
+      <div><label>Số ảnh mỗi hàng</label>
+        <div class="a-row">
+          <select name="cols_pc" data-hb-cols title="Trên PC"><% [1,2,3,4,5,6].forEach(n => { %><option value="<%= n %>" <%= (settings.cols_pc || 1) == n ? 'selected' : '' %>>PC: <%= n %></option><% }) %></select>
+          <select name="cols_m" title="Trên điện thoại"><% [1,2,3].forEach(n => { %><option value="<%= n %>" <%= (settings.cols_m || 1) == n ? 'selected' : '' %>>ĐT: <%= n %></option><% }) %></select>
+        </div>
+      </div>
+    </div>
+    <div class="a-chip-row">
+      <% [[1200,300,'Dải ngang 4:1'],[1200,400,'3:1'],[800,400,'2:1'],[600,600,'Vuông'],[600,800,'Dọc 3:4']].forEach(([w,h,l]) => { %><button type="button" class="a-btn a-xs" data-hb-preset="<%= w %>x<%= h %>"><%= l %></button><% }) %>
+    </div>
+    <label>Xem trước bố cục trên PC</label>
+    <div class="a-hb-preview" data-hb-preview></div>
+    <p class="a-field-hint">Ảnh khác tỉ lệ sẽ được cắt phần giữa cho vừa khung. Gợi ý: 1 ảnh/hàng dùng 1200×300; 2 ảnh/hàng dùng 800×400; 3–4 ảnh/hàng dùng ảnh vuông.</p>
+
+    <% if (items.length) { %>
+      <label>Ảnh trong khối</label>
+      <div class="a-hb-items">
+        <% items.forEach((it, k) => { %>
+          <div class="a-hb-item">
+            <img src="<%= it.image %>" alt="">
+            <div class="a-grow a-minw0">
+              <input name="link_<%= it.id %>" value="<%= it.link %>" maxlength="300" placeholder="Link khi bấm (VD /game/lien-quan-mobile)">
+              <div class="a-hb-item-foot">
+                <label class="a-hb-order">Thứ tự <input type="number" name="order_<%= it.id %>" value="<%= k + 1 %>" min="0" max="999"></label>
+                <label class="a-check a-hb-del"><input type="checkbox" name="remove_<%= it.id %>" value="1"> Xóa ảnh</label>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <label>Thêm ảnh <%- items.length ? '' : '<span class="req">*</span>' %> <small class="a-muted">(chọn được nhiều ảnh, tối đa 10 ảnh / lần, ≤ 8MB mỗi ảnh)</small></label>
+    <input type="file" name="images" accept="image/*" multiple <%= items.length ? '' : 'required' %>>
+    <input name="new_link" maxlength="300" placeholder="Link cho các ảnh vừa thêm (có thể sửa riêng từng ảnh sau)">
+  <% } else { %>
+    <p class="a-field-hint">Khối này lấy nội dung tự động. Ở đây chỉ đổi tiêu đề hiển thị; nội dung sửa ở mục <a href="<%= info.manage[0] %>"><%= info.manage[1] %></a>.</p>
+  <% } %>
+
+  <div class="a-modal-foot">
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= b ? 'Lưu thay đổi' : 'Thêm khối' %></button>
+  </div>
+</form>

@@ -1,0 +1,14 @@
+<% const bzStrip = H.bannerSize(s, 'strip'); %>
+<% if (strip.length) {
+  // Lặp danh sách cho đủ dài (>= 10 ảnh) rồi nhân đôi để chạy vòng liền mạch từ phải qua trái
+  let loop = [];
+  while (loop.length < 10) loop = loop.concat(strip);
+%>
+<section class="img-strip" data-strip aria-label="Ảnh nổi bật" style="--ar: <%= bzStrip.w %> / <%= bzStrip.h %>">
+  <div class="strip-track" style="--n: <%= loop.length %>">
+    <% [0, 1].forEach(copy => { loop.forEach(b => { %>
+      <a class="strip-item" href="<%= b.link || '#' %>" <%- copy ? 'aria-hidden="true" tabindex="-1"' : '' %>><img src="<%= b.image %>" alt="<%= copy ? '' : (b.title || '') %>" draggable="false"></a>
+    <% }) }) %>
+  </div>
+</section>
+<% } %>

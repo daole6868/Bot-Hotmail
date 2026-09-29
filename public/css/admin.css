@@ -518,3 +518,28 @@ select:disabled { background: #f5f6fa; color: #9aa1bb; cursor: not-allowed; }
 .a-cp-preview.vertical { flex-direction: column; }
 .a-cp-preview.vertical .a-cp-v { flex: 0 0 42%; }
 @media (max-width: 800px) { .a-cp-layout-form { grid-template-columns: 1fr; } }
+/* ---------- Bố cục trang chủ ---------- */
+.a-hb-list { display: flex; flex-direction: column; }
+.a-hb-row { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--border2); }
+.a-hb-row.a-row-off { opacity: .55; }
+.a-hb-no { width: 26px; height: 26px; border-radius: 50%; background: var(--primary-l); color: var(--primary); font-weight: 700; font-size: .8rem; display: grid; place-items: center; flex-shrink: 0; }
+.a-hb-thumb { width: 64px; height: 40px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); flex-shrink: 0; }
+.a-hb-row .a-type-badge { margin-left: 6px; }
+.a-hb-preview { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--border); border-radius: 12px; background: #f8f9fd; }
+.a-hb-preview i { display: block; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--primary2)); opacity: .75; }
+.a-hb-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+.a-hb-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px; border: 1px solid var(--border); border-radius: 12px; }
+.a-hb-item img { width: 96px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: #f3f5fb; }
+.a-hb-item-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.a-hb-order { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: .8rem; color: var(--muted); font-weight: 500; }
+.a-hb-order input { width: 64px; padding: 5px 8px; }
+.a-hb-del { margin: 0; font-size: .82rem; color: var(--red); }
+@media (max-width: 800px) {
+  .a-hb-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "no thumb info info" "move move actions sw"; gap: 8px 10px; padding: 12px 14px; }
+  .a-hb-row > .a-hb-no { grid-area: no; }
+  .a-hb-row > .a-hb-thumb, .a-hb-row > .a-folder { grid-area: thumb; }
+  .a-hb-row > .a-grow { grid-area: info; }
+  .a-hb-row > .a-move { grid-area: move; }
+  .a-hb-row > .a-actions { grid-area: actions; justify-self: end; }
+  .a-hb-row > .a-switch { grid-area: sw; justify-self: end; }
+}

@@ -770,3 +770,10 @@ body.no-scroll { overflow: hidden; }
   .top-uname { max-width: 48px; }
   .top-actions .btn-sm { padding: 6px 8px; }
 }
+/* ---------- Khối banner tự thêm ở trang chủ ---------- */
+.home-banner .hb-grid { display: grid; grid-template-columns: repeat(var(--hb-cols, 1), minmax(0, 1fr)); gap: 14px; }
+.hb-item { display: block; aspect-ratio: var(--hb-ar, 3 / 1); border-radius: calc(14px * var(--rk)); overflow: hidden; background: var(--card); border: 1px solid var(--img-border, var(--border)); transition: transform .15s, box-shadow .15s; }
+a.hb-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.hb-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 1100px) { .home-banner .hb-grid { grid-template-columns: repeat(var(--hb-cols-t, 2), minmax(0, 1fr)); } }
+@media (max-width: 720px) { .home-banner .hb-grid { grid-template-columns: repeat(var(--hb-cols-m, 1), minmax(0, 1fr)); gap: 10px; } .hb-item { border-radius: calc(10px * var(--rk)); } }

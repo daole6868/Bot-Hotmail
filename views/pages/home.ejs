@@ -1,85 +1,9 @@
 <%- include('../partials/header') %>
-<% const bzMain = H.bannerSize(s, 'main'), bzStrip = H.bannerSize(s, 'strip'); %>
-
-<% if (banners.length) { %>
-<section class="slider" data-slider style="--ar: <%= bzMain.w %> / <%= bzMain.h %>">
-  <div class="slides">
-    <% banners.forEach((b, i) => { %>
-      <a class="slide <%= i === 0 ? 'active' : '' %>" href="<%= b.link || '#' %>"><img src="<%= b.image %>" alt="<%= b.title || 'Banner' %>" <%= i ? 'loading=lazy' : '' %>></a>
-    <% }) %>
-  </div>
-  <% if (banners.length > 1) { %>
-    <button class="slider-nav prev" data-prev aria-label="Trước"><%- I('chevron-left') %></button>
-    <button class="slider-nav next" data-next aria-label="Sau"><%- I('chevron-right') %></button>
-    <div class="dots"><% banners.forEach((b, i) => { %><button data-dot="<%= i %>" class="<%= i === 0 ? 'active' : '' %>" aria-label="Banner <%= i + 1 %>"></button><% }) %></div>
-  <% } %>
-</section>
-<% } %>
-
-<% if (strip.length) {
-  // Lặp danh sách cho đủ dài (>= 10 ảnh) rồi nhân đôi để chạy vòng liền mạch từ phải qua trái
-  let loop = [];
-  while (loop.length < 10) loop = loop.concat(strip);
+<%
+  // Trang chủ vẽ theo "Bố cục trang chủ" trong admin: thứ tự, bật/tắt từng khối, khối banner tự thêm
+  const HOME_BLOCKS = ['slider', 'strip', 'games', 'coupons', 'featured', 'recent', 'banner'];
 %>
-<section class="img-strip" data-strip aria-label="Ảnh nổi bật" style="--ar: <%= bzStrip.w %> / <%= bzStrip.h %>">
-  <div class="strip-track" style="--n: <%= loop.length %>">
-    <% [0, 1].forEach(copy => { loop.forEach(b => { %>
-      <a class="strip-item" href="<%= b.link || '#' %>" <%- copy ? 'aria-hidden="true" tabindex="-1"' : '' %>><img src="<%= b.image %>" alt="<%= copy ? '' : (b.title || '') %>" draggable="false"></a>
-    <% }) }) %>
-  </div>
-</section>
-<% } %>
-
-<section class="section">
-  <div class="section-head"><h2><%- I('gamepad') %> Danh mục game</h2></div>
-  <div class="game-grid">
-    <% games.forEach(g => { %>
-      <a href="/game/<%= g.slug %>" class="card game-card" style="--c: <%= g.color %>">
-        <div class="thumb">
-          <img src="<%= g.image || '/img/no-image.svg' %>" alt="<%= g.name %>" loading="lazy">
-          <% if (g.is_hot) { %><span class="ribbon hot">HOT</span><% } %>
-        </div>
-        <div class="card-body">
-          <h3><%= g.name %></h3>
-          <div class="stat-boxes">
-            <div class="stat-box"><span class="stat-label"><%- I('cart') %> Đang bán</span><b><%= g.product_count.toLocaleString('vi-VN') %></b></div>
-            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã bán</span><b><%= g.sold.toLocaleString('vi-VN') %></b></div>
-          </div>
-          <span class="btn btn-block btn-primary">Xem ngay</span>
-        </div>
-      </a>
-    <% }) %>
-  </div>
-</section>
-
-<section class="section" id="coupons">
-  <div class="section-head"><h2><%- I('gift') %> Mã khuyến mãi</h2><a href="/khuyen-mai">Xem tất cả <%- I('chevron-right') %></a></div>
-  <%- include('../partials/coupon-list', { coupons }) %>
-</section>
-
-<% if (featured.length) { %>
-<section class="section">
-  <div class="section-head"><h2><%- I('star') %> Acc nổi bật</h2></div>
-  <div class="product-grid">
-    <% featured.forEach(p => { %><%- include('../partials/product-card', { p }) %><% }) %>
-  </div>
-</section>
-<% } %>
-
-<% if (recent.length) { %>
-<section class="section">
-  <div class="section-head"><h2><%- I('bag') %> Giao dịch gần đây</h2></div>
-  <div class="card">
-    <table class="table table-cards">
-      <thead><tr><th>Khách hàng</th><th>Sản phẩm</th><th>Giá</th><th>Thời gian</th></tr></thead>
-      <tbody>
-        <% recent.forEach(o => { %>
-          <tr><td class="tc-head"><%= o.username %></td><td class="tc-full"><%= o.product_title %></td><td data-label="Giá" class="price"><%= H.money(o.total) %></td><td data-label="Thời gian" class="muted"><%= H.fmtDate(o.created_at) %></td></tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
-</section>
-<% } %>
-
+<% blocks.forEach(block => { if (HOME_BLOCKS.includes(block.type)) { %>
+<%- include('../partials/home/' + block.type, { block }) %>
+<% } }) %>
 <%- include('../partials/footer') %>

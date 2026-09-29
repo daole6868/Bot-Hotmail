@@ -1,0 +1,34 @@
+<%- include('_header') %>
+<p class="a-muted a-small a-page-note"><%- I('list') %> <span>Các khối hiển thị ở <b>phần thân trang chủ</b> theo đúng thứ tự dưới đây. Bấm mũi tên để đổi vị trí, gạt công tắc để ẩn/hiện. Muốn thêm banner ở vị trí mới: bấm <b>Thêm khối banner</b> rồi đưa khối lên/xuống tới chỗ muốn đặt.</span></p>
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-pad">
+    <div><h3>Bố cục trang chủ <span class="a-count"><%= blocks.length %></span></h3><p class="a-muted a-small">Từ trên xuống dưới giống ngoài web</p></div>
+    <div class="a-head-actions">
+      <a href="/" target="_blank" class="a-btn a-ghost"><%- I('globe') %> <span class="a-hide-sm">Xem trang chủ</span></a>
+      <button type="button" class="a-btn a-primary" data-modal-url="/admin/home-blocks/form" data-modal-title="Thêm khối banner"><%- I('plus') %> Thêm khối banner</button>
+    </div>
+  </div>
+  <div class="a-hb-list">
+    <% blocks.forEach((b, i) => { %>
+      <div class="a-hb-row <%= b.is_active ? '' : 'a-row-off' %>">
+        <%- include('partials/move', { kind: 'home-blocks', id: b.id, first: i === 0, last: i === blocks.length - 1 }) %>
+        <span class="a-hb-no"><%= i + 1 %></span>
+        <% if (b.type === 'banner' && b.thumb) { %><img class="a-hb-thumb" src="<%= b.thumb %>" alt=""><% } else { %><span class="a-folder"><%- I(b.info.icon) %></span><% } %>
+        <div class="a-minw0 a-grow">
+          <b><%= b.type === 'banner' ? (b.title || 'Khối banner (không tiêu đề)') : b.info.name %></b>
+          <% if (b.type === 'banner') { %><span class="a-type-badge vip sm">Tự thêm</span><% } %>
+          <div class="a-muted a-small">
+            <% if (b.type === 'banner') { %><%= b.item_count %> ảnh · <%= b.settings.cols_pc || 1 %> ảnh/hàng trên PC, <%= b.settings.cols_m || 1 %> trên điện thoại · tỉ lệ <%= b.settings.w || 1200 %>×<%= b.settings.h || 400 %>
+            <% } else { %><% if (b.info.titled) { %>Tiêu đề: “<%= b.title || b.info.name %>” · <% } %>Nội dung sửa ở <a href="<%= b.info.manage[0] %>"><%= b.info.manage[1] %></a><% } %>
+          </div>
+        </div>
+        <%- include('partials/switch', { kind: 'home-blocks', id: b.id, on: b.is_active, disabled: false }) %>
+        <div class="a-actions">
+          <% if (b.info.titled || b.type === 'banner') { %><button type="button" class="a-icon-btn" data-modal-url="/admin/home-blocks/form?id=<%= b.id %>" data-modal-title="Sửa – <%= b.type === 'banner' ? (b.title || 'Khối banner') : b.info.name %>" title="Sửa"><%- I('edit') %></button><% } %>
+          <% if (b.type === 'banner') { %><form method="post" action="/admin/home-blocks/<%= b.id %>/delete" data-confirm="Xóa khối banner này và toàn bộ ảnh trong khối?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form><% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</section>
+<%- include('_footer') %>

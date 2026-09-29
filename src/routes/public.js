@@ -37,8 +37,18 @@ const PRODUCT_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.i
   (CASE WHEN p.type = 'stock' THEN (SELECT COUNT(*) FROM product_stock s WHERE s.product_id = p.id AND s.is_sold = 0) ELSE NULL END) AS stock_left`;
 
 // ================= CẤP 1: TRANG CHỦ - DANH MỤC GAME =================
+// Các khối trang chủ đang bật theo thứ tự admin sắp xếp; khối banner kèm danh sách ảnh
+function loadHomeBlocks() {
+  const blocks = db.prepare('SELECT * FROM home_blocks WHERE is_active = 1 ORDER BY sort_order, id').all()
+    .map((b) => ({ ...b, settings: parseJSON(b.settings, {}) }));
+  const items = db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id');
+  blocks.forEach((b) => { if (b.type === 'banner') b.items = items.all(b.id); });
+  return blocks.filter((b) => b.type !== 'banner' || b.items.length);
+}
+
 router.get('/', (req, res) => {
   const data = cached('home', 30000, () => ({
+    blocks: loadHomeBlocks(),
     banners: db.prepare("SELECT * FROM banners WHERE position = 'main' AND is_active = 1 ORDER BY sort_order, id").all(),
     strip: db.prepare("SELECT * FROM banners WHERE position = 'strip' AND is_active = 1 ORDER BY sort_order, id").all(),
     games: db.prepare(`SELECT g.*,

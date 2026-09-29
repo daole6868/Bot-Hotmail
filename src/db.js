@@ -352,6 +352,30 @@ if (addColumn('categories', 'sale_type', "TEXT NOT NULL DEFAULT 'vip'")) {
        OR id IN (SELECT category_id FROM products WHERE type = 'stock')`);
 }
 db.exec('CREATE INDEX IF NOT EXISTS idx_products_sort ON products(category_id, sort_order)');
+// Bố cục trang chủ: các khối hiển thị theo thứ tự admin sắp xếp (khối có sẵn + khối banner tự thêm)
+db.exec(`CREATE TABLE IF NOT EXISTS home_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    settings TEXT NOT NULL DEFAULT '{}',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE TABLE IF NOT EXISTS home_block_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    block_id INTEGER NOT NULL REFERENCES home_blocks(id) ON DELETE CASCADE,
+    image TEXT NOT NULL,
+    link TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '',
+    sort_order INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX IF NOT EXISTS idx_hbi_block ON home_block_items(block_id, sort_order);`);
+if (!db.prepare('SELECT 1 FROM home_blocks LIMIT 1').get()) {
+  const ins = db.prepare('INSERT INTO home_blocks(type, title, sort_order) VALUES(?,?,?)');
+  [['slider', ''], ['strip', ''], ['games', 'Danh mục game'], ['coupons', 'Mã khuyến mãi'], ['featured', 'Acc nổi bật'], ['recent', 'Giao dịch gần đây']]
+    .forEach(([t, title], i) => ins.run(t, title, i));
+}
 // Chỉ mục tìm kiếm toàn văn cho tên/mã acc (nhanh với hàng trăm nghìn acc, tìm được cả khi gõ không dấu)
 {
   const hasFts = db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'products_fts'").get();

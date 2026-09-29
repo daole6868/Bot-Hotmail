@@ -109,6 +109,29 @@
   // ---------------- Modal ----------------
   const modal = $('#aModal');
   const modalBody = $('#aModalBody');
+  // Khối banner trang chủ: xem trước bố cục (số ảnh / hàng + tỉ lệ) ngay khi nhập
+  function hbPreview(f) {
+    const box = $('[data-hb-preview]', f);
+    if (!box) return;
+    const draw = () => {
+      const w = +$('[data-hb-w]', f).value || 1200, h = +$('[data-hb-h]', f).value || 400, n = +$('[data-hb-cols]', f).value || 1;
+      box.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
+      box.innerHTML = Array.from({ length: n }, () => `<i style="aspect-ratio:${w}/${h}"></i>`).join('');
+    };
+    if (!f.dataset.hbInit) {
+      f.dataset.hbInit = '1';
+      f.addEventListener('input', draw);
+      f.addEventListener('change', draw);
+      f.addEventListener('click', (e) => {
+        const p = e.target.closest('[data-hb-preset]');
+        if (!p) return;
+        const [w, h] = p.dataset.hbPreset.split('x');
+        $('[data-hb-w]', f).value = w; $('[data-hb-h]', f).value = h; draw();
+      });
+    }
+    draw();
+  }
+
   async function openModal(url, title) {
     if (!modal) return;
     $('#aModalTitle').textContent = title || '';
@@ -121,6 +144,7 @@
       modalBody.innerHTML = await r.text();
       // Sau khi lưu sẽ quay lại đúng trang đang xem
       $$('input[name="_back"]', modalBody).forEach((i) => { i.value = location.pathname + location.search; });
+      $$('[data-hb-form]', modalBody).forEach(hbPreview);
       const first = $('[autofocus]', modalBody) || $('input:not([type=hidden]), select, textarea', modalBody);
       if (first) setTimeout(() => first.focus(), 50);
     } catch (e) {

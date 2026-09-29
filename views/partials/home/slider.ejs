@@ -1,0 +1,15 @@
+<% const bzMain = H.bannerSize(s, 'main'); %>
+<% if (banners.length) { %>
+<section class="slider" data-slider style="--ar: <%= bzMain.w %> / <%= bzMain.h %>">
+  <div class="slides">
+    <% banners.forEach((b, i) => { %>
+      <a class="slide <%= i === 0 ? 'active' : '' %>" href="<%= b.link || '#' %>"><img src="<%= b.image %>" alt="<%= b.title || 'Banner' %>" <%= i ? 'loading=lazy' : '' %>></a>
+    <% }) %>
+  </div>
+  <% if (banners.length > 1) { %>
+    <button class="slider-nav prev" data-prev aria-label="Trước"><%- I('chevron-left') %></button>
+    <button class="slider-nav next" data-next aria-label="Sau"><%- I('chevron-right') %></button>
+    <div class="dots"><% banners.forEach((b, i) => { %><button data-dot="<%= i %>" class="<%= i === 0 ? 'active' : '' %>" aria-label="Banner <%= i + 1 %>"></button><% }) %></div>
+  <% } %>
+</section>
+<% } %>

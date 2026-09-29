@@ -1,0 +1,21 @@
+<section class="section">
+  <div class="section-head"><h2><%- I('gamepad') %> <%= block.title || 'Danh mục game' %></h2></div>
+  <div class="game-grid">
+    <% games.forEach(g => { %>
+      <a href="/game/<%= g.slug %>" class="card game-card" style="--c: <%= g.color %>">
+        <div class="thumb">
+          <img src="<%= g.image || '/img/no-image.svg' %>" alt="<%= g.name %>" loading="lazy">
+          <% if (g.is_hot) { %><span class="ribbon hot">HOT</span><% } %>
+        </div>
+        <div class="card-body">
+          <h3><%= g.name %></h3>
+          <div class="stat-boxes">
+            <div class="stat-box"><span class="stat-label"><%- I('cart') %> Đang bán</span><b><%= g.product_count.toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã bán</span><b><%= g.sold.toLocaleString('vi-VN') %></b></div>
+          </div>
+          <span class="btn btn-block btn-primary">Xem ngay</span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+</section>

@@ -1,0 +1,8 @@
+<% if (featured.length) { %>
+<section class="section">
+  <div class="section-head"><h2><%- I('star') %> <%= block.title || 'Acc nổi bật' %></h2></div>
+  <div class="product-grid">
+    <% featured.forEach(p => { %><%- include('../product-card', { p }) %><% }) %>
+  </div>
+</section>
+<% } %>
