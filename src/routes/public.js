@@ -14,6 +14,7 @@ function cached(key, ttlMs, fn) {
   const c = cache.get(key);
   if (c && Date.now() - c.at < ttlMs) return c.v;
   const v = fn();
+  if (cache.size > 500) cache.clear(); // từ khóa tìm kiếm rất đa dạng -> không để bộ nhớ phình
   cache.set(key, { v, at: Date.now() });
   return v;
 }
@@ -117,6 +118,16 @@ function loadProduct(code) {
   return decorate(p);
 }
 
+const relatedCache = new Map();
+function relatedIds(gameId) {
+  const c = relatedCache.get(gameId);
+  if (c && Date.now() - c.at < 60000) return c.ids.slice();
+  const ids = db.prepare(`SELECT p.id FROM products p JOIN categories c ON c.id = p.category_id
+    WHERE c.game_id = ? AND c.is_active = 1 AND p.status = 'available' ORDER BY p.id DESC LIMIT 2000`).all(gameId).map((r) => r.id);
+  relatedCache.set(gameId, { at: Date.now(), ids });
+  return ids.slice();
+}
+
 router.get('/product/:code', (req, res, next) => {
   const p = loadProduct(str(req.params.code, 20));
   if (!p) return next();
@@ -126,9 +137,13 @@ router.get('/product/:code', (req, res, next) => {
     req.session.viewed.push(p.id);
     db.prepare('UPDATE products SET views = views + 1 WHERE id = ?').run(p.id);
   }
-  // Tài khoản liên quan: ngẫu nhiên các acc cùng game (mọi danh mục), tối đa 8
-  const related = db.prepare(`SELECT ${PRODUCT_SELECT} FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
-    WHERE g.id = ? AND p.id != ? AND p.status = 'available' AND c.is_active = 1 ORDER BY RANDOM() LIMIT 8`).all(p.game_id, p.id).map(decorate);
+  // Tài khoản liên quan: ngẫu nhiên 8 acc cùng game. Danh sách id acc đang bán của game được nhớ 60 giây,
+  // chọn ngẫu nhiên trong JS rồi lấy đúng 8 acc theo id -> không phải xáo trộn cả nghìn acc mỗi lần mở trang
+  const ids = relatedIds(p.game_id).filter((id) => id !== p.id);
+  const pick = [];
+  for (let i = 0; i < 8 && ids.length; i++) pick.push(ids.splice(Math.random() * ids.length | 0, 1)[0]);
+  const related = pick.length ? db.prepare(`SELECT ${PRODUCT_SELECT} FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
+    WHERE p.id IN (${pick.map(() => '?').join(',')}) AND p.status = 'available'`).all(...pick).map(decorate) : [];
   const coupons = publicCoupons(10).filter((c) => !c.game_id || c.game_id === p.game_id);
   res.render('pages/product', {
     title: p.title, p, related, coupons,
@@ -171,16 +186,28 @@ router.post('/api/coupon/check', limiters.coupon, (req, res) => {
 router.get('/search', (req, res) => {
   const q = str(req.query.q, 60);
   let result = { rows: [], total: 0, page: 1, pages: 1 };
-  if (q.length >= 2) {
-    result = paginate(db, {
+  // Từ khóa -> truy vấn FTS: mỗi từ khớp tiền tố ("lien quan" khớp "Liên Quân ...")
+  const terms = q.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean).slice(0, 8);
+  const page = toInt(req.query.page, 1, 1);
+  const ck = 'search:' + terms.join(' ') + ':' + page;
+  if (q.length >= 2 && terms.length) result = cached(ck, 20000, () => {
+    const match = terms.map((t) => `"${t}"*`).join(' ');
+    // Tên game / danh mục (bảng nhỏ): so khớp không dấu, VD "lien quan" khớp "Liên Quân Mobile"
+    const plain = (x) => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+    const pq = plain(terms.join(' '));
+    const catIds = db.prepare('SELECT c.id, c.name, g.name AS game FROM categories c JOIN games g ON g.id = c.game_id').all()
+      .filter((c) => plain(c.name).includes(pq) || plain(c.game).includes(pq)).map((c) => c.id);
+    const r = paginate(db, {
       select: PRODUCT_SELECT,
       from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
-      where: "WHERE p.status = 'available' AND c.is_active = 1 AND g.is_active = 1 AND (p.title LIKE ? OR p.code LIKE ? OR g.name LIKE ? OR c.name LIKE ?)",
-      params: [`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`],
-      order: 'ORDER BY p.id DESC', page: toInt(req.query.page, 1, 1), perPage: 12,
+      where: `WHERE p.status = 'available' AND c.is_active = 1 AND g.is_active = 1
+        AND (p.id IN (SELECT rowid FROM products_fts WHERE products_fts MATCH ?)${catIds.length ? ` OR p.category_id IN (${catIds.join(',')})` : ''})`,
+      params: [match],
+      order: 'ORDER BY p.id DESC', page, perPage: 12,
     });
-    result.rows.forEach(decorate);
-  }
+    r.rows.forEach(decorate);
+    return r;
+  });
   res.render('pages/search', { title: 'Tìm kiếm', q, result, query: { q }, breadcrumb: [{ name: 'Tìm kiếm' }] });
 });
 

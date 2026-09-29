@@ -23,7 +23,7 @@ Quên mật khẩu admin: `npm run reset-admin -- MatKhauMoi123`
 1. `NODE_ENV=production`, đổi `SESSION_SECRET`, `APP_KEY`, `ADMIN_PASSWORD`, `BANK_WEBHOOK_TOKEN` (nếu chưa đổi, server không chịu chạy).
    Tạo chuỗi ngẫu nhiên: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 2. Đặt web sau Nginx/Cloudflare, bật HTTPS, `TRUST_PROXY=true`, `BASE_URL=https://ten-mien.com`.
-3. Giữ server luôn chạy bằng PM2: `npm i -g pm2 && pm2 start server.js --name shopacc`.
+3. Giữ server luôn chạy bằng PM2: `npm i -g pm2 && pm2 start server.js --name shopacc -i 2` (`-i 2` = chạy 2 bản trên 2 nhân CPU, chịu tải gấp đôi; VPS 1 nhân thì bỏ `-i 2`).
 4. **Không bao giờ đổi `APP_KEY`** sau khi đã có dữ liệu (thông tin acc được mã hóa bằng khóa này).
 
 ## 2. Bố cục giao diện (3 cấp)

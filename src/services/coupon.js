@@ -28,8 +28,16 @@ function validateCoupon(code, userId, price, gameId) {
   return { ok: true, coupon: c, discount };
 }
 
+// Danh sách mã công khai hiện ở nhiều trang -> nhớ 30 giây (admin sửa mã thì xóa nhớ ngay)
+let pcCache = { at: 0, rows: null };
+function clearCouponCache() { pcCache = { at: 0, rows: null }; }
 function publicCoupons(limit = 6) {
+  if (!pcCache.rows || Date.now() - pcCache.at > 30000) pcCache = { at: Date.now(), rows: loadPublicCoupons() };
+  return pcCache.rows.slice(0, limit);
+}
+function loadPublicCoupons() {
   const t = now();
+  const limit = 50;
   return db.prepare(`SELECT c.*, g.name AS game_name FROM coupons c LEFT JOIN games g ON g.id = c.game_id
     WHERE c.is_active = 1 AND c.is_public = 1
       AND (c.starts_at IS NULL OR c.starts_at <= ?) AND (c.expires_at IS NULL OR c.expires_at >= ?)
@@ -37,4 +45,4 @@ function publicCoupons(limit = 6) {
     ORDER BY c.created_at DESC LIMIT ?`).all(t, t, limit);
 }
 
-module.exports = { validateCoupon, publicCoupons };
+module.exports = { validateCoupon, publicCoupons, clearCouponCache };

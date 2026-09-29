@@ -644,7 +644,7 @@ router.get('/orders/export.csv', (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="orders-${vnDay()}.csv"`);
   res.write('﻿Mã đơn,Khách,Game,Sản phẩm,Giá,Giảm,Thanh toán,Mã KM,Trạng thái,Thời gian\n');
   // Stream theo từng dòng -> xuất được hàng trăm nghìn đơn mà không tốn RAM
-  const it = db.prepare(`SELECT o.*, u.username FROM ${f.table} o LEFT JOIN users u ON u.id = o.user_id ${f.where} ORDER BY o.id DESC`).iterate(...f.params);
+  const it = db.prepareFresh(`SELECT o.*, u.username FROM ${f.table} o LEFT JOIN users u ON u.id = o.user_id ${f.where} ORDER BY o.id DESC`).iterate(...f.params);
   for (const o of it) {
     res.write([o.order_code, o.username, o.game_name, o.product_title, o.price, o.discount, o.total, o.coupon_code, o.status, H.fmtDate(o.created_at)]
       .map(H.escapeCsv).join(',') + '\n');
@@ -841,12 +841,14 @@ router.post('/coupons/save', (req, res) => {
       per_user_limit=?, starts_at=?, expires_at=?, is_public=?, is_active=? WHERE id=?`).run(...data, id);
   else db.prepare(`INSERT INTO coupons(code, description, type, value, max_discount, min_order, game_id, usage_limit, per_user_limit,
       starts_at, expires_at, is_public, is_active) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(...data);
+  require('../services/coupon').clearCouponCache();
   audit(req, id ? 'coupon_update' : 'coupon_create', code);
   back(req, res, 'success', 'Đã lưu mã giảm giá', '/admin/coupons');
 });
 
 router.post('/coupons/:id/delete', (req, res) => {
   db.prepare('DELETE FROM coupons WHERE id = ?').run(toInt(req.params.id));
+  require('../services/coupon').clearCouponCache();
   audit(req, 'coupon_delete', req.params.id);
   back(req, res, 'success', 'Đã xóa mã', '/admin/coupons');
 });

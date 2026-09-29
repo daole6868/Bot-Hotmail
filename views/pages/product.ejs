@@ -50,7 +50,7 @@
     <% if (soldOut) { %>
       <div class="alert alert-error"><%- I('alert') %> Sản phẩm đã bán hoặc hết hàng.</div>
     <% } else { %>
-      <% if (p.type === 'stock') { %><div class="pd-stock"><%- I('box') %> Kho còn <b><%= p.stock_left.toLocaleString('vi-VN') %></b> acc · giao ngay sau khi thanh toán</div><% } %>
+      <% if (p.type === 'stock') { %><div class="pd-stock"><%- I('box') %> <span>Kho còn <b><%= p.stock_left.toLocaleString('vi-VN') %></b> acc</span></div><% } %>
       <form method="post" action="/product/<%= p.code %>/buy" class="pd-buy" data-buy-form>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <label class="label" for="couponInput">Mã giảm giá <span class="muted small">(nếu có)</span></label>

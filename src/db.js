@@ -10,6 +10,23 @@ fs.mkdirSync(config.paths.uploads, { recursive: true });
 
 const db = new Database(path.join(config.paths.data, 'shop.db'));
 
+// Dùng lại câu lệnh SQL đã biên dịch (mỗi lần prepare tốn CPU) — giới hạn 1000 câu để không phình RAM.
+// Câu lệnh cần .iterate() (đọc dần) phải dùng db.prepareFresh để tránh "statement busy" khi chạy song song.
+{
+  const stmtCache = new Map();
+  const rawPrepare = db.prepare.bind(db);
+  db.prepareFresh = rawPrepare;
+  db.prepare = (sql) => {
+    let st = stmtCache.get(sql);
+    if (!st) {
+      if (stmtCache.size >= 1000) stmtCache.clear();
+      st = rawPrepare(sql);
+      stmtCache.set(sql, st);
+    }
+    return st;
+  };
+}
+
 // Tối ưu cho nhiều dữ liệu: WAL cho đọc/ghi đồng thời, cache lớn, đợi khóa thay vì lỗi
 db.pragma('journal_mode = WAL');
 db.pragma('synchronous = NORMAL');
@@ -335,6 +352,19 @@ if (addColumn('categories', 'sale_type', "TEXT NOT NULL DEFAULT 'vip'")) {
        OR id IN (SELECT category_id FROM products WHERE type = 'stock')`);
 }
 db.exec('CREATE INDEX IF NOT EXISTS idx_products_sort ON products(category_id, sort_order)');
+// Chỉ mục tìm kiếm toàn văn cho tên/mã acc (nhanh với hàng trăm nghìn acc, tìm được cả khi gõ không dấu)
+{
+  const hasFts = db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'products_fts'").get();
+  db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS products_fts USING fts5(title, code, content='products', content_rowid='id', tokenize='unicode61 remove_diacritics 2');
+    CREATE TRIGGER IF NOT EXISTS products_fts_ai AFTER INSERT ON products BEGIN
+      INSERT INTO products_fts(rowid, title, code) VALUES (new.id, new.title, new.code); END;
+    CREATE TRIGGER IF NOT EXISTS products_fts_ad AFTER DELETE ON products BEGIN
+      INSERT INTO products_fts(products_fts, rowid, title, code) VALUES ('delete', old.id, old.title, old.code); END;
+    CREATE TRIGGER IF NOT EXISTS products_fts_au AFTER UPDATE OF title, code ON products BEGIN
+      INSERT INTO products_fts(products_fts, rowid, title, code) VALUES ('delete', old.id, old.title, old.code);
+      INSERT INTO products_fts(rowid, title, code) VALUES (new.id, new.title, new.code); END;`);
+  if (!hasFts) db.exec("INSERT INTO products_fts(products_fts) VALUES('rebuild')");
+}
 // Thêm vị trí banner 'strip' (dải ảnh chạy ở trang chủ): SQLite không sửa được CHECK -> dựng lại bảng
 {
   const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'banners'").get()?.sql || '';

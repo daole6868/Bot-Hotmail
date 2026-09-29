@@ -11,6 +11,7 @@ class SQLiteStore extends session.Store {
       ON CONFLICT(sid) DO UPDATE SET sess = excluded.sess, expires = excluded.expires`);
     this.delStmt = db.prepare('DELETE FROM sessions WHERE sid = ?');
     this.touchStmt = db.prepare('UPDATE sessions SET expires = ? WHERE sid = ?');
+    this.touched = new Map();
   }
 
   expiresOf(sess) {
@@ -36,8 +37,17 @@ class SQLiteStore extends session.Store {
     try { this.delStmt.run(sid); cb && cb(null); } catch (e) { cb && cb(e); }
   }
 
+  // Gia hạn phiên: ghi DB tối đa 10 phút/lần cho mỗi phiên thay vì mỗi request (giảm ghi DB rất nhiều khi đông khách)
   touch(sid, sess, cb) {
-    try { this.touchStmt.run(this.expiresOf(sess), sid); cb && cb(null); } catch (e) { cb && cb(e); }
+    try {
+      const now = Date.now();
+      if (now - (this.touched.get(sid) || 0) > 10 * 60 * 1000) {
+        this.touchStmt.run(this.expiresOf(sess), sid);
+        if (this.touched.size > 50000) this.touched.clear();
+        this.touched.set(sid, now);
+      }
+      cb && cb(null);
+    } catch (e) { cb && cb(e); }
   }
 
   destroyUser(userId) {

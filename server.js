@@ -126,7 +126,8 @@ app.use((err, req, res, next) => {
   res.status(code).render('errors/error', { code, message: code === 500 ? 'Lỗi máy chủ, vui lòng thử lại sau' : err.message });
 });
 
-maintenance.startScheduler();
+// Chạy PM2 nhiều bản (cluster): chỉ bản số 0 chạy dọn dẹp / backup định kỳ
+if (!process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0') maintenance.startScheduler();
 
 app.listen(config.port, () => {
   console.log(`Shop đang chạy tại ${config.baseUrl} (port ${config.port})`);
