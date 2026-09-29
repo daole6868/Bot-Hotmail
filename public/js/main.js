@@ -166,6 +166,27 @@
     });
   }
 
+  // Điện thoại: cuộn xuống quá 1 đoạn thì ẩn thanh tìm kiếm, cuộn lên thì hiện lại
+  const topbar = $('.topbar');
+  const mq = window.matchMedia('(max-width: 720px)');
+  if (topbar && $('.search', topbar)) {
+    let lastY = window.scrollY, ticking = false, lockUntil = 0;
+    const update = () => {
+      ticking = false;
+      const y = window.scrollY;
+      const hidden = topbar.classList.contains('search-hidden');
+      const canScroll = document.documentElement.scrollHeight - window.innerHeight > 400;
+      if (!mq.matches || !canScroll || y < 80 || document.activeElement?.closest('.search')) {
+        if (hidden) topbar.classList.remove('search-hidden');
+      } else if (Date.now() > lockUntil) {
+        if (!hidden && y > lastY + 8) { topbar.classList.add('search-hidden'); lockUntil = Date.now() + 300; }
+        else if (hidden && y < lastY - 8) { topbar.classList.remove('search-hidden'); lockUntil = Date.now() + 300; }
+      }
+      if (Math.abs(y - lastY) > 8 || y < 80) lastY = y;
+    };
+    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  }
+
   // Popup xác nhận mua: kiểm tra mã KM + số dư trước khi gửi đơn
   const bc = $('#buyConfirm');
   const buyForm = $('[data-buy-form]');

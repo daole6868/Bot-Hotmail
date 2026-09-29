@@ -745,3 +745,28 @@ body.no-scroll { overflow: hidden; }
   .pd-main .ribbon-right { top: 8px; right: 8px; font-size: 11px; padding: 3px 8px; }
   .pd-count { font-size: 11px; padding: 3px 8px; }
 }
+
+/* ---------- Header điện thoại: logo + số dư + tài khoản 1 hàng, thanh tìm kiếm tự ẩn khi cuộn xuống ---------- */
+.catbar-ui { display: none; }
+@media (max-width: 720px) {
+  .topbar-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "menu logo actions" "search search search"; align-items: center; gap: 8px; padding: 8px 12px; }
+  .topbar-inner > .menu-toggle { grid-area: menu; }
+  .topbar-inner > .logo { grid-area: logo; min-width: 0; font-size: 1.05rem; gap: 6px; }
+  .topbar-inner > .logo > span:not(.logo-mark) { overflow: hidden; text-overflow: ellipsis; }
+  .topbar-inner > .logo .logo-mark .ico { width: 24px; height: 24px; }
+  .topbar-inner > .logo img { height: 32px; max-width: 100%; object-fit: contain; object-position: left center; }
+  .topbar-inner > .top-actions { grid-area: actions; margin-left: 0; gap: 6px; flex-wrap: nowrap; }
+  .topbar-inner > .search { grid-area: search; max-width: none; max-height: 60px; transition: max-height .25s ease, opacity .2s ease, margin .25s ease; }
+  .top-actions > .icon-round { display: none; } /* đã có trong menu tài khoản / menu ☰ */
+  .top-actions .btn-sm { padding: 5px 9px; font-size: .74rem; gap: 4px; border-radius: calc(8px * var(--rk)); line-height: 1.3; }
+  .top-actions .btn-sm .ico { width: 14px; height: 14px; }
+  .top-uname { max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+  .top-balance { white-space: nowrap; }
+  .topbar.search-hidden .search { max-height: 0; opacity: 0; margin-top: -8px; overflow: hidden; pointer-events: none; }
+  .catbar-ui { display: flex; align-items: center; gap: 8px; padding: 11px 14px; background: none; border: 0; color: var(--muted); font: inherit; font-weight: 500; cursor: pointer; text-align: left; }
+  .catbar-ui .ico { width: 18px; height: 18px; }
+}
+@media (max-width: 360px) {
+  .top-uname { max-width: 48px; }
+  .top-actions .btn-sm { padding: 6px 8px; }
+}

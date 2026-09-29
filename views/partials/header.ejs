@@ -44,9 +44,9 @@
       <button type="button" class="icon-round" data-ui-open title="Cài đặt giao diện" aria-label="Cài đặt giao diện"><%- I('palette') %></button>
       <a href="/khuyen-mai" class="hide-sm"><%- I('gift') %> Khuyến mãi</a>
       <% if (U) { %>
-        <a href="/user/deposit" class="btn btn-sm btn-accent"><%- I('card') %> <%= H.money(U.balance) %></a>
+        <a href="/user/deposit" class="btn btn-sm btn-accent top-balance"><%- I('card') %> <%= H.money(U.balance) %></a>
         <div class="dropdown">
-          <button class="btn btn-sm btn-ghost" data-toggle="#userMenu"><%- I('user') %> <%= U.username %> <%- I('caret-down') %></button>
+          <button class="btn btn-sm btn-ghost top-user" data-toggle="#userMenu"><%- I('user') %> <span class="top-uname"><%= U.username %></span> <%- I('caret-down') %></button>
           <div class="dropdown-menu" id="userMenu">
             <% if (U.role === 'admin') { %><a href="/admin"><%- I('gear') %> Trang quản trị</a><% } %>
             <a href="/user">Tài khoản</a>
@@ -72,6 +72,7 @@
         <a href="/game/<%= g.slug %>" class="<%= (locals.currentPath || '').startsWith('/game/' + g.slug) ? 'active' : '' %>"><%= g.name %><% if (g.is_hot) { %> <span class="badge-hot">HOT</span><% } %></a>
       <% }) %>
       <a href="/user/deposit"><%- I('card') %> Nạp tiền</a>
+      <button type="button" class="catbar-ui" data-ui-open><%- I('palette') %> Cài đặt giao diện</button>
     </div>
   </nav>
 </header>
