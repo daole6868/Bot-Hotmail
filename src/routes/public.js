@@ -119,6 +119,7 @@ function loadProduct(code) {
 }
 
 const relatedCache = new Map();
+const viewSeen = new Map();
 function relatedIds(gameId) {
   const c = relatedCache.get(gameId);
   if (c && Date.now() - c.at < 60000) return c.ids.slice();
@@ -131,10 +132,12 @@ function relatedIds(gameId) {
 router.get('/product/:code', (req, res, next) => {
   const p = loadProduct(str(req.params.code, 20));
   if (!p) return next();
-  // Đếm lượt xem 1 lần / phiên
-  req.session.viewed = (req.session.viewed || []).slice(-50);
-  if (!req.session.viewed.includes(p.id)) {
-    req.session.viewed.push(p.id);
+  // Đếm lượt xem: mỗi IP tính 1 lần / acc / 6 giờ (nhớ trong RAM, không tạo phiên cho khách chưa đăng nhập)
+  const vk = clientIp(req) + ':' + p.id;
+  const seen = viewSeen.get(vk);
+  if (!seen || Date.now() - seen > 6 * 3600 * 1000) {
+    if (viewSeen.size > 100000) viewSeen.clear();
+    viewSeen.set(vk, Date.now());
     db.prepare('UPDATE products SET views = views + 1 WHERE id = ?').run(p.id);
   }
   // Tài khoản liên quan: ngẫu nhiên 8 acc cùng game. Danh sách id acc đang bán của game được nhớ 60 giây,

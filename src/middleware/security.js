@@ -1,14 +1,38 @@
 'use strict';
+const crypto = require('crypto');
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const { db, logActivity } = require('../db');
 const { randomToken, safeEqual } = require('../utils/crypto');
 const { clientIp } = require('../utils/helpers');
 const config = require('../config');
 
-// ---------- CSRF (synchronizer token lưu trong session) ----------
+// ---------- CSRF ----------
+// Mã chống giả mạo có chữ ký HMAC, lưu trong cookie riêng (double-submit): khách chỉ xem trang không cần tạo
+// phiên trong database (bot/máy quét không làm phình bảng sessions). Phiên cũ đã có mã trong session vẫn dùng tiếp.
+const CSRF_COOKIE = 'xsrf';
+const signCsrf = (nonce) => nonce + '.' + crypto.createHmac('sha256', config.sessionSecret).update('csrf:' + nonce).digest('base64url').slice(0, 32);
+const validCsrf = (t) => typeof t === 'string' && /^[a-f0-9]{32}\.[A-Za-z0-9_-]{32}$/.test(t) && safeEqual(t, signCsrf(t.split('.')[0]));
+function readCookie(req, name) {
+  const m = (req.headers.cookie || '').match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
+  return m ? m[1] : null;
+}
+function expectedCsrf(req) {
+  if (req.session?.csrf) return req.session.csrf;
+  const c = readCookie(req, CSRF_COOKIE);
+  return validCsrf(c) ? c : null;
+}
+
 function csrf(req, res, next) {
-  if (!req.session.csrf) req.session.csrf = randomToken(24);
-  res.locals.csrfToken = req.session.csrf;
+  let token = expectedCsrf(req);
+  if (!token) {
+    token = signCsrf(randomToken(16));
+    res.cookie(CSRF_COOKIE, token, {
+      httpOnly: true, sameSite: 'lax', path: '/', maxAge: 30 * 86400 * 1000,
+      secure: config.isProd && config.baseUrl.startsWith('https'),
+    });
+    req.headers.cookie = (req.headers.cookie ? req.headers.cookie + '; ' : '') + CSRF_COOKIE + '=' + token;
+  }
+  res.locals.csrfToken = token;
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
   // Form upload ảnh (multipart) chỉ có ở trang admin: router admin tự kiểm tra CSRF sau khi parse form
   if (req.is('multipart/form-data') && req.path.startsWith('/admin')) return next();
@@ -21,7 +45,8 @@ function csrf(req, res, next) {
 
 function verifyCsrf(req) {
   const token = req.body?._csrf || req.get('x-csrf-token');
-  return !!token && !!req.session.csrf && safeEqual(token, req.session.csrf);
+  const expected = expectedCsrf(req);
+  return typeof token === 'string' && !!expected && safeEqual(token, expected);
 }
 
 // ---------- Chặn IP (bảng ip_blocks) ----------

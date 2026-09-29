@@ -4,7 +4,8 @@ module.exports = {
     name: 'gachaz',
     script: 'server.js',
     cwd: __dirname + '/..',
-    instances: 1, // SQLite: chỉ chạy 1 tiến trình
+    instances: 2, // cluster 2 bản (VPS 2 nhân); dùng chung 1 file SQLite ở chế độ WAL, chỉ bản 0 chạy dọn dẹp/backup
+    exec_mode: 'cluster',
     autorestart: true,
     max_memory_restart: '500M',
     env: { NODE_ENV: 'production' },

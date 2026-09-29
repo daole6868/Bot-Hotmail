@@ -39,7 +39,7 @@
       <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>"><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ</span></label><% }) %>
     </div>
     <input type="file" name="images" accept="image/*" multiple>
-    <p class="a-muted a-small">Tối đa 10 ảnh, mỗi ảnh ≤ 4MB. Bỏ tick "Giữ" để xóa ảnh cũ.</p>
+    <p class="a-muted a-small">Tối đa 10 ảnh, mỗi ảnh ≤ 8MB (tự nén). Bỏ tick "Giữ" để xóa ảnh cũ.</p>
 
     <div data-type-account <%= p.type === 'stock' ? 'hidden' : '' %>>
       <h3><%- I('key') %> Thông tin giao cho khách</h3>

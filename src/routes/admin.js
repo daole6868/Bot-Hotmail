@@ -5,7 +5,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { db, getSettings, setSetting, logActivity, vnDay } = require('../db');
 const { requireAdmin, verifyCsrf, blockIp, unblockIp } = require('../middleware/security');
-const { upload, saveImage, removeImage } = require('../utils/upload');
+const { upload, saveImage, removeImage, optimizeUploads } = require('../utils/upload');
 const { encrypt, decrypt, sha256, randomCode } = require('../utils/crypto');
 const H = require('../utils/helpers');
 const { refund } = require('../services/order');
@@ -34,11 +34,11 @@ router.use((req, res, next) => {
   if (!req.is('multipart/form-data')) return next();
   upload.any()(req, res, (err) => {
     if (err) {
-      req.flash('error', err.code === 'LIMIT_FILE_SIZE' ? 'Ảnh vượt quá 4MB' : err.message);
+      req.flash('error', err.code === 'LIMIT_FILE_SIZE' ? 'Ảnh vượt quá 8MB' : err.message);
       return res.redirect(req.get('referer') || '/admin');
     }
     if (!verifyCsrf(req)) return res.status(403).render('errors/error', { code: 403, message: 'CSRF token không hợp lệ' });
-    next();
+    optimizeUploads(req).then(() => next(), () => next());
   });
 });
 
