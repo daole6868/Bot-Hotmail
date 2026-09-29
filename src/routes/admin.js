@@ -128,6 +128,32 @@ function toggleItem(kind, id) {
   return { ok: true, active: !!db.prepare(`SELECT is_active FROM ${t} WHERE id = ?`).get(id).is_active };
 }
 
+// Kéo thả (nút 6 chấm): nhận danh sách id theo thứ tự mới của các dòng đang hiện trên trang.
+// Trang có phân trang chỉ gửi 1 phần -> giữ nguyên các vị trí của phần còn lại, chỉ đổi chỗ giữa các id được gửi.
+const REORDERABLE = { ...SORTABLE, attributes: { table: 'attributes', group: null, order: 'sort_order, id' } };
+function reorderItems(kind, ids) {
+  const s = REORDERABLE[kind];
+  ids = [...new Set(ids.map((x) => toInt(x)).filter(Boolean))].slice(0, 500);
+  if (ids.length < 2) return false;
+  const rows = db.prepare(`SELECT id${s.group ? ', ' + s.group + ' AS g' : ''} FROM ${s.table} WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids);
+  if (rows.length !== ids.length) return false;
+  if (s.group && new Set(rows.map((r) => r.g)).size !== 1) return false; // chỉ sắp xếp trong cùng 1 nhóm
+  const full = db.prepare(`SELECT id FROM ${s.table} ${s.group ? `WHERE ${s.group} = ?` : ''} ORDER BY ${s.order}`)
+    .all(...(s.group ? [rows[0].g] : [])).map((r) => r.id);
+  const slots = full.map((id, i) => (ids.includes(id) ? i : -1)).filter((i) => i >= 0);
+  slots.forEach((slot, k) => { full[slot] = ids[k]; });
+  const upd = db.prepare(`UPDATE ${s.table} SET sort_order = ? WHERE id = ?`);
+  db.transaction(() => full.forEach((x, k) => upd.run(k, x)))();
+  return true;
+}
+for (const kind of Object.keys(REORDERABLE)) {
+  router.post(`/${kind}/reorder`, (req, res) => {
+    const ok = reorderItems(kind, [].concat(req.body.ids || []));
+    if (ok) audit(req, `${kind}_reorder`, String(req.body.ids).slice(0, 200));
+    res.json({ ok });
+  });
+}
+
 for (const kind of Object.keys(SORTABLE)) {
   router.post(`/${kind}/:id/move`, (req, res) => {
     const ok = moveItem(kind, toInt(req.params.id), req.body.dir === 'up' ? 'up' : 'down');

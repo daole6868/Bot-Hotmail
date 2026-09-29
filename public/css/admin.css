@@ -543,3 +543,14 @@ select:disabled { background: #f5f6fa; color: #9aa1bb; cursor: not-allowed; }
   .a-hb-row > .a-actions { grid-area: actions; justify-self: end; }
   .a-hb-row > .a-switch { grid-area: sw; justify-self: end; }
 }
+/* ---------- Kéo thả bằng nút 6 chấm ---------- */
+.a-grip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 32px; margin: -6px 0; border-radius: 7px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; color: #a3aac4; }
+.a-grip:hover { color: var(--primary); background: var(--primary-l); }
+.a-grip:active { cursor: grabbing; }
+body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: none !important; -webkit-user-select: none !important; }
+.a-dragging, .a-dragging > td { background: #eef3ff !important; }
+.a-dragging { position: relative; z-index: 5; box-shadow: 0 10px 30px rgba(40, 70, 160, .18); outline: 2px solid var(--primary); outline-offset: -2px; border-radius: 10px; }
+.a-dragging .a-grip { color: var(--primary); background: var(--primary-l); }
+.a-dropped, .a-dropped > td { animation: aDropped .7s ease; }
+@keyframes aDropped { from { background: #dff7e8; } to { background: transparent; } }
+@media (max-width: 800px) { .a-grip { width: 34px; height: 38px; } .a-grip .ico { width: 20px; height: 20px; } }

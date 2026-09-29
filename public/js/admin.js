@@ -49,6 +49,67 @@
     upd();
   }
 
+  // ---------------- Kéo thả bằng nút 6 chấm (chuột & cảm ứng) ----------------
+  // Giữ nút 6 chấm rồi kéo lên/xuống: dòng di chuyển theo tay, thả ra là lưu thứ tự mới.
+  const itemOf = (el) => el.closest('tr, .a-banner-row, .a-hb-row');
+  const sortSiblings = (item) => Array.from(item.parentElement.children).filter((x) => x.querySelector(':scope .a-move[data-sort-kind]'));
+  function refreshMoveButtons(list) {
+    list.forEach((row, i) => {
+      const up = $('[data-dir="up"]', row), down = $('[data-dir="down"]', row);
+      if (up) up.disabled = i === 0;
+      if (down) down.disabled = i === list.length - 1;
+      const no = $('.a-hb-no', row);
+      if (no) no.textContent = i + 1;
+    });
+  }
+  let drag = null;
+  document.addEventListener('pointerdown', (e) => {
+    const grip = e.target.closest('.a-grip');
+    if (!grip || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const mv = grip.closest('.a-move[data-sort-kind]');
+    const item = mv && itemOf(mv);
+    if (!item || sortSiblings(item).length < 2) return;
+    e.preventDefault();
+    const list = sortSiblings(item);
+    drag = { item, kind: mv.dataset.sortKind, before: list.map((r) => $('.a-move', r).dataset.sortId).join(','), y: e.clientY, pid: e.pointerId };
+    grip.setPointerCapture?.(e.pointerId);
+    item.classList.add('a-dragging');
+    document.body.classList.add('a-drag-on');
+  });
+  document.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    e.preventDefault();
+    drag.y = e.clientY;
+    const list = sortSiblings(drag.item).filter((x) => x !== drag.item);
+    const target = list.find((x) => { const r = x.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+    const parent = drag.item.parentElement;
+    if (target) { if (drag.item.nextElementSibling !== target) parent.insertBefore(drag.item, target); }
+    else { const last = list[list.length - 1]; if (last && last.nextElementSibling !== drag.item) last.after(drag.item); }
+    // Tự cuộn trang khi kéo gần mép trên/dưới màn hình
+    const edge = 70;
+    if (e.clientY < edge) window.scrollBy(0, -12);
+    else if (e.clientY > window.innerHeight - edge) window.scrollBy(0, 12);
+  }, { passive: false });
+  const endDrag = async (e) => {
+    if (!drag || (e && e.pointerId !== drag.pid)) return;
+    const { item, kind, before } = drag;
+    drag = null;
+    item.classList.remove('a-dragging');
+    document.body.classList.remove('a-drag-on');
+    const list = sortSiblings(item);
+    const ids = list.map((r) => $('.a-move', r).dataset.sortId);
+    if (ids.join(',') === before) return;
+    refreshMoveButtons(list);
+    item.classList.add('a-dropped');
+    setTimeout(() => item.classList.remove('a-dropped'), 700);
+    try {
+      const r = await post(`/admin/${kind}/reorder`, { ids });
+      if (r.ok) toast('Đã lưu thứ tự mới'); else { toast('Không lưu được thứ tự', true); setTimeout(() => location.reload(), 800); }
+    } catch (err) { toast('Lỗi kết nối, đang tải lại...', true); setTimeout(() => location.reload(), 800); }
+  };
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+
   // ---------------- Bảng dạng thẻ trên điện thoại ----------------
   // Gắn nhãn cột (lấy từ <th>) vào từng ô; CSS ở màn hẹp biến mỗi dòng thành 1 khung "Nhãn ..... Giá trị"
   function labelTables(root) {
