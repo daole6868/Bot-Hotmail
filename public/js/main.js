@@ -377,4 +377,43 @@
     if (Date.now() - last > 12 * 3600 * 1000) popup.hidden = false;
     popup.addEventListener('click', (e) => { if (e.target === popup) closePopup(); });
   }
+
+  // Nút con mắt: xem / ẩn mật khẩu đang nhập
+  const EYE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.6A10.6 10.6 0 0 1 12 5.5c6.4 0 10 6.5 10 6.5a17 17 0 0 1-2.6 3.4M6.6 6.6C3.7 8.4 2 12 2 12s3.6 6.5 10 6.5c1.9 0 3.5-.5 4.9-1.3"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg>';
+  $$('input[type="password"]').forEach((inp) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'pw-wrap';
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pw-eye';
+    b.tabIndex = -1;
+    b.setAttribute('aria-label', 'Hiện mật khẩu');
+    b.innerHTML = EYE;
+    b.addEventListener('click', () => {
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      b.innerHTML = show ? EYE_OFF : EYE;
+      b.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+      inp.focus();
+    });
+    wrap.appendChild(b);
+  });
+
+  // Trang Bảo mật: nút Đổi email / Đổi mật khẩu mở bảng tương ứng (mở 1 bảng một lúc)
+  const secBtns = $$('[data-sec-toggle]');
+  function secOpen(name, focus) {
+    secBtns.forEach((b) => {
+      const on = b.dataset.secToggle === name && b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(on));
+      b.classList.toggle('active', on);
+      const panel = $(`[data-sec-panel="${b.dataset.secToggle}"]`);
+      if (panel) panel.hidden = !on;
+      if (on && focus && panel) panel.querySelector('input:not([type=hidden])')?.focus();
+    });
+  }
+  secBtns.forEach((b) => b.addEventListener('click', () => secOpen(b.dataset.secToggle, true)));
+  if (location.hash === '#password' && $('[data-sec-panel="password"]')) secOpen('password', true);
 })();

@@ -168,12 +168,12 @@ router.get('/balance', (req, res) => {
 });
 
 // ---------- Đổi mật khẩu ----------
-router.get('/password', (req, res) => res.render('user/password', { title: 'Đổi mật khẩu', tab: 'password' }));
+router.get('/password', (req, res) => res.redirect('/user/security#password')); // trang cũ -> đã gộp vào Bảo mật
 
 router.post('/password', limiters.login, async (req, res) => {
   const u = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
   const { current = '', password = '', password2 = '' } = req.body;
-  const back = (type, msg) => { req.flash(type, msg); res.redirect(req.user.role === 'admin' ? '/admin/profile' : '/user/password'); };
+  const back = (type, msg) => { req.flash(type, msg); res.redirect(req.user.role === 'admin' && req.body.from !== 'security' ? '/admin/profile' : '/user/security' + (type === 'error' ? '#password' : '')); };
   if (!(await bcrypt.compare(String(current), u.password_hash))) return back('error', 'Mật khẩu hiện tại không đúng');
   if (password.length < 8 || password.length > 72 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) return back('error', 'Mật khẩu mới 8-72 ký tự, gồm chữ và số');
   if (password !== password2) return back('error', 'Mật khẩu nhập lại không khớp');
