@@ -37,40 +37,55 @@ const PRODUCT_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.i
   (CASE WHEN p.type = 'stock' THEN (SELECT COUNT(*) FROM product_stock s WHERE s.product_id = p.id AND s.is_sold = 0) ELSE NULL END) AS stock_left`;
 
 // ================= CẤP 1: TRANG CHỦ - DANH MỤC GAME =================
-// Các khối trang chủ đang bật theo thứ tự admin sắp xếp; khối banner kèm danh sách ảnh
+// Trang chủ vẽ theo "Bố cục trang chủ" (admin): mỗi khối tự giữ cài đặt & nội dung riêng,
+// một loại khối có thể thêm nhiều lần (VD 2 slider, 3 danh sách acc theo từng game).
+const toIds = (a) => (Array.isArray(a) ? a.map((x) => toInt(x)).filter(Boolean) : []);
 function loadHomeBlocks() {
   const blocks = db.prepare('SELECT * FROM home_blocks WHERE is_active = 1 ORDER BY sort_order, id').all()
     .map((b) => ({ ...b, settings: parseJSON(b.settings, {}) }));
-  const items = db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id');
-  blocks.forEach((b) => { if (b.type === 'banner') b.items = items.all(b.id); });
-  return blocks.filter((b) => b.type !== 'banner' || b.items.length);
+  const items = db.prepare('SELECT * FROM home_block_items WHERE block_id = ? AND is_active = 1 ORDER BY sort_order, id');
+  let allGames = null;
+  for (const b of blocks) {
+    const st = b.settings;
+    if (['slider', 'strip', 'banner'].includes(b.type)) b.items = items.all(b.id);
+    else if (b.type === 'games') {
+      allGames = allGames || db.prepare(`SELECT g.*,
+          (SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id
+             WHERE c.game_id = g.id AND c.is_active = 1 AND p.status = 'available') AS product_count,
+          (SELECT COALESCE(SUM(p.sold_count),0) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id) AS sold
+        FROM games g WHERE g.is_active = 1 ORDER BY g.sort_order, g.id`).all();
+      const ids = toIds(st.game_ids);
+      b.games = ids.length ? allGames.filter((g) => ids.includes(g.id)) : allGames;
+    } else if (b.type === 'coupons') {
+      const gid = toInt(st.game_id);
+      b.coupons = publicCoupons(50).filter((c) => !gid || !c.game_id || c.game_id === gid).slice(0, toInt(st.limit, 8, 1, 50));
+    } else if (b.type === 'recent') {
+      b.recent = db.prepare(`SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
+        WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT ?`).all(toInt(st.limit, 10, 1, 30)).map((o) => ({ ...o, username: maskName(o.username) }));
+    }
+  }
+  return blocks;
+}
+
+// Khối danh sách acc: lấy theo nguồn admin chọn (nổi bật / mới nhất / bán chạy / giá rẻ / ngẫu nhiên), lọc theo game hoặc danh mục
+function productsForBlock(st) {
+  const where = ["p.status = 'available'", 'c.is_active = 1', 'g.is_active = 1'];
+  const params = [];
+  const src = st.source || 'featured';
+  if (src === 'featured') where.push('p.is_featured = 1');
+  if (toInt(st.category_id)) { where.push('p.category_id = ?'); params.push(toInt(st.category_id)); }
+  else if (toInt(st.game_id)) { where.push('g.id = ?'); params.push(toInt(st.game_id)); }
+  const order = { newest: 'p.id DESC', bestseller: 'p.sold_count DESC, p.id DESC', cheap: 'p.price ASC, p.id DESC' }[src] || 'RANDOM()';
+  return db.prepare(`SELECT ${PRODUCT_SELECT} FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
+    WHERE ${where.join(' AND ')} ORDER BY ${order} LIMIT ?`).all(...params, toInt(st.limit, 12, 1, 48)).map(decorate);
 }
 
 router.get('/', (req, res) => {
-  const data = cached('home', 30000, () => ({
-    blocks: loadHomeBlocks(),
-    banners: db.prepare("SELECT * FROM banners WHERE position = 'main' AND is_active = 1 ORDER BY sort_order, id").all(),
-    strip: db.prepare("SELECT * FROM banners WHERE position = 'strip' AND is_active = 1 ORDER BY sort_order, id").all(),
-    games: db.prepare(`SELECT g.*,
-        (SELECT COUNT(*) FROM categories c WHERE c.game_id = g.id AND c.is_active = 1) AS cat_count,
-        (SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id
-           WHERE c.game_id = g.id AND c.is_active = 1 AND p.status = 'available') AS product_count,
-        (SELECT COALESCE(SUM(p.sold_count),0) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id) AS sold
-      FROM games g WHERE g.is_active = 1 ORDER BY g.sort_order, g.id`).all(),
-    coupons: publicCoupons(8),
-    recent: db.prepare(`SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
-      WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT 10`).all().map((o) => ({ ...o, username: maskName(o.username) })),
-    stats: {
-      users: db.prepare('SELECT COUNT(*) c FROM users').get().c,
-      sold: db.prepare("SELECT COUNT(*) c FROM v_orders WHERE status = 'completed'").get().c,
-      available: db.prepare("SELECT COUNT(*) c FROM products WHERE status = 'available'").get().c,
-    },
-  }));
-  // Acc nổi bật: xáo trộn ngẫu nhiên, tối đa 12, khác nhau mỗi lần tải trang / mỗi user
-  const featured = db.prepare(`SELECT ${PRODUCT_SELECT} FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
-    WHERE p.is_featured = 1 AND p.status = 'available' AND c.is_active = 1 AND g.is_active = 1
-    ORDER BY RANDOM() LIMIT 12`).all().map(decorate);
-  res.render('pages/home', { title: null, ...data, featured });
+  const blocks = cached('home', 30000, loadHomeBlocks);
+  // Danh sách acc lấy mỗi lần tải trang (nguồn "ngẫu nhiên"/"nổi bật" xáo trộn khác nhau cho từng khách)
+  const view = blocks.map((b) => (b.type === 'featured' ? { ...b, products: productsForBlock(b.settings) } : b))
+    .filter((b) => (b.items ? b.items.length : true) && (b.products ? b.products.length : true) && (b.recent ? b.recent.length : true) && (b.games ? b.games.length : true));
+  res.render('pages/home', { title: null, blocks: view });
 });
 
 // ================= CẤP 2: DANH MỤC CON TRONG GAME =================

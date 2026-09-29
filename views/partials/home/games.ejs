@@ -1,7 +1,7 @@
 <section class="section">
   <div class="section-head"><h2><%- I('gamepad') %> <%= block.title || 'Danh mục game' %></h2></div>
   <div class="game-grid">
-    <% games.forEach(g => { %>
+    <% block.games.forEach(g => { %>
       <a href="/game/<%= g.slug %>" class="card game-card" style="--c: <%= g.color %>">
         <div class="thumb">
           <img src="<%= g.image || '/img/no-image.svg' %>" alt="<%= g.name %>" loading="lazy">

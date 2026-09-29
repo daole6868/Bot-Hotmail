@@ -371,6 +371,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS home_blocks (
     sort_order INTEGER NOT NULL DEFAULT 0
   );
   CREATE INDEX IF NOT EXISTS idx_hbi_block ON home_block_items(block_id, sort_order);`);
+addColumn('home_block_items', 'is_active', 'INTEGER NOT NULL DEFAULT 1');
 if (!db.prepare('SELECT 1 FROM home_blocks LIMIT 1').get()) {
   const ins = db.prepare('INSERT INTO home_blocks(type, title, sort_order) VALUES(?,?,?)');
   [['slider', ''], ['strip', ''], ['games', 'Danh mục game'], ['coupons', 'Mã khuyến mãi'], ['featured', 'Acc nổi bật'], ['recent', 'Giao dịch gần đây']]

@@ -1,4 +1,4 @@
 <section class="section" id="coupons">
   <div class="section-head"><h2><%- I('gift') %> <%= block.title || 'Mã khuyến mãi' %></h2><a href="/khuyen-mai">Xem tất cả <%- I('chevron-right') %></a></div>
-  <%- include('../coupon-list', { coupons }) %>
+  <%- include('../coupon-list', { coupons: block.coupons }) %>
 </section>

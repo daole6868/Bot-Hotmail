@@ -199,6 +199,31 @@ function seedStrip() {
   setSetting('strip_seeded', '1');
 }
 
+// Ảnh "Banner chính" và "Dải ảnh chạy" trước đây quản lý ở Banner & Sidebar -> chuyển vào khối tương ứng
+// ở Bố cục trang chủ (mỗi khối tự giữ ảnh + kích cỡ riêng, thêm được nhiều khối cùng loại). Chạy 1 lần.
+function migrateHomeBanners() {
+  if (getSettings().home_banners_migrated === '1') return;
+  const H = require('./utils/helpers');
+  const s = getSettings();
+  db.transaction(() => {
+    for (const [type, pos] of [['slider', 'main'], ['strip', 'strip']]) {
+      const rows = db.prepare('SELECT * FROM banners WHERE position = ? ORDER BY sort_order, id').all(pos);
+      let block = db.prepare('SELECT * FROM home_blocks WHERE type = ? ORDER BY sort_order, id LIMIT 1').get(type);
+      if (!block && !rows.length) continue;
+      const sz = H.bannerSize(s, pos);
+      if (!block) {
+        const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM home_blocks').get().n;
+        block = { id: db.prepare('INSERT INTO home_blocks(type, title, sort_order) VALUES(?,?,?)').run(type, '', next).lastInsertRowid };
+      }
+      db.prepare('UPDATE home_blocks SET settings = ? WHERE id = ?').run(JSON.stringify({ w: sz.w, h: sz.h }), block.id);
+      const ins = db.prepare('INSERT INTO home_block_items(block_id, image, link, title, sort_order, is_active) VALUES(?,?,?,?,?,?)');
+      rows.forEach((r, i) => ins.run(block.id, r.image, r.link || '', r.title || '', i, r.is_active));
+      db.prepare('DELETE FROM banners WHERE position = ?').run(pos);
+    }
+  })();
+  setSetting('home_banners_migrated', '1');
+}
+
 function runSeed() {
   ensureSettings();
   ensureAdmin();
@@ -206,6 +231,7 @@ function runSeed() {
   if (config.seedCatalog) seedCatalog();
   seedStrip();
   if (config.seedDemo) seedDemoProducts();
+  migrateHomeBanners();
 }
 
 module.exports = { runSeed, DEFAULT_SETTINGS };

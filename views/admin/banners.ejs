@@ -1,11 +1,10 @@
 <%- include('_header') %>
 <% const groups = [
-  ['main', 'Banner chính (slider trang chủ)'],
-  ['strip', 'Dải ảnh chạy (dưới banner chính)'],
   ['sidebar_left', 'Sidebar trái'],
   ['sidebar_right', 'Sidebar phải'],
   ['popup', 'Popup trang chủ'],
 ]; %>
+<div class="a-alert a-alert-info"><%- I('list') %> <span>Banner slider, dải ảnh chạy và khối banner ở trang chủ nay quản lý tại <a href="/admin/home-layout"><b>Bố cục trang chủ</b></a> (mỗi khối tự giữ ảnh & kích cỡ riêng). Trang này còn Sidebar 2 bên và Popup.</span></div>
 <p class="a-muted a-small a-page-note"><%- I('image') %> <span>Mỗi phần có kích cỡ hiển thị riêng (Rộng × Cao). Ảnh trên web được cắt theo tỉ lệ này, lấy phần giữa. Khi thêm ảnh sẽ thấy khung <b class="a-green">xanh</b> là phần hiển thị, vùng <b class="a-red">đỏ</b> là phần bị cắt.</span></p>
 <% groups.forEach(([pos, label]) => { const list = banners.filter(b => b.position === pos); const sz = sizes[pos]; %>
 <section class="a-card a-card-flush a-banner-sec">

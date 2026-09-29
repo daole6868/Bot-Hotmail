@@ -884,86 +884,128 @@ router.post('/coupons/:id/delete', (req, res) => {
 // Link khi bấm banner: chỉ nhận đường dẫn nội bộ hoặc http(s) (chặn javascript:...)
 const safeLink = (u) => { u = str(u, 300); return /^(\/(?!\/)|https?:\/\/)/i.test(u) ? u : ''; };
 const HOME_BLOCK_INFO = {
-  slider: { name: 'Banner chính (slider)', icon: 'image', manage: ['/admin/banners', 'Banner & Sidebar'] },
-  strip: { name: 'Dải ảnh chạy', icon: 'layers', manage: ['/admin/banners', 'Banner & Sidebar'] },
-  games: { name: 'Danh mục game', icon: 'gamepad', manage: ['/admin/games', 'Game'], titled: true },
-  coupons: { name: 'Mã khuyến mãi', icon: 'gift', manage: ['/admin/coupons', 'Mã giảm giá'], titled: true },
-  featured: { name: 'Acc nổi bật', icon: 'star', manage: ['/admin/products', 'Sản phẩm (đánh dấu Nổi bật)'], titled: true },
-  recent: { name: 'Giao dịch gần đây', icon: 'bag', manage: ['/admin/orders', 'Đơn hàng'], titled: true },
-  banner: { name: 'Khối banner', icon: 'image', titled: true, custom: true },
+  slider: { name: 'Banner slider', icon: 'image', images: true, desc: 'Ảnh lớn tự chuyển, có nút trái/phải. Hợp đặt đầu trang.', def: { w: 1200, h: 450 } },
+  strip: { name: 'Dải ảnh chạy', icon: 'layers', images: true, desc: 'Hàng ảnh nhỏ trôi ngang liên tục.', def: { w: 600, h: 300 } },
+  banner: { name: 'Khối banner', icon: 'image', images: true, desc: 'Ảnh đứng yên, chọn số ảnh mỗi hàng (1–6). Hợp chèn giữa các phần.', def: { w: 1200, h: 400, cols_pc: 2, cols_m: 1 } },
+  games: { name: 'Danh mục game', icon: 'gamepad', desc: 'Thẻ các game kèm số acc đang bán / đã bán. Chọn hiện tất cả hoặc vài game.', title: 'Danh mục game' },
+  coupons: { name: 'Mã khuyến mãi', icon: 'gift', desc: 'Thẻ mã giảm giá đang chạy, bấm để sao chép.', title: 'Mã khuyến mãi', def: { limit: 8 } },
+  featured: { name: 'Danh sách acc', icon: 'star', desc: 'Lưới acc theo nguồn: nổi bật, mới nhất, bán chạy, giá rẻ… lọc theo game / danh mục.', title: 'Acc nổi bật', def: { source: 'featured', limit: 12 } },
+  recent: { name: 'Giao dịch gần đây', icon: 'bag', desc: 'Các đơn mua mới nhất (tên khách được che bớt).', title: 'Giao dịch gần đây', def: { limit: 10 } },
 };
+const PRODUCT_SOURCES = { featured: 'Acc được đánh dấu Nổi bật (xáo ngẫu nhiên)', newest: 'Acc mới đăng', bestseller: 'Bán chạy nhất', cheap: 'Giá rẻ nhất', random: 'Ngẫu nhiên' };
+
+function blockSummary(b) {
+  const st = b.settings, info = b.info;
+  if (info.images) return `${b.item_count} ảnh · tỉ lệ ${st.w || info.def.w}×${st.h || info.def.h}` + (b.type === 'banner' ? ` · ${st.cols_pc || 1} ảnh/hàng trên PC, ${st.cols_m || 1} trên điện thoại` : '');
+  if (b.type === 'games') return (st.game_ids || []).length ? `${st.game_ids.length} game được chọn` : 'Tất cả game đang bật';
+  if (b.type === 'coupons') return `Tối đa ${st.limit || 8} mã`;
+  if (b.type === 'featured') return `${PRODUCT_SOURCES[st.source || 'featured']} · tối đa ${st.limit || 12} acc`;
+  if (b.type === 'recent') return `${st.limit || 10} đơn mới nhất`;
+  return '';
+}
 
 router.get('/home-layout', (req, res) => {
   const blocks = db.prepare(`SELECT b.*, (SELECT COUNT(*) FROM home_block_items i WHERE i.block_id = b.id) AS item_count,
       (SELECT image FROM home_block_items i WHERE i.block_id = b.id ORDER BY sort_order, id LIMIT 1) AS thumb
-    FROM home_blocks b ORDER BY b.sort_order, b.id`).all().map((b) => ({ ...b, settings: H.parseJSON(b.settings, {}), info: HOME_BLOCK_INFO[b.type] || { name: b.type, icon: 'box' } }));
+    FROM home_blocks b ORDER BY b.sort_order, b.id`).all()
+    .map((b) => ({ ...b, settings: H.parseJSON(b.settings, {}), info: HOME_BLOCK_INFO[b.type] || { name: b.type, icon: 'box' } }))
+    .map((b) => ({ ...b, summary: blockSummary(b) }));
   res.render('admin/home-layout', { title: 'Bố cục trang chủ', blocks });
 });
 
+// Bước 1 khi thêm: chọn loại khối
+router.get('/home-blocks/new', (req, res) => modal(res, 'home-block-types', { types: HOME_BLOCK_INFO }));
+
+// Bước 2: form cài đặt (thêm mới theo ?type= hoặc sửa theo ?id=)
 router.get('/home-blocks/form', (req, res) => {
   const b = req.query.id ? db.prepare('SELECT * FROM home_blocks WHERE id = ?').get(toInt(req.query.id)) : null;
   if (req.query.id && !b) return res.status(404).send('<p class="a-empty">Không tìm thấy khối</p>');
-  const type = b ? b.type : 'banner';
+  const type = b ? b.type : req.query.type;
+  const info = HOME_BLOCK_INFO[type];
+  if (!info) return res.status(404).send('<p class="a-empty">Loại khối không hợp lệ</p>');
   modal(res, 'home-block-form', {
-    b, type, info: HOME_BLOCK_INFO[type], settings: b ? H.parseJSON(b.settings, {}) : { w: 1200, h: 400, cols_pc: 2, cols_m: 1, show_title: 0 },
+    b, type, info, sources: PRODUCT_SOURCES,
+    settings: b ? { ...(info.def || {}), ...H.parseJSON(b.settings, {}) } : { ...(info.def || {}) },
     items: b ? db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id').all(b.id) : [],
+    games: db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all(),
+    categories: type === 'featured' ? db.prepare('SELECT c.id, c.name, g.name AS game FROM categories c JOIN games g ON g.id = c.game_id ORDER BY g.sort_order, c.sort_order').all() : [],
   });
 });
+
+function blockSettingsFromBody(type, body, info) {
+  const st = { show_title: bool(body.show_title) };
+  if (info.images) {
+    st.w = toInt(body.w, info.def.w, 100, 4000);
+    st.h = toInt(body.h, info.def.h, 50, 4000);
+    if (type === 'banner') { st.cols_pc = toInt(body.cols_pc, 1, 1, 6); st.cols_m = toInt(body.cols_m, 1, 1, 3); }
+  } else if (type === 'games') {
+    st.game_ids = [].concat(body.game_ids || []).map((x) => toInt(x)).filter(Boolean).slice(0, 100);
+  } else if (type === 'coupons') {
+    st.limit = toInt(body.limit, 8, 1, 50); st.game_id = toInt(body.game_id, 0, 0) || null;
+  } else if (type === 'featured') {
+    st.source = PRODUCT_SOURCES[body.source] ? body.source : 'featured';
+    st.limit = toInt(body.limit, 12, 1, 48);
+    st.game_id = toInt(body.game_id, 0, 0) || null;
+    st.category_id = toInt(body.category_id, 0, 0) || null;
+  } else if (type === 'recent') {
+    st.limit = toInt(body.limit, 10, 1, 30);
+  }
+  return JSON.stringify(st);
+}
 
 router.post('/home-blocks/save', (req, res) => {
   const id = toInt(req.body.id);
   const old = id ? db.prepare('SELECT * FROM home_blocks WHERE id = ?').get(id) : null;
   if (id && !old) return back(req, res, 'error', 'Không tìm thấy khối', '/admin/home-layout');
-  const type = old ? old.type : 'banner';
+  const type = old ? old.type : req.body.type;
+  const info = HOME_BLOCK_INFO[type];
+  if (!info) return back(req, res, 'error', 'Loại khối không hợp lệ', '/admin/home-layout');
   const title = str(req.body.title, 120);
-  let blockId = id;
-  if (type !== 'banner') {
-    db.prepare('UPDATE home_blocks SET title = ? WHERE id = ?').run(title, id);
-  } else {
-    const w = toInt(req.body.w, 1200, 100, 4000), h = toInt(req.body.h, 400, 50, 4000);
-    const settings = JSON.stringify({ w, h, cols_pc: toInt(req.body.cols_pc, 1, 1, 6), cols_m: toInt(req.body.cols_m, 1, 1, 3), show_title: bool(req.body.show_title) });
-    const files = filesOf(req, 'images');
-    const current = old ? db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id').all(id) : [];
-    const removing = current.filter((it) => req.body['remove_' + it.id]);
-    if (!files.length && current.length - removing.length <= 0) return back(req, res, 'error', 'Khối banner cần ít nhất 1 ảnh', '/admin/home-layout');
-    const saved = [];
-    for (const f of files.slice(0, 20)) {
-      const p = saveImage(f, 'blocks');
-      if (!p) { saved.forEach(removeImage); return back(req, res, 'error', 'Có file ảnh không hợp lệ', '/admin/home-layout'); }
-      saved.push(p);
-    }
-    db.transaction(() => {
-      if (old) db.prepare('UPDATE home_blocks SET title = ?, settings = ? WHERE id = ?').run(title, settings, id);
-      else {
-        const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM home_blocks').get().n;
-        blockId = db.prepare("INSERT INTO home_blocks(type, title, settings, sort_order) VALUES('banner', ?, ?, ?)").run(title, settings, next).lastInsertRowid;
-      }
-      const upd = db.prepare('UPDATE home_block_items SET link = ?, sort_order = ? WHERE id = ?');
-      current.forEach((it) => { if (!req.body['remove_' + it.id]) upd.run(safeLink(req.body['link_' + it.id]), toInt(req.body['order_' + it.id], it.sort_order, 0, 999), it.id); });
-      const del = db.prepare('DELETE FROM home_block_items WHERE id = ?');
-      removing.forEach((it) => del.run(it.id));
-      const base = current.length ? Math.max(...current.map((it) => it.sort_order)) + 1 : 0;
-      const ins = db.prepare('INSERT INTO home_block_items(block_id, image, link, sort_order) VALUES(?,?,?,?)');
-      saved.forEach((p, k) => ins.run(blockId, p, safeLink(req.body.new_link), base + k));
-    })();
-    removing.forEach((it) => removeImage(it.image));
+  const settings = blockSettingsFromBody(type, req.body, info);
+  const current = old && info.images ? db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id').all(id) : [];
+  const removing = current.filter((it) => req.body['remove_' + it.id]);
+  const files = info.images ? filesOf(req, 'images') : [];
+  if (info.images && !files.length && current.length - removing.length <= 0) return back(req, res, 'error', 'Khối này cần ít nhất 1 ảnh', '/admin/home-layout');
+  const saved = [];
+  for (const f of files.slice(0, 20)) {
+    const p = saveImage(f, 'blocks');
+    if (!p) { saved.forEach(removeImage); return back(req, res, 'error', 'Có file ảnh không hợp lệ', '/admin/home-layout'); }
+    saved.push(p);
   }
+  let blockId = id;
+  db.transaction(() => {
+    if (old) db.prepare('UPDATE home_blocks SET title = ?, settings = ? WHERE id = ?').run(title, settings, id);
+    else {
+      const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM home_blocks').get().n;
+      blockId = db.prepare('INSERT INTO home_blocks(type, title, settings, sort_order) VALUES(?, ?, ?, ?)').run(type, title, settings, next).lastInsertRowid;
+    }
+    if (!info.images) return;
+    const upd = db.prepare('UPDATE home_block_items SET link = ?, sort_order = ?, is_active = ? WHERE id = ?');
+    current.forEach((it) => { if (!req.body['remove_' + it.id]) upd.run(safeLink(req.body['link_' + it.id]), toInt(req.body['order_' + it.id], it.sort_order, 0, 999), req.body['hide_' + it.id] ? 0 : 1, it.id); });
+    const del = db.prepare('DELETE FROM home_block_items WHERE id = ?');
+    removing.forEach((it) => del.run(it.id));
+    const base = current.length ? Math.max(...current.map((it) => it.sort_order)) + 1 : 0;
+    const ins = db.prepare('INSERT INTO home_block_items(block_id, image, link, sort_order) VALUES(?,?,?,?)');
+    saved.forEach((p, k) => ins.run(blockId, p, safeLink(req.body.new_link), base + k));
+  })();
+  removing.forEach((it) => removeImage(it.image));
   audit(req, old ? 'home_block_update' : 'home_block_create', `${type} ${title}`);
-  back(req, res, 'success', old ? 'Đã lưu khối' : 'Đã thêm khối banner (nằm cuối trang, bấm mũi tên để đổi vị trí)', '/admin/home-layout');
+  back(req, res, 'success', old ? 'Đã lưu khối' : `Đã thêm khối “${title || info.name}” (nằm cuối trang, kéo nút ⠿ để đổi vị trí)`, '/admin/home-layout');
 });
 
 router.post('/home-blocks/:id/delete', (req, res) => {
-  const b = db.prepare("SELECT * FROM home_blocks WHERE id = ? AND type = 'banner'").get(toInt(req.params.id));
-  if (!b) return back(req, res, 'error', 'Chỉ xóa được khối banner tự thêm', '/admin/home-layout');
+  const b = db.prepare('SELECT * FROM home_blocks WHERE id = ?').get(toInt(req.params.id));
+  if (!b) return back(req, res, 'error', 'Không tìm thấy khối', '/admin/home-layout');
   const imgs = db.prepare('SELECT image FROM home_block_items WHERE block_id = ?').all(b.id);
   db.prepare('DELETE FROM home_blocks WHERE id = ?').run(b.id);
   imgs.forEach((r) => removeImage(r.image));
-  audit(req, 'home_block_delete', b.title);
-  back(req, res, 'success', 'Đã xóa khối banner', '/admin/home-layout');
+  audit(req, 'home_block_delete', `${b.type} ${b.title}`);
+  back(req, res, 'success', 'Đã xóa khối', '/admin/home-layout');
 });
 
 // ======================= BANNER / SIDEBAR =======================
-const BANNER_POSITIONS = ['main', 'strip', 'sidebar_left', 'sidebar_right', 'popup'];
+// Banner chính & dải ảnh chạy nay nằm trong Bố cục trang chủ (mỗi khối tự giữ ảnh)
+const BANNER_POSITIONS = ['sidebar_left', 'sidebar_right', 'popup'];
 
 router.get('/banners', (req, res) => {
   const banners = db.prepare('SELECT * FROM banners ORDER BY sort_order, id').all();
@@ -985,14 +1027,14 @@ router.post('/banners/size', (req, res) => {
 
 router.get('/banners/form', (req, res) => {
   const b = req.query.id ? db.prepare('SELECT * FROM banners WHERE id = ?').get(toInt(req.query.id)) : null;
-  const position = b ? b.position : (BANNER_POSITIONS.includes(req.query.position) ? req.query.position : 'main');
+  const position = b ? b.position : (BANNER_POSITIONS.includes(req.query.position) ? req.query.position : 'sidebar_left');
   modal(res, 'banner-form', { b, position, size: H.bannerSize(getSettings(), position) });
 });
 
 router.post('/banners/save', (req, res) => {
   const id = toInt(req.body.id);
   const old = id ? db.prepare('SELECT * FROM banners WHERE id = ?').get(id) : null;
-  const position = BANNER_POSITIONS.includes(req.body.position) ? req.body.position : 'main';
+  const position = BANNER_POSITIONS.includes(req.body.position) ? req.body.position : 'sidebar_left';
   let image = old?.image;
   const f = fileOf(req, 'image');
   if (f) {

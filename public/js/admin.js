@@ -175,8 +175,9 @@
     const box = $('[data-hb-preview]', f);
     if (!box) return;
     const draw = () => {
-      const w = +$('[data-hb-w]', f).value || 1200, h = +$('[data-hb-h]', f).value || 400, n = +$('[data-hb-cols]', f).value || 1;
-      box.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
+      const w = +$('[data-hb-w]', f).value || 1200, h = +$('[data-hb-h]', f).value || 400;
+      const n = box.hasAttribute('data-hb-strip') ? 5 : (+($('[data-hb-cols]', f) || {}).value || 1);
+      if (!box.hasAttribute('data-hb-strip')) box.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
       box.innerHTML = Array.from({ length: n }, () => `<i style="aspect-ratio:${w}/${h}"></i>`).join('');
     };
     if (!f.dataset.hbInit) {

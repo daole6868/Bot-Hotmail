@@ -60,9 +60,8 @@
     setTimeout(() => { delete f.dataset.submitting; $$('button', f).forEach((b) => { b.disabled = false; }); }, 8000);
   });
 
-  // Slider banner
-  const slider = $('[data-slider]');
-  if (slider) {
+  // Slider banner (trang chủ có thể có nhiều slider)
+  $$('[data-slider]').forEach((slider) => {
     const slides = $$('.slide', slider);
     const dots = $$('[data-dot]', slider);
     let i = 0, timer;
@@ -76,7 +75,7 @@
     $('[data-next]', slider)?.addEventListener('click', () => { go(i + 1); auto(); });
     dots.forEach((d) => d.addEventListener('click', () => { go(+d.dataset.dot); auto(); }));
     if (slides.length > 1) auto();
-  }
+  });
 
   // Gallery sản phẩm + xem ảnh phóng to (lightbox)
   const gal = $('[data-gallery]');
