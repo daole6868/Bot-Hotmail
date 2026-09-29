@@ -170,20 +170,45 @@
   // ---------------- Modal ----------------
   const modal = $('#aModal');
   const modalBody = $('#aModalBody');
-  // Khối banner trang chủ: xem trước bố cục (số ảnh / hàng + tỉ lệ) ngay khi nhập
+  // Khối ảnh trang chủ (slider / dải ảnh / banner): xem trước bằng chính ảnh đã chọn
+  //  - "Hiển thị trên web": ảnh cắt theo tỉ lệ khung, đúng số ảnh mỗi hàng như ngoài web
+  //  - "Kiểm tra cắt ảnh": ảnh gốc với khung xanh (phần hiện) / vùng đỏ (phần bị cắt)
   function hbPreview(f) {
     const box = $('[data-hb-preview]', f);
     if (!box) return;
+    const kind = box.dataset.hbKind || 'banner';
+    const fileInput = $('input[type=file][name=images]', f);
+    let urls = [];
+    const sources = () => {
+      if (urls.length) return urls;
+      return $$('.a-hb-item', f).filter((it) => !$('[name^=remove_]', it)?.checked && !$('[name^=hide_]', it)?.checked).map((it) => $('img', it).src);
+    };
     const draw = () => {
       const w = +$('[data-hb-w]', f).value || 1200, h = +$('[data-hb-h]', f).value || 400;
-      const n = box.hasAttribute('data-hb-strip') ? 5 : (+($('[data-hb-cols]', f) || {}).value || 1);
-      if (!box.hasAttribute('data-hb-strip')) box.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
-      box.innerHTML = Array.from({ length: n }, () => `<i style="aspect-ratio:${w}/${h}"></i>`).join('');
+      const n = kind === 'strip' ? 5 : kind === 'slider' ? 1 : (+($('[data-hb-cols]', f) || {}).value || 1);
+      const src = sources();
+      const cells = Array.from({ length: n }, (_, k) => src.length ? src[k % src.length] : null);
+      const view = $('[data-hb-view]', box), crops = $('[data-hb-crops]', box);
+      view.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
+      view.innerHTML = cells.map((u) => `<div class="a-hb-cell" style="aspect-ratio:${w}/${h}">${u ? `<img src="${u}" alt="">` : '<span>Chưa có ảnh</span>'}</div>`).join('');
+      $('[data-hb-note]', box).textContent = kind === 'slider' ? `Ảnh tự chuyển lần lượt (${src.length || 0} ảnh)` : kind === 'strip' ? 'Hàng ảnh trôi ngang liên tục' : `${n} ảnh mỗi hàng trên PC`;
+      crops.hidden = !src.length;
+      crops.innerHTML = src.slice(0, 10).map((u) => `<div class="a-crop a-crop-sm" data-crop data-ratio="${w}/${h}">
+          <div class="a-crop-stage" data-crop-stage><img data-crop-img src="${u}" alt=""><div class="a-crop-keep" data-crop-keep></div></div>
+          <div class="a-crop-empty" data-crop-empty hidden></div><div class="a-crop-legend" data-crop-legend hidden><span class="a-muted" data-crop-info></span></div>
+        </div>`).join('');
+      $$('[data-crop-img]', crops).forEach((img) => { if (img.complete && img.naturalWidth) updateCrop(img); });
     };
     if (!f.dataset.hbInit) {
       f.dataset.hbInit = '1';
       f.addEventListener('input', draw);
-      f.addEventListener('change', draw);
+      f.addEventListener('change', (e) => {
+        if (e.target === fileInput) {
+          urls.forEach((u) => URL.revokeObjectURL(u));
+          urls = Array.from(fileInput.files || []).filter((x) => /^image\//.test(x.type)).map((x) => URL.createObjectURL(x));
+        }
+        draw();
+      });
       f.addEventListener('click', (e) => {
         const p = e.target.closest('[data-hb-preset]');
         if (!p) return;

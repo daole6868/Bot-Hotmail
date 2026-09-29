@@ -12,7 +12,7 @@
   <p class="a-field-hint a-mt0"><%= info.desc %></p>
 
   <label>Tiêu đề</label>
-  <input name="title" maxlength="120" value="<%= b ? b.title : (info.title || '') %>" placeholder="<%= info.title || 'VD: Banner giữa trang' %>">
+  <input name="title" maxlength="120" value="<%= b ? b.title : (info.title || '') %>" placeholder="<%= info.title || ({ slider: 'VD: Slider đầu trang', strip: 'VD: Dải ảnh khuyến mãi', banner: 'VD: Banner giữa trang' })[type] %>">
   <% if (info.images) { %>
     <label class="a-check"><input type="checkbox" name="show_title" value="1" <%= settings.show_title ? 'checked' : '' %>> Hiện tiêu đề phía trên khối ngoài web</label>
   <% } %>
@@ -34,9 +34,13 @@
     <div class="a-chip-row">
       <% [[1200,450,'Slider 8:3'],[1200,300,'Dải ngang 4:1'],[1200,400,'3:1'],[800,400,'2:1'],[600,300,'2:1 nhỏ'],[600,600,'Vuông'],[600,800,'Dọc 3:4']].forEach(([w,h,l]) => { %><button type="button" class="a-btn a-xs" data-hb-preset="<%= w %>x<%= h %>"><%= l %></button><% }) %>
     </div>
-    <label>Xem trước tỉ lệ<%= type === 'banner' ? ' & bố cục trên PC' : '' %></label>
-    <div class="a-hb-preview" data-hb-preview <%- type === 'strip' ? 'data-hb-strip' : '' %>></div>
-    <p class="a-field-hint">Ảnh khác tỉ lệ sẽ được cắt phần giữa cho vừa khung.</p>
+    <div class="a-hb-preview" data-hb-preview data-hb-kind="<%= type %>">
+      <div class="a-hb-pv-head"><b>Xem trước trên web</b><span class="a-muted a-small" data-hb-note></span></div>
+      <div class="a-hb-view" data-hb-view></div>
+      <div class="a-hb-pv-head a-mt"><b>Kiểm tra cắt ảnh</b><span class="a-muted a-small"><i class="a-lg-keep"></i> xanh: phần hiện <i class="a-lg-cut"></i> đỏ: phần bị cắt</span></div>
+      <div class="a-hb-crops" data-hb-crops hidden></div>
+    </div>
+    <p class="a-field-hint">Chọn ảnh ở ô “Thêm ảnh” bên dưới là thấy ngay. Ảnh khác tỉ lệ khung sẽ bị cắt phần giữa — nên chọn kích cỡ gần với ảnh gốc.</p>
 
     <% if (items.length) { %>
       <label>Ảnh trong khối <small class="a-muted">(<%= items.length %>)</small></label>
