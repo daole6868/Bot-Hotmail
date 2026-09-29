@@ -586,3 +586,4 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 .pw-wrap > input { padding-right: 44px; }
 .pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; display: grid; place-items: center; background: none; border: 0; border-radius: 8px; color: #8a8fa3; cursor: pointer; }
 .pw-eye:hover { color: var(--text); }
+.a-submit { margin-top: 14px; }

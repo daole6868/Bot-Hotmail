@@ -808,3 +808,5 @@ a.hb-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .pw-eye:hover { color: var(--text); }
 .linkish { background: none; border: 0; padding: 0; color: var(--primary2); font: inherit; cursor: pointer; text-decoration: underline; }
 .auth-card form.center { margin-top: 12px; }
+/* Nút to (cả hàng) nằm ngay dưới ô nhập -> luôn cách ra */
+form :is(input, select, textarea, .captcha-row, .pw-wrap, .cf-turnstile) + :is(.btn-block, .btn-lg) { margin-top: 14px; }
