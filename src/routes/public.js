@@ -197,6 +197,8 @@ router.post('/product/:code/buy', requireLogin, limiters.buy, (req, res) => {
     return res.redirect(`/product/${p.code}`);
   }
   router.clearCache();
+  const o = db.prepare('SELECT order_code, product_title, discount, total, created_at FROM orders WHERE id = ?').get(r.orderId);
+  if (o) require('../services/mailer').sendLater(req.user.email, 'order', { username: req.user.username, code: o.order_code, title: o.product_title, discount: o.discount, total: o.total, at: o.created_at });
   req.flash('success', 'Mua thành công! Thông tin tài khoản ở bên dưới.');
   res.redirect(`/user/orders/${r.code}`);
 });

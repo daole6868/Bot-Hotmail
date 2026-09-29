@@ -576,3 +576,9 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 .a-type-card b { display: block; margin-bottom: 3px; }
 .a-type-card small { display: block; color: var(--muted); font-size: .8rem; line-height: 1.45; }
 @media (max-width: 560px) { .a-type-grid { grid-template-columns: 1fr; } }
+.a-inline-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.a-inline-form input { flex: 1 1 200px; }
+.a-help { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #f8f9fd; font-size: .86rem; }
+.a-help summary { cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.a-help summary .ico { color: var(--primary); }
+.a-help ol { margin: 8px 0 4px; padding-left: 20px; line-height: 1.6; }

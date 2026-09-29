@@ -352,6 +352,52 @@ if (addColumn('categories', 'sale_type', "TEXT NOT NULL DEFAULT 'vip'")) {
        OR id IN (SELECT category_id FROM products WHERE type = 'stock')`);
 }
 db.exec('CREATE INDEX IF NOT EXISTS idx_products_sort ON products(category_id, sort_order)');
+// Bảo mật tài khoản: xác minh 2 lớp qua email, thiết bị tin cậy, đặt lại mật khẩu, nhật ký email
+addColumn('users', 'email_verified_at', 'INTEGER');
+addColumn('users', 'twofa_enabled', 'INTEGER NOT NULL DEFAULT 0');
+db.exec(`CREATE TABLE IF NOT EXISTS trusted_devices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    device_hash TEXT NOT NULL,
+    user_agent TEXT,
+    ip TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    last_verified_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    last_seen_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    UNIQUE(user_id, device_hash)
+  );
+  CREATE TABLE IF NOT EXISTS email_otps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    purpose TEXT NOT NULL,
+    code_hash TEXT NOT NULL,
+    target_email TEXT,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    expires_at INTEGER NOT NULL,
+    used_at INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_otp_user ON email_otps(user_id, purpose, id);
+  CREATE TABLE IF NOT EXISTS password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at INTEGER NOT NULL,
+    used_at INTEGER,
+    ip TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE TABLE IF NOT EXISTS email_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    to_email TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    type TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'queued',
+    error TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_maillog_created ON email_logs(created_at);`);
+
 // Bố cục trang chủ: các khối hiển thị theo thứ tự admin sắp xếp (khối có sẵn + khối banner tự thêm)
 db.exec(`CREATE TABLE IF NOT EXISTS home_blocks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

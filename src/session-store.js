@@ -50,6 +50,11 @@ class SQLiteStore extends session.Store {
     } catch (e) { cb && cb(e); }
   }
 
+  // Dùng được cả khi không có instance: SQLiteStore.destroyUser(id)
+  static destroyUser(userId, exceptSid = null) {
+    db.prepare(`DELETE FROM sessions WHERE json_extract(sess, '$.userId') = ? AND sid != ?`).run(userId, exceptSid || '');
+  }
+
   destroyUser(userId) {
     // Đăng xuất mọi phiên của 1 user (khi bị khóa / đổi mật khẩu)
     db.prepare(`DELETE FROM sessions WHERE json_extract(sess, '$.userId') = ?`).run(userId);

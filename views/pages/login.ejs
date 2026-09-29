@@ -13,7 +13,7 @@
       <% if (needCaptcha) { %>
       <%- include('../partials/captcha') %>
       <% } %>
-      <label class="check"><input type="checkbox" name="remember" value="1"> Ghi nhớ đăng nhập</label>
+      <div class="auth-row"><label class="check"><input type="checkbox" name="remember" value="1"> Ghi nhớ đăng nhập</label><a href="/forgot">Quên mật khẩu?</a></div>
       <button class="btn btn-lg btn-block btn-primary">Đăng nhập</button>
     </form>
     <p class="center muted">Chưa có tài khoản? <a href="/register">Đăng ký ngay</a></p>

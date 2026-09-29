@@ -60,6 +60,10 @@ const completeTx = db.transaction((depositId, received, { txnId = null, adminId 
 function completeDeposit(depositId, received, opts) {
   const r = completeTx.immediate(depositId, received, opts);
   if (r.ok) logActivity(opts?.adminId || r.deposit.user_id, opts?.adminId ? 'admin_deposit_approve' : 'deposit_auto', `${r.deposit.code} +${money(r.received)}`);
+  if (r.ok) {
+    const u = db.prepare('SELECT username, email, balance FROM users WHERE id = ?').get(r.deposit.user_id);
+    if (u?.email) require('./mailer').sendLater(u.email, 'deposit', { username: u.username, code: r.deposit.code, amount: r.received, balance: u.balance });
+  }
   return r;
 }
 

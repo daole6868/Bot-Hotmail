@@ -5,6 +5,9 @@ const { db, logActivity, getSettings, bumpStat } = require('../db');
 const { limiters, honeypot, blockIp } = require('../middleware/security');
 const captcha = require('../utils/captcha');
 const { clientIp, str } = require('../utils/helpers');
+const sec = require('../services/account-security');
+const mailer = require('../services/mailer');
+const SQLiteStore = require('../session-store');
 
 const router = express.Router();
 
@@ -73,8 +76,25 @@ router.post('/login', limiters.login, honeypot, async (req, res) => {
   }
   if (user.status === 'banned') return fail(`Tài khoản đã bị khóa${user.ban_reason ? ': ' + user.ban_reason : ''}`);
 
-  const returnTo = req.session.returnTo;
-  // Tạo session mới sau đăng nhập (chống session fixation)
+  const opts = { remember: !!req.body.remember, returnTo: req.session.returnTo };
+  // Xác minh 2 lớp: thiết bị lạ / quá lâu chưa xác minh -> gửi mã 6 số về email
+  if (sec.needsOtp(user, req, res)) {
+    const wait = sec.otpCooldown(user.id, 'login');
+    if (!wait) {
+      const r = await sec.sendOtp(user, 'login', { ip });
+      if (!r.ok) return fail('Không gửi được mã xác minh tới email. Vui lòng thử lại sau hoặc liên hệ shop.');
+    }
+    req.session.loginFails = 0;
+    req.session.pending2fa = { uid: user.id, at: Date.now(), sends: 1, ...opts };
+    logActivity(user.id, 'login_2fa_sent', null, ip);
+    return req.session.save(() => res.redirect('/login/verify'));
+  }
+  finishLogin(req, res, user, opts);
+});
+
+// Hoàn tất đăng nhập: tạo session mới (chống session fixation), cập nhật lần đăng nhập, chuyển trang
+function finishLogin(req, res, user, { remember, returnTo }) {
+  const ip = clientIp(req);
   req.session.regenerate((err) => {
     if (err) return res.status(500).render('errors/error', { code: 500, message: 'Lỗi phiên đăng nhập' });
     req.session.userId = user.id;
@@ -82,10 +102,10 @@ router.post('/login', limiters.login, honeypot, async (req, res) => {
     if (req.session.isAdmin) {
       req.session.adminLastSeen = Date.now();
       req.session.cookie.maxAge = 8 * 3600 * 1000; // phiên admin tối đa 8h
-    } else if (req.body.remember) {
+    } else if (remember) {
       req.session.cookie.maxAge = 30 * 86400 * 1000;
     }
-    db.prepare('UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ?, last_login_ip = ? WHERE id = ?').run(nowS, ip, user.id);
+    db.prepare('UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ?, last_login_ip = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), ip, user.id);
     logActivity(user.id, user.role === 'admin' ? 'admin_login' : 'login', null, ip);
     req.session.save(() => {
       // Đúng tài khoản admin -> vào thẳng trang quản trị
@@ -94,6 +114,101 @@ router.post('/login', limiters.login, honeypot, async (req, res) => {
       res.redirect(safe);
     });
   });
+}
+
+// ---------- Bước 2 đăng nhập: nhập mã gửi qua email ----------
+function pendingUser(req) {
+  const p = req.session.pending2fa;
+  if (!p || Date.now() - p.at > 15 * 60 * 1000) return null;
+  const u = db.prepare('SELECT * FROM users WHERE id = ?').get(p.uid);
+  return u && u.status !== 'banned' ? { p, u } : null;
+}
+const renderVerify = (req, res, u, extra = {}) => res.render('pages/login-verify', {
+  title: 'Xác minh đăng nhập', email: sec.maskEmail(u.email), wait: sec.otpCooldown(u.id, 'login'), ...extra,
+});
+
+router.get('/login/verify', (req, res) => {
+  const pu = pendingUser(req);
+  if (!pu) { delete req.session.pending2fa; return res.redirect('/login'); }
+  renderVerify(req, res, pu.u);
+});
+
+router.post('/login/verify', limiters.otp, (req, res) => {
+  const pu = pendingUser(req);
+  if (!pu) { delete req.session.pending2fa; req.flash('error', 'Phiên xác minh đã hết hạn, vui lòng đăng nhập lại'); return res.redirect('/login'); }
+  const { p, u } = pu;
+  const v = sec.verifyOtp(u.id, 'login', req.body.code);
+  if (!v.ok) {
+    logActivity(u.id, 'login_2fa_fail', null, clientIp(req));
+    res.status(400); return renderVerify(req, res, u, { error: v.message });
+  }
+  const known = sec.isKnownDevice(u.id, req, res);
+  if (req.body.trust === '1') sec.trustDevice(u, req, res);
+  if (!u.email_verified_at) db.prepare('UPDATE users SET email_verified_at = unixepoch() WHERE id = ?').run(u.id);
+  if (!known) mailer.sendLater(u.email, 'login_alert', { username: u.username, ip: clientIp(req), ua: req.get('user-agent'), at: Math.floor(Date.now() / 1000) });
+  finishLogin(req, res, u, p);
+});
+
+router.post('/login/resend', limiters.otp, async (req, res) => {
+  const pu = pendingUser(req);
+  if (!pu) return res.redirect('/login');
+  const { p, u } = pu;
+  const wait = sec.otpCooldown(u.id, 'login');
+  if (wait > 0 || p.sends >= 5) return renderVerify(req, res, u, { error: p.sends >= 5 ? 'Đã gửi lại quá nhiều lần, vui lòng đăng nhập lại sau' : `Vui lòng chờ ${wait} giây rồi gửi lại` });
+  const r = await sec.sendOtp(u, 'login', { ip: clientIp(req) });
+  p.sends += 1;
+  renderVerify(req, res, u, r.ok ? { info: 'Đã gửi mã mới tới email của bạn' } : { error: 'Không gửi được email, vui lòng thử lại sau' });
+});
+
+// ---------- Quên mật khẩu ----------
+router.get('/forgot', (req, res) => {
+  if (req.user) return res.redirect('/user/security');
+  res.render('pages/forgot', { title: 'Quên mật khẩu', form: {}, ready: mailer.isReady() });
+});
+
+router.post('/forgot', limiters.forgot, honeypot, async (req, res) => {
+  const ip = clientIp(req);
+  const q = str(req.body.email, 100).toLowerCase();
+  const render = (extra) => res.render('pages/forgot', { title: 'Quên mật khẩu', form: { email: q }, ready: mailer.isReady(), ...extra });
+  if (!mailer.isReady()) return render({ error: 'Shop chưa bật gửi email. Vui lòng liên hệ admin để lấy lại mật khẩu.' });
+  if (!q) return render({ error: 'Vui lòng nhập email hoặc tên đăng nhập' });
+  if (!(await captcha.check(req))) return render({ error: 'Xác minh captcha không đúng' });
+  const user = db.prepare('SELECT * FROM users WHERE (email = ? OR username = ?) AND status = ?').get(q, q, 'active');
+  if (user && user.email) {
+    const recent = db.prepare('SELECT COUNT(*) c FROM password_resets WHERE user_id = ? AND created_at > ?').get(user.id, Math.floor(Date.now() / 1000) - 3600).c;
+    if (recent < 3) {
+      const token = sec.createResetToken(user.id, ip);
+      await mailer.send(user.email, 'reset', { username: user.username, url: `${require('../config').baseUrl}/reset/${token}` });
+      logActivity(user.id, 'password_reset_request', null, ip);
+    }
+  }
+  // Luôn trả cùng 1 thông báo -> không dò được email nào có tài khoản
+  render({ sent: true });
+});
+
+router.get('/reset/:token', (req, res) => {
+  const r = sec.findReset(req.params.token);
+  res.set('Referrer-Policy', 'no-referrer').render('pages/reset', { title: 'Đặt lại mật khẩu', valid: !!r, token: req.params.token });
+});
+
+router.post('/reset/:token', limiters.forgot, async (req, res) => {
+  const r = sec.findReset(req.params.token);
+  const render = (error) => res.status(400).render('pages/reset', { title: 'Đặt lại mật khẩu', valid: !!r, token: req.params.token, error });
+  if (!r) return render('Link đã hết hạn hoặc đã được sử dụng');
+  const password = String(req.body.password || '');
+  if (password.length < 8 || password.length > 72 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) return render('Mật khẩu 8-72 ký tự, gồm cả chữ và số');
+  if (password !== req.body.password2) return render('Mật khẩu nhập lại không khớp');
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(r.user_id);
+  if (!user) return render('Tài khoản không tồn tại');
+  const ip = clientIp(req);
+  db.prepare('UPDATE users SET password_hash = ?, failed_logins = 0, locked_until = NULL, email_verified_at = COALESCE(email_verified_at, unixepoch()) WHERE id = ?')
+    .run(await bcrypt.hash(password, 12), user.id);
+  sec.useReset(r.id);
+  SQLiteStore.destroyUser(user.id); // đăng xuất mọi thiết bị
+  logActivity(user.id, 'password_reset_done', null, ip);
+  mailer.sendLater(user.email, 'password_changed', { username: user.username, ip, at: Math.floor(Date.now() / 1000), byReset: true });
+  req.flash('success', 'Đã đặt lại mật khẩu. Hãy đăng nhập bằng mật khẩu mới.');
+  res.redirect('/login');
 });
 
 router.get('/register', (req, res) => {
@@ -131,6 +246,7 @@ router.post('/register', limiters.register, honeypot, async (req, res) => {
     .run(form.username, form.email || null, hash, ip).lastInsertRowid;
   bumpStat('new_users', 1);
   logActivity(id, 'register', null, ip);
+  if (form.email) mailer.sendLater(form.email, 'welcome', { username: form.username });
 
   req.session.regenerate(() => {
     req.session.userId = id;

@@ -7,6 +7,10 @@ const { encrypt, sha256, randomCode } = require('./utils/crypto');
 const config = require('./config');
 
 const DEFAULT_SETTINGS = {
+  // Email & xác minh 2 lớp (chỉ hoạt động khi đã cấu hình SMTP ở Admin > Email & Bảo mật)
+  twofa_mode_user: 'optional', twofa_admin: '1', twofa_days: '30',
+  mail_on_welcome: '1', mail_on_order: '1', mail_on_deposit: '1', mail_on_password: '1', mail_on_login_alert: '1',
+  smtp_port: '587', smtp_secure: 'tls',
   site_name: 'ShopAcc.VN',
   site_slogan: 'Shop acc game uy tín - Giao dịch tự động 24/7',
   site_description: 'Mua bán tài khoản game Liên Quân, Free Fire, PUBG, Genshin, Roblox, Valorant... uy tín, giao acc tự động 24/7.',

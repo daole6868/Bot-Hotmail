@@ -38,6 +38,11 @@ function purgeOld() {
   out.bankTxns = db.prepare("DELETE FROM bank_transactions WHERE status IN ('matched','ignored') AND created_at < ?").run(t - r.bankTxnDays * DAY).changes;
   out.sessions = SQLiteStore.cleanup();
   out.ipBlocks = db.prepare('DELETE FROM ip_blocks WHERE expires_at IS NOT NULL AND expires_at < ?').run(t).changes;
+  // Mã xác minh / link đặt lại mật khẩu đã dùng hoặc hết hạn, nhật ký email cũ, thiết bị không dùng 180 ngày
+  out.otps = db.prepare('DELETE FROM email_otps WHERE expires_at < ?').run(t - DAY).changes
+    + db.prepare('DELETE FROM password_resets WHERE expires_at < ?').run(t - DAY).changes;
+  out.emailLogs = db.prepare('DELETE FROM email_logs WHERE created_at < ?').run(t - r.logDays * DAY).changes;
+  out.devices = db.prepare('DELETE FROM trusted_devices WHERE last_seen_at < ?').run(t - 180 * DAY).changes;
   return out;
 }
 

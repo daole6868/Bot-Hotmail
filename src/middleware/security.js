@@ -116,6 +116,14 @@ const limiters = {
     handler: limitHandler('Bạn thử mã quá nhiều lần.'),
   }),
   webhook: rateLimit({ windowMs: 60 * 1000, limit: 120 }),
+  otp: rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 30, keyGenerator: (req) => ipKeyGenerator(req.ip),
+    handler: limitHandler('Bạn nhập mã quá nhiều lần. Vui lòng thử lại sau 15 phút.'),
+  }),
+  forgot: rateLimit({
+    windowMs: 60 * 60 * 1000, limit: 6, keyGenerator: (req) => ipKeyGenerator(req.ip),
+    handler: limitHandler('Bạn yêu cầu đặt lại mật khẩu quá nhiều lần. Vui lòng thử lại sau 1 giờ.'),
+  }),
 };
 
 // ---------- Honeypot: form có ô ẩn "website", bot điền vào sẽ bị chặn ----------
@@ -130,7 +138,7 @@ function honeypot(req, res, next) {
 }
 
 // ---------- Nạp user hiện tại ----------
-const userStmt = db.prepare('SELECT id, username, email, role, balance, status, ban_reason, total_deposit, total_spent, created_at FROM users WHERE id = ?');
+const userStmt = db.prepare('SELECT id, username, email, email_verified_at, twofa_enabled, role, balance, status, ban_reason, total_deposit, total_spent, created_at FROM users WHERE id = ?');
 function loadUser(req, res, next) {
   res.locals.user = null;
   if (req.session.userId) {

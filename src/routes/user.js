@@ -8,6 +8,8 @@ const maintenance = require('../services/maintenance');
 const { decrypt } = require('../utils/crypto');
 const { paginate, toInt, str, clientIp } = require('../utils/helpers');
 const SQLiteStore = require('../session-store');
+const sec = require('../services/account-security');
+const mailer = require('../services/mailer');
 
 const router = express.Router();
 router.use(requireLogin);
@@ -36,6 +38,80 @@ router.get('/orders/:code', (req, res, next) => {
   o.delivered = require('../utils/helpers').formatDelivered(decrypt(o.delivered_enc));
   res.set('Cache-Control', 'no-store');
   res.render('user/order-detail', { title: `Đơn hàng ${o.order_code}`, o, tab: 'orders' });
+});
+
+// ---------- Bảo mật: email, xác minh 2 lớp, thiết bị tin cậy ----------
+router.get('/security', (req, res) => {
+  const s = getSettings();
+  const devices = db.prepare('SELECT * FROM trusted_devices WHERE user_id = ? ORDER BY last_seen_at DESC').all(req.user.id);
+  res.set('Cache-Control', 'no-store').render('user/security', {
+    title: 'Bảo mật tài khoản', tab: 'security', devices, currentDevice: sec.currentDeviceHash(req, res),
+    ready: mailer.isReady(s), mode: req.user.role === 'admin' ? (s.twofa_admin !== '0' ? 'required' : 'off') : (s.twofa_mode_user || 'optional'),
+    active: sec.twofaApplies(req.user, s), days: sec.twofaDays(s),
+    pendingEmail: req.session.pendingEmail || null, wait: req.session.pendingEmail ? sec.otpCooldown(req.user.id, 'email') : 0,
+  });
+});
+const secBack = (req, res, type, msg) => { if (msg) req.flash(type, msg); res.redirect('/user/security'); };
+const checkPassword = async (req) => {
+  const u = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
+  return bcrypt.compare(String(req.body.password || ''), u.password_hash);
+};
+
+// Thêm / đổi email (hoặc xác minh email hiện tại): gửi mã 6 số tới email đó
+router.post('/email', limiters.otp, async (req, res) => {
+  if (!mailer.isReady()) return secBack(req, res, 'error', 'Shop chưa bật gửi email');
+  const email = str(req.body.email, 100).toLowerCase() || req.user.email;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return secBack(req, res, 'error', 'Email không hợp lệ');
+  if (!(await checkPassword(req))) return secBack(req, res, 'error', 'Mật khẩu không đúng');
+  if (db.prepare('SELECT 1 FROM users WHERE email = ? AND id != ?').get(email, req.user.id)) return secBack(req, res, 'error', 'Email đã được tài khoản khác sử dụng');
+  const wait = sec.otpCooldown(req.user.id, 'email');
+  if (wait > 0) return secBack(req, res, 'error', `Vui lòng chờ ${wait} giây rồi gửi lại mã`);
+  const r = await sec.sendOtp(req.user, 'email', { email });
+  if (!r.ok) return secBack(req, res, 'error', 'Không gửi được email, kiểm tra lại địa chỉ hoặc thử lại sau');
+  req.session.pendingEmail = email;
+  logActivity(req.user.id, 'email_verify_sent', sec.maskEmail(email), clientIp(req));
+  secBack(req, res, 'success', `Đã gửi mã xác minh tới ${sec.maskEmail(email)}`);
+});
+
+router.post('/email/verify', limiters.otp, (req, res) => {
+  const email = req.session.pendingEmail;
+  if (!email) return secBack(req, res, 'error', 'Không có yêu cầu xác minh email nào');
+  const v = sec.verifyOtp(req.user.id, 'email', req.body.code);
+  if (!v.ok) { if (v.expired) delete req.session.pendingEmail; return secBack(req, res, 'error', v.message); }
+  if (v.row.target_email !== email) return secBack(req, res, 'error', 'Mã không khớp với email đang xác minh');
+  if (db.prepare('SELECT 1 FROM users WHERE email = ? AND id != ?').get(email, req.user.id)) return secBack(req, res, 'error', 'Email đã được tài khoản khác sử dụng');
+  const old = req.user.email;
+  db.prepare('UPDATE users SET email = ?, email_verified_at = unixepoch() WHERE id = ?').run(email, req.user.id);
+  delete req.session.pendingEmail;
+  logActivity(req.user.id, old && old !== email ? 'email_changed' : 'email_verified', sec.maskEmail(email), clientIp(req));
+  secBack(req, res, 'success', old && old.toLowerCase() !== email ? 'Đã đổi email thành công' : 'Đã xác minh email thành công');
+});
+
+router.post('/email/cancel', (req, res) => { delete req.session.pendingEmail; secBack(req, res); });
+
+// Bật / tắt xác minh 2 lớp (khi admin để chế độ "khách tự chọn")
+router.post('/2fa', limiters.otp, async (req, res) => {
+  const s = getSettings();
+  if (req.user.role === 'admin' || s.twofa_mode_user !== 'optional') return secBack(req, res, 'error', 'Chế độ xác minh 2 lớp do shop quy định');
+  if (!(await checkPassword(req))) return secBack(req, res, 'error', 'Mật khẩu không đúng');
+  const on = req.body.enable === '1';
+  if (on && !(req.user.email && req.user.email_verified_at)) return secBack(req, res, 'error', 'Cần xác minh email trước khi bật xác minh 2 lớp');
+  db.prepare('UPDATE users SET twofa_enabled = ? WHERE id = ?').run(on ? 1 : 0, req.user.id);
+  if (on) sec.trustDevice(req.user, req, res); // thiết bị đang dùng coi như đã xác minh
+  logActivity(req.user.id, on ? 'twofa_on' : 'twofa_off', null, clientIp(req));
+  secBack(req, res, 'success', on ? 'Đã bật xác minh 2 lớp' : 'Đã tắt xác minh 2 lớp');
+});
+
+router.post('/devices/:id/delete', (req, res) => {
+  db.prepare('DELETE FROM trusted_devices WHERE id = ? AND user_id = ?').run(toInt(req.params.id), req.user.id);
+  logActivity(req.user.id, 'device_removed', req.params.id, clientIp(req));
+  secBack(req, res, 'success', 'Đã xóa thiết bị. Lần đăng nhập sau trên thiết bị đó sẽ phải nhập mã xác minh.');
+});
+router.post('/devices/clear', (req, res) => {
+  db.prepare('DELETE FROM trusted_devices WHERE user_id = ?').run(req.user.id);
+  SQLiteStore.destroyUser(req.user.id, req.sessionID); // đăng xuất mọi thiết bị khác
+  logActivity(req.user.id, 'devices_cleared', null, clientIp(req));
+  secBack(req, res, 'success', 'Đã xóa mọi thiết bị tin cậy và đăng xuất các thiết bị khác.');
 });
 
 // ---------- Nạp tiền ----------
@@ -102,6 +178,7 @@ router.post('/password', limiters.login, async (req, res) => {
   if (password !== password2) return back('error', 'Mật khẩu nhập lại không khớp');
   db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(await bcrypt.hash(password, 12), req.user.id);
   logActivity(req.user.id, 'change_password', null, clientIp(req));
+  mailer.sendLater(req.user.email, 'password_changed', { username: req.user.username, ip: clientIp(req), at: Math.floor(Date.now() / 1000) });
   // Đăng xuất các thiết bị khác
   new SQLiteStore().destroyUser(req.user.id);
   req.session.regenerate(() => {

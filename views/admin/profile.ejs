@@ -8,6 +8,7 @@
     <label>Nhập lại <span class="req">*</span></label><input type="password" name="password2" required minlength="8" maxlength="72" autocomplete="new-password">
     <button class="a-btn a-primary">Cập nhật</button>
   </form>
-  <p class="a-muted a-small">Quên mật khẩu admin? Chạy lệnh <code>npm run reset-admin -- MatKhauMoi123</code> trên server.</p>
+  <p class="a-small"><a href="/user/security"><%- I('shield') %> Email, xác minh 2 lớp & thiết bị tin cậy của tài khoản admin</a></p>
+  <p class="a-muted a-small">Quên mật khẩu admin? Dùng “Quên mật khẩu” ở trang đăng nhập (cần đã cấu hình email), hoặc chạy lệnh <code>npm run reset-admin -- MatKhauMoi123</code> trên server.</p>
 </div>
 <%- include('_footer') %>

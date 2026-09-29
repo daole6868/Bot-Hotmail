@@ -1130,6 +1130,47 @@ router.post('/settings/bank', (req, res) => {
   back(req, res, 'success', 'Đã lưu cài đặt bank', '/admin/settings/bank');
 });
 
+// --- Email & Bảo mật: SMTP, xác minh 2 lớp, loại email thông báo ---
+const MAIL_TOGGLES = [['mail_on_welcome', 'Chào mừng khi đăng ký'], ['mail_on_order', 'Mua hàng thành công'], ['mail_on_deposit', 'Nạp tiền thành công'],
+  ['mail_on_password', 'Mật khẩu vừa được thay đổi'], ['mail_on_login_alert', 'Đăng nhập từ thiết bị mới']];
+router.get('/settings/email', (req, res) => {
+  const mailer = require('../services/mailer');
+  const s = getSettings();
+  res.render('admin/settings-email', {
+    title: 'Email & Bảo mật', s, ready: mailer.isReady(s), toggles: MAIL_TOGGLES, hasPass: !!s.smtp_pass_enc,
+    logs: db.prepare('SELECT * FROM email_logs ORDER BY id DESC LIMIT 40').all(),
+    stats: db.prepare("SELECT SUM(status = 'sent') sent, SUM(status = 'failed') failed FROM email_logs WHERE created_at > unixepoch() - 86400").get(),
+    adminsNoEmail: db.prepare("SELECT username FROM users WHERE role = 'admin' AND (email IS NULL OR email = '')").all().map((r) => r.username),
+  });
+});
+router.post('/settings/email', (req, res) => {
+  const mailer = require('../services/mailer');
+  setSetting('smtp_host', str(req.body.smtp_host, 120));
+  setSetting('smtp_port', String(toInt(req.body.smtp_port, 587, 1, 65535)));
+  setSetting('smtp_secure', ['ssl', 'tls', 'none'].includes(req.body.smtp_secure) ? req.body.smtp_secure : 'tls');
+  setSetting('smtp_user', str(req.body.smtp_user, 150));
+  if (req.body.smtp_pass) setSetting('smtp_pass_enc', mailer.encryptPass(String(req.body.smtp_pass).slice(0, 300)));
+  if (req.body.clear_pass) setSetting('smtp_pass_enc', '');
+  setSetting('mail_from_name', str(req.body.mail_from_name, 100));
+  const from = str(req.body.mail_from_email, 150);
+  if (from && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(from)) return back(req, res, 'error', 'Email người gửi không hợp lệ', '/admin/settings/email');
+  setSetting('mail_from_email', from);
+  setSetting('twofa_mode_user', ['off', 'optional', 'required'].includes(req.body.twofa_mode_user) ? req.body.twofa_mode_user : 'optional');
+  setSetting('twofa_admin', req.body.twofa_admin ? '1' : '0');
+  setSetting('twofa_days', String(toInt(req.body.twofa_days, 30, 1, 365)));
+  for (const [k] of MAIL_TOGGLES) setSetting(k, req.body[k] ? '1' : '0');
+  audit(req, 'settings_email_update');
+  back(req, res, 'success', 'Đã lưu cài đặt email & bảo mật', '/admin/settings/email');
+});
+router.post('/settings/email/test', async (req, res) => {
+  const mailer = require('../services/mailer');
+  const to = str(req.body.to, 150) || req.user.email;
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(to)) return back(req, res, 'error', 'Nhập email nhận thử hợp lệ', '/admin/settings/email');
+  const r = await mailer.send(to, 'test');
+  audit(req, 'email_test', `${to} ${r.ok ? 'ok' : r.error}`);
+  back(req, res, r.ok ? 'success' : 'error', r.ok ? `Đã gửi email thử tới ${to}. Hãy kiểm tra hộp thư (cả mục Spam).` : `Gửi thất bại: ${r.error}`, '/admin/settings/email');
+});
+
 // ======================= NHẬT KÝ & BẢO MẬT =======================
 router.get('/logs', (req, res) => {
   const tab = req.query.tab === 'login' ? 'login' : 'activity';

@@ -186,6 +186,20 @@
     window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
   }
 
+  // Nút "Gửi lại mã": đếm ngược thời gian chờ
+  $$('[data-resend-wait]').forEach((btn) => {
+    let w = +btn.dataset.resendWait || 0;
+    if (w <= 0) return;
+    const label = 'Gửi lại mã';
+    const t = setInterval(() => {
+      w -= 1;
+      btn.textContent = w > 0 ? `${label} (${w}s)` : label;
+      if (w <= 0) { btn.disabled = false; clearInterval(t); }
+    }, 1000);
+  });
+  // Ô nhập mã 6 số: chỉ giữ chữ số
+  $$('.otp-input').forEach((inp) => inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 6); }));
+
   // Popup xác nhận mua: kiểm tra mã KM + số dư trước khi gửi đơn
   const bc = $('#buyConfirm');
   const buyForm = $('[data-buy-form]');
