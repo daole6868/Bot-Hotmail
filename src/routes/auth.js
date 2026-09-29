@@ -213,7 +213,8 @@ router.post('/reset/:token', limiters.forgot, async (req, res) => {
 
 router.get('/register', (req, res) => {
   if (req.user) return res.redirect('/');
-  res.render('pages/register', { title: 'Đăng ký', form: {} });
+  const r = pendingReg(req);
+  res.render('pages/register', { title: 'Đăng ký', form: r ? { username: r.username, email: r.email } : {} });
 });
 
 router.post('/register', limiters.register, honeypot, async (req, res) => {
@@ -227,14 +228,15 @@ router.post('/register', limiters.register, honeypot, async (req, res) => {
   const password = String(req.body.password || '');
   if (!/^[a-zA-Z0-9_]{4,20}$/.test(form.username)) return render('Tên đăng nhập 4-20 ký tự, chỉ gồm chữ, số, dấu gạch dưới');
   if (RESERVED.some((r) => form.username.toLowerCase().includes(r))) return render('Tên đăng nhập này không được phép sử dụng');
-  if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) return render('Email không hợp lệ');
+  if (!form.email) return render('Vui lòng nhập email');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) return render('Email không hợp lệ');
   if (password.length < 8 || password.length > 72 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
     return render('Mật khẩu 8-72 ký tự, gồm cả chữ và số');
   }
   if (password !== req.body.password2) return render('Mật khẩu nhập lại không khớp');
   if (!req.body.agree) return render('Bạn cần đồng ý điều khoản');
 
-  const dup = db.prepare('SELECT username, email FROM users WHERE username = ? OR (email IS NOT NULL AND email = ?)').get(form.username, form.email || null);
+  const dup = db.prepare('SELECT username, email FROM users WHERE username = ? OR (email IS NOT NULL AND email = ?)').get(form.username, form.email);
   if (dup) return render(dup.username.toLowerCase() === form.username.toLowerCase() ? 'Tên đăng nhập đã tồn tại' : 'Email đã được sử dụng');
 
   // Giới hạn số tài khoản / IP / ngày (chống clone)
@@ -242,19 +244,82 @@ router.post('/register', limiters.register, honeypot, async (req, res) => {
   if (sameIp >= 3) return render('IP của bạn đã tạo quá nhiều tài khoản hôm nay');
 
   const hash = await bcrypt.hash(password, 12);
-  const id = db.prepare("INSERT INTO users(username, email, password_hash, role, register_ip) VALUES(?,?,?,'user',?)")
-    .run(form.username, form.email || null, hash, ip).lastInsertRowid;
+  // Shop đã bật gửi email -> bắt buộc nhập mã 6 số gửi về email rồi mới tạo tài khoản
+  if (mailer.isReady(s)) {
+    const reg = { username: form.username, email: form.email, hash, at: Date.now(), sends: 1, otp: sec.createRegOtp(form.email) };
+    const r = await mailer.send(form.email, 'otp', { code: reg.otp.code, username: form.username, purpose: 'register', ip });
+    if (!r.ok) return render('Không gửi được mã tới email này, vui lòng kiểm tra lại địa chỉ email');
+    delete reg.otp.code;
+    req.session.pendingReg = reg;
+    return req.session.save(() => res.redirect('/register/verify'));
+  }
+  createAccount(req, res, { username: form.username, email: form.email, hash }, false);
+});
+
+function createAccount(req, res, { username, email, hash }, verified) {
+  const ip = clientIp(req);
+  let id;
+  try {
+    id = db.prepare(`INSERT INTO users(username, email, password_hash, role, register_ip, email_verified_at, last_login_at, last_login_ip)
+      VALUES(?,?,?,'user',?,?,unixepoch(),?)`).run(username, email || null, hash, ip, verified ? Math.floor(Date.now() / 1000) : null, ip).lastInsertRowid;
+  } catch (e) {
+    if (!/UNIQUE/.test(e.message)) throw e;
+    req.flash('error', 'Tên đăng nhập hoặc email vừa được người khác sử dụng, vui lòng đăng ký lại');
+    return res.redirect('/register');
+  }
   bumpStat('new_users', 1);
   logActivity(id, 'register', null, ip);
-  if (form.email) mailer.sendLater(form.email, 'welcome', { username: form.username });
+  if (verified) sec.trustDevice({ id }, req, res); // vừa nhập đúng mã trên thiết bị này -> thiết bị tin cậy
+  if (email) mailer.sendLater(email, 'welcome', { username });
 
   req.session.regenerate(() => {
     req.session.userId = id;
     req.session.isAdmin = false;
-    req.flash('success', 'Đăng ký thành công! Chào mừng bạn.');
+    req.flash('success', verified ? 'Đăng ký thành công! Email đã được xác minh, chào mừng bạn.' : 'Đăng ký thành công! Chào mừng bạn.');
     req.session.save(() => res.redirect('/'));
   });
+}
+
+// ---------- Bước 2 đăng ký: nhập mã gửi tới email ----------
+function pendingReg(req) {
+  const r = req.session.pendingReg;
+  if (!r || Date.now() - r.at > 30 * 60 * 1000) { delete req.session.pendingReg; return null; }
+  return r;
+}
+const regWait = (r) => Math.max(0, (r.otp?.sentAt || 0) + 60 - Math.floor(Date.now() / 1000));
+const renderRegVerify = (req, res, r, extra = {}) => res.render('pages/register-verify', {
+  title: 'Xác minh email đăng ký', email: r.email, wait: regWait(r), ...extra,
 });
+
+router.get('/register/verify', (req, res) => {
+  const r = pendingReg(req);
+  if (!r) return res.redirect('/register');
+  renderRegVerify(req, res, r);
+});
+
+router.post('/register/verify', limiters.otp, (req, res) => {
+  const r = pendingReg(req);
+  if (!r) { req.flash('error', 'Phiên đăng ký đã hết hạn, vui lòng đăng ký lại'); return res.redirect('/register'); }
+  const v = sec.verifyRegOtp(r, req.body.code);
+  if (!v.ok) { res.status(400); return renderRegVerify(req, res, r, { error: v.message }); }
+  delete req.session.pendingReg;
+  createAccount(req, res, r, true);
+});
+
+router.post('/register/resend', limiters.otp, async (req, res) => {
+  const r = pendingReg(req);
+  if (!r) return res.redirect('/register');
+  const wait = regWait(r);
+  if (wait > 0 || r.sends >= 5) return renderRegVerify(req, res, r, { error: r.sends >= 5 ? 'Đã gửi lại quá nhiều lần, vui lòng đăng ký lại sau' : `Vui lòng chờ ${wait} giây rồi gửi lại` });
+  const otp = sec.createRegOtp(r.email);
+  const m = await mailer.send(r.email, 'otp', { code: otp.code, username: r.username, purpose: 'register', ip: clientIp(req) });
+  if (!m.ok) return renderRegVerify(req, res, r, { error: 'Không gửi được email, vui lòng thử lại sau' });
+  delete otp.code;
+  r.otp = otp; r.sends += 1;
+  renderRegVerify(req, res, r, { info: 'Đã gửi mã mới tới email của bạn' });
+});
+
+router.post('/register/cancel', (req, res) => { delete req.session.pendingReg; res.redirect('/register'); });
 
 router.post('/logout', (req, res) => {
   const uid = req.session.userId;

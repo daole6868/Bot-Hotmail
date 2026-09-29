@@ -52,6 +52,25 @@ async function sendOtp(user, purpose, { email, ip } = {}) {
   return mailer.send(to, 'otp', { code, username: user.username, purpose, ip });
 }
 
+// ---------- Mã đăng ký (tài khoản chưa tồn tại -> lưu băm trong phiên) ----------
+function createRegOtp(email) {
+  const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+  return { code, hash: hmac(`reg:${email}:${code}`), expires: nowS() + OTP_TTL, tries: 0, sentAt: nowS() };
+}
+/** reg = req.session.pendingReg (bị sửa trực tiếp: tăng số lần sai) -> { ok, message, expired } */
+function verifyRegOtp(reg, code) {
+  code = String(code || '').replace(/\D/g, '');
+  if (!reg.otp || reg.otp.expires < nowS()) return { ok: false, expired: true, message: 'Mã đã hết hạn, hãy bấm Gửi lại mã' };
+  if (reg.otp.tries >= OTP_MAX_TRIES) return { ok: false, expired: true, message: 'Nhập sai quá nhiều lần, hãy gửi lại mã mới' };
+  if (code.length !== 6 || !safeEq(hmac(`reg:${reg.email}:${code}`), reg.otp.hash)) {
+    reg.otp.tries += 1;
+    const left = OTP_MAX_TRIES - reg.otp.tries;
+    return { ok: false, expired: left <= 0, message: left > 0 ? `Mã không đúng, còn ${left} lần thử` : 'Nhập sai quá nhiều lần, hãy gửi lại mã mới' };
+  }
+  reg.otp = null;
+  return { ok: true };
+}
+
 // ---------- Thiết bị tin cậy ----------
 function deviceId(req, res) {
   let id = (req.headers.cookie || '').match(/(?:^|;\s*)did=([a-f0-9]{48})/)?.[1];
@@ -108,6 +127,6 @@ const useReset = (id) => db.prepare('UPDATE password_resets SET used_at = ? WHER
 const maskEmail = (e) => String(e || '').replace(/^(.{1,2})[^@]*(@.*)$/, (m, a, b) => a + '***' + b);
 
 module.exports = {
-  createOtp, verifyOtp, otpCooldown, sendOtp, twofaApplies, twofaDays, needsOtp, trustDevice, isKnownDevice, currentDeviceHash,
+  createOtp, verifyOtp, createRegOtp, verifyRegOtp, otpCooldown, sendOtp, twofaApplies, twofaDays, needsOtp, trustDevice, isKnownDevice, currentDeviceHash,
   createResetToken, findReset, useReset, maskEmail, OTP_TTL,
 };

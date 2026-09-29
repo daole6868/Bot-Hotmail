@@ -69,8 +69,9 @@ const TEMPLATES = {
   otp: (d) => ({
     subject: `${d.code} là mã xác minh của bạn`,
     html: layout({
-      title: d.purpose === 'email' ? 'Xác minh địa chỉ email' : 'Mã xác minh đăng nhập',
-      intro: d.purpose === 'email' ? `Xin chào <b>${esc(d.username)}</b>, nhập mã dưới đây để xác minh email này cho tài khoản của bạn.`
+      title: d.purpose === 'register' ? 'Xác minh đăng ký tài khoản' : d.purpose === 'email' ? 'Xác minh địa chỉ email' : 'Mã xác minh đăng nhập',
+      intro: d.purpose === 'register' ? `Xin chào <b>${esc(d.username)}</b>, nhập mã dưới đây để hoàn tất đăng ký tài khoản.`
+        : d.purpose === 'email' ? `Xin chào <b>${esc(d.username)}</b>, nhập mã dưới đây để xác minh email này cho tài khoản của bạn.`
         : `Xin chào <b>${esc(d.username)}</b>, có yêu cầu đăng nhập tài khoản của bạn${d.ip ? ` từ IP <b>${esc(d.ip)}</b>` : ''}. Nhập mã dưới đây để tiếp tục.`,
       body: `<div style="font-size:34px;font-weight:800;letter-spacing:10px;text-align:center;background:#f5f0ff;border:1px dashed #c4b5fd;border-radius:12px;padding:16px;color:#5b21b6">${esc(d.code)}</div>`,
       note: `Mã có hiệu lực <b>10 phút</b> và chỉ dùng được 1 lần. <b>Không chia sẻ mã này cho bất kỳ ai</b>, kể cả người tự xưng là nhân viên shop. Nếu không phải bạn, hãy đổi mật khẩu ngay.`,
