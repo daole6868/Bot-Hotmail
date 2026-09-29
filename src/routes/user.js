@@ -83,6 +83,7 @@ router.post('/email/verify', limiters.otp, (req, res) => {
   const old = req.user.email;
   db.prepare('UPDATE users SET email = ?, email_verified_at = unixepoch() WHERE id = ?').run(email, req.user.id);
   delete req.session.pendingEmail;
+  sec.trustDevice(req.user, req, res); // vừa nhập đúng mã trên thiết bị này -> coi là thiết bị tin cậy
   logActivity(req.user.id, old && old !== email ? 'email_changed' : 'email_verified', sec.maskEmail(email), clientIp(req));
   secBack(req, res, 'success', old && old.toLowerCase() !== email ? 'Đã đổi email thành công' : 'Đã xác minh email thành công');
 });

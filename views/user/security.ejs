@@ -79,7 +79,7 @@
 <div class="card pad">
   <h2><%- I('monitor') %> Thiết bị tin cậy</h2>
   <p class="muted">Thiết bị đã xác minh bằng mã sẽ không bị hỏi lại mã trong <%= days %> ngày. Thấy thiết bị lạ? Xóa ngay và đổi mật khẩu.</p>
-  <% if (!devices.length) { %><p class="muted">Chưa có thiết bị nào.</p><% } %>
+  <% if (!devices.length) { %><p class="muted">Chưa có thiết bị nào. Thiết bị sẽ được thêm khi bạn <b>nhập mã xác minh</b> (lúc đăng nhập có tích “Tin cậy thiết bị này”, hoặc khi xác minh email ở mục trên).</p><% } %>
   <div class="sec-list">
     <% devices.forEach(d => { %>
       <div class="sec-item">
