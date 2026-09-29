@@ -11,6 +11,7 @@ const SQLiteStore = require('../session-store');
 const sec = require('../services/account-security');
 const mailer = require('../services/mailer');
 
+const GMAIL = /^[a-z0-9](?:[a-z0-9.+_-]{0,62}[a-z0-9])?@(gmail|googlemail)\.com$/i; // khách chỉ dùng Gmail
 const router = express.Router();
 router.use(requireLogin);
 
@@ -61,7 +62,7 @@ const checkPassword = async (req) => {
 router.post('/email', limiters.otp, async (req, res) => {
   if (!mailer.isReady()) return secBack(req, res, 'error', 'Shop chưa bật gửi email');
   const email = str(req.body.email, 100).toLowerCase() || req.user.email;
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return secBack(req, res, 'error', 'Email không hợp lệ');
+  if (!email || !(req.user.role === 'admin' ? /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/ : GMAIL).test(email)) return secBack(req, res, 'error', 'Email không hợp lệ');
   if (!(await checkPassword(req))) return secBack(req, res, 'error', 'Mật khẩu không đúng');
   if (db.prepare('SELECT 1 FROM users WHERE email = ? AND id != ?').get(email, req.user.id)) return secBack(req, res, 'error', 'Email đã được tài khoản khác sử dụng');
   const wait = sec.otpCooldown(req.user.id, 'email');

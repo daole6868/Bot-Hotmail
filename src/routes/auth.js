@@ -15,6 +15,7 @@ const MAX_FAILS = 5;          // sai 5 lần -> khóa tài khoản tạm thời
 const LOCK_MINUTES = 15;
 const CAPTCHA_AFTER = 2;      // sai 2 lần trong phiên -> bắt nhập captcha
 const RESERVED = ['admin', 'administrator', 'root', 'support', 'system', 'mod', 'moderator', 'shop', 'staff'];
+const GMAIL = /^[a-z0-9](?:[a-z0-9.+_-]{0,62}[a-z0-9])?@(gmail|googlemail)\.com$/i; // chỉ nhận Gmail
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 12);
 
 router.get('/captcha.svg', (req, res) => {
@@ -229,7 +230,7 @@ router.post('/register', limiters.register, honeypot, async (req, res) => {
   if (!/^[a-zA-Z0-9_]{4,20}$/.test(form.username)) return render('Tên đăng nhập 4-20 ký tự, chỉ gồm chữ, số, dấu gạch dưới');
   if (RESERVED.some((r) => form.username.toLowerCase().includes(r))) return render('Tên đăng nhập này không được phép sử dụng');
   if (!form.email) return render('Vui lòng nhập email');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) return render('Email không hợp lệ');
+  if (!GMAIL.test(form.email)) return render('Email không hợp lệ');
   if (password.length < 8 || password.length > 72 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
     return render('Mật khẩu 8-72 ký tự, gồm cả chữ và số');
   }
