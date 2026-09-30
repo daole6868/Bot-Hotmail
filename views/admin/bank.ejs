@@ -1,15 +1,5 @@
 <%- include('_header') %>
 <div class="a-card">
-  <h3><%- I('link') %> Cấu hình nạp tự động</h3>
-  <p>Đăng ký webhook tại cổng trung gian (SePay / Casso / script riêng) với thông tin:</p>
-  <table class="a-table a-kv">
-    <tr><th>URL webhook</th><td><code><%= webhookUrl %></code></td></tr>
-    <tr><th>Phương thức</th><td>POST, JSON</td></tr>
-    <tr><th>Xác thực</th><td>Header <code>Authorization: Apikey &lt;BANK_WEBHOOK_TOKEN trong file .env&gt;</code></td></tr>
-  </table>
-  <p class="a-muted a-small">Hệ thống tự đọc nội dung CK có dạng mã nạp (VD: NAPAB12CD) để cộng tiền. Giao dịch trùng mã giao dịch bị bỏ qua (chống cộng 2 lần).</p>
-</div>
-<div class="a-card">
   <form class="a-filter" method="get">
     <select name="status"><option value="">-- Tất cả --</option><% [['unmatched','Chưa khớp'],['matched','Đã khớp'],['ignored','Bỏ qua']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select>
     <button class="a-btn">Lọc</button>
