@@ -83,8 +83,8 @@ function normalizeWebhook(body) {
   const list = [];
   if (!body || typeof body !== 'object') return list;
   if (Array.isArray(body.transactions)) {
-    // NIFY: { event:'new_transactions', bank:{ account_number }, transactions:[{ amount, description, reference, transaction_date }] }
-    const acc = String(body.bank?.account_number || '').replace(/\D/g, '');
+    // NIFY: { event:'new_transactions', account:{ account_number }, transactions:[{ amount, description, reference, transaction_date }] }
+    const acc = String((body.account || body.bank)?.account_number || '').replace(/\D/g, '');
     const mine = String(getSettings().bank_account || '').replace(/\D/g, '');
     if (acc && mine && acc !== mine) return list; // giao dịch của tài khoản khác -> bỏ qua
     for (const t of body.transactions) {

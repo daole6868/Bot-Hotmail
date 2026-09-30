@@ -11,11 +11,10 @@
 const crypto = require('crypto');
 const express = require('express');
 const config = require('../config');
-const { logActivity } = require('../db');
+const { db, logActivity } = require('../db');
 const { limiters } = require('../middleware/security');
 const { processBankTransactions } = require('../services/deposit');
 const { safeEqual, decrypt } = require('../utils/crypto');
-const { getSettings } = require('../db');
 const { clientIp } = require('../utils/helpers');
 
 const router = express.Router();
@@ -26,19 +25,29 @@ function extractToken(req) {
   return (m && m[1]) || req.get('x-api-key') || req.get('secure-token') || '';
 }
 
-function validSignature(req) {
-  const sig = String(req.get('x-webhook-signature') || '').trim().toLowerCase();
-  const enc = getSettings().webhook_secret_enc;
-  if (!sig || !enc || !req.rawBody) return false;
-  const secret = decrypt(enc);
-  return !!secret && safeEqual(sig, crypto.createHmac('sha256', secret).update(req.rawBody).digest('hex'));
+// Đọc thẳng từ DB (không qua cache 30s): chạy nhiều bản PM2 thì cache của bản khác có thể còn key cũ
+const secretStmt = db.prepare("SELECT value FROM settings WHERE key = 'webhook_secret_enc'");
+const webhookSecret = () => { const r = secretStmt.get(); return r && r.value ? decrypt(r.value) : ''; };
+
+/** -> '' nếu hợp lệ, ngược lại là lý do (ghi log để admin tra) */
+function checkSignature(req, secret) {
+  if (!secret) return 'chưa có Secret Key';
+  // Cách phụ: ?key=<Secret Key> trên URL (cổng thanh toán không hỗ trợ ký)
+  if (req.query.key && safeEqual(String(req.query.key), secret)) return '';
+  let sig = String(req.get('x-webhook-signature') || req.get('x-signature') || '').trim();
+  if (!sig) return 'thiếu header X-Webhook-Signature';
+  sig = sig.replace(/^sha256=/i, '');
+  const mac = crypto.createHmac('sha256', secret).update(req.rawBody || '').digest();
+  if (safeEqual(sig.toLowerCase(), mac.toString('hex')) || safeEqual(sig, mac.toString('base64'))) return '';
+  return `chữ ký không khớp (nhận ${sig.slice(0, 8)}…, dài ${sig.length})`;
 }
 
 const keepRaw = express.json({ limit: '200kb', verify: (req, res, buf) => { req.rawBody = buf; } });
 router.post('/bank/webhook', limiters.webhook, keepRaw, (req, res) => {
   const tokenOk = config.bankWebhookToken && safeEqual(extractToken(req), config.bankWebhookToken);
-  if (!tokenOk && !validSignature(req)) {
-    logActivity(null, 'webhook_unauthorized', null, clientIp(req));
+  const why = tokenOk ? '' : checkSignature(req, webhookSecret());
+  if (why) {
+    logActivity(null, 'webhook_unauthorized', why, clientIp(req));
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
   try {

@@ -1114,12 +1114,13 @@ const BANK_KEYS = ['bank_code', 'bank_name', 'bank_account', 'bank_owner', 'depo
 
 router.get('/settings/bank', (req, res) => {
   // Secret Key cho webhook ký HMAC (NIFY): tự tạo lần đầu, admin copy dán sang bên cổng thanh toán
-  if (!getSettings().webhook_secret_enc) setSetting('webhook_secret_enc', encrypt(crypto.randomBytes(24).toString('hex')));
+  // INSERT OR IGNORE thẳng vào DB: nhiều bản PM2 cùng mở trang cũng chỉ tạo đúng 1 key, không đè nhau
+  db.prepare("INSERT OR IGNORE INTO settings(key, value) VALUES('webhook_secret_enc', ?)").run(encrypt(crypto.randomBytes(24).toString('hex')));
   res.render('admin/settings-bank', renderBank());
 });
 const renderBank = () => ({
   title: 'Cài đặt bank', s: getSettings(), webhookUrl: config.baseUrl + '/api/bank/webhook',
-  webhookSecret: decrypt(getSettings().webhook_secret_enc || ''), depositPrefix: config.depositPrefix,
+  webhookSecret: decrypt(db.prepare("SELECT value FROM settings WHERE key = 'webhook_secret_enc'").get()?.value || ''), depositPrefix: config.depositPrefix,
   expireMinutes: maintenance.depositExpireMinutes(),
   pendingCount: db.prepare("SELECT COUNT(*) c FROM deposits WHERE status = 'pending'").get().c,
 });
