@@ -15,6 +15,8 @@ const config = {
   port: int(env.PORT, 3000),
   baseUrl: env.BASE_URL || 'http://localhost:3000',
   trustProxy: env.TRUST_PROXY === 'true' ? 1 : false,
+  // Chạy sau Nginx (TRUST_PROXY=true): chỉ nhận kết nối từ chính VPS -> không ai gọi thẳng IP:cổng để vượt Cloudflare / Nginx / giả IP
+  host: env.HOST || (env.TRUST_PROXY === 'true' ? '127.0.0.1' : '0.0.0.0'),
   sessionSecret: env.SESSION_SECRET || 'dev_secret_change_me',
   appKey: env.APP_KEY || '0'.repeat(64),
   admin: {

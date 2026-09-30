@@ -133,8 +133,8 @@ app.use((err, req, res, next) => {
 // Chạy PM2 nhiều bản (cluster): chỉ bản số 0 chạy dọn dẹp / backup định kỳ
 if (!process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0') maintenance.startScheduler();
 
-app.listen(config.port, () => {
-  console.log(`Shop đang chạy tại ${config.baseUrl} (port ${config.port})`);
+app.listen(config.port, config.host, () => {
+  console.log(`Shop đang chạy tại ${config.baseUrl} (${config.host}:${config.port})`);
 });
 
 module.exports = app;
