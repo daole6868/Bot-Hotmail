@@ -26,7 +26,12 @@
       <tr><th>File database</th><td><%= mb(info.size) %> (WAL: <%= mb(info.wal) %>)</td></tr>
       <tr><th>Ảnh đã tải lên</th><td><%= uploads.files.toLocaleString('vi-VN') %> file · <%= mb(uploads.size) %></td></tr>
       <% groups.forEach(([g, m]) => { %><tr class="a-kv-group"><td colspan="2"><%= g %></td></tr>
-        <% Object.entries(m).forEach(([k, label]) => { if (info.counts[k] === undefined) return; %><tr><th><%= label %></th><td><%= info.counts[k].toLocaleString('vi-VN') %> dòng</td></tr><% }) %>
+        <% Object.entries(m).forEach(([k, label]) => { if (info.counts[k] === undefined) return; %>
+          <% if (k === 'sessions') { %>
+            <tr><th>Phiên đã đăng nhập</th><td><%= info.sessions.logged.toLocaleString('vi-VN') %> <small class="a-muted">(mỗi thiết bị / trình duyệt 1 phiên)</small></td></tr>
+            <tr><th>Phiên khách tạm thời</th><td><%= info.sessions.guest.toLocaleString('vi-VN') %> <small class="a-muted">(giữ captcha, thông báo; tự xóa sau 1 giờ)</small></td></tr>
+          <% } else { %><tr><th><%= label %></th><td><%= info.counts[k].toLocaleString('vi-VN') %> dòng</td></tr><% } %>
+        <% }) %>
       <% }) %>
       <tr class="a-kv-group"><td colspan="2">Sao lưu</td></tr>
       <tr><th>Backup gần nhất</th><td><%= s.last_backup ? H.fmtDate(+s.last_backup) : 'Chưa có' %></td></tr>

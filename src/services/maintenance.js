@@ -125,8 +125,9 @@ function dbInfo() {
   const walFile = file + '-wal';
   const wal = fs.existsSync(walFile) ? fs.statSync(walFile).size : 0;
   const counts = require('./backup').tableCounts();
+  const sessions = SQLiteStore.stats();
   const backups = require('./backup').listBackups();
-  return { size, wal, counts, backups };
+  return { size, wal, counts, backups, sessions: { logged: sessions.logged || 0, guest: sessions.guest || 0 } };
 }
 
 function runLight() {

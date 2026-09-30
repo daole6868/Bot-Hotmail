@@ -101,6 +101,8 @@ app.use((req, res, next) => {
 });
 app.locals.clearNav = () => { navCache.at = 0; };
 
+// Phiên khách chưa đăng nhập: cookie cũng chỉ 1 giờ (khớp với hạn trong database)
+app.use((req, res, next) => { if (req.session && !req.session.userId) req.session.cookie.maxAge = 60 * 60 * 1000; next(); });
 app.use(security.flash);
 app.use(security.csrf);
 app.use(security.loadUser);

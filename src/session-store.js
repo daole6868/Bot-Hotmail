@@ -3,9 +3,18 @@
 const session = require('express-session');
 const { db } = require('./db');
 
+// Phiên của khách CHƯA đăng nhập (chỉ để giữ mã captcha, thông báo, bước nhập mã 6 số) chỉ sống 1 giờ;
+// đăng nhập xong thì phiên mới sống theo thời hạn bình thường (7 ngày / 30 ngày nếu ghi nhớ / 8 giờ với admin)
+const GUEST_TTL = 60 * 60 * 1000;
+let migrated = false;
+
 class SQLiteStore extends session.Store {
   constructor() {
     super();
+    if (!migrated) {
+      migrated = true; // phiên khách cũ (trước khi có quy tắc 1 giờ) -> rút hạn còn tối đa 1 giờ
+      db.prepare("UPDATE sessions SET expires = MIN(expires, ?) WHERE json_extract(sess, '$.userId') IS NULL").run(Date.now() + GUEST_TTL);
+    }
     this.getStmt = db.prepare('SELECT sess FROM sessions WHERE sid = ? AND expires > ?');
     this.setStmt = db.prepare(`INSERT INTO sessions(sid, sess, expires) VALUES(?,?,?)
       ON CONFLICT(sid) DO UPDATE SET sess = excluded.sess, expires = excluded.expires`);
@@ -15,8 +24,14 @@ class SQLiteStore extends session.Store {
   }
 
   expiresOf(sess) {
-    const maxAge = sess?.cookie?.maxAge || 86400000;
+    const maxAge = sess?.userId ? (sess?.cookie?.maxAge || 86400000) : GUEST_TTL;
     return Date.now() + maxAge;
+  }
+
+  /** Số phiên còn hạn: đã đăng nhập / khách tạm thời */
+  static stats() {
+    return db.prepare(`SELECT SUM(json_extract(sess, '$.userId') IS NOT NULL) logged, SUM(json_extract(sess, '$.userId') IS NULL) guest
+      FROM sessions WHERE expires > ?`).get(Date.now());
   }
 
   get(sid, cb) {
