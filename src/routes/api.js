@@ -63,6 +63,13 @@ router.post('/bank/webhook', limiters.webhook, keepRaw, (req, res) => {
   }
 });
 
+// Trạng thái khôi phục dữ liệu (mã công việc ngẫu nhiên 24 ký tự, chỉ admin vừa khởi chạy mới biết)
+router.get('/restore-status/:id', (req, res) => {
+  const j = require('../services/backup').getJob(String(req.params.id));
+  res.set('Cache-Control', 'no-store');
+  res.json(j || { state: 'unknown' });
+});
+
 router.get('/health', (req, res) => res.json({ ok: true, time: Date.now() }));
 
 module.exports = router;

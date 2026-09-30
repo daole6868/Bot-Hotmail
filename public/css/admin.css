@@ -602,3 +602,8 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 .a-btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .a-card-danger { border-color: #f6cfcf; }
 .a-kv-compact th, .a-kv-compact td { padding-top: 6px; padding-bottom: 6px; font-size: .86rem; }
+.rs-progress { margin-top: 14px; }
+.rs-bar { height: 10px; border-radius: 99px; background: #eef0f6; overflow: hidden; }
+.rs-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #4f7cff, #6c5cff); transition: width .3s; }
+.rs-bar span.err { background: #e5484d; }
+.rs-text { margin-top: 8px; font-size: .88rem; line-height: 1.5; }

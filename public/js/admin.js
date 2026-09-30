@@ -659,4 +659,61 @@
       if (inp) { inp.select(); document.execCommand('copy'); done(); }
     });
   });
+
+  // Khôi phục dữ liệu: tải file theo từng phần 20MB (vượt giới hạn 100MB/lần của Cloudflare), rồi khôi phục chạy nền và hỏi kết quả
+  const rsForm = $('form[data-chunk-restore]');
+  if (rsForm) {
+    const bar = $('.rs-bar span', rsForm), txt = $('.rs-text', rsForm), box = $('.rs-progress', rsForm), btn = $('button.a-danger', rsForm);
+    const CHUNK = 20 * 1024 * 1024;
+    const show = (pct, msg, err) => { box.hidden = false; bar.style.width = pct + '%'; bar.classList.toggle('err', !!err); txt.innerHTML = msg; };
+    const fmt = (b) => (b / 1048576).toFixed(b > 104857600 ? 0 : 1) + 'MB';
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    rsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const file = rsForm.elements.file.files[0];
+      if (!file) return;
+      if (rsForm.elements.confirm.value.trim().toUpperCase() !== 'XOA HET') { show(0, 'Gõ đúng <b>XOA HET</b> để xác nhận.', true); return; }
+      if (file.size > 10 * 1024 ** 3) { show(0, 'File vượt quá 10GB.', true); return; }
+      if (!confirm('XÓA toàn bộ dữ liệu hiện tại và khôi phục từ file này?')) return;
+      btn.disabled = true;
+      const id = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, '0')).join('');
+      let offset = 0, fails = 0;
+      try {
+        while (offset < file.size) {
+          show(Math.floor(offset / file.size * 90), `Đang tải lên ${fmt(offset)} / ${fmt(file.size)}…`);
+          let j;
+          try {
+            const r = await fetch(`/admin/maintenance/restore/chunk?id=${id}&offset=${offset}&total=${file.size}`, {
+              method: 'POST', headers: { 'content-type': 'application/octet-stream', 'x-csrf-token': csrf }, body: file.slice(offset, offset + CHUNK),
+            });
+            j = await r.json();
+          } catch (err) { j = null; }
+          if (j && j.ok) { offset = j.received; fails = 0; continue; }
+          if (j && typeof j.resume === 'number') { offset = j.resume; }
+          if (j && j.message && !('resume' in j)) throw new Error(j.message);
+          if (++fails > 5) throw new Error('Mất kết nối khi tải lên, vui lòng thử lại');
+          show(Math.floor(offset / file.size * 90), `Mạng chập chờn, đang thử lại (${fails}/5)…`);
+          await sleep(2000 * fails);
+        }
+        show(92, 'Đã tải lên xong. Đang giải mã và khôi phục dữ liệu, vui lòng không đóng trang…');
+        const body = new URLSearchParams({ _csrf: csrf, id, total: file.size, name: file.name, password: rsForm.elements.password.value, confirm: rsForm.elements.confirm.value });
+        const f = await (await fetch('/admin/maintenance/restore/finish', { method: 'POST', body })).json();
+        if (!f.ok) throw new Error(f.message || 'Không khôi phục được');
+        for (let i = 0; i < 1800; i++) { // tối đa 1 giờ
+          await sleep(2000);
+          let st;
+          try { st = await (await fetch('/api/restore-status/' + f.job, { cache: 'no-store' })).json(); } catch (err) { continue; }
+          if (st.state === 'done') {
+            show(100, '<b>Khôi phục dữ liệu thành công.</b><br>' + st.lines.map((l) => '• ' + l).join('<br>') + '<br>Web đang tự khởi động lại. <a href="/login">Đăng nhập lại</a> bằng tài khoản admin trong bản sao lưu.');
+            return;
+          }
+          if (st.state === 'error') throw new Error(st.message);
+        }
+        throw new Error('Quá lâu chưa có kết quả, hãy tải lại trang để kiểm tra');
+      } catch (err) {
+        show(100, err.message, true);
+        btn.disabled = false;
+      }
+    });
+  }
 })();

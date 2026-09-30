@@ -370,7 +370,22 @@ function watchRestart() {
 }
 const requestRestart = () => setSetting('restart_token', String(Date.now()));
 
+// Trạng thái khôi phục chạy nền: lưu ra file (còn đọc được sau khi web tự khởi động lại và phiên đăng nhập đã đổi)
+const jobFile = (id) => path.join(TMP, `job-${id}.json`);
+const setJob = (id, data) => fs.writeFileSync(jobFile(id), JSON.stringify({ ...data, at: nowS() }));
+const getJob = (id) => { if (!/^[a-f0-9]{24}$/.test(id)) return null; try { return JSON.parse(fs.readFileSync(jobFile(id), 'utf8')); } catch { return null; } };
+
+// Dọn file tạm bị bỏ dở (tải lên nửa chừng, gói lỗi...) cũ hơn 1 ngày
+function cleanTmp() {
+  const old = Date.now() - 86400000;
+  for (const f of fs.readdirSync(TMP)) {
+    const full = path.join(TMP, f);
+    try { if (fs.statSync(full).mtimeMs < old) fs.rmSync(full, { recursive: true, force: true }); } catch { /* bỏ qua */ }
+  }
+}
+
 module.exports = {
+  cleanTmp, setJob, getJob,
   makePackage, readPackage, restoreFromFile, importDatabase, localBackup, listBackups, deleteBackup, pruneBackups,
   sendTelegram, backupToTelegram, tableCounts, uploadsSize, watchRestart, requestRestart, TMP,
 };

@@ -97,7 +97,7 @@
   <div class="a-card a-card-danger">
     <h3><%- I('upload') %> Khôi phục dữ liệu</h3>
     <div class="a-alert a-alert-error"><%- I('alert') %> <span>Toàn bộ dữ liệu hiện tại (người dùng, số dư, sản phẩm, đơn hàng, cài đặt…) sẽ <b>bị xóa</b> và thay bằng dữ liệu trong file. Web tự lưu 1 bản sao dữ liệu hiện tại trước khi khôi phục (hiện ở bảng bên dưới).</span></div>
-    <form method="post" action="/admin/maintenance/restore" enctype="multipart/form-data" class="a-form" data-confirm="XÓA toàn bộ dữ liệu hiện tại và khôi phục từ file này?">
+    <form method="post" action="/admin/maintenance/restore" enctype="multipart/form-data" class="a-form" data-chunk-restore>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <label>File sao lưu <span class="req">*</span> <small class="a-muted">(.gzbak từ Telegram / nút Tải gói, hoặc file .db ở bảng dưới)</small></label>
       <input type="file" name="file" accept=".gzbak,.db" required>
@@ -106,9 +106,13 @@
       <label>Gõ <b>XOA HET</b> để xác nhận <span class="req">*</span></label>
       <input name="confirm" required autocomplete="off" placeholder="XOA HET">
       <button class="a-btn a-danger a-submit"><%- I('upload') %> Xóa dữ liệu cũ &amp; khôi phục</button>
+      <div class="rs-progress" hidden>
+        <div class="rs-bar"><span></span></div>
+        <div class="rs-text"></div>
+      </div>
     </form>
     <p class="a-field-hint"><b>Chuyển sang VPS / tên miền mới:</b> cài web trên VPS mới → đăng nhập admin mặc định → vào đây tải gói <code>.gzbak</code> lên kèm mật khẩu. Web tự nhận khóa mã hóa của VPS cũ và mã hóa lại thông tin acc cho VPS mới. Xong thì đăng nhập lại bằng tài khoản admin cũ. File <code>.db</code> lẻ chỉ dùng được trên chính VPS đã tạo ra nó.</p>
-    <p class="a-field-hint">Gói lớn hơn 90MB: tăng giới hạn tải lên của Nginx (<code>client_max_body_size</code>) trước khi khôi phục.</p>
+    <p class="a-field-hint">File tối đa <b>10GB</b>, được tải lên theo từng phần 20MB (mạng chập chờn sẽ tự tải tiếp). Ổ đĩa VPS cần trống khoảng <b>2 lần</b> dung lượng file. Giữ trang mở cho tới khi xong.</p>
   </div>
 </div>
 

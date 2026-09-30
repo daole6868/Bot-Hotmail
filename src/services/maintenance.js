@@ -138,6 +138,7 @@ function runLight() {
 
 async function runDaily() {
   const res = { light: runLight(), archived: archive() };
+  try { require('./backup').cleanTmp(); } catch { /* bỏ qua */ }
   optimize(false);
   res.backup = await backup();
   setSetting('last_maintenance', String(nowS()));

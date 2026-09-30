@@ -1353,7 +1353,15 @@ router.post('/maintenance/package', async (req, res) => {
 });
 
 // --- Khôi phục dữ liệu từ gói sao lưu (.gzbak) hoặc file .db ---
-const restoreUpload = require('multer')({ dest: backupSvc.TMP, limits: { fileSize: 4 * 1024 * 1024 * 1024, files: 1 } });
+const MAX_RESTORE = 10 * 1024 ** 3; // gói sao lưu tối đa 10GB
+const restoreUpload = require('multer')({ dest: backupSvc.TMP, limits: { fileSize: MAX_RESTORE, files: 1 } });
+const restoreLines = (r) => {
+  const c = r.summary;
+  return [`Người dùng: ${c.users || 0}`, `Sản phẩm: ${c.products || 0}`, `Đơn hàng: ${c.orders || 0}`, `Đơn nạp: ${c.deposits || 0}`,
+    r.uploads ? 'Ảnh: đã thay bằng ảnh trong gói' : 'Ảnh: giữ nguyên (gói không có ảnh)',
+    c._reencrypted ? `Đã mã hóa lại ${c._reencrypted} mục cho khóa của VPS này` : '',
+    `Bản sao lưu dữ liệu trước khi khôi phục: ${r.safety}`].filter(Boolean);
+};
 router.post('/maintenance/restore', (req, res) => {
   restoreUpload.single('file')(req, res, async (err) => {
     const cleanup = () => req.file && ['', '-wal', '-shm', '-journal'].forEach((x) => fs.rm(req.file.path + x, { force: true }, () => {})); // kèm file phụ của SQLite
@@ -1371,14 +1379,61 @@ router.post('/maintenance/restore', (req, res) => {
       return fail('Không khôi phục được: ' + e.message + '. Dữ liệu hiện tại vẫn giữ nguyên.');
     }
     cleanup();
-    const c = r.summary;
-    const lines = [`Người dùng: ${c.users || 0}`, `Sản phẩm: ${c.products || 0}`, `Đơn hàng: ${c.orders || 0}`, `Đơn nạp: ${c.deposits || 0}`,
-      r.uploads ? 'Ảnh: đã thay bằng ảnh trong gói' : 'Ảnh: giữ nguyên (gói không có ảnh)',
-      c._reencrypted ? `Đã mã hóa lại ${c._reencrypted} mục cho khóa của VPS này` : '',
-      `Bản sao lưu dữ liệu trước khi khôi phục: ${r.safety}`].filter(Boolean);
+    const lines = restoreLines(r);
     logActivity(null, 'restore_done', lines.join(' | '), clientIp(req));
     res.render('errors/error', { code: 'OK', message: 'Khôi phục dữ liệu thành công. ' + lines.join(' · ') + '. Web đang tự khởi động lại, vui lòng đăng nhập lại bằng tài khoản trong bản sao lưu.' });
     setTimeout(() => backupSvc.requestRestart(), 300);
+  });
+});
+
+// Tải file sao lưu lớn theo từng phần (20MB/lần): vượt giới hạn 100MB/lần của Cloudflare và giới hạn của Nginx,
+// mạng chập chờn thì tải tiếp từ phần đang dở. Ghi thẳng xuống đĩa, không giữ trong RAM.
+const partFile = (id) => path.join(backupSvc.TMP, `up-${id}.part`);
+router.post('/maintenance/restore/chunk', async (req, res) => {
+  const id = String(req.query.id || '');
+  const offset = Number(req.query.offset);
+  const total = Number(req.query.total);
+  if (!/^[a-f0-9]{24}$/.test(id) || !Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(total) || total <= 0) return res.status(400).json({ ok: false, message: 'Tham số không hợp lệ' });
+  if (total > MAX_RESTORE) return res.status(413).json({ ok: false, message: 'File vượt quá 10GB' });
+  const f = partFile(id);
+  const have = fs.existsSync(f) ? fs.statSync(f).size : 0;
+  if (offset !== have) return res.json({ ok: false, resume: have }); // lệch vị trí (tải lại sau khi mất mạng) -> báo vị trí đúng
+  let n = 0;
+  const limit = new (require('stream').Transform)({
+    transform(chunk, enc, cb) { n += chunk.length; if (n > 32 * 1024 * 1024 || have + n > total) return cb(new Error('Phần tải lên quá lớn')); cb(null, chunk); },
+  });
+  try {
+    await require('stream/promises').pipeline(req, limit, fs.createWriteStream(f, { flags: 'a' }));
+  } catch (e) {
+    return res.status(400).json({ ok: false, message: e.message, resume: fs.existsSync(f) ? fs.statSync(f).size : 0 });
+  }
+  res.json({ ok: true, received: have + n });
+});
+router.post('/maintenance/restore/finish', async (req, res) => {
+  const id = String(req.body.id || '');
+  if (!/^[a-f0-9]{24}$/.test(id)) return res.status(400).json({ ok: false, message: 'Tham số không hợp lệ' });
+  const f = partFile(id);
+  const cleanup = () => ['', '-wal', '-shm', '-journal'].forEach((x) => fs.rm(f + x, { force: true }, () => {}));
+  if (!fs.existsSync(f) || fs.statSync(f).size !== Number(req.body.total)) { cleanup(); return res.json({ ok: false, message: 'File tải lên chưa đủ, vui lòng thử lại' }); }
+  if (String(req.body.confirm || '').trim().toUpperCase() !== 'XOA HET') { cleanup(); return res.json({ ok: false, message: 'Gõ đúng XOA HET để xác nhận xóa dữ liệu hiện tại' }); }
+  audit(req, 'restore_start', String(req.body.name || '').slice(0, 100));
+  // Chạy nền: gói lớn có thể mất vài phút, vượt thời gian chờ của Nginx / Cloudflare -> trang tự hỏi kết quả
+  const job = crypto.randomBytes(12).toString('hex');
+  backupSvc.setJob(job, { state: 'running' });
+  res.json({ ok: true, job });
+  const password = String(req.body.password || '');
+  const ip = clientIp(req);
+  setImmediate(async () => {
+    try {
+      const r = await backupSvc.restoreFromFile(f, password);
+      const lines = restoreLines(r);
+      logActivity(null, 'restore_done', lines.join(' | '), ip);
+      backupSvc.setJob(job, { state: 'done', lines });
+      setTimeout(() => backupSvc.requestRestart(), 1500);
+    } catch (e) {
+      console.error('[restore]', e);
+      backupSvc.setJob(job, { state: 'error', message: 'Không khôi phục được: ' + e.message + '. Dữ liệu hiện tại vẫn giữ nguyên.' });
+    } finally { cleanup(); }
   });
 });
 
