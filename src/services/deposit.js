@@ -82,7 +82,15 @@ function cancelDeposit(depositId, userId = null, adminId = null) {
 function normalizeWebhook(body) {
   const list = [];
   if (!body || typeof body !== 'object') return list;
-  if (Array.isArray(body.data)) {
+  if (Array.isArray(body.transactions)) {
+    // NIFY: { event:'new_transactions', bank:{ account_number }, transactions:[{ amount, description, reference, transaction_date }] }
+    const acc = String(body.bank?.account_number || '').replace(/\D/g, '');
+    const mine = String(getSettings().bank_account || '').replace(/\D/g, '');
+    if (acc && mine && acc !== mine) return list; // giao dịch của tài khoản khác -> bỏ qua
+    for (const t of body.transactions) {
+      list.push({ txnId: String(t.reference || t.id || ''), amount: Number(t.amount), content: String(t.description || t.content || '') });
+    }
+  } else if (Array.isArray(body.data)) {
     // Casso: { error:0, data:[{ id|tid, amount, description }] }
     for (const t of body.data) {
       list.push({ txnId: String(t.tid || t.id || t.reference || ''), amount: Number(t.amount), content: String(t.description || t.content || '') });

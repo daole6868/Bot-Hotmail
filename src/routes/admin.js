@@ -1,6 +1,7 @@
 'use strict';
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { db, getSettings, setSetting, logActivity, vnDay } = require('../db');
@@ -1111,11 +1112,17 @@ router.post('/settings', (req, res) => {
 // --- Cài đặt bank: tài khoản nhận tiền, hạn mức nạp ---
 const BANK_KEYS = ['bank_code', 'bank_name', 'bank_account', 'bank_owner', 'deposit_min', 'deposit_max'];
 
-router.get('/settings/bank', (req, res) => res.render('admin/settings-bank', {
+router.get('/settings/bank', (req, res) => {
+  // Secret Key cho webhook ký HMAC (NIFY): tự tạo lần đầu, admin copy dán sang bên cổng thanh toán
+  if (!getSettings().webhook_secret_enc) setSetting('webhook_secret_enc', encrypt(crypto.randomBytes(24).toString('hex')));
+  res.render('admin/settings-bank', renderBank());
+});
+const renderBank = () => ({
   title: 'Cài đặt bank', s: getSettings(), webhookUrl: config.baseUrl + '/api/bank/webhook',
+  webhookSecret: decrypt(getSettings().webhook_secret_enc || ''), depositPrefix: config.depositPrefix,
   expireMinutes: maintenance.depositExpireMinutes(),
   pendingCount: db.prepare("SELECT COUNT(*) c FROM deposits WHERE status = 'pending'").get().c,
-}));
+});
 
 router.post('/settings/bank', (req, res) => {
   for (const k of BANK_KEYS) if (req.body[k] !== undefined) setSetting(k, str(req.body[k], 200));
@@ -1125,6 +1132,7 @@ router.post('/settings/bank', (req, res) => {
   if (expMin < 5 || expMin > 10080) return back(req, res, 'error', 'Thời gian chờ nạp phải từ 5 đến 10080 phút (7 ngày)', '/admin/settings/bank');
   setSetting('deposit_expire_minutes', String(expMin));
   setSetting('deposit_late_credit', req.body.deposit_late_credit ? '1' : '0');
+  if (req.body.regen_secret) setSetting('webhook_secret_enc', encrypt(crypto.randomBytes(24).toString('hex')));
   maintenance.expireDeposits(); // áp dụng ngay cho các đơn đang chờ
   audit(req, 'settings_bank_update');
   back(req, res, 'success', 'Đã lưu cài đặt bank', '/admin/settings/bank');

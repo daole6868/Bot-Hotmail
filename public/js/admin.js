@@ -647,4 +647,16 @@
     });
     wrap.appendChild(b);
   });
+
+  // Nút Sao chép (data-copy)
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-copy]');
+    if (!b) return;
+    const done = () => { const t = b.textContent; b.textContent = 'Đã chép'; setTimeout(() => { b.textContent = t; }, 1200); };
+    const text = b.dataset.copy;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(done).catch(() => {
+      const inp = b.parentElement.querySelector('input');
+      if (inp) { inp.select(); document.execCommand('copy'); done(); }
+    });
+  });
 })();

@@ -31,7 +31,12 @@
       <p class="a-field-hint">Nên bật: tránh trường hợp khách chuyển muộn vài phút mà không được cộng. Nếu tắt, giao dịch đó nằm ở mục <a href="/admin/bank">GD ngân hàng</a> (chưa khớp) để bạn tự xử lý.</p>
 
       <h3 class="a-mt"><%- I('link') %> Nạp tự động (webhook)</h3>
-      <p class="a-field-hint a-mt0">Khai báo ở SePay / Casso: URL <code><%= webhookUrl %></code>, header <code>Authorization: Apikey &lt;BANK_WEBHOOK_TOKEN trong .env&gt;</code>. Xem giao dịch ở mục <a href="/admin/bank">GD ngân hàng</a>.</p>
+      <label>Webhook URL</label>
+      <div class="a-copy-row"><input value="<%= webhookUrl %>" readonly><button type="button" class="a-btn" data-copy="<%= webhookUrl %>">Sao chép</button></div>
+      <label>Secret Key</label>
+      <div class="a-copy-row"><input value="<%= webhookSecret %>" readonly><button type="button" class="a-btn" data-copy="<%= webhookSecret %>">Sao chép</button></div>
+      <label class="a-check"><input type="checkbox" name="regen_secret" value="1"> <span>Tạo Secret Key mới khi lưu</span></label>
+      <p class="a-field-hint">NIFY: dán Webhook URL và Secret Key vào mục Webhook của tài khoản ngân hàng, ô lọc nội dung điền <code><%= depositPrefix %></code>. SePay / Casso: dùng header <code>Authorization: Apikey &lt;BANK_WEBHOOK_TOKEN trong .env&gt;</code>. Xem giao dịch ở mục <a href="/admin/bank">GD ngân hàng</a>.</p>
     </div>
   </div>
   <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt bank</button></div>
