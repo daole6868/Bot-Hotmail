@@ -810,3 +810,21 @@ a.hb-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .auth-card form.center { margin-top: 12px; }
 /* Nút to (cả hàng) nằm ngay dưới ô nhập -> luôn cách ra */
 form :is(input, select, textarea, .captcha-row, .pw-wrap, .cf-turnstile) + :is(.btn-block, .btn-lg) { margin-top: 14px; }
+/* Chống spam: trang yêu cầu đăng nhập & đếm ngược khi thao tác quá nhanh */
+.gate-body { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--bg); }
+.gate-body .auth-wrap { width: 100%; padding: 0; }
+.gate-card { text-align: center; }
+.gate-card h1 { font-size: 1.35rem; margin: 14px 0 18px; }
+.gate-logo { display: inline-flex; justify-content: center; }
+.gate-logo img { max-height: 64px; max-width: 220px; object-fit: contain; }
+.gate-logo b { font-size: 1.4rem; }
+.gate-actions { display: grid; gap: 10px; }
+.slow-toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 1001; display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 999px; background: var(--card); color: var(--text); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0, 0, 0, .35); font-size: .9rem; line-height: 1.35; }
+.slow-toast b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.slow-toast.slow-static { bottom: auto; top: 50%; transform: translate(-50%, -50%); border-radius: calc(16px * var(--rk)); padding: 16px 20px; }
+.slow-toast > span:last-child { min-width: 0; }
+.slow-toast .spinner { flex: 0 0 auto; }
+.slow-toast.shake { animation: slowShake .35s; }
+.slow-toast.slow-static.shake { animation: none; }
+.slow-shield { position: fixed; inset: 0; z-index: 1000; cursor: not-allowed; }
+@keyframes slowShake { 0%, 100% { transform: translateX(-50%); } 25% { transform: translateX(calc(-50% - 6px)); } 75% { transform: translateX(calc(-50% + 6px)); } }

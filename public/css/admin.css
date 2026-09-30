@@ -589,3 +589,10 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 .a-submit { margin-top: 14px; }
 .a-copy-row { display: flex; gap: 8px; align-items: center; }
 .a-copy-row input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: .85rem; }
+.as-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 8px; }
+.as-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; }
+.as-stats span { font-size: .8rem; color: #7a7f95; }
+.as-stats b { font-size: 1.4rem; }
+.as-stats small { font-size: .78rem; color: #7a7f95; }
+.a-mb { margin-bottom: 10px; }
+@media (max-width: 760px) { .as-stats { grid-template-columns: 1fr 1fr; } }

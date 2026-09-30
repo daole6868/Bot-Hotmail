@@ -212,19 +212,33 @@ router.post('/reset/:token', limiters.forgot, async (req, res) => {
   res.redirect('/login');
 });
 
+// Mốc thời gian mở form (có chữ ký): bot gửi form ngay lập tức sau khi tải trang -> bị từ chối
+const crypto = require('crypto');
+const config = require('../config');
+const formStamp = () => { const t = Date.now().toString(36); return t + '.' + crypto.createHmac('sha256', config.sessionSecret).update('reg:' + t).digest('base64url').slice(0, 16); };
+function stampAge(v) {
+  const [t, sig] = String(v || '').split('.');
+  if (!t || !sig || sig !== crypto.createHmac('sha256', config.sessionSecret).update('reg:' + t).digest('base64url').slice(0, 16)) return -1;
+  return (Date.now() - parseInt(t, 36)) / 1000;
+}
+
 router.get('/register', (req, res) => {
   if (req.user) return res.redirect('/');
   const r = pendingReg(req);
-  res.render('pages/register', { title: 'Đăng ký', form: r ? { username: r.username, email: r.email } : {} });
+  res.render('pages/register', { title: 'Đăng ký', form: r ? { username: r.username, email: r.email } : {}, stamp: formStamp() });
 });
 
 router.post('/register', limiters.register, honeypot, async (req, res) => {
   const ip = clientIp(req);
   const s = getSettings();
   const form = { username: str(req.body.username, 32), email: str(req.body.email, 100).toLowerCase() };
-  const render = (error) => res.status(400).render('pages/register', { title: 'Đăng ký', error, form });
+  const render = (error) => res.status(400).render('pages/register', { title: 'Đăng ký', error, form, stamp: formStamp() });
 
   if (s.allow_register === '0') return render('Hệ thống đang tạm dừng đăng ký');
+  const age = stampAge(req.body._ts);
+  const minSec = Math.min(60, Math.max(0, parseInt(s.reg_min_seconds, 10) || 0));
+  if (age < 0 || age > 3 * 3600) return render('Trang đăng ký đã hết hạn, vui lòng thử lại');
+  if (age < minSec) { logActivity(null, 'register_too_fast', `${age.toFixed(1)}s`, ip); return render('Bạn thao tác quá nhanh, vui lòng thử lại'); }
   if (!(await captcha.check(req))) return render('Xác minh captcha không đúng');
   const password = String(req.body.password || '');
   if (!/^[a-zA-Z0-9_]{4,20}$/.test(form.username)) return render('Tên đăng nhập 4-20 ký tự, chỉ gồm chữ, số, dấu gạch dưới');
@@ -237,12 +251,13 @@ router.post('/register', limiters.register, honeypot, async (req, res) => {
   if (password !== req.body.password2) return render('Mật khẩu nhập lại không khớp');
   if (!req.body.agree) return render('Bạn cần đồng ý điều khoản');
 
-  const dup = db.prepare('SELECT username, email FROM users WHERE username = ? OR (email IS NOT NULL AND email = ?)').get(form.username, form.email);
+  // Email so theo dạng chuẩn Gmail: a.b.c+1@gmail.com trùng với abc@gmail.com
+  const dup = db.prepare('SELECT username, email FROM users WHERE username = ? OR (email IS NOT NULL AND gmail_norm(email) = gmail_norm(?))').get(form.username, form.email);
   if (dup) return render(dup.username.toLowerCase() === form.username.toLowerCase() ? 'Tên đăng nhập đã tồn tại' : 'Email đã được sử dụng');
 
   // Giới hạn số tài khoản / IP / ngày (chống clone)
   const sameIp = db.prepare('SELECT COUNT(*) n FROM users WHERE register_ip = ? AND created_at > ?').get(ip, Math.floor(Date.now() / 1000) - 86400).n;
-  if (sameIp >= 3) return render('IP của bạn đã tạo quá nhiều tài khoản hôm nay');
+  if (sameIp >= Math.max(1, parseInt(s.reg_ip_day, 10) || 3)) return render('IP của bạn đã tạo quá nhiều tài khoản hôm nay');
 
   const hash = await bcrypt.hash(password, 12);
   // Shop đã bật gửi email -> bắt buộc nhập mã 6 số gửi về email rồi mới tạo tài khoản

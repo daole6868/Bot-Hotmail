@@ -1219,6 +1219,37 @@ router.post('/security/unblock', (req, res) => {
   back(req, res, 'success', 'Đã bỏ chặn');
 });
 
+// ======================= CHỐNG SPAM & DDOS =======================
+const AS_NUM = {
+  as_guest_limit: [10, 100000], as_gate_minutes: [1, 1440], as_ban_limit: [20, 100000], as_ban_minutes: [1, 10080],
+  as_user_limit: [5, 10000], as_user_cooldown: [1, 600], as_overload_ms: [50, 5000],
+  reg_hour_limit: [1, 1000], reg_ip_day: [1, 1000], reg_min_seconds: [0, 60],
+};
+const AS_BOOL = ['as_enabled', 'as_ban_enabled', 'as_overload', 'as_emergency'];
+router.get('/antispam', (req, res) => {
+  const shield = require('../services/shield');
+  res.render('admin/antispam', { title: 'Chống spam & DDoS', s: getSettings(), st: shield.status(), myIp: clientIp(req) });
+});
+router.post('/antispam', (req, res) => {
+  const cur = getSettings();
+  for (const [k, [min, max]] of Object.entries(AS_NUM)) setSetting(k, String(toInt(req.body[k], parseInt(cur[k], 10) || min, min, max)));
+  for (const k of AS_BOOL) setSetting(k, req.body[k] ? '1' : '0');
+  const wl = String(req.body.as_whitelist || '').split(/[\s,]+/).map((x) => x.trim()).filter((x) => /^[0-9a-fA-F:.]{3,45}$/.test(x)).slice(0, 200);
+  setSetting('as_whitelist', wl.join('\n'));
+  if (toInt(req.body.as_ban_limit, 0) <= toInt(req.body.as_guest_limit, 0)) setSetting('as_ban_limit', String(toInt(req.body.as_guest_limit, 120) * 2));
+  audit(req, 'antispam_update', req.body.as_emergency ? 'emergency ON' : '');
+  back(req, res, 'success', 'Đã lưu cài đặt chống spam', '/admin/antispam');
+});
+router.post('/antispam/release', (req, res) => {
+  const shield = require('../services/shield');
+  const key = str(req.body.key, 80);
+  if (key === 'all') db.prepare("DELETE FROM shield_flags WHERE key LIKE 'g:%'").run();
+  else if (/^[gc]:/.test(key)) shield.clearFlag(key);
+  shield.syncFlags();
+  audit(req, 'antispam_release', key);
+  back(req, res, 'success', 'Đã gỡ chặn', '/admin/antispam');
+});
+
 // ======================= BẢO TRÌ DỮ LIỆU =======================
 router.get('/maintenance', (req, res) => {
   res.render('admin/maintenance', { title: 'Bảo trì dữ liệu', info: maintenance.dbInfo(), s: getSettings(), retention: config.retention,

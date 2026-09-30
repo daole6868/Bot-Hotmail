@@ -352,6 +352,20 @@ if (addColumn('categories', 'sale_type', "TEXT NOT NULL DEFAULT 'vip'")) {
        OR id IN (SELECT category_id FROM products WHERE type = 'stock')`);
 }
 db.exec('CREATE INDEX IF NOT EXISTS idx_products_sort ON products(category_id, sort_order)');
+// Chống spam / DDoS: IP đang bị yêu cầu đăng nhập (g:<ip>), tài khoản đang phải chờ vì thao tác quá nhanh (c:<id>).
+// Dùng chung cho mọi bản PM2 (mỗi bản đồng bộ vào bộ nhớ vài giây / lần)
+db.exec(`CREATE TABLE IF NOT EXISTS shield_flags (
+    key TEXT PRIMARY KEY,
+    until INTEGER NOT NULL,
+    reason TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  )`);
+// Gmail bỏ qua dấu chấm và phần +tag: a.b+1@gmail.com và ab@gmail.com là cùng 1 hộp thư -> so trùng theo dạng chuẩn
+db.function('gmail_norm', { deterministic: true }, (e) => {
+  const m = String(e || '').toLowerCase().trim().match(/^([^@]+)@(gmail|googlemail)\.com$/);
+  return m ? m[1].split('+')[0].replace(/\./g, '') + '@gmail.com' : String(e || '').toLowerCase().trim();
+});
+
 // Bảo mật tài khoản: xác minh 2 lớp qua email, thiết bị tin cậy, đặt lại mật khẩu, nhật ký email
 addColumn('users', 'email_verified_at', 'INTEGER');
 addColumn('users', 'twofa_enabled', 'INTEGER NOT NULL DEFAULT 0');

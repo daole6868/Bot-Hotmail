@@ -4,7 +4,7 @@
     <h1>Đăng ký tài khoản</h1>
     <% if (locals.error) { %><div class="alert alert-error"><%= error %></div><% } %>
     <form method="post" action="/register" autocomplete="off">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="_ts" value="<%= locals.stamp || '' %>">
       <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
       <label class="label">Tên đăng nhập <span class="req">*</span></label>
       <input type="text" name="username" value="<%= form.username || '' %>" required pattern="[a-zA-Z0-9_]{4,20}" maxlength="20" placeholder="4-20 ký tự: chữ, số, _">

@@ -50,20 +50,21 @@ function verifyCsrf(req) {
 }
 
 // ---------- Chặn IP (bảng ip_blocks) ----------
-const blockCache = new Map();
+// Toàn bộ danh sách nằm trong bộ nhớ (làm mới 10 giây / lần, dùng chung giữa các bản PM2 qua DB):
+// IP bị khóa bị từ chối ngay mà không tốn 1 truy vấn nào, kể cả khi bị tấn công bằng rất nhiều IP.
+let blocked = new Map(); // ip -> hết hạn (ms), Infinity = vĩnh viễn
+let blockedAt = 0;
+const selBlocks = db.prepare('SELECT ip, expires_at FROM ip_blocks WHERE expires_at IS NULL OR expires_at > ?');
+function refreshBlocks() {
+  const m = new Map();
+  for (const r of selBlocks.all(Math.floor(Date.now() / 1000))) m.set(r.ip, r.expires_at ? r.expires_at * 1000 : Infinity);
+  blocked = m;
+  blockedAt = Date.now();
+}
 function ipBlock(req, res, next) {
-  const ip = clientIp(req);
-  const cached = blockCache.get(ip);
-  const nowMs = Date.now();
-  let blocked;
-  if (cached && nowMs - cached.at < 30000) blocked = cached.blocked;
-  else {
-    const row = db.prepare('SELECT expires_at FROM ip_blocks WHERE ip = ?').get(ip);
-    blocked = !!row && (!row.expires_at || row.expires_at * 1000 > nowMs);
-    blockCache.set(ip, { blocked, at: nowMs });
-    if (blockCache.size > 10000) blockCache.clear();
-  }
-  if (blocked) return res.status(403).send('IP của bạn đã bị tạm khóa do hoạt động bất thường.');
+  if (Date.now() - blockedAt > 10000) { try { refreshBlocks(); } catch { /* DB bận: dùng danh sách cũ */ } }
+  const exp = blocked.get(clientIp(req));
+  if (exp && exp > Date.now()) return res.status(403).type('text').send('IP của bạn đã bị tạm khóa do hoạt động bất thường.');
   next();
 }
 
@@ -71,11 +72,11 @@ function blockIp(ip, minutes, reason) {
   const exp = minutes ? Math.floor(Date.now() / 1000) + minutes * 60 : null;
   db.prepare(`INSERT INTO ip_blocks(ip, reason, expires_at) VALUES(?,?,?)
     ON CONFLICT(ip) DO UPDATE SET reason = excluded.reason, expires_at = excluded.expires_at`).run(ip, reason, exp);
-  blockCache.delete(ip);
+  blocked.set(ip, exp ? exp * 1000 : Infinity);
 }
 function unblockIp(ip) {
   db.prepare('DELETE FROM ip_blocks WHERE ip = ?').run(ip);
-  blockCache.delete(ip);
+  blocked.delete(ip);
 }
 
 // ---------- Rate limit ----------
@@ -88,17 +89,13 @@ function limitHandler(message) {
 }
 
 const limiters = {
-  global: rateLimit({
-    windowMs: 60 * 1000, limit: 300, standardHeaders: 'draft-7', legacyHeaders: false,
-    handler: limitHandler('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.'),
-  }),
   login: rateLimit({
     windowMs: 15 * 60 * 1000, limit: 10, skipSuccessfulRequests: true,
     keyGenerator: (req) => ipKeyGenerator(req.ip),
     handler: limitHandler('Đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.'),
   }),
   register: rateLimit({
-    windowMs: 60 * 60 * 1000, limit: 5,
+    windowMs: 60 * 60 * 1000, limit: () => Math.max(1, parseInt(require('../db').getSettings().reg_hour_limit, 10) || 5),
     handler: limitHandler('Bạn đã tạo quá nhiều tài khoản. Thử lại sau 1 giờ.'),
   }),
   buy: rateLimit({

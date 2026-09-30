@@ -1,0 +1,100 @@
+<%- include('_header') %>
+<%
+  const on = (k) => s[k] !== '0' ? 'checked' : '';
+  const left = (u) => { const n = Math.max(0, u - Math.floor(Date.now() / 1000)); return n >= 60 ? Math.ceil(n / 60) + ' phút' : n + ' giây'; };
+%>
+<div class="a-card as-status">
+  <h3><%- I('chart') %> Tình trạng hiện tại</h3>
+  <div class="as-stats">
+    <div><span>Độ trễ xử lý</span><b class="<%= st.overloaded ? 'a-red' : 'a-green' %>"><%= st.lagMs %> ms</b><small><%= st.overloaded ? 'Đang quá tải' : 'Bình thường' %></small></div>
+    <div><span>IP đang bị yêu cầu đăng nhập</span><b><%= st.gated.length %></b></div>
+    <div><span>IP đang bị tự khóa</span><b><%= st.autoBans %></b><small><a href="/admin/security">Xem / bỏ khóa</a></small></div>
+    <div><span>Tài khoản đang phải chờ</span><b><%= st.cooling.length %></b></div>
+  </div>
+  <p class="a-field-hint">Số bản web đang chạy: <b><%= st.instances %></b>. IP của bạn: <code><%= myIp %></code>. Từ lần khởi động gần nhất (bản này): yêu cầu đăng nhập <b><%= st.stats.gated %></b> IP, tự khóa <b><%= st.stats.banned %></b> IP, bắt chờ <b><%= st.stats.slowed %></b> lần, từ chối do quá tải <b><%= st.stats.shed %></b> yêu cầu.</p>
+  <% if (s.as_emergency === '1') { %><div class="a-alert a-alert-error"><%- I('alert') %> <span><b>Chế độ khẩn cấp đang BẬT</b>: mọi khách chưa đăng nhập đều phải đăng nhập mới xem được web. Nhớ tắt khi hết bị tấn công.</span></div><% } %>
+</div>
+
+<form method="post" action="/admin/antispam" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('shield') %> Bật / tắt</h3>
+      <label class="a-check"><input type="checkbox" name="as_enabled" value="1" <%= on('as_enabled') %>> <span><b>Bật chống spam</b></span></label>
+      <p class="a-field-hint">Tắt thì toàn bộ các giới hạn bên dưới ngừng hoạt động (các giới hạn riêng của đăng nhập, mua hàng, nạp tiền vẫn giữ). Chỉ nên tắt khi cần thử nghiệm.</p>
+
+      <label class="a-check"><input type="checkbox" name="as_emergency" value="1" <%= s.as_emergency === '1' ? 'checked' : '' %>> <span><b>Chế độ khẩn cấp</b></span></label>
+      <p class="a-field-hint">Bật khi web đang bị tấn công: <b>mọi khách chưa đăng nhập</b> chỉ thấy trang “Vui lòng đăng nhập để tiếp tục” (vẫn đăng nhập / đăng ký được). Khách đã đăng nhập dùng bình thường. Nên bật cùng “Under Attack Mode” của Cloudflare.</p>
+
+      <h3 class="a-mt"><%- I('user') %> Khách chưa đăng nhập (tính theo IP)</h3>
+      <label>Số yêu cầu tối đa / phút / IP</label>
+      <input type="number" name="as_guest_limit" min="10" max="100000" value="<%= s.as_guest_limit %>">
+      <p class="a-field-hint">Mỗi lần mở trang, tìm kiếm, bấm lọc… tính là 1 yêu cầu (ảnh, CSS, JS không tính). Người xem bình thường chỉ khoảng 5–20 yêu cầu / phút. Vượt mức này, IP đó sẽ thấy trang <b>“Vui lòng đăng nhập để tiếp tục”</b>. Lưu ý: mạng di động và quán net có nhiều người dùng chung 1 IP, đừng đặt quá thấp (khuyên 100–200).</p>
+      <label>Thời gian yêu cầu đăng nhập (phút)</label>
+      <input type="number" name="as_gate_minutes" min="1" max="1440" value="<%= s.as_gate_minutes %>">
+      <p class="a-field-hint">Trong khoảng này, khách chưa đăng nhập từ IP đó chỉ vào được trang đăng nhập, đăng ký, quên mật khẩu. Đăng nhập xong là dùng web bình thường ngay (người thật đăng nhập / đăng ký được vì có captcha và mã xác minh email, bot thì không).</p>
+
+      <h3 class="a-mt"><%- I('lock') %> Tự khóa IP</h3>
+      <label class="a-check"><input type="checkbox" name="as_ban_enabled" value="1" <%= on('as_ban_enabled') %>> <span>Tự khóa IP gửi yêu cầu dồn dập</span></label>
+      <label>Khóa khi vượt quá (yêu cầu / phút / IP)</label>
+      <input type="number" name="as_ban_limit" min="20" max="100000" value="<%= s.as_ban_limit %>">
+      <label>Thời gian khóa (phút)</label>
+      <input type="number" name="as_ban_minutes" min="1" max="10080" value="<%= s.as_ban_minutes %>">
+      <p class="a-field-hint">IP chưa đăng nhập mà vẫn bắn quá mức này (phải lớn hơn mức ở trên) là tool / bot: bị khóa hẳn, mọi yêu cầu bị từ chối ngay mà gần như không tốn tài nguyên VPS. Danh sách và nút bỏ khóa ở trang <a href="/admin/security">Bảo mật</a>. Khách đã đăng nhập không bao giờ bị tự khóa.</p>
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('user') %> Khách đã đăng nhập (tính theo tài khoản)</h3>
+      <label>Số yêu cầu tối đa / 10 giây / tài khoản</label>
+      <input type="number" name="as_user_limit" min="5" max="10000" value="<%= s.as_user_limit %>">
+      <label>Thời gian phải chờ (giây)</label>
+      <input type="number" name="as_user_cooldown" min="1" max="600" value="<%= s.as_user_cooldown %>">
+      <p class="a-field-hint">Thao tác nhanh hơn mức này, khách thấy thông báo nhỏ <b>“Bạn đang thao tác quá nhanh, vui lòng chậm lại sau … giây”</b> kèm đếm ngược và không bấm được gì cho tới khi hết giờ. Tính theo tài khoản nên người dùng chung IP (quán net, 4G) không ảnh hưởng nhau. Admin không bị giới hạn.</p>
+
+      <h3 class="a-mt"><%- I('bolt') %> Ưu tiên khi quá tải</h3>
+      <label class="a-check"><input type="checkbox" name="as_overload" value="1" <%= on('as_overload') %>> <span>Tạm từ chối khách chưa đăng nhập khi VPS quá tải</span></label>
+      <label>Coi là quá tải khi độ trễ vượt (ms)</label>
+      <input type="number" name="as_overload_ms" min="50" max="5000" value="<%= s.as_overload_ms %>">
+      <p class="a-field-hint">Web tự đo độ trễ xử lý mỗi giây (bình thường dưới 20 ms). Vượt ngưỡng: khách chưa đăng nhập nhận “Hệ thống đang quá tải, thử lại sau”, còn <b>khách đã đăng nhập vẫn mua hàng, nạp tiền bình thường</b>. Hết quá tải thì tự trở lại sau vài giây. Khuyên để 300.</p>
+
+      <h3 class="a-mt"><%- I('users') %> Chống spam tạo tài khoản</h3>
+      <div class="a-row">
+        <div><label>Số lần gửi đăng ký / giờ / IP</label><input type="number" name="reg_hour_limit" min="1" max="1000" value="<%= s.reg_hour_limit %>"></div>
+        <div><label>Số tài khoản tối đa / IP / ngày</label><input type="number" name="reg_ip_day" min="1" max="1000" value="<%= s.reg_ip_day %>"></div>
+      </div>
+      <label>Thời gian tối thiểu điền form đăng ký (giây)</label>
+      <input type="number" name="reg_min_seconds" min="0" max="60" value="<%= s.reg_min_seconds %>">
+      <p class="a-field-hint">Người thật mất vài giây để điền form; tool gửi ngay lập tức sau khi tải trang sẽ bị từ chối (0 = tắt). Đăng ký còn có sẵn: captcha, ô bẫy bot (điền vào là khóa IP 60 phút), bắt buộc Gmail + mã xác minh 6 số, và một Gmail chỉ tạo được 1 tài khoản (tính cả kiểu thêm dấu chấm / +tag như <code>a.b+1@gmail.com</code>).</p>
+
+      <h3 class="a-mt"><%- I('check') %> IP bỏ qua giới hạn</h3>
+      <textarea name="as_whitelist" rows="3" placeholder="Mỗi dòng 1 IP"><%= s.as_whitelist %></textarea>
+      <p class="a-field-hint">IP không bao giờ bị giới hạn (VD: IP nhà / văn phòng của bạn). Webhook nạp tiền luôn được bỏ qua, không cần thêm vào đây.</p>
+    </div>
+  </div>
+  <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt</button></div>
+</form>
+
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3>IP đang bị yêu cầu đăng nhập (<%= st.gated.length %>)</h3>
+    <% if (st.gated.length) { %>
+      <form method="post" action="/admin/antispam/release" class="a-mb"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="key" value="all"><button class="a-btn a-xs">Gỡ tất cả</button></form>
+    <% } %>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>IP</th><th>Lý do</th><th>Còn</th><th></th></tr></thead>
+      <% st.gated.forEach(g => { %><tr><td><code><%= g.ip %></code></td><td class="a-small"><%= g.reason %></td><td class="a-small"><%= left(g.until) %></td>
+        <td><form method="post" action="/admin/antispam/release"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="key" value="<%= g.key %>"><button class="a-btn a-xs">Gỡ</button></form></td></tr><% }) %>
+      <% if (!st.gated.length) { %><tr><td colspan="4" class="a-muted">Không có</td></tr><% } %>
+    </table></div>
+  </div>
+  <div class="a-card">
+    <h3>Tài khoản đang phải chờ (<%= st.cooling.length %>)</h3>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Tài khoản</th><th>Còn</th><th></th></tr></thead>
+      <% st.cooling.forEach(c => { %><tr><td><%= c.username || c.key %></td><td class="a-small"><%= left(c.until) %></td>
+        <td><form method="post" action="/admin/antispam/release"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="key" value="<%= c.key %>"><button class="a-btn a-xs">Gỡ</button></form></td></tr><% }) %>
+      <% if (!st.cooling.length) { %><tr><td colspan="3" class="a-muted">Không có</td></tr><% } %>
+    </table></div>
+  </div>
+</div>
+<%- include('_footer') %>

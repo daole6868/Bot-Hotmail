@@ -64,7 +64,7 @@ router.post('/email', limiters.otp, async (req, res) => {
   const email = str(req.body.email, 100).toLowerCase() || req.user.email;
   if (!email || !(req.user.role === 'admin' ? /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/ : GMAIL).test(email)) return secBack(req, res, 'error', 'Email không hợp lệ');
   if (!(await checkPassword(req))) return secBack(req, res, 'error', 'Mật khẩu không đúng');
-  if (db.prepare('SELECT 1 FROM users WHERE email = ? AND id != ?').get(email, req.user.id)) return secBack(req, res, 'error', 'Email đã được tài khoản khác sử dụng');
+  if (db.prepare('SELECT 1 FROM users WHERE gmail_norm(email) = gmail_norm(?) AND id != ?').get(email, req.user.id)) return secBack(req, res, 'error', 'Email đã được tài khoản khác sử dụng');
   const wait = sec.otpCooldown(req.user.id, 'email');
   if (wait > 0) return secBack(req, res, 'error', `Vui lòng chờ ${wait} giây rồi gửi lại mã`);
   const r = await sec.sendOtp(req.user, 'email', { email });
@@ -80,7 +80,7 @@ router.post('/email/verify', limiters.otp, (req, res) => {
   const v = sec.verifyOtp(req.user.id, 'email', req.body.code);
   if (!v.ok) { if (v.expired) delete req.session.pendingEmail; return secBack(req, res, 'error', v.message); }
   if (v.row.target_email !== email) return secBack(req, res, 'error', 'Mã không khớp với email đang xác minh');
-  if (db.prepare('SELECT 1 FROM users WHERE email = ? AND id != ?').get(email, req.user.id)) return secBack(req, res, 'error', 'Email đã được tài khoản khác sử dụng');
+  if (db.prepare('SELECT 1 FROM users WHERE gmail_norm(email) = gmail_norm(?) AND id != ?').get(email, req.user.id)) return secBack(req, res, 'error', 'Email đã được tài khoản khác sử dụng');
   const old = req.user.email;
   db.prepare('UPDATE users SET email = ?, email_verified_at = unixepoch() WHERE id = ?').run(email, req.user.id);
   delete req.session.pendingEmail;

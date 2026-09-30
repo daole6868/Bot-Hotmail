@@ -59,6 +59,10 @@ app.use(security.ipBlock);
 // Webhook ngân hàng đặt TRƯỚC session/CSRF (xác thực bằng token riêng)
 app.use('/api', require('./src/routes/api'));
 
+// Chống spam / DDoS lớp 1: khách không có cookie phiên bị đếm theo IP ngay tại đây, trước khi đọc form / phiên / database
+const shield = require('./src/services/shield');
+app.use(shield.early);
+
 app.use(express.urlencoded({ extended: false, limit: '200kb', parameterLimit: 500 }));
 app.use(express.json({ limit: '50kb' }));
 
@@ -98,9 +102,9 @@ app.use((req, res, next) => {
 app.locals.clearNav = () => { navCache.at = 0; };
 
 app.use(security.flash);
-app.use(security.limiters.global);
 app.use(security.csrf);
 app.use(security.loadUser);
+app.use(shield.late); // lớp 2: đã đăng nhập -> đếm theo tài khoản; có cookie nhưng chưa đăng nhập -> đếm theo IP
 
 // Chế độ bảo trì: chỉ admin vào được
 app.use((req, res, next) => {

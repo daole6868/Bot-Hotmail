@@ -5,7 +5,7 @@
     <ul class="a-list">
       <li><%- I('check') %> Mật khẩu băm bcrypt (cost 12), thông tin acc mã hóa AES-256-GCM</li>
       <li><%- I('check') %> CSRF token cho mọi form, cookie HttpOnly + SameSite</li>
-      <li><%- I('check') %> Giới hạn tốc độ: toàn cục, đăng nhập, đăng ký, mua hàng, nạp tiền, thử mã KM</li>
+      <li><%- I('check') %> Chống spam &amp; DDoS: giới hạn theo IP / theo tài khoản, tự khóa IP, ưu tiên khách đã đăng nhập khi quá tải (<a href="/admin/antispam">cài đặt</a>); giới hạn riêng cho đăng nhập, đăng ký, mua hàng, nạp tiền, thử mã KM</li>
       <li><%- I('check') %> Khóa tài khoản 15 phút sau 5 lần sai mật khẩu; captcha sau 2 lần sai</li>
       <li><%- I('check') %> Tự chặn IP khi brute-force (≥30 lần sai/giờ) hoặc bot điền honeypot</li>
       <li><%- I('check') %> Trang admin trả 404 với người không phải admin; phiên admin tự hết hạn sau 60 phút không thao tác</li>
