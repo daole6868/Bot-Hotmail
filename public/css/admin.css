@@ -596,3 +596,5 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 .as-stats small { font-size: .78rem; color: #7a7f95; }
 .a-mb { margin-bottom: 10px; }
 @media (max-width: 760px) { .as-stats { grid-template-columns: 1fr 1fr; } }
+.acn-status { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: #f5f6fa; margin: 10px 0; font-size: .85rem; }
+.acn-status.ok { background: #effbf3; color: #166534; } .acn-status.err { background: #fdf1f1; color: #991b1b; }

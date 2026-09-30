@@ -1123,6 +1123,7 @@ const renderBank = () => ({
   webhookSecret: decrypt(db.prepare("SELECT value FROM settings WHERE key = 'webhook_secret_enc'").get()?.value || ''), depositPrefix: config.depositPrefix,
   expireMinutes: maintenance.depositExpireMinutes(),
   pendingCount: db.prepare("SELECT COUNT(*) c FROM deposits WHERE status = 'pending'").get().c,
+  acnHasKey: !!getSettings().acn_key_enc, acnWindowMin: Math.ceil(require('../services/apicanhan').windowSec(require('../services/apicanhan').conf()) / 60),
 });
 
 router.post('/settings/bank', (req, res) => {
@@ -1134,9 +1135,28 @@ router.post('/settings/bank', (req, res) => {
   setSetting('deposit_expire_minutes', String(expMin));
   setSetting('deposit_late_credit', req.body.deposit_late_credit ? '1' : '0');
   if (req.body.regen_secret) setSetting('webhook_secret_enc', encrypt(crypto.randomBytes(24).toString('hex')));
+  // Nạp tự động: NIFY (webhook) và APICANHAN (quét giao dịch)
+  setSetting('nify_enabled', req.body.nify_enabled ? '1' : '0');
+  setSetting('acn_enabled', req.body.acn_enabled ? '1' : '0');
+  const acnKey = String(req.body.acn_key || '').trim();
+  if (acnKey) {
+    if (!/^[A-Za-z0-9_\-.]{8,200}$/.test(acnKey)) return back(req, res, 'error', 'ApiKey APICANHAN không hợp lệ', '/admin/settings/bank');
+    setSetting('acn_key_enc', encrypt(acnKey));
+  }
+  if (req.body.acn_clear_key) setSetting('acn_key_enc', '');
+  setSetting('acn_bank', ['ACBnew', 'MB'].includes(req.body.acn_bank) ? req.body.acn_bank : 'ACBnew');
+  setSetting('acn_interval', String(toInt(req.body.acn_interval, 5, 3, 120)));
+  setSetting('acn_extra_pct', String(toInt(req.body.acn_extra_pct, 20, 0, 300)));
   maintenance.expireDeposits(); // áp dụng ngay cho các đơn đang chờ
   audit(req, 'settings_bank_update');
   back(req, res, 'success', 'Đã lưu cài đặt bank', '/admin/settings/bank');
+});
+
+// Quét APICANHAN ngay (thử ApiKey / lấy giao dịch mới mà không đợi vòng quét)
+router.post('/settings/bank/acn-scan', async (req, res) => {
+  const r = await require('../services/apicanhan').pollOnce({ force: true });
+  audit(req, 'acn_scan', r.message);
+  back(req, res, r.ok ? 'success' : 'error', 'APICANHAN: ' + r.message, '/admin/settings/bank');
 });
 
 // --- Email & Bảo mật: SMTP, xác minh 2 lớp, loại email thông báo ---

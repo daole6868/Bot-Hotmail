@@ -11,7 +11,7 @@
 const crypto = require('crypto');
 const express = require('express');
 const config = require('../config');
-const { db, logActivity } = require('../db');
+const { db, logActivity, getSettings } = require('../db');
 const { limiters } = require('../middleware/security');
 const { processBankTransactions } = require('../services/deposit');
 const { safeEqual, decrypt } = require('../utils/crypto');
@@ -46,6 +46,10 @@ const keepRaw = express.json({ limit: '200kb', verify: (req, res, buf) => { req.
 router.post('/bank/webhook', limiters.webhook, keepRaw, (req, res) => {
   const tokenOk = config.bankWebhookToken && safeEqual(extractToken(req), config.bankWebhookToken);
   const why = tokenOk ? '' : checkSignature(req, webhookSecret());
+  if (!why && !tokenOk && getSettings().nify_enabled === '0') {
+    // NIFY đang tắt trong Cài đặt bank: vẫn trả 200 để NIFY không gửi lại mãi, nhưng không xử lý
+    return res.json({ success: true, status: 'success', message: 'NIFY đang tắt trên web', results: [] });
+  }
   if (why) {
     logActivity(null, 'webhook_unauthorized', why, clientIp(req));
     return res.status(401).json({ success: false, message: 'Unauthorized' });

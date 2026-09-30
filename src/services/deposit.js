@@ -107,31 +107,44 @@ function normalizeWebhook(body) {
 }
 
 function processBankTransactions(body) {
-  const txns = normalizeWebhook(body);
+  return processTxns(normalizeWebhook(body), 'Webhook ngân hàng');
+}
+
+/**
+ * Khớp danh sách giao dịch tiền vào { txnId, amount, content } với đơn nạp (dùng chung cho webhook NIFY/SePay và quét APICANHAN).
+ * - Mã GD đã xử lý -> bỏ qua (không cộng 2 lần)
+ * - Cùng 1 lần chuyển khoản báo về từ 2 nguồn (mã GD mỗi nguồn khác nhau) -> nguồn đến sau ghi "Bỏ qua", không cộng lại
+ */
+const ACN = 'acn:'; // tiền tố mã GD từ APICANHAN
+function processTxns(txns, note) {
   require('./maintenance').expireDeposits(); // đơn quá thời gian chờ phải được đánh dấu trước khi khớp tiền
   const re = new RegExp(config.depositPrefix + '[0-9A-Z]{6}');
+  const lateOk = getSettings().deposit_late_credit !== '0';
   const results = [];
   for (const t of txns) {
     const exists = db.prepare('SELECT id, status FROM bank_transactions WHERE txn_id = ?').get(t.txnId);
     if (exists) { results.push({ txnId: t.txnId, status: 'duplicate' }); continue; }
     const normalized = t.content.toUpperCase().replace(/[^0-9A-Z]/g, '');
     const m = normalized.match(re);
+    const amount = Math.floor(t.amount);
     let status = 'unmatched';
     let depositId = null;
     if (m) {
+      const d = db.prepare('SELECT id, status, received, bank_txn_id, completed_at FROM deposits WHERE code = ?').get(m[0]);
       // Đơn đã quá hạn: chỉ tự cộng nếu admin bật "cộng tiền khi khách chuyển muộn"; nếu tắt, GD nằm ở mục chưa khớp để admin xử lý
-      const lateOk = getSettings().deposit_late_credit !== '0';
-      const d = db.prepare(`SELECT id FROM deposits WHERE code = ? AND status IN ('pending'${lateOk ? ", 'expired'" : ''})`).get(m[0]);
-      if (d) {
-        const r = completeDeposit(d.id, Math.floor(t.amount), { txnId: t.txnId, note: 'Webhook ngân hàng' });
+      if (d && (d.status === 'pending' || (lateOk && d.status === 'expired'))) {
+        const r = completeDeposit(d.id, amount, { txnId: t.txnId, note });
         if (r.ok) { status = 'matched'; depositId = d.id; }
+      } else if (d && d.status === 'success' && d.received === amount && d.completed_at > Math.floor(Date.now() / 1000) - 6 * 3600
+        && String(d.bank_txn_id || '').startsWith(ACN) !== t.txnId.startsWith(ACN)) {
+        status = 'ignored'; depositId = d.id; // đã cộng qua nguồn kia
       }
     }
     db.prepare('INSERT OR IGNORE INTO bank_transactions(txn_id, amount, content, matched_deposit_id, status, raw) VALUES(?,?,?,?,?,?)')
-      .run(t.txnId, Math.floor(t.amount), t.content.slice(0, 500), depositId, status, JSON.stringify(t).slice(0, 2000));
+      .run(t.txnId, amount, t.content.slice(0, 500), depositId, status, JSON.stringify(t).slice(0, 2000));
     results.push({ txnId: t.txnId, status });
   }
   return results;
 }
 
-module.exports = { createDeposit, completeDeposit, cancelDeposit, processBankTransactions, limits };
+module.exports = { createDeposit, completeDeposit, cancelDeposit, processBankTransactions, processTxns, limits };

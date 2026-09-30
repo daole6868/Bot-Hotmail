@@ -15,6 +15,8 @@ const DEFAULT_SETTINGS = {
   as_enabled: '1', as_guest_limit: '120', as_gate_minutes: '30', as_ban_enabled: '1', as_ban_limit: '300', as_ban_minutes: '60',
   as_user_limit: '40', as_user_cooldown: '10', as_overload: '1', as_overload_ms: '300', as_emergency: '0', as_whitelist: '',
   reg_hour_limit: '5', reg_ip_day: '3', reg_min_seconds: '3',
+  // Nạp tự động: NIFY (webhook) và APICANHAN (quét giao dịch) — bật riêng, chạy song song được
+  nify_enabled: '1', acn_enabled: '0', acn_bank: 'ACBnew', acn_interval: '5', acn_extra_pct: '20',
   site_name: 'ShopAcc.VN',
   site_slogan: 'Shop acc game uy tín - Giao dịch tự động 24/7',
   site_description: 'Mua bán tài khoản game Liên Quân, Free Fire, PUBG, Genshin, Roblox, Valorant... uy tín, giao acc tự động 24/7.',

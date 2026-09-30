@@ -131,7 +131,10 @@ app.use((err, req, res, next) => {
 });
 
 // Chạy PM2 nhiều bản (cluster): chỉ bản số 0 chạy dọn dẹp / backup định kỳ
-if (!process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0') maintenance.startScheduler();
+if (!process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0') {
+  maintenance.startScheduler();
+  require('./src/services/apicanhan').start(); // quét giao dịch APICANHAN (chỉ chạy khi bật trong Cài đặt bank và có đơn chờ)
+}
 
 app.listen(config.port, config.host, () => {
   console.log(`Shop đang chạy tại ${config.baseUrl} (${config.host}:${config.port})`);
