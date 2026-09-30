@@ -3,7 +3,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { db, logActivity, getSettings } = require('../db');
 const { requireLogin, limiters } = require('../middleware/security');
-const { createDeposit, cancelDeposit, limits } = require('../services/deposit');
+const depositSvc = require('../services/deposit');
+const { createDeposit, cancelDeposit, limits } = depositSvc;
 const maintenance = require('../services/maintenance');
 const { decrypt } = require('../utils/crypto');
 const { paginate, toInt, str, clientIp } = require('../utils/helpers');
@@ -155,8 +156,11 @@ router.post('/deposit/:id/cancel', (req, res) => {
 // Trạng thái đơn nạp (trang nạp tự kiểm tra định kỳ)
 router.get('/deposit/:code/status', (req, res) => {
   maintenance.expireDeposits();
-  const d = db.prepare('SELECT status, received FROM deposits WHERE code = ? AND user_id = ?').get(str(req.params.code, 20), req.user.id);
-  res.json(d ? { ok: true, status: d.status, received: d.received } : { ok: false });
+  const d = db.prepare('SELECT * FROM deposits WHERE code = ? AND user_id = ?').get(str(req.params.code, 20), req.user.id);
+  if (!d) return res.json({ ok: false });
+  if (d.status !== 'success') return res.json({ ok: true, status: d.status });
+  depositSvc.markSeen(d.id); // trang nạp tự hiện popup -> không hiện lại ở trang sau
+  res.json({ ok: true, status: d.status, received: d.received, receipt: depositSvc.depositReceipt(d) });
 });
 
 // ---------- Biến động số dư ----------

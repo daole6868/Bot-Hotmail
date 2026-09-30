@@ -37,6 +37,15 @@ const createTx = db.transaction((userId, amount, replace) => {
   return { ok: true, deposit: db.prepare('SELECT * FROM deposits WHERE id = ?').get(id) };
 });
 
+/** Thông tin cho popup "Nạp tiền thành công": số tiền, số dư trước / sau */
+function depositReceipt(d) {
+  const log = db.prepare("SELECT amount, balance_after FROM balance_logs WHERE user_id = ? AND type = 'deposit' AND ref = ? ORDER BY id DESC LIMIT 1").get(d.user_id, d.code);
+  const after = log ? log.balance_after : null;
+  return { id: d.id, code: d.code, received: d.received, before: after == null ? null : after - (log.amount || d.received), after, at: d.completed_at };
+}
+const unseenStmt = db.prepare("SELECT * FROM deposits WHERE user_id = ? AND status = 'success' AND seen_at IS NULL AND completed_at > unixepoch() - 86400 ORDER BY id DESC LIMIT 1");
+const markSeen = (id) => db.prepare('UPDATE deposits SET seen_at = unixepoch() WHERE id = ? AND seen_at IS NULL').run(id);
+
 /** Cộng tiền cho 1 đơn nạp. Idempotent: chỉ cộng khi đơn còn pending/expired. */
 const completeTx = db.transaction((depositId, received, { txnId = null, adminId = null, note = null } = {}) => {
   const d = db.prepare('SELECT * FROM deposits WHERE id = ?').get(depositId);
@@ -147,4 +156,4 @@ function processTxns(txns, note) {
   return results;
 }
 
-module.exports = { createDeposit, completeDeposit, cancelDeposit, processBankTransactions, processTxns, limits };
+module.exports = { createDeposit, completeDeposit, cancelDeposit, processBankTransactions, processTxns, limits, depositReceipt, unseenStmt, markSeen };

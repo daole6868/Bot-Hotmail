@@ -56,6 +56,26 @@
   </div>
 </div>
 <% } %>
+<% if (locals.user) { const DP = locals.depositPopup; %>
+<!-- Popup nạp tiền thành công (hiện khi tiền về: trang nạp tự điền số liệu, trang khác do server gửi sẵn) -->
+<div class="dp-modal" id="depPopup" <%= DP ? '' : 'hidden' %>>
+  <div class="dp-box" role="dialog" aria-modal="true" aria-labelledby="dpTitle">
+    <div class="dp-check"><%- I('check') %></div>
+    <h3 id="dpTitle">Nạp tiền thành công</h3>
+    <div class="dp-amount" data-dp="received">+<%= DP ? H.money(DP.received) : '' %></div>
+    <div class="dp-lines">
+      <div><span>Số dư trước</span><b data-dp="before"><%= DP && DP.before != null ? H.money(DP.before) : '—' %></b></div>
+      <div class="dp-arrow"><%- I('caret-down') %></div>
+      <div class="dp-after"><span>Số dư sau</span><b data-dp="after"><%= DP && DP.after != null ? H.money(DP.after) : '—' %></b></div>
+    </div>
+    <div class="dp-meta">Mã nạp <b data-dp="code"><%= DP ? DP.code : '' %></b> · <span data-dp="at"><%= DP ? H.fmtDate(DP.at) : '' %></span></div>
+    <div class="dp-actions">
+      <button type="button" class="btn btn-ghost" data-dp-close>Đóng</button>
+      <a href="/" class="btn btn-primary">Mua sắm ngay</a>
+    </div>
+  </div>
+</div>
+<% } %>
 <%- include('ui-settings') %>
 <script src="/js/slow.js?v=<%= locals.assetV || 1 %>" defer></script>
 <script src="/js/main.js?v=<%= locals.assetV || 1 %>" defer></script>

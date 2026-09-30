@@ -310,6 +310,34 @@
     tick();
   }
 
+  // Popup "Nạp tiền thành công" (giữa màn hình). Đóng -> tải lại để số dư trên đầu trang cập nhật
+  const depPopup = $('#depPopup');
+  const money = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
+  function showDepositPopup(r) {
+    if (!depPopup) return;
+    const set = (k, v) => { const el = $('[data-dp="' + k + '"]', depPopup); if (el) el.textContent = v; };
+    set('received', '+' + money(r.received));
+    set('before', r.before == null ? '—' : money(r.before));
+    set('after', r.after == null ? '—' : money(r.after));
+    set('code', r.code || '');
+    set('at', r.at ? new Date(r.at * 1000).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '');
+    if (r.after != null) $$('.top-balance').forEach((b) => { const ico = b.querySelector('svg'); b.textContent = ' ' + money(r.after); if (ico) b.prepend(ico); });
+    depPopup.hidden = false;
+    depPopup.dataset.reload = '1';
+    document.body.classList.add('no-scroll');
+  }
+  if (depPopup) {
+    if (!depPopup.hidden) document.body.classList.add('no-scroll');
+    const closeDp = () => {
+      depPopup.hidden = true;
+      document.body.classList.remove('no-scroll');
+      if (depPopup.dataset.reload) location.href = '/user/deposit';
+    };
+    $$('[data-dp-close]', depPopup).forEach((b) => b.addEventListener('click', closeDp));
+    depPopup.addEventListener('click', (e) => { if (e.target === depPopup) closeDp(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !depPopup.hidden) closeDp(); });
+  }
+
   // Trang nạp tiền: tự kiểm tra trạng thái mỗi 5 giây
   const dep = $('[data-deposit-code]');
   if (dep) {
@@ -322,8 +350,8 @@
         const j = await r.json();
         if (j.ok && j.status === 'success') {
           $('#depositStatus').innerHTML = '';
-          $('#depositStatus').textContent = 'Nạp thành công ' + j.received.toLocaleString('vi-VN') + 'đ! Đang tải lại...';
-          setTimeout(() => { location.href = '/user/deposit'; }, 1800);
+          $('#depositStatus').textContent = 'Nạp thành công ' + j.received.toLocaleString('vi-VN') + 'đ!';
+          showDepositPopup(j.receipt || { received: j.received, code });
           return;
         }
         if (j.ok && j.status !== 'pending') { $('#depositStatus').textContent = 'Yêu cầu nạp đã ' + (j.status === 'expired' ? 'quá thời gian chờ và bị hủy. Vui lòng tạo yêu cầu mới.' : 'bị hủy'); return; }
@@ -390,7 +418,7 @@
   if (popup) {
     let last = 0;
     try { last = +localStorage.getItem('popup_' + popup.dataset.popupId) || 0; } catch (e) { /* ignore */ }
-    if (Date.now() - last > 12 * 3600 * 1000) popup.hidden = false;
+    if (Date.now() - last > 12 * 3600 * 1000 && !(depPopup && !depPopup.hidden)) popup.hidden = false;
     popup.addEventListener('click', (e) => { if (e.target === popup) closePopup(); });
   }
 

@@ -22,7 +22,12 @@ function depositExpireMinutes() {
 }
 
 // Đơn nạp quá thời gian chờ -> chuyển 'expired' (hiện cho khách là "Đã hủy (quá hạn)", không thao tác được nữa)
-function expireDeposits() {
+// Gọi rất thường xuyên (mỗi lần trang nạp tự kiểm tra, mỗi webhook...) -> tối đa 1 lần / 2 giây mỗi bản web,
+// tránh mỗi request đều mở 1 lệnh ghi vào database khi nhiều khách cùng nạp
+let lastExpire = 0;
+function expireDeposits(force = false) {
+  if (!force && Date.now() - lastExpire < 2000) return 0;
+  lastExpire = Date.now();
   const cutoff = nowS() - depositExpireMinutes() * 60;
   return db.prepare("UPDATE deposits SET status = 'expired' WHERE status = 'pending' AND created_at < ?").run(cutoff).changes;
 }
@@ -137,7 +142,7 @@ function dbInfo() {
 }
 
 function runLight() {
-  const expired = expireDeposits();
+  const expired = expireDeposits(true);
   const purged = purgeOld();
   db.pragma('wal_checkpoint(PASSIVE)');
   return { expired, ...purged };
@@ -172,7 +177,7 @@ function startScheduler() {
   timer = setInterval(tick, 10 * 60 * 1000); // 10 phút
   timer.unref();
   // Hết hạn đơn nạp cần chính xác theo phút -> kiểm tra riêng mỗi phút (câu lệnh rất nhẹ)
-  setInterval(() => { try { expireDeposits(); } catch (e) { console.error('[maintenance] expire', e.message); } }, 60 * 1000).unref();
+  setInterval(() => { try { expireDeposits(true); } catch (e) { console.error('[maintenance] expire', e.message); } }, 60 * 1000).unref();
 }
 
 module.exports = { runLight, runDaily, archive, backup, optimize, rebuildStats, dbInfo, startScheduler, expireDeposits, depositExpireMinutes };

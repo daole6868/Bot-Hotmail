@@ -106,6 +106,18 @@ app.use(security.csrf);
 app.use(security.loadUser);
 app.use(shield.late); // lớp 2: đã đăng nhập -> đếm theo tài khoản; có cookie nhưng chưa đăng nhập -> đếm theo IP
 
+// Popup "Nạp tiền thành công": tiền về lúc khách đang ở trang khác -> hiện ở lần mở trang tiếp theo (1 lần)
+const depositSvc = require('./src/services/deposit');
+app.use((req, res, next) => {
+  if (!req.user || req.method !== 'GET' || req.xhr || req.path.startsWith('/admin') || !(req.get('accept') || '').includes('text/html')) return next();
+  const d = depositSvc.unseenStmt.get(req.user.id);
+  if (d) {
+    res.locals.depositPopup = depositSvc.depositReceipt(d);
+    res.on('finish', () => { if (res.statusCode === 200) depositSvc.markSeen(d.id); });
+  }
+  next();
+});
+
 // Chế độ bảo trì: chỉ admin vào được
 app.use((req, res, next) => {
   if (res.locals.s.maintenance_mode === '1' && !(req.user && req.user.role === 'admin')

@@ -1147,7 +1147,7 @@ router.post('/settings/bank', (req, res) => {
   setSetting('acn_bank', ['ACBnew', 'MB'].includes(req.body.acn_bank) ? req.body.acn_bank : 'ACBnew');
   setSetting('acn_interval', String(toInt(req.body.acn_interval, 5, 3, 120)));
   setSetting('acn_extra_pct', String(toInt(req.body.acn_extra_pct, 20, 0, 300)));
-  maintenance.expireDeposits(); // áp dụng ngay cho các đơn đang chờ
+  maintenance.expireDeposits(true); // áp dụng ngay cho các đơn đang chờ
   audit(req, 'settings_bank_update');
   back(req, res, 'success', 'Đã lưu cài đặt bank', '/admin/settings/bank');
 });

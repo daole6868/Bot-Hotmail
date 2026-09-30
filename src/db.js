@@ -345,6 +345,8 @@ function addColumn(table, col, def) {
   return true;
 }
 addColumn('products', 'sort_order', 'INTEGER NOT NULL DEFAULT 0');
+// Popup "Nạp tiền thành công": seen_at = lúc khách đã thấy thông báo (đơn cũ coi như đã thấy)
+if (addColumn('deposits', 'seen_at', 'INTEGER')) db.exec("UPDATE deposits SET seen_at = completed_at WHERE status = 'success'");
 // Loại danh mục: vip = mỗi acc bán 1 lần ; reroll = 1 sản phẩm chứa nhiều acc, mua nhiều lần tới khi hết
 if (addColumn('categories', 'sale_type', "TEXT NOT NULL DEFAULT 'vip'")) {
   db.exec(`UPDATE categories SET sale_type = 'reroll'
