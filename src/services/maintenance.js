@@ -82,17 +82,9 @@ function archive() {
   return { orders, deposits };
 }
 
+// Bản sao lưu DB trên VPS: giữ tối đa BACKUP_KEEP bản (mặc định 10), tự xóa bản cũ hơn BACKUP_DAYS ngày (mặc định 10)
 function backup() {
-  const name = `shop-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 23)}.db`;
-  const dest = path.join(config.paths.backups, name);
-  return db.backup(dest).then(() => {
-    const files = fs.readdirSync(config.paths.backups).filter((f) => f.endsWith('.db')).sort();
-    while (files.length > config.retention.backupKeep) {
-      fs.unlinkSync(path.join(config.paths.backups, files.shift()));
-    }
-    setSetting('last_backup', String(nowS()));
-    return name;
-  });
+  return require('./backup').localBackup();
 }
 
 const dbFile = () => path.join(config.paths.data, 'shop.db');
@@ -132,12 +124,8 @@ function dbInfo() {
   const size = fs.existsSync(file) ? fs.statSync(file).size : 0;
   const walFile = file + '-wal';
   const wal = fs.existsSync(walFile) ? fs.statSync(walFile).size : 0;
-  const tables = ['users', 'products', 'product_stock', 'orders', 'orders_archive', 'deposits', 'deposits_archive',
-    'bank_transactions', 'balance_logs', 'activity_logs', 'login_logs', 'sessions'];
-  const counts = {};
-  for (const t of tables) counts[t] = db.prepare(`SELECT COUNT(*) c FROM ${t}`).get().c;
-  const backups = fs.readdirSync(config.paths.backups).filter((f) => f.endsWith('.db')).sort().reverse()
-    .map((f) => ({ name: f, size: fs.statSync(path.join(config.paths.backups, f)).size }));
+  const counts = require('./backup').tableCounts();
+  const backups = require('./backup').listBackups();
   return { size, wal, counts, backups };
 }
 
@@ -153,6 +141,8 @@ async function runDaily() {
   optimize(false);
   res.backup = await backup();
   setSetting('last_maintenance', String(nowS()));
+  // Gửi gói sao lưu về Telegram (nếu đã bật) — chạy nền, không chặn web
+  if (getSettings().tg_enabled === '1') res.telegram = (await require('./backup').backupToTelegram()).message;
   return res;
 }
 

@@ -147,6 +147,7 @@ if (!process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0') {
   maintenance.startScheduler();
   require('./src/services/apicanhan').start(); // quét giao dịch APICANHAN (chỉ chạy khi bật trong Cài đặt bank và có đơn chờ)
 }
+require('./src/services/backup').watchRestart(); // khôi phục dữ liệu xong -> mọi bản PM2 tự khởi động lại
 
 app.listen(config.port, config.host, () => {
   console.log(`Shop đang chạy tại ${config.baseUrl} (${config.host}:${config.port})`);

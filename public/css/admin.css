@@ -598,3 +598,7 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 @media (max-width: 760px) { .as-stats { grid-template-columns: 1fr 1fr; } }
 .acn-status { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: #f5f6fa; margin: 10px 0; font-size: .85rem; }
 .acn-status.ok { background: #effbf3; color: #166534; } .acn-status.err { background: #fdf1f1; color: #991b1b; }
+.a-kv .a-kv-group td { padding-top: 12px; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a8fa3; }
+.a-btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.a-card-danger { border-color: #f6cfcf; }
+.a-kv-compact th, .a-kv-compact td { padding-top: 6px; padding-bottom: 6px; font-size: .86rem; }

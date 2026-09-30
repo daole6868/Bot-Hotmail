@@ -440,18 +440,22 @@ if (!db.prepare('SELECT 1 FROM home_blocks LIMIT 1').get()) {
     .forEach(([t, title], i) => ins.run(t, title, i));
 }
 // Chỉ mục tìm kiếm toàn văn cho tên/mã acc (nhanh với hàng trăm nghìn acc, tìm được cả khi gõ không dấu)
-{
-  const hasFts = db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'products_fts'").get();
-  db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS products_fts USING fts5(title, code, content='products', content_rowid='id', tokenize='unicode61 remove_diacritics 2');
-    CREATE TRIGGER IF NOT EXISTS products_fts_ai AFTER INSERT ON products BEGIN
+const FTS_TRIGGERS = `CREATE TRIGGER IF NOT EXISTS products_fts_ai AFTER INSERT ON products BEGIN
       INSERT INTO products_fts(rowid, title, code) VALUES (new.id, new.title, new.code); END;
     CREATE TRIGGER IF NOT EXISTS products_fts_ad AFTER DELETE ON products BEGIN
       INSERT INTO products_fts(products_fts, rowid, title, code) VALUES ('delete', old.id, old.title, old.code); END;
     CREATE TRIGGER IF NOT EXISTS products_fts_au AFTER UPDATE OF title, code ON products BEGIN
       INSERT INTO products_fts(products_fts, rowid, title, code) VALUES ('delete', old.id, old.title, old.code);
-      INSERT INTO products_fts(rowid, title, code) VALUES (new.id, new.title, new.code); END;`);
+      INSERT INTO products_fts(rowid, title, code) VALUES (new.id, new.title, new.code); END;`;
+{
+  const hasFts = db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'products_fts'").get();
+  db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS products_fts USING fts5(title, code, content='products', content_rowid='id', tokenize='unicode61 remove_diacritics 2');
+    ${FTS_TRIGGERS}`);
   if (!hasFts) db.exec("INSERT INTO products_fts(products_fts) VALUES('rebuild')");
 }
+// Khôi phục dữ liệu: tạm bỏ trigger tìm kiếm khi nạp hàng loạt, xong thì tạo lại và dựng lại chỉ mục
+const ftsPause = () => db.exec('DROP TRIGGER IF EXISTS products_fts_ai; DROP TRIGGER IF EXISTS products_fts_ad; DROP TRIGGER IF EXISTS products_fts_au;');
+const ftsResume = () => { db.exec(FTS_TRIGGERS); db.exec("INSERT INTO products_fts(products_fts) VALUES('rebuild')"); };
 // Thêm vị trí banner 'strip' (dải ảnh chạy ở trang chủ): SQLite không sửa được CHECK -> dựng lại bảng
 {
   const sql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'banners'").get()?.sql || '';
@@ -511,4 +515,5 @@ function vnDay(ts = Date.now()) {
   return new Date(ts + 7 * 3600 * 1000).toISOString().slice(0, 10);
 }
 
-module.exports = { db, getSettings, setSetting, logActivity, bumpStat, vnDay };
+const clearSettingsCache = () => { settingsCache.data = null; };
+module.exports = { db, getSettings, setSetting, logActivity, bumpStat, vnDay, ftsPause, ftsResume, clearSettingsCache };

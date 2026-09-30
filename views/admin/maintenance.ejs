@@ -1,12 +1,19 @@
 <%- include('_header') %>
 <% const mb = (b) => (b / 1024 / 1024).toFixed(2) + ' MB';
-   const tableNames = { users: 'Người dùng', products: 'Sản phẩm', product_stock: 'Kho tài khoản', orders: 'Đơn hàng', orders_archive: 'Đơn hàng (lưu trữ)',
-     deposits: 'Đơn nạp', deposits_archive: 'Đơn nạp (lưu trữ)', bank_transactions: 'GD ngân hàng', balance_logs: 'Biến động số dư',
-     activity_logs: 'Nhật ký hoạt động', login_logs: 'Nhật ký đăng nhập', sessions: 'Phiên đăng nhập' };
+   const groups = [
+     ['Khách hàng', { users: 'Người dùng', trusted_devices: 'Thiết bị tin cậy', sessions: 'Phiên đăng nhập', email_otps: 'Mã xác minh email', password_resets: 'Link đặt lại mật khẩu' }],
+     ['Sản phẩm', { games: 'Game', categories: 'Danh mục', products: 'Sản phẩm', product_stock: 'Kho tài khoản', attributes: 'Thuộc tính' }],
+     ['Giao dịch', { orders: 'Đơn hàng', orders_archive: 'Đơn hàng (lưu trữ)', deposits: 'Đơn nạp', deposits_archive: 'Đơn nạp (lưu trữ)', bank_transactions: 'GD ngân hàng', balance_logs: 'Biến động số dư', coupons: 'Mã giảm giá', coupon_usages: 'Lượt dùng mã giảm giá' }],
+     ['Giao diện & cài đặt', { settings: 'Cài đặt', banners: 'Banner', home_blocks: 'Khối trang chủ', home_block_items: 'Ảnh trong khối', daily_stats: 'Thống kê theo ngày' }],
+     ['Nhật ký & bảo mật', { activity_logs: 'Nhật ký hoạt động', login_logs: 'Nhật ký đăng nhập', email_logs: 'Nhật ký email', ip_blocks: 'IP bị chặn', shield_flags: 'Chặn spam đang áp dụng' }],
+   ];
+   const known = new Set(groups.flatMap(([, m]) => Object.keys(m)));
+   const other = Object.keys(info.counts).filter((k) => !known.has(k));
+   if (other.length) groups.push(['Khác', Object.fromEntries(other.map((k) => [k, k]))]);
    const tasks = [
      ['light', 'broom', 'Dọn dẹp nhanh', 'Hủy ngay các đơn nạp quá thời gian chờ; xóa nhật ký, đơn nạp hủy, GD bank đã khớp, biến động số dư đã quá hạn giữ; xóa phiên đăng nhập và IP bị chặn đã hết hạn.', 'An toàn, chạy lúc nào cũng được'],
      ['archive', 'archive', 'Lưu trữ dữ liệu cũ', 'Chuyển đơn hàng và đơn nạp thành công cũ hơn ' + retention.archiveDays + ' ngày sang bảng lưu trữ để bảng chính nhẹ, web nhanh. Khách và admin vẫn xem được lịch sử.', 'An toàn'],
-     ['backup', 'save', 'Backup ngay', 'Tạo 1 bản sao toàn bộ database vào thư mục backups (tải về ở bảng bên dưới). Chỉ giữ ' + retention.backupKeep + ' bản mới nhất, bản cũ tự xóa.', 'Nên chạy trước khi sửa lớn'],
+     ['backup', 'save', 'Backup ngay', 'Tạo 1 bản sao toàn bộ database vào thư mục backups (tải về ở bảng bên dưới). Giữ tối đa ' + retention.backupKeep + ' bản, bản cũ hơn ' + retention.backupDays + ' ngày tự xóa.', 'Nên chạy trước khi sửa lớn'],
      ['optimize', 'bolt', 'Tối ưu chỉ mục', 'Gộp file nhật ký ghi (WAL) vào DB và cập nhật thống kê chỉ mục để tìm kiếm/lọc nhanh hơn.', 'An toàn, rất nhanh'],
      ['stats', 'chart', 'Tính lại thống kê', 'Tính lại số liệu doanh thu, đơn hàng, nạp tiền, người dùng mới theo ngày (biểu đồ Tổng quan) từ dữ liệu gốc. Dùng khi số liệu bị lệch.', 'An toàn'],
      ['vacuum', 'compress', 'VACUUM (thu gọn DB)', 'Sắp xếp lại và thu nhỏ file database sau khi xóa nhiều dữ liệu. Khóa DB vài giây, khách có thể phải chờ.', 'Chạy lúc ít khách'],
@@ -15,9 +22,13 @@
 <div class="a-grid-3">
   <div class="a-card">
     <h3><%- I('box') %> Dung lượng dữ liệu</h3>
-    <table class="a-table a-kv">
+    <table class="a-table a-kv a-kv-compact">
       <tr><th>File database</th><td><%= mb(info.size) %> (WAL: <%= mb(info.wal) %>)</td></tr>
-      <% Object.entries(info.counts).forEach(([k, v]) => { %><tr><th><%= tableNames[k] || k %></th><td><%= v.toLocaleString('vi-VN') %> dòng</td></tr><% }) %>
+      <tr><th>Ảnh đã tải lên</th><td><%= uploads.files.toLocaleString('vi-VN') %> file · <%= mb(uploads.size) %></td></tr>
+      <% groups.forEach(([g, m]) => { %><tr class="a-kv-group"><td colspan="2"><%= g %></td></tr>
+        <% Object.entries(m).forEach(([k, label]) => { if (info.counts[k] === undefined) return; %><tr><th><%= label %></th><td><%= info.counts[k].toLocaleString('vi-VN') %> dòng</td></tr><% }) %>
+      <% }) %>
+      <tr class="a-kv-group"><td colspan="2">Sao lưu</td></tr>
       <tr><th>Backup gần nhất</th><td><%= s.last_backup ? H.fmtDate(+s.last_backup) : 'Chưa có' %></td></tr>
       <tr><th>Bảo trì tự động gần nhất</th><td><%= s.last_maintenance ? H.fmtDate(+s.last_maintenance) : 'Chưa chạy' %></td></tr>
     </table>
@@ -32,7 +43,8 @@
       <li>Xóa GD ngân hàng đã khớp cũ hơn <b><%= retention.bankTxnDays %> ngày</b></li>
       <li>Xóa biến động số dư cũ hơn <b><%= retention.balanceLogDays %> ngày</b></li>
       <li>Hằng ngày: chuyển đơn hàng & nạp tiền cũ hơn <b><%= retention.archiveDays %> ngày</b> sang bảng lưu trữ (khách vẫn xem được)</li>
-      <li>Hằng ngày: backup DB, giữ <b><%= retention.backupKeep %></b> bản gần nhất; tối ưu chỉ mục</li>
+      <li>Hằng ngày: backup DB, giữ tối đa <b><%= retention.backupKeep %></b> bản, tự xóa bản cũ hơn <b><%= retention.backupDays %> ngày</b>; tối ưu chỉ mục</li>
+      <li>Hằng ngày: gửi gói sao lưu về Telegram <b><%= s.tg_enabled === '1' ? '(đang bật)' : '(đang tắt)' %></b></li>
     </ul>
     <p class="a-muted a-small">Số ngày giữ dữ liệu sửa trong file .env trên VPS.</p>
     <h3>Chạy thủ công</h3>
@@ -52,9 +64,64 @@
     <p class="a-muted a-small">Không nút nào xóa sản phẩm, tài khoản khách hay số dư. Sau khi chạy, kết quả hiện ở thông báo đầu trang.</p>
   </div>
 </div>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3><%- I('send') %> Sao lưu tự động về Telegram</h3>
+    <form method="post" action="/admin/maintenance/telegram" class="a-form" autocomplete="off">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="a-check"><input type="checkbox" name="tg_enabled" value="1" <%= s.tg_enabled === '1' ? 'checked' : '' %>> <span><b>Mỗi ngày tự gửi gói sao lưu về Telegram</b></span></label>
+      <div class="a-row">
+        <div><label>Bot token <%- tgHasToken ? '<small class="a-green">(đã lưu)</small>' : '' %></label><input type="password" name="tg_token" placeholder="<%= tgHasToken ? 'Để trống = giữ token cũ' : '123456789:AAF...' %>"></div>
+        <div><label>Chat ID admin</label><input name="tg_chat_id" value="<%= s.tg_chat_id || '' %>" placeholder="VD: 123456789"></div>
+      </div>
+      <% if (tgHasToken) { %><label class="a-check"><input type="checkbox" name="tg_clear" value="1"> <span>Xóa bot token đã lưu</span></label><% } %>
+      <label>Mật khẩu gói sao lưu <%- hasBackupPass ? '<small class="a-green">(đã đặt)</small>' : '<span class="req">*</span>' %></label>
+      <div class="a-row">
+        <div><input type="password" name="backup_pass" minlength="8" placeholder="<%= hasBackupPass ? 'Để trống = giữ mật khẩu cũ' : 'Ít nhất 8 ký tự' %>" autocomplete="new-password"></div>
+        <div><input type="password" name="backup_pass2" placeholder="Nhập lại mật khẩu" autocomplete="new-password"></div>
+      </div>
+      <p class="a-field-hint">Gói sao lưu gồm <b>toàn bộ dữ liệu + ảnh</b>, được <b>mã hóa bằng mật khẩu này</b>: ai có file mà không có mật khẩu cũng không mở được. <b>Hãy ghi nhớ mật khẩu</b> — mất mật khẩu thì không khôi phục được gói. Gói nặng hơn 50MB (giới hạn của Telegram) sẽ gửi bản chỉ có dữ liệu, không kèm ảnh.</p>
+      <p class="a-field-hint">Lấy <b>Bot token</b>: nhắn <b>@BotFather</b> trên Telegram → <code>/newbot</code>. Lấy <b>Chat ID</b>: nhắn <b>@userinfobot</b>. Sau đó nhắn <code>/start</code> cho bot của bạn 1 lần để bot được phép gửi tin.</p>
+      <div class="acn-status <%= s.tg_last_ok === '1' ? 'ok' : s.tg_last_at ? 'err' : '' %>">
+        <span>Lần gửi gần nhất: <b><%= s.tg_last_at ? H.fmtDate(+s.tg_last_at) : 'chưa có' %></b></span>
+        <% if (s.tg_last_msg) { %><span><%= s.tg_last_msg %></span><% } %>
+      </div>
+      <div class="a-btn-row">
+        <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt</button>
+        <button class="a-btn" formaction="/admin/maintenance/telegram/test" formnovalidate <%= tgHasToken && hasBackupPass ? '' : 'disabled' %>><%- I('send') %> Gửi thử ngay</button>
+        <button class="a-btn" formaction="/admin/maintenance/package" formnovalidate <%= hasBackupPass ? '' : 'disabled' %>><%- I('download') %> Tải gói đầy đủ</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="a-card a-card-danger">
+    <h3><%- I('upload') %> Khôi phục dữ liệu</h3>
+    <div class="a-alert a-alert-error"><%- I('alert') %> <span>Toàn bộ dữ liệu hiện tại (người dùng, số dư, sản phẩm, đơn hàng, cài đặt…) sẽ <b>bị xóa</b> và thay bằng dữ liệu trong file. Web tự lưu 1 bản sao dữ liệu hiện tại trước khi khôi phục (hiện ở bảng bên dưới).</span></div>
+    <form method="post" action="/admin/maintenance/restore" enctype="multipart/form-data" class="a-form" data-confirm="XÓA toàn bộ dữ liệu hiện tại và khôi phục từ file này?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>File sao lưu <span class="req">*</span> <small class="a-muted">(.gzbak từ Telegram / nút Tải gói, hoặc file .db ở bảng dưới)</small></label>
+      <input type="file" name="file" accept=".gzbak,.db" required>
+      <label>Mật khẩu gói sao lưu <small class="a-muted">(không cần với file .db)</small></label>
+      <input type="password" name="password" autocomplete="off">
+      <label>Gõ <b>XOA HET</b> để xác nhận <span class="req">*</span></label>
+      <input name="confirm" required autocomplete="off" placeholder="XOA HET">
+      <button class="a-btn a-danger a-submit"><%- I('upload') %> Xóa dữ liệu cũ &amp; khôi phục</button>
+    </form>
+    <p class="a-field-hint"><b>Chuyển sang VPS / tên miền mới:</b> cài web trên VPS mới → đăng nhập admin mặc định → vào đây tải gói <code>.gzbak</code> lên kèm mật khẩu. Web tự nhận khóa mã hóa của VPS cũ và mã hóa lại thông tin acc cho VPS mới. Xong thì đăng nhập lại bằng tài khoản admin cũ. File <code>.db</code> lẻ chỉ dùng được trên chính VPS đã tạo ra nó.</p>
+    <p class="a-field-hint">Gói lớn hơn 90MB: tăng giới hạn tải lên của Nginx (<code>client_max_body_size</code>) trước khi khôi phục.</p>
+  </div>
+</div>
+
 <div class="a-card">
-  <h3>Bản backup</h3>
-  <table class="a-table"><% info.backups.forEach(b => { %><tr><td><%= b.name %></td><td><%= mb(b.size) %></td><td><a href="/admin/maintenance/backup/<%= b.name %>" class="a-btn a-xs"><%- I('download') %> Tải</a></td></tr><% }) %>
-  <% if (!info.backups.length) { %><tr><td class="a-muted">Chưa có bản backup</td></tr><% } %></table>
+  <h3><%- I('save') %> Bản sao lưu hằng ngày trên VPS <small class="a-muted">(tối đa <%= retention.backupKeep %> bản, tự xóa sau <%= retention.backupDays %> ngày)</small></h3>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Thời gian</th><th>Tên file</th><th>Dung lượng</th><th></th></tr></thead>
+    <% info.backups.forEach(b => { %><tr>
+      <td class="a-small"><%= H.fmtDate(b.at) %></td><td class="a-small"><code><%= b.name %></code><% if (b.name.includes('truoc-khoi-phuc')) { %> <span class="a-tag yellow">Trước khi khôi phục</span><% } %></td><td><%= mb(b.size) %></td>
+      <td class="a-actions"><a href="/admin/maintenance/backup/<%= b.name %>" class="a-btn a-xs"><%- I('download') %> Tải</a>
+        <form method="post" action="/admin/maintenance/backup/<%= b.name %>/delete" data-confirm="Xóa bản sao lưu này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger"><%- I('trash') %></button></form></td></tr><% }) %>
+    <% if (!info.backups.length) { %><tr><td colspan="4" class="a-muted">Chưa có bản sao lưu</td></tr><% } %>
+  </table></div>
+  <p class="a-field-hint">File <code>.db</code> là bản chụp database (không kèm ảnh, không mã hóa bằng mật khẩu — thông tin acc vẫn được mã hóa bằng khóa của VPS). Để chuyển VPS hãy dùng <b>gói đầy đủ .gzbak</b>.</p>
 </div>
 <%- include('_footer') %>

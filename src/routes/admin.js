@@ -12,6 +12,7 @@ const H = require('../utils/helpers');
 const { refund } = require('../services/order');
 const { completeDeposit, cancelDeposit } = require('../services/deposit');
 const maintenance = require('../services/maintenance');
+const backupSvc = require('../services/backup');
 const SQLiteStore = require('../session-store');
 const publicRouter = require('./public');
 const config = require('../config');
@@ -32,7 +33,7 @@ router.use((req, res, next) => {
 
 // Multipart (upload ảnh): parse rồi kiểm tra CSRF
 router.use((req, res, next) => {
-  if (!req.is('multipart/form-data')) return next();
+  if (!req.is('multipart/form-data') || req.path === '/maintenance/restore') return next(); // khôi phục dữ liệu có bộ nhận file riêng
   upload.any()(req, res, (err) => {
     if (err) {
       req.flash('error', err.code === 'LIMIT_FILE_SIZE' ? 'Ảnh vượt quá 8MB' : err.message);
@@ -1271,9 +1272,11 @@ router.post('/antispam/release', (req, res) => {
 });
 
 // ======================= BẢO TRÌ DỮ LIỆU =======================
-router.get('/maintenance', (req, res) => {
-  res.render('admin/maintenance', { title: 'Bảo trì dữ liệu', info: maintenance.dbInfo(), s: getSettings(), retention: config.retention,
-    expireMinutes: maintenance.depositExpireMinutes() });
+router.get('/maintenance', async (req, res) => {
+  const s = getSettings();
+  res.render('admin/maintenance', { title: 'Bảo trì dữ liệu', info: maintenance.dbInfo(), s, retention: config.retention,
+    expireMinutes: maintenance.depositExpireMinutes(), uploads: await backupSvc.uploadsSize(),
+    tgHasToken: !!s.tg_token_enc, hasBackupPass: !!s.backup_pass_enc });
 });
 
 router.post('/maintenance/run', async (req, res) => {
@@ -1308,6 +1311,75 @@ router.get('/maintenance/backup/:name', (req, res, next) => {
   if (!/^shop-[\w-]+\.db$/.test(name) || !fs.existsSync(file)) return next();
   audit(req, 'backup_download', name);
   res.download(file);
+});
+router.post('/maintenance/backup/:name/delete', (req, res) => {
+  const ok = backupSvc.deleteBackup(path.basename(String(req.params.name)));
+  if (ok) audit(req, 'backup_delete', req.params.name);
+  back(req, res, ok ? 'success' : 'error', ok ? 'Đã xóa bản sao lưu' : 'Không tìm thấy bản sao lưu', '/admin/maintenance');
+});
+
+// --- Sao lưu về Telegram + mật khẩu gói sao lưu ---
+router.post('/maintenance/telegram', (req, res) => {
+  const token = String(req.body.tg_token || '').trim();
+  if (token) {
+    if (!/^\d{5,15}:[\w-]{20,60}$/.test(token)) return back(req, res, 'error', 'Bot token không đúng dạng (VD: 123456789:AAF...)', '/admin/maintenance');
+    setSetting('tg_token_enc', encrypt(token));
+  }
+  if (req.body.tg_clear) setSetting('tg_token_enc', '');
+  const chat = String(req.body.tg_chat_id || '').trim();
+  if (chat && !/^-?\d{3,20}$/.test(chat)) return back(req, res, 'error', 'Chat ID phải là số (VD: 123456789 hoặc -100123...)', '/admin/maintenance');
+  setSetting('tg_chat_id', chat);
+  const pass = String(req.body.backup_pass || '');
+  if (pass) {
+    if (pass.length < 8) return back(req, res, 'error', 'Mật khẩu gói sao lưu phải từ 8 ký tự', '/admin/maintenance');
+    if (pass !== String(req.body.backup_pass2 || '')) return back(req, res, 'error', 'Nhập lại mật khẩu gói sao lưu không khớp', '/admin/maintenance');
+    setSetting('backup_pass_enc', encrypt(pass));
+  }
+  setSetting('tg_enabled', req.body.tg_enabled ? '1' : '0');
+  audit(req, 'backup_settings', (token ? 'token ' : '') + (pass ? 'password' : ''));
+  back(req, res, 'success', 'Đã lưu cài đặt sao lưu', '/admin/maintenance');
+});
+router.post('/maintenance/telegram/test', async (req, res) => {
+  const r = await backupSvc.backupToTelegram();
+  audit(req, 'backup_telegram', r.message);
+  back(req, res, r.ok ? 'success' : 'error', 'Telegram: ' + r.message, '/admin/maintenance');
+});
+// Tải gói sao lưu đầy đủ (mã hóa bằng mật khẩu gói) về máy
+router.post('/maintenance/package', async (req, res) => {
+  let pkg;
+  try { pkg = await backupSvc.makePackage({ withUploads: true }); } catch (e) { return back(req, res, 'error', e.message, '/admin/maintenance'); }
+  audit(req, 'backup_package', path.basename(pkg.file));
+  res.download(pkg.file, path.basename(pkg.file), () => fs.rm(pkg.file, { force: true }, () => {}));
+});
+
+// --- Khôi phục dữ liệu từ gói sao lưu (.gzbak) hoặc file .db ---
+const restoreUpload = require('multer')({ dest: backupSvc.TMP, limits: { fileSize: 4 * 1024 * 1024 * 1024, files: 1 } });
+router.post('/maintenance/restore', (req, res) => {
+  restoreUpload.single('file')(req, res, async (err) => {
+    const cleanup = () => req.file && ['', '-wal', '-shm', '-journal'].forEach((x) => fs.rm(req.file.path + x, { force: true }, () => {})); // kèm file phụ của SQLite
+    const fail = (m) => { cleanup(); back(req, res, 'error', m, '/admin/maintenance'); };
+    if (err) return fail('Lỗi tải file: ' + err.message);
+    if (!verifyCsrf(req)) { cleanup(); return res.status(403).render('errors/error', { code: 403, message: 'CSRF token không hợp lệ' }); }
+    if (!req.file) return fail('Chưa chọn file sao lưu');
+    if (String(req.body.confirm || '').trim().toUpperCase() !== 'XOA HET') return fail('Gõ đúng XOA HET để xác nhận xóa dữ liệu hiện tại');
+    audit(req, 'restore_start', req.file.originalname);
+    let r;
+    try {
+      r = await backupSvc.restoreFromFile(req.file.path, String(req.body.password || ''));
+    } catch (e) {
+      console.error('[restore]', e);
+      return fail('Không khôi phục được: ' + e.message + '. Dữ liệu hiện tại vẫn giữ nguyên.');
+    }
+    cleanup();
+    const c = r.summary;
+    const lines = [`Người dùng: ${c.users || 0}`, `Sản phẩm: ${c.products || 0}`, `Đơn hàng: ${c.orders || 0}`, `Đơn nạp: ${c.deposits || 0}`,
+      r.uploads ? 'Ảnh: đã thay bằng ảnh trong gói' : 'Ảnh: giữ nguyên (gói không có ảnh)',
+      c._reencrypted ? `Đã mã hóa lại ${c._reencrypted} mục cho khóa của VPS này` : '',
+      `Bản sao lưu dữ liệu trước khi khôi phục: ${r.safety}`].filter(Boolean);
+    logActivity(null, 'restore_done', lines.join(' | '), clientIp(req));
+    res.render('errors/error', { code: 'OK', message: 'Khôi phục dữ liệu thành công. ' + lines.join(' · ') + '. Web đang tự khởi động lại, vui lòng đăng nhập lại bằng tài khoản trong bản sao lưu.' });
+    setTimeout(() => backupSvc.requestRestart(), 300);
+  });
 });
 
 // ======================= TÀI KHOẢN ADMIN =======================
