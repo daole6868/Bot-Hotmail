@@ -13,7 +13,6 @@
       <div class="bx-thumb"><% if (it.image) { %><img src="<%= it.image %>" alt="<%= it.name %>" loading="lazy"><% } else { %><span class="bx-thumb-ico" style="--ic:<%= it.icon_color %>"><%- I(it.icon) %></span><% } %></div>
       <div class="bx-body">
         <h3><%= it.name %></h3>
-        <% if (it.description) { %><p class="muted small bx-desc"><%= it.description %></p><% } %>
         <div class="bx-foot"><span class="bx-price"><%- priceHtml %></span><span class="bx-meta"><%- I('layers') %> <%= it.package_count %> gói</span></div>
         <span class="btn btn-sm btn-primary bx-view">Xem ngay</span>
       </div>
@@ -21,7 +20,7 @@
       <%- icoBox %>
       <div class="bx-body">
         <h3><%= it.name %></h3>
-        <p class="muted small bx-desc"><%= it.description || (it.package_count + ' gói dịch vụ') %></p>
+        <p class="muted small bx-desc"><%= it.package_count %> gói dịch vụ</p>
       </div>
       <div class="bx-side"><span class="bx-price"><%- priceHtml %></span><%- I('chevron-right') %></div>
     <% } %>
