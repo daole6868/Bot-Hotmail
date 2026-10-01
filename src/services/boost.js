@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Cày thuê: giỏ hàng (theo từng game, lưu trên server, tự hết hạn), đặt đơn, 5 trạng thái đơn, hoàn tiền, thông báo.
+ * Cày thuê (Game -> danh mục loại Cày thuê -> danh mục con -> gói): giỏ hàng (theo từng game, lưu trên server, tự hết hạn), đặt đơn, 5 trạng thái đơn, hoàn tiền, thông báo.
  *
  * Trạng thái: received (Nhận đơn) -> processing (Đang xử lý) -> done (Đã xong)
  *             need_info (Cần bổ sung thông tin: khách tự sửa tài khoản/mật khẩu -> quay lại Nhận đơn)
@@ -27,17 +27,18 @@ class BoostError extends Error {}
 const cartHours = (s = getSettings()) => int(s.boost_cart_hours, 24, 1, 720);
 
 // ---------- Giỏ hàng ----------
-const pkgStmt = db.prepare(`SELECT p.*, c.name AS category_name, c.slug AS category_slug, c.game_id, c.is_active AS cat_active, g.is_active AS game_active, g.slug AS game_slug
-  FROM boost_packages p JOIN boost_categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id WHERE p.id = ?`);
-const orderable = (p) => p && p.is_active && p.cat_active && p.game_active;
+const pkgStmt = db.prepare(`SELECT p.*, c.name AS category_name, c.slug AS category_slug, c.game_id, c.is_active AS cat_active, g.is_active AS game_active, g.slug AS game_slug,
+    pc.is_active AS parent_active
+  FROM boost_packages p JOIN boost_categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id JOIN categories pc ON pc.id = c.parent_id WHERE p.id = ?`);
+const orderable = (p) => p && p.is_active && p.cat_active && p.game_active && p.parent_active;
 
 function cartItems(userId, gameId) {
   if (!userId) return [];
   const minAt = nowS() - cartHours() * 3600;
   return db.prepare(`SELECT b.qty, p.id, p.name, p.price, p.old_price, p.unit, p.min_qty, p.max_qty, p.is_paused, p.icon, p.icon_color, p.image,
       c.name AS category_name, c.slug AS category_slug
-    FROM boost_carts b JOIN boost_packages p ON p.id = b.package_id JOIN boost_categories c ON c.id = p.category_id
-    WHERE b.user_id = ? AND b.game_id = ? AND b.updated_at > ? AND p.is_active = 1 AND c.is_active = 1
+    FROM boost_carts b JOIN boost_packages p ON p.id = b.package_id JOIN boost_categories c ON c.id = p.category_id JOIN categories pc ON pc.id = c.parent_id
+    WHERE b.user_id = ? AND b.game_id = ? AND b.updated_at > ? AND p.is_active = 1 AND c.is_active = 1 AND pc.is_active = 1
     ORDER BY b.updated_at, p.id`).all(userId, gameId, minAt)
     .map((r) => ({ ...r, line: r.price * r.qty }));
 }

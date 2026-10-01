@@ -1,13 +1,13 @@
 <%- include('../partials/header') %>
 <% const inCart = Object.fromEntries(cart.items.map((i) => [i.id, i.qty]));
-   const here = `/game/${game.slug}/cay-thue/${category.slug}`;
+   const here = `/game/${game.slug}/${parent.slug}/${category.slug}`;
    const loginUrl = '/login?next=' + encodeURIComponent(here); %>
 <div class="bp-head">
-  <h1><%- I(category.icon) %> <%= category.name %> <span class="muted">· <%= game.name %></span></h1>
+  <h1><%- I(category.icon) %> <%= category.name %> <span class="muted">· <%= parent.name %></span></h1>
   <% if (category.description) { %><p class="muted"><%= category.description %></p><% } %>
   <% if (siblings.length > 1) { %>
     <div class="bp-chips">
-      <% siblings.forEach(c => { %><a href="/game/<%= game.slug %>/cay-thue/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><span style="color:<%= c.icon_color %>"><%- I(c.icon) %></span> <%= c.name %></a><% }) %>
+      <% siblings.forEach(c => { %><a href="/game/<%= game.slug %>/<%= parent.slug %>/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><span style="color:<%= c.icon_color %>"><%- I(c.icon) %></span> <%= c.name %></a><% }) %>
     </div>
   <% } %>
 </div>

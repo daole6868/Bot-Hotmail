@@ -22,7 +22,7 @@
             </div>
           </td>
           <td class="a-num"><a href="/admin/categories#game-<%= g.id %>"><%= g.cat_count %></a></td>
-          <td class="a-num"><a href="/admin/products#game-<%= g.id %>"><%= g.product_count.toLocaleString('vi-VN') %></a></td>
+          <td class="a-num"><a href="/admin/vip#game-<%= g.id %>"><%= g.product_count.toLocaleString('vi-VN') %></a></td>
           <td class="a-center"><%- include('partials/switch', { kind: 'games', id: g.id, on: g.is_active, disabled: false }) %></td>
           <td class="a-right">
             <div class="a-actions">

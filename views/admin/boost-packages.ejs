@@ -1,11 +1,11 @@
 <%- include('_header') %>
 <div class="a-section-head">
   <div>
-    <h3><a href="/admin/boost#bgame-<%= c.game_id %>" class="a-muted"><%= c.game_name %></a> › <%= c.name %></h3>
+    <h3><a href="/admin/boost/c/<%= c.parent_id %>" class="a-muted"><%= c.game_name %> › <%= c.parent_name %></a> › <%= c.name %></h3>
     <p class="a-muted a-small">Kéo nút ⠿ để đổi thứ tự gói. Tắt “Nhận đơn” để tạm ngưng gói mà vẫn hiển thị.</p>
   </div>
   <div class="a-actions">
-    <a class="a-btn a-ghost" href="/game/<%= c.game_slug %>/cay-thue/<%= c.slug %>" target="_blank" rel="noopener"><%- I('eye') %> Xem ngoài web</a>
+    <a class="a-btn a-ghost" href="/game/<%= c.game_slug %>/<%= c.parent_slug %>/<%= c.slug %>" target="_blank" rel="noopener"><%- I('eye') %> Xem ngoài web</a>
     <button type="button" class="a-btn a-primary" data-modal-url="/admin/boost/packages/form?category_id=<%= c.id %>" data-modal-title="Thêm gói – <%= c.name %>"><%- I('plus') %> Thêm gói</button>
   </div>
 </div>

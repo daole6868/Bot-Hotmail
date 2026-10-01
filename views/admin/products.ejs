@@ -7,9 +7,9 @@
       <% [['available','Đang bán'],['hidden','Đang ẩn'],['sold','Đã bán (tra cứu)']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %>
     </select>
     <button class="a-btn">Lọc</button>
-    <% if (query.q || query.status) { %><a class="a-btn a-ghost" href="/admin/products">Xóa lọc</a><% } %>
+    <% if (query.q || query.status) { %><a class="a-btn a-ghost" href="<%= base %>">Xóa lọc</a><% } %>
   </form>
-  <p class="a-field-hint a-mb0">Acc VIP đã bán tự rời khỏi danh sách này. Tra cứu lại ở <a href="/admin/orders">Đơn hàng</a> (có đủ tên acc, giá, khách mua và thông tin đã giao) hoặc chọn lọc “Đã bán”.</p>
+  <% if (saleType === 'vip') { %><p class="a-field-hint a-mb0">Acc VIP đã bán tự rời khỏi danh sách này. Tra cứu lại ở <a href="/admin/orders">Đơn hàng</a> (có đủ tên acc, giá, khách mua và thông tin đã giao) hoặc chọn lọc “Đã bán”.</p><% } %>
 </div>
 
 <!-- Thao tác hàng loạt: ô chọn trong bảng gắn vào form này qua thuộc tính form="bulkForm" -->
@@ -38,7 +38,7 @@
       </button>
     </div>
     <div class="a-acc-body a-acc-nested">
-      <% if (!g.cats.length) { %><div class="a-empty">Game chưa có danh mục. <a href="/admin/categories#game-<%= g.id %>">Thêm danh mục</a></div><% } %>
+      <% if (!g.cats.length) { %><div class="a-empty">Game chưa có danh mục <%= saleType === 'reroll' ? 'Reroll' : 'VIP' %>. <a href="/admin/categories#game-<%= g.id %>">Thêm danh mục</a></div><% } %>
       <% g.cats.forEach(c => { %>
       <section class="a-acc a-acc-sub" id="cat-<%= c.id %>" data-acc="prod-cat-<%= c.id %>"
                data-rows-url="/admin/products/rows?category_id=<%= c.id %><%= query.status ? '&status=' + query.status : '' %>">

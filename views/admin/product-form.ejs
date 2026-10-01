@@ -52,7 +52,7 @@
       <p class="a-muted a-small">Mỗi dòng là 1 đơn vị hàng. Tự bỏ qua dòng trùng.</p>
     </div>
     <button class="a-btn a-primary a-lg"><%- I('save') %> Lưu sản phẩm</button>
-    <a href="/admin/products" class="a-btn a-ghost">Quay lại</a>
+    <a href="<%= p.type === 'stock' ? '/admin/reroll' : '/admin/vip' %>" class="a-btn a-ghost">Quay lại</a>
   </div>
 </form>
 

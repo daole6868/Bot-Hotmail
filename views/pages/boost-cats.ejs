@@ -1,12 +1,13 @@
 <%- include('../partials/header') %>
 <section class="page-hero" style="--c: <%= game.color %>">
-  <% if (game.image) { %><img src="<%= game.image %>" alt="<%= game.name %>"><% } %>
-  <div><h1><%= s.boost_tile_title || 'Cày thuê' %> <%= game.name %></h1><p><%= s.boost_tile_desc %></p></div>
+  <% const heroImg = parent.image || game.image; if (heroImg) { %><img src="<%= heroImg %>" alt="<%= parent.name %>"><% } %>
+  <div><h1><%= parent.name %></h1><% if (parent.description) { %><p><%= parent.description %></p><% } %></div>
 </section>
 <section class="section">
   <div class="section-head"><h2><%- I('g-swords') %> Chọn dịch vụ</h2></div>
+  <% if (!categories.length) { %><div class="empty">Chưa có dịch vụ nào.</div><% } %>
   <div class="bx-list bx-list-<%= disp.mode %>" style="--cols-pc:<%= disp.colsPc %>;--cols-m:<%= disp.colsM %>" data-scroll-max="<%= disp.max %>">
-    <% categories.forEach(c => { %><%- include('../partials/boost/item', { it: c, kind: 'cat', mode: disp.mode, href: `/game/${game.slug}/cay-thue/${c.slug}`, inCart: 0, loginUrl: '' }) %><% }) %>
+    <% categories.forEach(c => { %><%- include('../partials/boost/item', { it: c, kind: 'cat', mode: disp.mode, href: `/game/${game.slug}/${parent.slug}/${c.slug}`, inCart: 0, loginUrl: '' }) %><% }) %>
   </div>
 </section>
 <% if (coupons.length) { %>

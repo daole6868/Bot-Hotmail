@@ -465,6 +465,31 @@ addColumn('coupons', 'scope', "TEXT NOT NULL DEFAULT 'all'");
 addColumn('coupon_usages', 'boost_order_id', 'INTEGER');
 addColumn('daily_stats', 'boost_revenue', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('daily_stats', 'boost_orders', 'INTEGER NOT NULL DEFAULT 0');
+// Cày thuê nằm trong "Danh mục" như VIP / Reroll: danh mục loại 'boost' (sửa tên, ảnh, mô tả, thứ tự được)
+// -> bên trong là danh mục con (boost_categories.parent_id) -> gói. options = cài đặt hiển thị riêng của danh mục cày thuê
+addColumn('categories', 'options', 'TEXT');
+addColumn('boost_categories', 'parent_id', 'INTEGER REFERENCES categories(id) ON DELETE CASCADE');
+db.exec('CREATE INDEX IF NOT EXISTS idx_bcat_parent ON boost_categories(parent_id, is_active, sort_order)');
+{
+  // Danh mục con tạo trước khi có cấp "Cày thuê" -> gom vào 1 danh mục Cày thuê mới của đúng game
+  const orphans = db.prepare('SELECT DISTINCT game_id FROM boost_categories WHERE parent_id IS NULL').all();
+  if (orphans.length) {
+    const st = (k, d) => db.prepare('SELECT value FROM settings WHERE key = ?').get(k)?.value || d;
+    const name = st('boost_tile_title', 'Cày thuê');
+    const opts = JSON.stringify(Object.fromEntries(['cat_mode', 'cat_cols_pc', 'cat_cols_m', 'cat_max', 'pkg_mode', 'pkg_cols_pc', 'pkg_cols_m', 'pkg_max']
+      .map((k) => [k, st('boost_' + k, '')]).filter(([, v]) => v !== '')));
+    db.transaction(() => {
+      for (const { game_id: gid } of orphans) {
+        let slug = 'cay-thue';
+        for (let i = 2; db.prepare('SELECT 1 FROM categories WHERE game_id = ? AND slug = ?').get(gid, slug); i++) slug = 'cay-thue-' + i;
+        const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM categories WHERE game_id = ?').get(gid).n;
+        const cid = db.prepare("INSERT INTO categories(game_id, name, slug, image, description, sort_order, sale_type, options) VALUES(?,?,?,?,?,?,'boost',?)")
+          .run(gid, name, slug, st('boost_tile_image', '') || null, st('boost_tile_desc', '') || null, next, opts).lastInsertRowid;
+        db.prepare('UPDATE boost_categories SET parent_id = ? WHERE game_id = ? AND parent_id IS NULL').run(cid, gid);
+      }
+    })();
+  }
+}
 
 // Bảo mật tài khoản: xác minh 2 lớp qua email, thiết bị tin cậy, đặt lại mật khẩu, nhật ký email
 addColumn('users', 'email_verified_at', 'INTEGER');

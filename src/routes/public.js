@@ -62,9 +62,9 @@ function loadHomeBlocks() {
     } else if (b.type === 'boost') {
       const order = { newest: 'p.id DESC', cheap: 'p.price ASC, p.id DESC' }[st.source] || 'p.sold_count DESC, p.id DESC';
       const gid = toInt(st.game_id);
-      b.packages = db.prepare(`SELECT p.*, c.name AS category_name, c.slug AS category_slug, g.name AS game_name, g.slug AS game_slug
-        FROM boost_packages p JOIN boost_categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
-        WHERE p.is_active = 1 AND c.is_active = 1 AND g.is_active = 1${gid ? ' AND g.id = ?' : ''} ORDER BY ${order} LIMIT ?`)
+      b.packages = db.prepare(`SELECT p.*, c.name AS category_name, c.slug AS category_slug, g.name AS game_name, g.slug AS game_slug, pc.slug AS parent_slug
+        FROM boost_packages p JOIN boost_categories c ON c.id = p.category_id JOIN categories pc ON pc.id = c.parent_id JOIN games g ON g.id = c.game_id
+        WHERE p.is_active = 1 AND c.is_active = 1 AND pc.is_active = 1 AND g.is_active = 1${gid ? ' AND g.id = ?' : ''} ORDER BY ${order} LIMIT ?`)
         .all(...(gid ? [gid] : []), toInt(st.limit, 8, 1, 48));
     } else if (b.type === 'recent') {
       b.recent = db.prepare(`SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
@@ -105,10 +105,11 @@ router.get('/game/:slug', (req, res, next) => {
       (SELECT COALESCE(SUM(sold_count),0) FROM products p WHERE p.category_id = c.id) AS sold
     FROM categories c WHERE c.game_id = ? AND c.is_active = 1 ORDER BY c.sort_order, c.id`).all(game.id);
   const coupons = publicCoupons(10, 'acc').filter((c) => !c.game_id || c.game_id === game.id);
-  // Thẻ "Cày thuê" cạnh các danh mục VIP / Reroll (chỉ hiện khi game có danh mục cày thuê đang bật)
-  const boostTile = db.prepare(`SELECT COUNT(DISTINCT c.id) cats, MIN(p.price) min_price, COALESCE(SUM(p.sold_count), 0) sold, COUNT(p.id) pkgs
-    FROM boost_categories c LEFT JOIN boost_packages p ON p.category_id = c.id AND p.is_active = 1 WHERE c.game_id = ? AND c.is_active = 1`).get(game.id);
-  res.render('pages/game', { title: game.name, game, categories, coupons, boostTile: boostTile.cats ? boostTile : null, breadcrumb: [{ name: game.name }] });
+  // Danh mục loại Cày thuê: số gói / lượt thuê / giá từ lấy theo các gói trong danh mục con
+  const bStat = db.prepare(`SELECT COUNT(p.id) pkgs, MIN(p.price) min_price, COALESCE(SUM(p.sold_count), 0) sold
+    FROM boost_categories b JOIN boost_packages p ON p.category_id = b.id AND p.is_active = 1 WHERE b.parent_id = ? AND b.is_active = 1`);
+  categories.forEach((c) => { if (c.sale_type === 'boost') Object.assign(c, bStat.get(c.id)); });
+  res.render('pages/game', { title: game.name, game, categories, coupons, breadcrumb: [{ name: game.name }] });
 });
 
 // ================= CẤP 3: DANH SÁCH SẢN PHẨM / THẺ GAME =================

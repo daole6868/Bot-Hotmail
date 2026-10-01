@@ -1,26 +1,6 @@
 <%- include('_header') %>
-<form method="post" action="/admin/boost/settings" enctype="multipart/form-data" class="a-form">
+<form method="post" action="/admin/boost/settings" class="a-form">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <div class="a-grid-2">
-    <% [['cat', 'Danh mục cày thuê (cấp 1)'], ['pkg', 'Gói cày thuê (cấp 2)']].forEach(([lv, name]) => { %>
-    <div class="a-card">
-      <h3><%- I('layers') %> Hiển thị <%= name %></h3>
-      <label>Kiểu hiển thị</label>
-      <div class="a-choice">
-        <label class="a-choice-item"><input type="radio" name="<%= lv %>_mode" value="image" <%= s[`boost_${lv}_mode`] !== 'icon' ? 'checked' : '' %>><span class="a-choice-box"><b><%- I('image') %> Ảnh</b><small>Thẻ có ảnh lớn, xếp lưới theo số cột bên dưới.</small></span></label>
-        <label class="a-choice-item"><input type="radio" name="<%= lv %>_mode" value="icon" <%= s[`boost_${lv}_mode`] === 'icon' ? 'checked' : '' %>><span class="a-choice-box"><b><%- I('star') %> Icon</b><small>Hàng ngang icon + tên: 1 cột trên điện thoại, 2 cột trên PC.</small></span></label>
-      </div>
-      <div class="a-row">
-        <div><label>Số cột trên PC <small class="a-muted">(kiểu Ảnh)</small></label><select name="<%= lv %>_cols_pc"><% [1,2,3,4,5,6].forEach(n => { %><option <%= +s[`boost_${lv}_cols_pc`] === n ? 'selected' : '' %>><%= n %></option><% }) %></select></div>
-        <div><label>Số cột trên điện thoại <small class="a-muted">(kiểu Ảnh)</small></label><select name="<%= lv %>_cols_m"><% [1,2,3].forEach(n => { %><option <%= +s[`boost_${lv}_cols_m`] === n ? 'selected' : '' %>><%= n %></option><% }) %></select></div>
-      </div>
-      <label>Số ô hiện tối đa</label>
-      <input type="number" name="<%= lv %>_max" min="1" max="200" value="<%= s[`boost_${lv}_max`] %>">
-      <p class="a-field-hint">Nhiều hơn số này thì phần còn lại nằm trong khung cuộn.</p>
-    </div>
-    <% }) %>
-  </div>
-
   <div class="a-grid-2">
     <div class="a-card">
       <h3><%- I('cart') %> Giỏ hàng & đơn</h3>
@@ -34,30 +14,12 @@
       <label class="a-check"><input type="checkbox" name="self_cancel" value="1" <%= s.boost_self_cancel !== '0' ? 'checked' : '' %>> Cho khách tự hủy đơn khi còn “Nhận đơn” (tự hoàn tiền)</label>
       <label class="a-check"><input type="checkbox" name="mail_on_boost" value="1" <%= s.mail_on_boost !== '0' ? 'checked' : '' %>> Gửi email cho khách mỗi khi đổi trạng thái</label>
       <label class="a-check"><input type="checkbox" name="tg_notify" value="1" <%= s.boost_tg_notify !== '0' ? 'checked' : '' %>> Báo đơn mới qua Telegram <small class="a-muted">(dùng bot ở Bảo trì dữ liệu)</small></label>
+      <p class="a-field-hint">Tên, ảnh, mô tả và kiểu hiển thị của từng mục Cày thuê chỉnh ở <a href="/admin/categories">Danh mục</a> (bấm Sửa danh mục loại Cày thuê).</p>
     </div>
-
     <div class="a-card">
-      <h3><%- I('g-swords') %> Ô “Cày thuê” trong trang game</h3>
-      <label>Tiêu đề</label>
-      <input name="tile_title" maxlength="60" value="<%= s.boost_tile_title %>">
-      <label>Mô tả</label>
-      <input name="tile_desc" maxlength="300" value="<%= s.boost_tile_desc %>">
-      <div class="a-upload-row">
-        <div class="a-upload-preview" data-preview-box>
-          <% if (s.boost_tile_image) { %><img src="<%= s.boost_tile_image %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Icon mặc định</span><% } %>
-        </div>
-        <div class="a-grow">
-          <label>Ảnh <small class="a-muted">(không bắt buộc)</small></label>
-          <input type="file" name="tile_image" accept="image/*" data-preview-input>
-          <% if (s.boost_tile_image) { %><label class="a-check"><input type="checkbox" name="remove_tile_image" value="1"> Xóa ảnh</label><% } %>
-        </div>
-      </div>
+      <h3><%- I('list') %> Điều khoản dịch vụ</h3>
+      <textarea name="terms" rows="12" maxlength="5000"><%= s.boost_terms %></textarea>
     </div>
-  </div>
-
-  <div class="a-card">
-    <h3><%- I('list') %> Điều khoản dịch vụ</h3>
-    <textarea name="terms" rows="6" maxlength="5000"><%= s.boost_terms %></textarea>
   </div>
   <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt</button>
 </form>

@@ -58,7 +58,7 @@
     <% } %>
 
     <div class="bo-actions">
-      <% if (game) { %><a href="/game/<%= game.slug %>/cay-thue" class="btn btn-ghost"><%- I('g-swords') %> Thuê thêm</a><% } %>
+      <% if (game) { %><a href="/game/<%= game.slug %>" class="btn btn-ghost"><%- I('g-swords') %> Thuê thêm</a><% } %>
       <% if (canCancel) { %>
       <form method="post" action="/user/boost/<%= o.code %>/cancel" data-confirm="Hủy đơn <%= o.code %>? Tiền sẽ được hoàn vào số dư.">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">

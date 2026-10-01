@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Trang khách: Game -> "Cày thuê" -> Danh mục cày thuê -> Gói (+ giỏ hàng theo game, đặt đơn).
- * Đặt TRƯỚC router public để /game/:slug/cay-thue không bị hiểu là 1 danh mục acc.
+ * Trang khách: Game -> danh mục loại Cày thuê -> danh mục con -> gói (+ giỏ hàng theo game, đặt đơn).
+ * Đặt TRƯỚC router public: danh mục Cày thuê xử lý ở đây, danh mục VIP / Reroll đi tiếp sang router public.
  */
 const express = require('express');
 const { db, getSettings } = require('../db');
@@ -13,52 +13,58 @@ const { str, toInt, clientIp } = require('../utils/helpers');
 const router = express.Router();
 const int = (v, d, min, max) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : d; };
 
-/** Cài đặt hiển thị cho 1 cấp ('cat' | 'pkg') */
-function display(level, s = getSettings()) {
+/** Cài đặt hiển thị cho 1 cấp ('cat' = danh mục con | 'pkg' = gói): lấy theo danh mục Cày thuê, chưa chỉnh thì theo mặc định */
+function display(level, parent, s = getSettings()) {
+  let o = {};
+  try { o = JSON.parse(parent?.options || '{}') || {}; } catch { o = {}; }
+  const v = (k) => (o[`${level}_${k}`] !== undefined && o[`${level}_${k}`] !== '' ? o[`${level}_${k}`] : s[`boost_${level}_${k}`]);
   return {
-    mode: s[`boost_${level}_mode`] === 'icon' ? 'icon' : 'image',
-    colsPc: int(s[`boost_${level}_cols_pc`], 4, 1, 6),
-    colsM: int(s[`boost_${level}_cols_m`], 2, 1, 3),
-    max: int(s[`boost_${level}_max`], 12, 1, 200),
+    mode: v('mode') === 'icon' ? 'icon' : 'image',
+    colsPc: int(v('cols_pc'), 4, 1, 6),
+    colsM: int(v('cols_m'), 2, 1, 3),
+    max: int(v('max'), 12, 1, 200),
   };
 }
 
 const gameBySlug = (slug) => db.prepare('SELECT * FROM games WHERE slug = ? AND is_active = 1').get(slug);
-const categoriesOf = (gameId) => db.prepare(`SELECT c.*,
+const boostParent = (gameId, slug) => db.prepare("SELECT * FROM categories WHERE game_id = ? AND slug = ? AND is_active = 1 AND sale_type = 'boost'").get(gameId, slug);
+const categoriesOf = (parentId) => db.prepare(`SELECT c.*,
     (SELECT COUNT(*) FROM boost_packages p WHERE p.category_id = c.id AND p.is_active = 1) AS package_count,
     (SELECT MIN(price) FROM boost_packages p WHERE p.category_id = c.id AND p.is_active = 1) AS min_price,
     (SELECT COALESCE(SUM(sold_count), 0) FROM boost_packages p WHERE p.category_id = c.id) AS sold
-  FROM boost_categories c WHERE c.game_id = ? AND c.is_active = 1 ORDER BY c.sort_order, c.id`).all(gameId);
+  FROM boost_categories c WHERE c.parent_id = ? AND c.is_active = 1 ORDER BY c.sort_order, c.id`).all(parentId);
+const boostCoupons = (gameId) => publicCoupons(10, 'boost').filter((c) => !c.game_id || c.game_id === gameId);
 
-// ---------- Cấp 1: danh mục cày thuê của game ----------
-router.get('/game/:slug/cay-thue', (req, res, next) => {
+// ---------- Danh mục loại Cày thuê -> danh sách danh mục con ----------
+router.get('/game/:slug/:cat', (req, res, next) => {
   const game = gameBySlug(req.params.slug);
   if (!game) return next();
-  const categories = categoriesOf(game.id);
-  if (!categories.length) return next();
-  const s = getSettings();
+  const parent = boostParent(game.id, req.params.cat);
+  if (!parent) return next(); // danh mục VIP / Reroll -> router public
   res.render('pages/boost-cats', {
-    title: `${s.boost_tile_title || 'Cày thuê'} ${game.name}`, game, categories, disp: display('cat', s),
-    coupons: publicCoupons(10, 'boost').filter((c) => !c.game_id || c.game_id === game.id),
-    breadcrumb: [{ name: game.name, url: `/game/${game.slug}` }, { name: s.boost_tile_title || 'Cày thuê' }],
+    title: `${parent.name} - ${game.name}`, game, parent, categories: categoriesOf(parent.id), disp: display('cat', parent),
+    coupons: boostCoupons(game.id),
+    breadcrumb: [{ name: game.name, url: `/game/${game.slug}` }, { name: parent.name }],
   });
 });
 
-// ---------- Cấp 2: gói trong danh mục + giỏ + đặt đơn ----------
-router.get('/game/:slug/cay-thue/:cat', (req, res, next) => {
+// ---------- Danh mục con -> gói + giỏ + đặt đơn ----------
+router.get('/game/:slug/:cat/:sub', (req, res, next) => {
   const game = gameBySlug(req.params.slug);
   if (!game) return next();
-  const category = db.prepare('SELECT * FROM boost_categories WHERE game_id = ? AND slug = ? AND is_active = 1').get(game.id, req.params.cat);
+  const parent = boostParent(game.id, req.params.cat);
+  if (!parent) return next();
+  const category = db.prepare('SELECT * FROM boost_categories WHERE parent_id = ? AND slug = ? AND is_active = 1').get(parent.id, req.params.sub);
   if (!category) return next();
   const s = getSettings();
   const packages = db.prepare('SELECT * FROM boost_packages WHERE category_id = ? AND is_active = 1 ORDER BY sort_order, id').all(category.id);
-  const siblings = db.prepare('SELECT name, slug, icon, icon_color FROM boost_categories WHERE game_id = ? AND is_active = 1 ORDER BY sort_order, id').all(game.id);
+  const siblings = db.prepare('SELECT name, slug, icon, icon_color FROM boost_categories WHERE parent_id = ? AND is_active = 1 ORDER BY sort_order, id').all(parent.id);
   const cart = boost.cartSummary(req.user?.id, game.id);
   res.set('Cache-Control', 'no-store');
   res.render('pages/boost-packages', {
-    title: `${category.name} - ${game.name}`, game, category, packages, siblings, cart, disp: display('pkg', s),
-    coupons: publicCoupons(10, 'boost').filter((c) => !c.game_id || c.game_id === game.id), terms: s.boost_terms || '', cartHours: boost.cartHours(s),
-    breadcrumb: [{ name: game.name, url: `/game/${game.slug}` }, { name: s.boost_tile_title || 'Cày thuê', url: `/game/${game.slug}/cay-thue` }, { name: category.name }],
+    title: `${category.name} - ${game.name}`, game, parent, category, packages, siblings, cart, disp: display('pkg', parent),
+    coupons: boostCoupons(game.id), terms: s.boost_terms || '', cartHours: boost.cartHours(s),
+    breadcrumb: [{ name: game.name, url: `/game/${game.slug}` }, { name: parent.name, url: `/game/${game.slug}/${parent.slug}` }, { name: category.name }],
   });
 });
 
@@ -96,7 +102,7 @@ router.post('/api/boost/coupon/check', limiters.coupon, (req, res) => {
 router.post('/boost/checkout', requireLogin, limiters.buy, (req, res) => {
   const gameId = toInt(req.body.game, 0);
   const back = str(req.body.back, 200);
-  const safeBack = /^\/game\/[\w-]+\/cay-thue(\/[\w-]+)?$/.test(back) ? back : '/';
+  const safeBack = /^\/game\/[\w-]+\/[\w-]+\/[\w-]+$/.test(back) ? back : '/';
   if (!req.body.agree) { req.flash('error', 'Bạn cần đồng ý điều khoản dịch vụ'); return res.redirect(safeBack); }
   const r = boost.checkout(req.user.id, gameId, req.body, clientIp(req));
   if (!r.ok) { req.flash('error', r.message); return res.redirect(safeBack); }

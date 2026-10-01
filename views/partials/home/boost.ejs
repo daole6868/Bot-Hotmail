@@ -2,7 +2,7 @@
 <section class="section">
   <div class="section-head"><h2><%- I('g-swords') %> <%= block.title || 'Cày thuê nổi bật' %></h2></div>
   <div class="bx-list bx-list-<%= D.mode %>" style="--cols-pc:<%= D.pc %>;--cols-m:<%= D.m %>">
-    <% block.packages.forEach(p => { const href = `/game/${p.game_slug}/cay-thue/${p.category_slug}`;
+    <% block.packages.forEach(p => { const href = `/game/${p.game_slug}/${p.parent_slug}/${p.category_slug}`;
          const price = `${p.old_price && p.old_price > p.price ? `<del class="muted small">${H.money(p.old_price)}</del> ` : ''}<b class="price">${H.money(p.price)}</b><span class="muted small">/${p.unit}</span>`; %>
       <a href="<%= href %>" class="bx-item bx-<%= D.mode %> card">
         <% if (D.mode === 'image') { %>

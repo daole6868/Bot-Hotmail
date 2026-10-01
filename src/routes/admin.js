@@ -243,7 +243,10 @@ router.get('/categories', (req, res) => {
   const cats = db.prepare(`SELECT c.*,
       (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.status != 'sold') AS product_count,
       (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS available_count,
-      (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price
+      (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price,
+      (SELECT COUNT(*) FROM boost_categories b WHERE b.parent_id = c.id) AS sub_count,
+      (SELECT COUNT(*) FROM boost_packages p JOIN boost_categories b ON b.id = p.category_id WHERE b.parent_id = c.id) AS pkg_count,
+      (SELECT MIN(p.price) FROM boost_packages p JOIN boost_categories b ON b.id = p.category_id WHERE b.parent_id = c.id AND p.is_active = 1 AND b.is_active = 1) AS pkg_min
     FROM categories c ORDER BY c.sort_order, c.id`).all();
   games.forEach((g) => { g.cats = cats.filter((c) => c.game_id === g.id); });
   res.render('admin/categories', { title: 'Danh mục', games });
@@ -251,9 +254,13 @@ router.get('/categories', (req, res) => {
 
 router.get('/categories/form', (req, res) => {
   const c = req.query.id ? db.prepare('SELECT * FROM categories WHERE id = ?').get(toInt(req.query.id)) : null;
-  if (c) c.product_count = db.prepare('SELECT COUNT(*) n FROM products WHERE category_id = ?').get(c.id).n;
+  if (c) {
+    c.product_count = db.prepare('SELECT COUNT(*) n FROM products WHERE category_id = ?').get(c.id).n
+      + db.prepare('SELECT COUNT(*) n FROM boost_categories WHERE parent_id = ?').get(c.id).n;
+  }
   const games = db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all();
-  modal(res, 'category-form', { c, games, gameId: c ? c.game_id : toInt(req.query.game_id) });
+  const disp = require('./boost').display;
+  modal(res, 'category-form', { c, games, gameId: c ? c.game_id : toInt(req.query.game_id), boostDisp: { cat: disp('cat', c), pkg: disp('pkg', c) } });
 });
 
 router.post('/categories/save', (req, res) => {
@@ -275,18 +282,34 @@ router.post('/categories/save', (req, res) => {
     removeImage(old.image);
     image = null;
   }
-  const saleType = req.body.sale_type === 'reroll' ? 'reroll' : 'vip';
+  const saleType = ['reroll', 'boost'].includes(req.body.sale_type) ? req.body.sale_type : 'vip';
   if (old && old.sale_type !== saleType) {
-    // Không cho đổi loại khi đã có sản phẩm (acc VIP và kho acc Reroll lưu khác nhau)
+    // Không cho đổi loại khi đã có hàng bên trong (acc VIP, kho acc Reroll và gói cày thuê lưu khác nhau)
     const n = db.prepare('SELECT COUNT(*) c FROM products WHERE category_id = ?').get(old.id).c;
-    if (n) return back(req, res, 'error', `Danh mục đã có ${n} sản phẩm, không thể đổi loại VIP/Reroll. Hãy tạo danh mục mới.`);
+    if (n) return back(req, res, 'error', `Danh mục đã có ${n} sản phẩm, không thể đổi loại. Hãy tạo danh mục mới.`);
+    const b = db.prepare('SELECT COUNT(*) c FROM boost_categories WHERE parent_id = ?').get(old.id).c;
+    if (b) return back(req, res, 'error', `Danh mục đã có ${b} danh mục con cày thuê, không thể đổi loại. Hãy tạo danh mục mới.`);
   }
-  const data = [gameId, name, slug, image, str(req.body.description, 1000), bool(req.body.is_active), saleType];
+  // Cày thuê: cài đặt hiển thị riêng (danh mục con + gói)
+  let options = old?.options || null;
+  if (saleType === 'boost') {
+    const o = {};
+    for (const lv of ['cat', 'pkg']) {
+      o[`${lv}_mode`] = req.body[`${lv}_mode`] === 'icon' ? 'icon' : 'image';
+      o[`${lv}_cols_pc`] = String(toInt(req.body[`${lv}_cols_pc`], 4, 1, 6));
+      o[`${lv}_cols_m`] = String(toInt(req.body[`${lv}_cols_m`], 2, 1, 3));
+      o[`${lv}_max`] = String(toInt(req.body[`${lv}_max`], 12, 1, 200));
+    }
+    options = JSON.stringify(o);
+  }
+  const data = [gameId, name, slug, image, str(req.body.description, 1000), bool(req.body.is_active), saleType, options];
   if (old) {
-    db.prepare('UPDATE categories SET game_id=?, name=?, slug=?, image=?, description=?, is_active=?, sale_type=? WHERE id=?').run(...data, id);
+    db.prepare('UPDATE categories SET game_id=?, name=?, slug=?, image=?, description=?, is_active=?, sale_type=?, options=? WHERE id=?').run(...data, id);
+    // chuyển danh mục cày thuê sang game khác -> danh mục con đi theo (giỏ hàng tính theo game)
+    if (old.game_id !== gameId) db.prepare('UPDATE boost_categories SET game_id = ? WHERE parent_id = ?').run(gameId, id);
   } else {
     const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM categories WHERE game_id = ?').get(gameId).n;
-    db.prepare('INSERT INTO categories(game_id, name, slug, image, description, is_active, sale_type, sort_order) VALUES(?,?,?,?,?,?,?,?)').run(...data, next);
+    db.prepare('INSERT INTO categories(game_id, name, slug, image, description, is_active, sale_type, options, sort_order) VALUES(?,?,?,?,?,?,?,?,?)').run(...data, next);
   }
   audit(req, old ? 'category_update' : 'category_create', name);
   back(req, res, 'success', old ? 'Đã cập nhật danh mục' : 'Đã thêm danh mục', '/admin/categories');
@@ -297,6 +320,10 @@ router.post('/categories/:id/delete', (req, res) => {
   if (!c) return back(req, res, 'error', 'Không tìm thấy');
   const sold = db.prepare("SELECT COUNT(*) n FROM products WHERE category_id = ? AND status = 'sold'").get(c.id).n;
   if (sold) return back(req, res, 'error', `Danh mục có ${sold} sản phẩm đã bán. Hãy tắt hiển thị thay vì xóa.`);
+  const rented = db.prepare('SELECT COUNT(*) n FROM boost_order_items i JOIN boost_packages p ON p.id = i.package_id JOIN boost_categories b ON b.id = p.category_id WHERE b.parent_id = ?').get(c.id).n;
+  if (rented) return back(req, res, 'error', `Danh mục cày thuê đã có ${rented} lượt thuê. Hãy tắt hiển thị thay vì xóa.`);
+  db.prepare('SELECT b.image FROM boost_categories b WHERE b.parent_id = ? UNION ALL SELECT p.image FROM boost_packages p JOIN boost_categories b ON b.id = p.category_id WHERE b.parent_id = ?')
+    .all(c.id, c.id).forEach((r) => removeImage(r.image));
   db.prepare('SELECT images FROM products WHERE category_id = ?').all(c.id).forEach((r) => H.parseJSON(r.images, []).forEach(removeImage));
   db.prepare('DELETE FROM categories WHERE id = ?').run(c.id);
   removeImage(c.image);
@@ -306,7 +333,7 @@ router.post('/categories/:id/delete', (req, res) => {
 
 // ======================= SẢN PHẨM (CẤP 3) =======================
 function categoryOptions() {
-  return db.prepare('SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id ORDER BY g.sort_order, c.sort_order, c.id').all();
+  return db.prepare("SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type != 'boost' ORDER BY g.sort_order, c.sort_order, c.id").all();
 }
 
 const PRODUCT_ROW_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.images, p.status, p.views, p.sold_count, p.is_featured,
@@ -326,18 +353,24 @@ function productFilter(req) {
   return { q, status, where, params };
 }
 
-// Trang sản phẩm: Game -> Danh mục (sản phẩm tải khi mở danh mục, phân trang => chịu được hàng nghìn acc)
-router.get('/products', (req, res) => {
+// Trang sản phẩm tách theo loại: Acc VIP (/admin/vip) và Reroll (/admin/reroll)
+// Game -> Danh mục (sản phẩm tải khi mở danh mục, phân trang => chịu được hàng nghìn acc)
+const PRODUCT_PAGES = { vip: { title: 'Acc VIP', base: '/admin/vip' }, reroll: { title: 'Reroll', base: '/admin/reroll' } };
+const productsBase = (saleType) => (saleType === 'reroll' ? '/admin/reroll' : '/admin/vip');
+router.get('/products', (req, res) => res.redirect('/admin/vip' + (req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '')));
+router.get(['/vip', '/reroll'], (req, res) => {
+  const type = req.path === '/reroll' ? 'reroll' : 'vip';
+  const page = PRODUCT_PAGES[type];
   const f = productFilter(req);
   const query = { q: f.q, status: f.status };
   if (f.q) {
     const result = paginate(db, {
       select: PRODUCT_ROW_SELECT,
       from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
-      where: 'WHERE ' + f.where.join(' AND '), params: f.params,
+      where: 'WHERE ' + [...f.where, 'c.sale_type = ?'].join(' AND '), params: [...f.params, type],
       order: 'ORDER BY p.id DESC', page: toInt(req.query.page, 1, 1), perPage: 50,
     });
-    return res.render('admin/products', { title: 'Sản phẩm', query, result, games: null });
+    return res.render('admin/products', { title: page.title, query, result, games: null, saleType: type, base: page.base });
   }
   const statusSql = f.status ? ' AND p.status = ?' : " AND p.status != 'sold'";
   const sp = f.status ? [f.status] : [];
@@ -345,12 +378,12 @@ router.get('/products', (req, res) => {
   const cats = db.prepare(`SELECT c.id, c.game_id, c.name, c.image, c.sale_type,
       (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id${statusSql}) AS product_count,
       (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price
-    FROM categories c ORDER BY c.sort_order, c.id`).all(...sp);
+    FROM categories c WHERE c.sale_type = ? ORDER BY c.sort_order, c.id`).all(...sp, type);
   games.forEach((g) => {
     g.cats = cats.filter((c) => c.game_id === g.id);
     g.product_count = g.cats.reduce((a, c) => a + c.product_count, 0);
   });
-  res.render('admin/products', { title: 'Sản phẩm', query, result: null, games });
+  res.render('admin/products', { title: page.title, query, result: null, games, saleType: type, base: page.base });
 });
 
 // Danh sách sản phẩm của 1 danh mục (HTML, tải bằng JS)
@@ -446,7 +479,7 @@ router.post('/products/save', (req, res) => {
   const categoryId = toInt(req.body.category_id);
   const title = str(req.body.title, 200);
   const price = toInt(req.body.price, -1, -1);
-  if (!title || price < 0 || !db.prepare('SELECT 1 FROM categories WHERE id = ?').get(categoryId)) {
+  if (!title || price < 0 || !db.prepare("SELECT 1 FROM categories WHERE id = ? AND sale_type != 'boost'").get(categoryId)) {
     return back(req, res, 'error', 'Vui lòng nhập tên, giá và chọn danh mục');
   }
   const cat = categoryInfo(categoryId);
@@ -503,7 +536,7 @@ router.post('/products/save', (req, res) => {
     msg += `. Thêm ${r.added} mã vào kho${r.dup ? `, bỏ qua ${r.dup} mã trùng` : ''}`;
   }
   audit(req, old ? 'product_update' : 'product_create', `${code} ${title}`);
-  back(req, res, 'success', msg, '/admin/products');
+  back(req, res, 'success', msg, productsBase(cat.sale_type));
 });
 
 router.post('/products/:id/duplicate', (req, res) => {
@@ -944,7 +977,7 @@ router.get('/home-blocks/form', (req, res) => {
     settings: b ? { ...(info.def || {}), ...H.parseJSON(b.settings, {}) } : { ...(info.def || {}) },
     items: b ? db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id').all(b.id) : [],
     games: db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all(),
-    categories: type === 'featured' ? db.prepare('SELECT c.id, c.name, g.name AS game FROM categories c JOIN games g ON g.id = c.game_id ORDER BY g.sort_order, c.sort_order').all() : [],
+    categories: type === 'featured' ? db.prepare("SELECT c.id, c.name, g.name AS game FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type != 'boost' ORDER BY g.sort_order, c.sort_order").all() : [],
   });
 });
 

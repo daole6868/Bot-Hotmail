@@ -32,14 +32,20 @@
             <td><%- include('partials/move', { kind: 'categories', id: c.id, first: i === 0, last: i === g.cats.length - 1 }) %></td>
             <td><div class="a-item">
               <% if (c.image && !c.image.startsWith('/img/catalog/')) { %><img src="<%= c.image %>" class="a-avatar sm" alt="" loading="lazy"><% } %>
-              <div><b><%= c.name %></b> <% if (c.sale_type === 'reroll') { %><span class="a-type-badge reroll sm"><%- I('refresh') %> Reroll</span><% } else { %><span class="a-type-badge vip sm"><%- I('star') %> VIP</span><% } %><% if (c.description) { %><div class="a-muted a-small a-trunc"><%= c.description %></div><% } %></div>
+              <div><b><%= c.name %></b> <% if (c.sale_type === 'boost') { %><span class="a-type-badge boost sm"><%- I('g-swords') %> Cày thuê</span><% } else if (c.sale_type === 'reroll') { %><span class="a-type-badge reroll sm"><%- I('refresh') %> Reroll</span><% } else { %><span class="a-type-badge vip sm"><%- I('star') %> VIP</span><% } %><% if (c.description) { %><div class="a-muted a-small a-trunc"><%= c.description %></div><% } %></div>
             </div></td>
-            <td class="a-num"><a href="/admin/products#cat-<%= c.id %>"><%= c.product_count.toLocaleString('vi-VN') %> SP</a><% if (c.product_count !== c.available_count) { %><div class="a-muted a-small"><%= c.available_count %> đang bán</div><% } %></td>
+            <% if (c.sale_type === 'boost') { %>
+            <td class="a-num"><a href="/admin/boost/c/<%= c.id %>"><%= c.sub_count %> danh mục con</a><div class="a-muted a-small"><%= c.pkg_count %> gói</div></td>
+            <td class="a-num"><%= c.pkg_min != null ? H.money(c.pkg_min) : '—' %></td>
+            <% } else { %>
+            <td class="a-num"><a href="/admin/<%= c.sale_type === 'reroll' ? 'reroll' : 'vip' %>#cat-<%= c.id %>"><%= c.product_count.toLocaleString('vi-VN') %> SP</a><% if (c.product_count !== c.available_count) { %><div class="a-muted a-small"><%= c.available_count %> đang bán</div><% } %></td>
             <td class="a-num"><%= c.min_price != null ? H.money(c.min_price) : '—' %></td>
+            <% } %>
             <td class="a-center"><%- include('partials/switch', { kind: 'categories', id: c.id, on: c.is_active, disabled: false }) %></td>
             <td class="a-right"><div class="a-actions">
+              <% if (c.sale_type === 'boost') { %><a class="a-btn a-xs a-soft" href="/admin/boost/c/<%= c.id %>"><%- I('layers') %> Danh mục con</a><% } %>
               <button type="button" class="a-icon-btn" data-modal-url="/admin/categories/form?id=<%= c.id %>" data-modal-title="Sửa danh mục" title="Sửa"><%- I('edit') %></button>
-              <form method="post" action="/admin/categories/<%= c.id %>/delete" data-confirm="Xóa danh mục “<%= c.name %>” và các sản phẩm chưa bán bên trong?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+              <form method="post" action="/admin/categories/<%= c.id %>/delete" data-confirm="Xóa danh mục “<%= c.name %>” và <%= c.sale_type === 'boost' ? 'các danh mục con, gói' : 'các sản phẩm chưa bán' %> bên trong?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
             </div></td>
           </tr>
         <% }) %>

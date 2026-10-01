@@ -640,3 +640,10 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 .a-bo-timeline li { padding-left: 12px; border-left: 2px solid var(--border, #e3e6ef); }
 a.a-stat { color: inherit; text-decoration: none; }
 .a-bo-cred[hidden] { display: none; }
+.a-type-badge.boost { background: #ede9fe; color: #6d28d9; }
+.a-boost-only { display: none; }
+.a-cat-form:has(input[name=sale_type][value=boost]:checked) .a-boost-only { display: block; }
+.a-row-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 560px) { .a-row-4 { grid-template-columns: 1fr 1fr; } }
+.a-cat-form .a-choice { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 800px) { .a-cat-form .a-choice { grid-template-columns: 1fr; } }
