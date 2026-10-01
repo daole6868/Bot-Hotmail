@@ -1295,12 +1295,43 @@ router.post('/security/unblock', (req, res) => {
 const AS_NUM = {
   as_guest_limit: [10, 100000], as_gate_minutes: [1, 1440], as_ban_limit: [20, 100000], as_ban_minutes: [1, 10080],
   as_user_limit: [5, 10000], as_user_cooldown: [1, 600], as_overload_ms: [50, 5000], edge_cache_seconds: [0, 600],
+  ad_mult: [2, 100], ad_floor_rpm: [60, 10000000], ad_ip_floor: [10, 10000000], ad_escalate_sec: [20, 3600], ad_calm_min: [1, 1440],
   reg_hour_limit: [1, 1000], reg_ip_day: [1, 1000], reg_min_seconds: [0, 60],
 };
-const AS_BOOL = ['as_enabled', 'as_ban_enabled', 'as_overload', 'as_emergency'];
+const AS_BOOL = ['as_enabled', 'as_ban_enabled', 'as_overload', 'as_emergency', 'ad_enabled', 'ad_auto_gate', 'ad_auto_cf'];
 router.get('/antispam', (req, res) => {
   const shield = require('../services/shield');
-  res.render('admin/antispam', { title: 'Chống spam & DDoS', s: getSettings(), st: shield.status(), myIp: clientIp(req) });
+  res.render('admin/antispam', { title: 'Chống spam & DDoS', s: getSettings(), st: shield.status(), ad: require('../services/traffic').status(), myIp: clientIp(req) });
+});
+
+// ---- Tự phát hiện truy cập bất thường: Cloudflare + xử lý bằng tay ----
+router.post('/antispam/cloudflare', (req, res) => {
+  const zone = str(req.body.cf_zone_id, 64).replace(/[^a-f0-9]/gi, '');
+  if (req.body.cf_zone_id && zone.length !== 32) return back(req, res, 'error', 'Zone ID không đúng (32 ký tự chữ và số)', '/admin/antispam');
+  setSetting('cf_zone_id', zone);
+  const token = str(req.body.cf_token, 200);
+  if (token) setSetting('cf_token_enc', encrypt(token));
+  if (req.body.cf_clear) setSetting('cf_token_enc', '');
+  audit(req, 'cloudflare_api', zone ? 'cập nhật' : 'xóa');
+  back(req, res, 'success', 'Đã lưu thông tin Cloudflare', '/admin/antispam');
+});
+router.post('/antispam/cloudflare/test', async (req, res) => {
+  try {
+    const level = await require('../services/cloudflare').getSecurityLevel();
+    back(req, res, 'success', `Kết nối Cloudflare thành công. Security level hiện tại: ${level}`, '/admin/antispam');
+  } catch (e) { back(req, res, 'error', e.message, '/admin/antispam'); }
+});
+router.post('/antispam/auto/stop', async (req, res) => {
+  const msg = await require('../services/traffic').stand('admin tắt bằng tay');
+  audit(req, 'auto_shield_stop', '');
+  back(req, res, msg.includes('⚠️') ? 'error' : 'success', msg.replace(/^✅ /, ''), '/admin/antispam');
+});
+router.post('/antispam/auto/under-attack', async (req, res) => {
+  try {
+    await require('../services/traffic').manualUnderAttack();
+    audit(req, 'auto_shield_ua', 'bật bằng tay');
+    back(req, res, 'success', 'Đã bật Cloudflare Under Attack. Nhớ bấm “Trở lại bình thường” khi hết bị tấn công.', '/admin/antispam');
+  } catch (e) { back(req, res, 'error', e.message, '/admin/antispam'); }
 });
 router.post('/antispam', (req, res) => {
   const cur = getSettings();
@@ -1308,7 +1339,7 @@ router.post('/antispam', (req, res) => {
   for (const k of AS_BOOL) setSetting(k, req.body[k] ? '1' : '0');
   const wl = String(req.body.as_whitelist || '').split(/[\s,]+/).map((x) => x.trim()).filter((x) => /^[0-9a-fA-F:.]{3,45}$/.test(x)).slice(0, 200);
   setSetting('as_whitelist', wl.join('\n'));
-  if (toInt(req.body.as_ban_limit, 0) <= toInt(req.body.as_guest_limit, 0)) setSetting('as_ban_limit', String(toInt(req.body.as_guest_limit, 120) * 2));
+  if (toInt(req.body.as_ban_limit, 0) <= toInt(req.body.as_guest_limit, 0)) setSetting('as_ban_limit', String(Math.min(AS_NUM.as_ban_limit[1], toInt(req.body.as_guest_limit, 120) * 2)));
   audit(req, 'antispam_update', req.body.as_emergency ? 'emergency ON' : '');
   back(req, res, 'success', 'Đã lưu cài đặt chống spam', '/admin/antispam');
 });

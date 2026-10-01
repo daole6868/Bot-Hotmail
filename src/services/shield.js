@@ -21,6 +21,7 @@ const ejs = require('ejs');
 const { monitorEventLoopDelay } = require('perf_hooks');
 const { db, getSettings, logActivity } = require('../db');
 const { clientIp } = require('../utils/helpers');
+const traffic = require('./traffic');
 
 // Số bản PM2 đang chạy: request được chia đều cho các bản nên mỗi bản chỉ cần đếm 1/N giới hạn
 const INSTANCES = (() => {
@@ -113,6 +114,7 @@ function startTimers() {
   setInterval(() => {
     lag.ms = Math.round(hist.percentile(90) / 1e6);
     hist.reset();
+    traffic.noteLag(lag.ms);
     const c = conf();
     if (c.overloadOn && lag.ms > c.overloadMs) lag.overloadedUntil = Date.now() + 5000;
   }, 1000).unref();
@@ -176,7 +178,8 @@ function checkGuest(req, res, next, ip, c) {
     stats.gated++;
     left = c.gateMin * 60000;
   }
-  if ((left || c.emergency) && !auth) return gateResponse(req, res, Math.ceil(left / 1000));
+  // Bậc 1 của bộ tự phát hiện truy cập bất thường (traffic.js): khách mới phải đăng nhập
+  if ((left || c.emergency || flagLeft(traffic.GATE_KEY)) && !auth) return gateResponse(req, res, Math.ceil(left / 1000));
   next();
 }
 
@@ -203,6 +206,7 @@ function early(req, res, next) {
   const c = conf();
   if (!c.on) return next();
   const ip = clientIp(req);
+  traffic.record(ip, !hasSession(req));
   if (c.whitelist.has(ip)) { req.shieldDone = true; return next(); }
   if (hasSession(req)) return next(); // có cookie: đợi nạp user rồi mới quyết định
   return checkGuest(req, res, next, ip, c);
@@ -231,4 +235,4 @@ function status() {
   };
 }
 
-module.exports = { early, late, status, clearFlag, syncFlags, conf, INSTANCES };
+module.exports = { early, late, status, setFlag, clearFlag, syncFlags, conf, INSTANCES };

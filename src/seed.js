@@ -12,7 +12,8 @@ const DEFAULT_SETTINGS = {
   mail_on_welcome: '1', mail_on_order: '1', mail_on_deposit: '1', mail_on_password: '1', mail_on_login_alert: '1',
   smtp_port: '587', smtp_secure: 'tls',
   // Chống spam / DDoS (Admin > Chống spam & DDoS)
-  edge_cache_seconds: '30', as_enabled: '1', as_guest_limit: '120', as_gate_minutes: '30', as_ban_enabled: '1', as_ban_limit: '300', as_ban_minutes: '60',
+  edge_cache_seconds: '30',
+  ad_enabled: '1', ad_mult: '5', ad_floor_rpm: '1200', ad_ip_floor: '300', ad_escalate_sec: '120', ad_calm_min: '15', ad_auto_gate: '1', ad_auto_cf: '1', cf_zone_id: '', cf_token_enc: '', as_enabled: '1', as_guest_limit: '120', as_gate_minutes: '30', as_ban_enabled: '1', as_ban_limit: '300', as_ban_minutes: '60',
   as_user_limit: '40', as_user_cooldown: '10', as_overload: '1', as_overload_ms: '300', as_emergency: '0', as_whitelist: '',
   reg_hour_limit: '5', reg_ip_day: '3', reg_min_seconds: '3',
   // Nạp tự động: NIFY (webhook) và APICANHAN (quét giao dịch) — bật riêng, chạy song song được

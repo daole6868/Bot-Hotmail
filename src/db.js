@@ -491,6 +491,21 @@ db.exec('CREATE INDEX IF NOT EXISTS idx_bcat_parent ON boost_categories(parent_i
   }
 }
 
+// Chống quá tải lớp 3: lượt truy cập theo khung 10 giây (mọi bản PM2 cộng dồn) + nhật ký các lần tự xử lý
+db.exec(`CREATE TABLE IF NOT EXISTS traffic_buckets (
+    ts INTEGER PRIMARY KEY,
+    total INTEGER NOT NULL DEFAULT 0,
+    guests INTEGER NOT NULL DEFAULT 0,
+    ips INTEGER NOT NULL DEFAULT 0,
+    lag_ms INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS traffic_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    level INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );`);
+
 // Bảo mật tài khoản: xác minh 2 lớp qua email, thiết bị tin cậy, đặt lại mật khẩu, nhật ký email
 addColumn('users', 'email_verified_at', 'INTEGER');
 addColumn('users', 'twofa_enabled', 'INTEGER NOT NULL DEFAULT 0');

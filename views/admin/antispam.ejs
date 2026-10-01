@@ -15,6 +15,47 @@
   <% if (s.as_emergency === '1') { %><div class="a-alert a-alert-error"><%- I('alert') %> <span><b>Chế độ khẩn cấp đang BẬT</b>: mọi khách chưa đăng nhập đều phải đăng nhập mới xem được web. Nhớ tắt khi hết bị tấn công.</span></div><% } %>
 </div>
 
+<% const A = ad, lv = A.state.level, nf = (n) => Number(n || 0).toLocaleString('vi-VN'); %>
+<div class="a-card as-auto">
+  <div class="a-card-head"><h3><%- I('bolt') %> Tự phát hiện truy cập bất thường</h3><span class="a-tag <%= lv === 2 ? 'red' : lv === 1 ? 'orange' : 'green' %>"><%= A.levelName %></span></div>
+  <% if (!A.conf.on) { %><div class="a-alert a-alert-error"><%- I('alert') %> <span>Đang tắt tự phát hiện.</span></div><% } %>
+  <div class="as-stats">
+    <div><span>Lượt / phút vào tới web</span><b class="<%= A.live.rpm > A.thr.rpm ? 'a-red' : '' %>"><%= nf(A.live.rpm) %></b><small>Ngưỡng <%= nf(A.thr.rpm) %></small></div>
+    <div><span>IP / phút</span><b class="<%= A.live.ipm > A.thr.ipm ? 'a-red' : '' %>"><%= nf(A.live.ipm) %></b><small>Ngưỡng <%= nf(A.thr.ipm) %></small></div>
+    <div><span>Mức nền khung giờ này</span><b><%= nf(A.thr.base.rpm) %></b><small><%= A.thr.base.samples >= 30 ? 'lượt/phút (7 ngày trước)' : 'Chưa đủ dữ liệu, dùng ngưỡng tối thiểu' %></small></div>
+    <div><span>Cloudflare</span><b class="<%= A.cfReady ? 'a-green' : '' %>"><%= A.cfReady ? 'Đã kết nối' : 'Chưa nhập' %></b><small><%= A.state.cfSet ? 'Under Attack đang bật' : '' %></small></div>
+  </div>
+  <% if (lv > 0) { %><p class="a-field-hint">Bắt đầu <b><%= H.fmtDate(A.state.since) %></b>: <%= A.state.reason %><%= A.state.manual ? '' : `. Tự trở lại bình thường sau ${A.conf.calmMin} phút yên ổn.` %></p><% } %>
+  <div class="a-actions a-mt">
+    <% if (lv > 0 || A.state.cfSet) { %><form method="post" action="/admin/antispam/auto/stop"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-primary"><%- I('check') %> Trở lại bình thường</button></form><% } %>
+    <% if (A.cfReady && lv < 2) { %><form method="post" action="/admin/antispam/auto/under-attack" data-confirm="Bật Cloudflare Under Attack ngay? Mọi khách sẽ phải qua trang xác minh vài giây."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-danger"><%- I('shield') %> Bật Under Attack ngay</button></form><% } %>
+  </div>
+
+  <details class="a-mt" <%= A.cfReady ? '' : 'open' %>>
+    <summary><b>Kết nối Cloudflare</b> <span class="a-muted a-small">(để tự bật / tắt Under Attack)</span></summary>
+    <form method="post" action="/admin/antispam/cloudflare" class="a-form a-mt">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="a-row">
+        <div><label>Zone ID</label><input name="cf_zone_id" maxlength="64" value="<%= s.cf_zone_id %>" placeholder="32 ký tự, ở trang Overview của tên miền"></div>
+        <div><label>API Token <% if (s.cf_token_enc) { %><small class="a-muted">(đã lưu, để trống = giữ nguyên)</small><% } %></label><input type="password" name="cf_token" maxlength="200" autocomplete="new-password" placeholder="Quyền Zone Settings: Edit"></div>
+      </div>
+      <% if (s.cf_token_enc) { %><label class="a-check"><input type="checkbox" name="cf_clear" value="1"> Xóa API Token đã lưu</label><% } %>
+      <p class="a-field-hint">Khi Under Attack bật, Cloudflare thử thách cả webhook nạp tiền. Cần tạo 1 luật WAF <b>Skip</b> cho đường dẫn <code>/api/bank/webhook</code> để nạp tiền tự động không bị gián đoạn.</p>
+      <div class="a-actions">
+        <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+        <% if (A.cfReady) { %><button class="a-btn" formaction="/admin/antispam/cloudflare/test"><%- I('refresh') %> Kiểm tra kết nối</button><% } %>
+      </div>
+    </form>
+  </details>
+
+  <% if (A.events.length) { %>
+  <h3 class="a-mt">Nhật ký tự xử lý</h3>
+  <ul class="as-log">
+    <% A.events.forEach(e => { %><li><span class="a-muted a-small"><%= H.fmtDate(e.created_at) %></span><div class="a-prewrap a-small"><%= e.message %></div></li><% }) %>
+  </ul>
+  <% } %>
+</div>
+
 <form method="post" action="/admin/antispam" class="a-form">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <div class="a-grid-2">
@@ -75,6 +116,21 @@
       <textarea name="as_whitelist" rows="3" placeholder="Mỗi dòng 1 IP"><%= s.as_whitelist %></textarea>
       <p class="a-field-hint">IP không bao giờ bị giới hạn (VD: IP nhà / văn phòng của bạn). Webhook nạp tiền luôn được bỏ qua, không cần thêm vào đây.</p>
     </div>
+  </div>
+  <div class="a-card">
+    <h3><%- I('bolt') %> Cài đặt tự phát hiện truy cập bất thường</h3>
+    <label class="a-check"><input type="checkbox" name="ad_enabled" value="1" <%= on('ad_enabled') %>> <span><b>Bật tự phát hiện</b></span></label>
+    <div class="a-row a-row-4">
+      <div><label>Bất thường khi gấp (lần) mức nền</label><input type="number" name="ad_mult" min="2" max="100" value="<%= s.ad_mult %>"></div>
+      <div><label>Ngưỡng tối thiểu (lượt/phút)</label><input type="number" name="ad_floor_rpm" min="60" value="<%= s.ad_floor_rpm %>"></div>
+      <div><label>Ngưỡng tối thiểu (IP/phút)</label><input type="number" name="ad_ip_floor" min="10" value="<%= s.ad_ip_floor %>"></div>
+      <div><label>Tự tắt sau (phút yên ổn)</label><input type="number" name="ad_calm_min" min="1" max="1440" value="<%= s.ad_calm_min %>"></div>
+    </div>
+    <p class="a-field-hint">Mức nền = lượt truy cập cao nhất (95%) của cùng khung giờ trong 7 ngày trước. Chỉ tính lượt vào tới web (trang Cloudflare / Nginx đã trả lời thay không tính). Web mới chạy chưa đủ dữ liệu thì dùng ngưỡng tối thiểu.</p>
+    <label class="a-check"><input type="checkbox" name="ad_auto_gate" value="1" <%= on('ad_auto_gate') %>> <span><b>Bậc 1:</b> khách mới chưa đăng nhập phải đăng nhập (trang đã lưu sẵn vẫn xem được; người đã đăng nhập, webhook nạp tiền không ảnh hưởng)</span></label>
+    <label class="a-check"><input type="checkbox" name="ad_auto_cf" value="1" <%= on('ad_auto_cf') %>> <span><b>Bậc 2:</b> vẫn bất thường thì tự bật Cloudflare Under Attack</span></label>
+    <label>Lên bậc 2 sau (giây bất thường liên tục)</label>
+    <input type="number" name="ad_escalate_sec" min="20" max="3600" value="<%= s.ad_escalate_sec %>">
   </div>
   <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt</button></div>
 </form>
