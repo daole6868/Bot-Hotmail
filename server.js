@@ -56,6 +56,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 app.use(security.ipBlock);
 
+// Khách chưa đăng nhập xem trang công khai -> cho Cloudflare / Nginx lưu sẵn vài giây; trang còn lại không ai được lưu
+app.use(require('./src/middleware/edge-cache').middleware);
+
 // Webhook ngân hàng đặt TRƯỚC session/CSRF (xác thực bằng token riêng)
 app.use('/api', require('./src/routes/api'));
 

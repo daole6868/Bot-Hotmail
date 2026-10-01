@@ -1294,7 +1294,7 @@ router.post('/security/unblock', (req, res) => {
 // ======================= CHỐNG SPAM & DDOS =======================
 const AS_NUM = {
   as_guest_limit: [10, 100000], as_gate_minutes: [1, 1440], as_ban_limit: [20, 100000], as_ban_minutes: [1, 10080],
-  as_user_limit: [5, 10000], as_user_cooldown: [1, 600], as_overload_ms: [50, 5000],
+  as_user_limit: [5, 10000], as_user_cooldown: [1, 600], as_overload_ms: [50, 5000], edge_cache_seconds: [0, 600],
   reg_hour_limit: [1, 1000], reg_ip_day: [1, 1000], reg_min_seconds: [0, 60],
 };
 const AS_BOOL = ['as_enabled', 'as_ban_enabled', 'as_overload', 'as_emergency'];

@@ -57,6 +57,11 @@
       <input type="number" name="as_overload_ms" min="50" max="5000" value="<%= s.as_overload_ms %>">
       <p class="a-field-hint">Web tự đo độ trễ xử lý mỗi giây (bình thường dưới 20 ms). Vượt ngưỡng: khách chưa đăng nhập nhận “Hệ thống đang quá tải, thử lại sau”, còn <b>khách đã đăng nhập vẫn mua hàng, nạp tiền bình thường</b>. Hết quá tải thì tự trở lại sau vài giây. Khuyên để 300.</p>
 
+      <h3 class="a-mt"><%- I('layers') %> Lưu sẵn trang cho khách</h3>
+      <label>Cloudflare lưu sẵn trang công khai cho khách chưa đăng nhập (giây)</label>
+      <input type="number" name="edge_cache_seconds" min="0" max="600" value="<%= s.edge_cache_seconds %>">
+      <p class="a-field-hint">Trang chủ, game, danh mục, sản phẩm, khuyến mãi, tìm kiếm. Nhiều người cùng mở / tải lại 1 trang thì Cloudflare trả lời thay VPS. Người đã đăng nhập luôn thấy dữ liệu mới nhất. Sửa sản phẩm / giá thì khách chưa đăng nhập thấy thay đổi sau tối đa số giây này. Khuyên để 30, đặt 0 để tắt.</p>
+
       <h3 class="a-mt"><%- I('users') %> Chống spam tạo tài khoản</h3>
       <div class="a-row">
         <div><label>Số lần gửi đăng ký / giờ / IP</label><input type="number" name="reg_hour_limit" min="1" max="1000" value="<%= s.reg_hour_limit %>"></div>

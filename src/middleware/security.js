@@ -22,7 +22,13 @@ function expectedCsrf(req) {
   return validCsrf(c) ? c : null;
 }
 
+// Yêu cầu chỉ đọc dữ liệu (không đổi gì) -> không cần mã CSRF; gọi được từ trang khách đã lưu sẵn (không có mã riêng)
+const CSRF_FREE = new Set(['/api/coupon/check']);
+
 function csrf(req, res, next) {
+  // Trang khách được lưu sẵn ở Cloudflare / Nginx: dùng chung cho mọi người -> không tạo cookie, không in mã của ai
+  if (req.edgeCache) { res.locals.csrfToken = ''; return next(); }
+  if (req.method === 'POST' && CSRF_FREE.has(req.path)) { res.locals.csrfToken = expectedCsrf(req) || ''; return next(); }
   let token = expectedCsrf(req);
   if (!token) {
     token = signCsrf(randomToken(16));
