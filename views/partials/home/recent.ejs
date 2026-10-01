@@ -2,11 +2,11 @@
 <section class="section">
   <div class="section-head"><h2><%- I('bag') %> <%= block.title || 'Giao dịch gần đây' %></h2></div>
   <div class="card">
-    <table class="table table-cards">
+    <table class="table table-cards recent-table">
       <thead><tr><th>Khách hàng</th><th>Sản phẩm</th><th>Giá</th><th>Thời gian</th></tr></thead>
       <tbody>
         <% block.recent.forEach(o => { %>
-          <tr><td class="tc-head"><%= o.username %></td><td class="tc-full"><%= o.product_title %></td><td data-label="Giá" class="price"><%= H.money(o.total) %></td><td data-label="Thời gian" class="muted"><%= H.fmtDate(o.created_at) %></td></tr>
+          <tr><td class="tc-head"><%= o.username %></td><td class="tc-full"><%= o.product_title %></td><td data-label="Giá" class="price"><%= H.money(o.total) %></td><td data-label="Thời gian" class="muted rc-time"><%= H.fmtDate(o.created_at) %></td></tr>
         <% }) %>
       </tbody>
     </table>

@@ -671,6 +671,17 @@ html[data-theme="dark"] { color-scheme: dark; }
   .table-wrap:has(.table-cards) { overflow: visible; }
 }
 
+/* Giao dịch gần đây trên điện thoại: 1 dòng "khách · sản phẩm… · giá", tên sản phẩm dài tự rút gọn */
+@media (max-width: 640px) {
+  .recent-table tr { flex-direction: row; align-items: center; gap: 8px; padding: 8px 12px; font-size: .8rem; }
+  .recent-table td { width: auto; padding: 0; }
+  .recent-table .tc-head { order: 0; flex: 0 0 auto; font-size: .8rem; word-break: normal; white-space: nowrap; color: var(--muted); }
+  .recent-table .tc-full { flex: 1 1 auto; min-width: 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .recent-table td[data-label] { flex: 0 0 auto; white-space: nowrap; font-size: .82rem; }
+  .recent-table td[data-label]::before { content: none; }
+  .recent-table .rc-time { display: none !important; }
+}
+
 /* Thẻ gần vuông / dọc: mức giảm ở trên, thông tin ở dưới */
 .coupon-grid-v .coupon { flex-direction: column; }
 .coupon-grid-v .coupon-value { flex: 0 0 40%; }
