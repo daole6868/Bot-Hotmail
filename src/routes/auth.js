@@ -110,7 +110,7 @@ function finishLogin(req, res, user, { remember, returnTo }) {
       req.session.cookie.maxAge = 30 * 86400 * 1000;
     }
     db.prepare('UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ?, last_login_ip = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), ip, user.id);
-    logActivity(user.id, user.role === 'admin' ? 'admin_login' : 'login', null, ip);
+    logActivity(user.id, user.role === 'admin' ? 'admin_login' : 'login', user.role === 'admin' ? String(req.get('user-agent') || '').slice(0, 160) : null, ip);
     req.session.save(() => {
       // Đúng tài khoản admin -> vào thẳng trang quản trị
       if (user.role === 'admin') return res.redirect('/admin');

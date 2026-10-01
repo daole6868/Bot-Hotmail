@@ -39,7 +39,8 @@ function purgeOld() {
   out.activityLogs = db.prepare('DELETE FROM activity_logs WHERE created_at < ?').run(t - r.logDays * DAY).changes;
   out.loginLogs = db.prepare('DELETE FROM login_logs WHERE created_at < ?').run(t - r.logDays * DAY).changes;
   out.deadDeposits = db.prepare("DELETE FROM deposits WHERE status IN ('cancelled','expired') AND created_at < ?").run(t - r.depositDays * DAY).changes;
-  out.balanceLogs = db.prepare('DELETE FROM balance_logs WHERE created_at < ?').run(t - r.balanceLogDays * DAY).changes;
+  // luôn giữ dòng mới nhất của mỗi khách (để đối chiếu số dư hằng đêm)
+  out.balanceLogs = db.prepare('DELETE FROM balance_logs WHERE created_at < ? AND id NOT IN (SELECT MAX(id) FROM balance_logs GROUP BY user_id)').run(t - r.balanceLogDays * DAY).changes;
   out.bankTxns = db.prepare("DELETE FROM bank_transactions WHERE status IN ('matched','ignored') AND created_at < ?").run(t - r.bankTxnDays * DAY).changes;
   out.sessions = SQLiteStore.cleanup();
   try { const b = require('./boost'); out.boostCarts = b.purgeCarts(); out.boostLogins = b.wipeLogins(); } catch (e) { console.error('[maintenance] boost', e.message); }
@@ -143,6 +144,8 @@ async function runDaily() {
   try { require('./backup').cleanTmp(); } catch { /* bỏ qua */ }
   optimize(false);
   res.backup = await backup();
+  // Đối chiếu số dư khách với lịch sử giao dịch, lệch thì báo Telegram
+  try { res.reconcile = require('./alerts').reconcileAndReport().mismatches.length; } catch (e) { console.error('[reconcile]', e); }
   setSetting('last_maintenance', String(nowS()));
   // Gửi gói sao lưu về Telegram (nếu đã bật) — chạy nền, không chặn web
   if (getSettings().tg_enabled === '1') res.telegram = (await require('./backup').backupToTelegram()).message;

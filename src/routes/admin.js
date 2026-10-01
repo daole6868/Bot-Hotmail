@@ -834,6 +834,7 @@ router.post('/deposits/:id/approve', (req, res) => {
   if (!d) return back(req, res, 'error', 'Không tìm thấy');
   const amount = toInt(req.body.amount, d.amount, 1);
   const r = completeDeposit(id, amount, { adminId: req.user.id, note: str(req.body.note, 200) || 'Admin duyệt' });
+  if (r.ok) audit(req, 'deposit_approve', `nạp #${id}: ${amount}`);
   back(req, res, r.ok ? 'success' : 'error', r.ok ? `Đã cộng ${H.money(amount)}` : r.message);
 });
 
@@ -1418,8 +1419,17 @@ router.post('/maintenance/telegram', (req, res) => {
     setSetting('backup_pass_enc', encrypt(pass));
   }
   setSetting('tg_enabled', req.body.tg_enabled ? '1' : '0');
+  setSetting('alert_admin', req.body.alert_admin ? '1' : '0');
   audit(req, 'backup_settings', (token ? 'token ' : '') + (pass ? 'password' : ''));
   back(req, res, 'success', 'Đã lưu cài đặt sao lưu', '/admin/maintenance');
+});
+// Đối chiếu số dư khách với lịch sử giao dịch ngay (bình thường tự chạy mỗi đêm)
+router.post('/maintenance/reconcile', (req, res) => {
+  const r = require('../services/alerts').reconcileAndReport();
+  const money = (n) => H.money(n);
+  if (!r.mismatches.length) return back(req, res, 'success', `Đối chiếu ${r.checked.toLocaleString('vi-VN')} tài khoản: số dư khớp hoàn toàn với lịch sử giao dịch`, '/admin/maintenance');
+  const list = r.mismatches.slice(0, 5).map((m) => `${m.username} (${money(m.balance)} / ${money(m.expected)})`).join(', ');
+  back(req, res, 'error', `${r.mismatches.length} tài khoản số dư không khớp lịch sử giao dịch: ${list}${r.mismatches.length > 5 ? '…' : ''}`, '/admin/maintenance');
 });
 router.post('/maintenance/telegram/test', async (req, res) => {
   const r = await backupSvc.backupToTelegram();

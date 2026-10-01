@@ -638,6 +638,8 @@ function logActivity(userId, action, detail, ip) {
   } catch (e) {
     console.error('logActivity', e.message);
   }
+  // Thao tác nhạy cảm -> báo Telegram (chạy nền, không làm chậm request)
+  setImmediate(() => { try { require('./services/alerts').onActivity(userId, action, detail, ip); } catch { /* bỏ qua */ } });
 }
 
 // Cộng dồn thống kê ngày (giờ VN)

@@ -243,11 +243,20 @@ function importDatabase(srcPath, oldAppKey) {
   return summary;
 }
 
+// Thay nội dung thư mục ảnh (chuyển từng mục bên trong, không đổi tên chính thư mục uploads):
+// web chạy bằng tài khoản riêng chỉ có quyền ghi trong public/uploads, không có quyền với public/
 async function swapUploads(newDir) {
   const cur = config.paths.uploads;
   const old = path.join(TMP, `uploads-cu-${Date.now()}`);
-  if (fs.existsSync(cur)) await fsp.rename(cur, old);
-  try { await fsp.rename(newDir, cur); } catch (e) { if (fs.existsSync(old)) await fsp.rename(old, cur); throw e; }
+  await fsp.mkdir(cur, { recursive: true });
+  await fsp.mkdir(old, { recursive: true });
+  const moveAll = async (from, to) => { for (const n of await fsp.readdir(from)) await fsp.rename(path.join(from, n), path.join(to, n)); };
+  await moveAll(cur, old);
+  try { await moveAll(newDir, cur); } catch (e) {
+    for (const n of await fsp.readdir(cur)) await fsp.rm(path.join(cur, n), { recursive: true, force: true });
+    await moveAll(old, cur);
+    throw e;
+  }
   await fsp.rm(old, { recursive: true, force: true });
 }
 

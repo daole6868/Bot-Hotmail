@@ -50,6 +50,7 @@
       <li>Hằng ngày: chuyển đơn hàng & nạp tiền cũ hơn <b><%= retention.archiveDays %> ngày</b> sang bảng lưu trữ (khách vẫn xem được)</li>
       <li>Hằng ngày: backup DB, giữ tối đa <b><%= retention.backupKeep %></b> bản, tự xóa bản cũ hơn <b><%= retention.backupDays %> ngày</b>; tối ưu chỉ mục</li>
       <li>Hằng ngày: gửi gói sao lưu về Telegram <b><%= s.tg_enabled === '1' ? '(đang bật)' : '(đang tắt)' %></b></li>
+      <li>Hằng ngày: đối chiếu số dư khách với lịch sử giao dịch, lệch thì báo Telegram</li>
     </ul>
     <p class="a-muted a-small">Số ngày giữ dữ liệu sửa trong file .env trên VPS.</p>
     <h3>Chạy thủ công</h3>
@@ -57,6 +58,7 @@
       <% tasks.forEach(([t, ic, l]) => { %>
         <form method="post" action="/admin/maintenance/run" data-confirm="Chạy tác vụ: <%= l %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="task" value="<%= t %>"><button class="a-btn <%= t === 'vacuum' ? 'a-danger' : '' %>"><%- I(ic) %> <%= l %></button></form>
       <% }) %>
+      <form method="post" action="/admin/maintenance/reconcile"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn"><%- I('money') %> Đối chiếu số dư</button></form>
     </div>
   </div>
   <div class="a-card">
@@ -87,6 +89,7 @@
       </div>
       <p class="a-field-hint">Gói sao lưu gồm <b>toàn bộ dữ liệu + ảnh</b>, được <b>mã hóa bằng mật khẩu này</b>: ai có file mà không có mật khẩu cũng không mở được. <b>Hãy ghi nhớ mật khẩu</b> — mất mật khẩu thì không khôi phục được gói. Gói nặng hơn 50MB (giới hạn của Telegram) sẽ gửi bản chỉ có dữ liệu, không kèm ảnh.</p>
       <p class="a-field-hint">Lấy <b>Bot token</b>: nhắn <b>@BotFather</b> trên Telegram → <code>/newbot</code>. Lấy <b>Chat ID</b>: nhắn <b>@userinfobot</b>. Sau đó nhắn <code>/start</code> cho bot của bạn 1 lần để bot được phép gửi tin.</p>
+      <label class="a-check"><input type="checkbox" name="alert_admin" value="1" <%= s.alert_admin !== '0' ? 'checked' : '' %>> <span>Báo ngay khi có thao tác nhạy cảm: admin đăng nhập, cộng / trừ tiền, duyệt nạp tay, hoàn tiền, đổi cài đặt ngân hàng / email / Telegram / Cloudflare, khôi phục / tải dữ liệu, số dư khách không khớp lịch sử giao dịch</span></label>
       <div class="acn-status <%= s.tg_last_ok === '1' ? 'ok' : s.tg_last_at ? 'err' : '' %>">
         <span>Lần gửi gần nhất: <b><%= s.tg_last_at ? H.fmtDate(+s.tg_last_at) : 'chưa có' %></b></span>
         <% if (s.tg_last_msg) { %><span><%= s.tg_last_msg %></span><% } %>
