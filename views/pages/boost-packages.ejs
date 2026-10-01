@@ -4,7 +4,6 @@
    const loginUrl = '/login?next=' + encodeURIComponent(here); %>
 <div class="bp-head">
   <h1><%- I(category.icon) %> <%= category.name %> <span class="muted">· <%= parent.name %></span></h1>
-  <% if (category.description) { %><p class="muted"><%= category.description %></p><% } %>
   <% if (siblings.length > 1) { %>
     <div class="bp-chips">
       <% siblings.forEach(c => { %><a href="/game/<%= game.slug %>/<%= parent.slug %>/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><span style="color:<%= c.icon_color %>"><%- I(c.icon) %></span> <%= c.name %></a><% }) %>
@@ -14,9 +13,14 @@
 
 <div class="bp-layout" data-boost-page data-game="<%= game.id %>">
   <section class="bp-main">
-    <% if (!packages.length) { %><div class="empty card pad">Danh mục này chưa có gói dịch vụ nào.</div><% } %>
-    <div class="bx-list bx-list-<%= disp.mode %>" style="--cols-pc:<%= disp.colsPc %>;--cols-m:<%= disp.colsM %>" data-scroll-max="<%= disp.max %>">
-      <% packages.forEach(p => { %><%- include('../partials/boost/item', { it: p, kind: 'pkg', mode: disp.mode, href: '', inCart: inCart[p.id] || 0, loginUrl }) %><% }) %>
+    <div class="bp-box card">
+      <% if (category.description) { %><div class="bp-desc prewrap"><%= category.description %></div><% } %>
+      <% if (!packages.length) { %><div class="bp-empty muted">Danh mục này chưa có gói dịch vụ nào.</div><% } %>
+      <% if (packages.length) { %>
+      <div class="bx-list bx-list-<%= disp.mode %>" style="--cols-pc:<%= disp.colsPc %>;--cols-m:<%= disp.colsM %>" data-scroll-max="<%= disp.max %>">
+        <% packages.forEach(p => { %><%- include('../partials/boost/item', { it: p, kind: 'pkg', mode: disp.mode, href: '', inCart: inCart[p.id] || 0, loginUrl }) %><% }) %>
+      </div>
+      <% } %>
     </div>
   </section>
 
@@ -94,7 +98,7 @@
     <div class="bc-note bc-err" data-bcf-err hidden></div>
     <div class="bc-actions">
       <button type="button" class="btn btn-ghost" data-bcf-close>Để sau</button>
-      <button type="button" class="btn btn-accent" data-bcf-ok><%- I('check') %> <span>Xác nhận thanh toán</span></button>
+      <button type="button" class="btn btn-accent" data-bcf-ok><%- I('check') %> <span>Xác nhận</span></button>
       <a href="/user/deposit" class="btn btn-accent" data-bcf-topup hidden><%- I('card') %> Nạp thêm tiền</a>
     </div>
   </div>

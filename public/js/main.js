@@ -615,7 +615,7 @@
         err.hidden = !msg; err.textContent = msg;
         okBtn.hidden = after < 0 || !!(code && !couponOk);
         topup.hidden = after >= 0;
-        $('span', okBtn).textContent = 'Xác nhận thanh toán · ' + money(total);
+        $('span', okBtn).textContent = 'Xác nhận';
         cf.hidden = false; document.body.classList.add('no-scroll');
       });
       okBtn.addEventListener('click', () => {

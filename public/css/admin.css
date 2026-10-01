@@ -614,8 +614,8 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 .a-bx-ico .ico { width: 20px; height: 20px; }
 .a-icon-pick { border: 1px solid var(--border, #e3e6ef); border-radius: 12px; padding: 10px; display: grid; gap: 10px; }
 .a-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 6px; max-height: 190px; overflow-y: auto; }
-.a-icon-grid label { margin: 0; cursor: pointer; }
-.a-icon-grid input { position: absolute; opacity: 0; pointer-events: none; }
+.a-icon-grid label { position: relative; margin: 0; cursor: pointer; }
+.a-icon-grid input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 .a-icon-grid span { height: 40px; border-radius: 10px; display: grid; place-items: center; border: 1px solid var(--border, #e3e6ef); color: #6b7090; transition: .12s; }
 .a-icon-grid span .ico { width: 20px; height: 20px; }
 .a-icon-grid label:hover span { border-color: var(--ic); color: var(--ic); }
@@ -627,8 +627,8 @@ body.a-drag-on, body.a-drag-on * { cursor: grabbing !important; user-select: non
 .a-icon-color .a-chip-row { margin: 0; }
 .a-color-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #d4d7e3; cursor: pointer; padding: 0; }
 .a-bo-status { display: flex; flex-wrap: wrap; gap: 8px; }
-.a-bo-st { margin: 0; cursor: pointer; }
-.a-bo-st input { position: absolute; opacity: 0; }
+.a-bo-st { position: relative; margin: 0; cursor: pointer; }
+.a-bo-st input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .a-bo-st .a-tag { font-size: .8rem; padding: 6px 12px; border: 2px solid transparent; opacity: .6; }
 .a-bo-st input:checked + .a-tag { opacity: 1; border-color: currentColor; }
 .a-bo-login { display: flex; flex-direction: column; gap: 8px; }
@@ -647,3 +647,4 @@ a.a-stat { color: inherit; text-decoration: none; }
 @media (max-width: 560px) { .a-row-4 { grid-template-columns: 1fr 1fr; } }
 .a-cat-form .a-choice { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 800px) { .a-cat-form .a-choice { grid-template-columns: 1fr; } }
+.a-choice-item { position: relative; }
