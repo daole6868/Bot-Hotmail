@@ -72,6 +72,35 @@ const PATHS = {
   monitor: '<rect x="3" y="4" width="18" height="12.5" rx="2"/><path d="M8.5 20.5h7M12 16.5v4"/>',
   square: '<rect x="4" y="4" width="16" height="16" rx="3.5"/>',
   palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10" cy="7" r="1.2" fill="currentColor"/><circle cx="14.5" cy="7" r="1.2" fill="currentColor"/>',
+  // Icon chủ đề game (danh mục / gói cày thuê)
+  'g-sword': '<path d="M14.5 3.5h6v6L9 21l-3-3L17.5 6.5"/><path d="m5 14 5 5M3.5 20.5l2-2"/>',
+  'g-swords': '<path d="M3.5 3.5h4l9 9M20.5 3.5h-4l-9 9M14 15l5 5M10 15l-5 5M16 17.5l2-2M8 17.5l-2-2"/>',
+  'g-crown': '<path d="m3 8 4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8Z"/>',
+  'g-medal': '<circle cx="12" cy="15" r="5.5"/><path d="M8.5 10.5 6 3.5h4l2 5M15.5 10.5 18 3.5h-4l-2 5"/>',
+  'g-gem': '<path d="M6 3.5h12l3.5 5L12 20.5 2.5 8.5 6 3.5Z"/><path d="M2.5 8.5h19M9 3.5 8 8.5l4 12 4-12-1-5"/>',
+  'g-coin': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v10M14.5 9.3c-.4-.8-1.4-1.3-2.5-1.3-1.4 0-2.5.8-2.5 1.9s1.1 1.6 2.5 1.9 2.5.9 2.5 1.9-1.1 1.9-2.5 1.9c-1.1 0-2.1-.5-2.5-1.3"/>',
+  'g-sparkles': '<path d="m10 4 1.6 4.4L16 10l-4.4 1.6L10 16l-1.6-4.4L4 10l4.4-1.6L10 4Z"/><path d="m18 14 .8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14Z"/>',
+  'g-target': '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+  'g-rocket': '<path d="M14 4.5c3-1.5 5.5-1 5.5-1s.5 2.5-1 5.5L12 15.5 8.5 12 14 4.5Z"/><path d="M8.5 12 5 11.5l3-3h4M12 15.5l.5 3.5 3-3v-4M6.5 17.5c-1.5.5-2.5 3-2.5 3s2.5-1 3-2.5"/>',
+  'g-level': '<path d="M4 20.5h16M7 16.5V12M12 16.5V8M17 16.5V4M14.5 6.5 17 4l2.5 2.5"/>',
+  'g-map': '<path d="m3 6 6-2.5 6 2.5 6-2.5v14.5L15 20.5l-6-2.5-6 2.5V6Z"/><path d="M9 3.5V18M15 6v14.5"/>',
+  'g-compass': '<circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/>',
+  'g-flag': '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  'g-castle': '<path d="M4 20.5V9h3V6h2v3h2V6h2v3h2V6h2v3h3v11.5H4Z"/><path d="M10 20.5v-4a2 2 0 0 1 4 0v4"/>',
+  'g-scroll': '<path d="M7 3.5h11a2.5 2.5 0 0 1 0 5h-1.5V18a2.5 2.5 0 0 1-2.5 2.5H5.5A2.5 2.5 0 0 1 3 18v-1.5h11"/><path d="M7 3.5a2.5 2.5 0 0 0-2.5 2.5v10.5M9 9h4.5M9 12.5h4.5"/>',
+  'g-book': '<path d="M4 5.5a2 2 0 0 1 2-2h13v14H6a2 2 0 0 0-2 2v-14Z"/><path d="M4 19.5a2 2 0 0 0 2 2h13v-4"/>',
+  'g-wand': '<path d="M4 20 15 9M13 7l2-2 4 4-2 2"/><path d="m8 3.5.6 1.4L10 5.5l-1.4.6L8 7.5l-.6-1.4L6 5.5l1.4-.6L8 3.5Z"/>',
+  'g-potion': '<path d="M9.5 3.5h5M10.5 3.5v5L5.5 17a2.5 2.5 0 0 0 2.2 3.5h8.6a2.5 2.5 0 0 0 2.2-3.5L13.5 8.5v-5"/><path d="M7.5 14h9"/>',
+  'g-heart': '<path d="M12 20s-7.5-4.5-7.5-10A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7.5 3c0 5.5-7.5 10-7.5 10Z"/>',
+  'g-skull': '<path d="M12 3.5A7.5 7.5 0 0 0 4.5 11c0 2.5 1.2 4.3 3 5.4V20h9v-3.6c1.8-1.1 3-2.9 3-5.4A7.5 7.5 0 0 0 12 3.5Z"/><circle cx="9" cy="11.5" r="1.5"/><circle cx="15" cy="11.5" r="1.5"/><path d="M10.5 20v-2M13.5 20v-2"/>',
+  'g-ghost': '<path d="M5 20v-9a7 7 0 0 1 14 0v9l-2.3-1.5-2.4 1.5-2.3-1.5-2.3 1.5-2.4-1.5L5 20Z"/><circle cx="9.5" cy="11" r="1"/><circle cx="14.5" cy="11" r="1"/>',
+  'g-dice': '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><circle cx="8.5" cy="8.5" r="1"/><circle cx="15.5" cy="15.5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="15.5" cy="8.5" r="1"/><circle cx="8.5" cy="15.5" r="1"/>',
+  'g-hammer': '<path d="m14 6.5 3.5 3.5M5 21l9-9M13 4.5l6.5 6.5-2 2L11 6.5l2-2Z"/>',
+  'g-leaf': '<path d="M5 19C5 10 11 4.5 20 4c0 9-5.5 15-14 15H5Z"/><path d="m5 19 8-8"/>',
+  'g-hourglass': '<path d="M6 3.5h12M6 20.5h12M7 3.5c0 5 10 5 10 8.5s-10 3.5-10 8.5M17 3.5c0 5-10 5-10 8.5s10 3.5 10 8.5"/>',
+  'g-crosshair': '<circle cx="12" cy="12" r="8"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>',
+  'g-paw': '<circle cx="7" cy="9" r="1.8"/><circle cx="11" cy="5.5" r="1.8"/><circle cx="15.5" cy="6.5" r="1.8"/><circle cx="18.5" cy="10.5" r="1.8"/><path d="M8 17c0-3 2-5.5 4.5-5.5S17 14 17 17c0 2-2 2.5-4.5 2.5S8 19 8 17Z"/>',
+  'g-snow': '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>',
   // Mạng xã hội (vẽ lại dạng nét, không dùng logo gốc)
   's-facebook': '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M15.5 8H14a2 2 0 0 0-2 2v11M9.5 13h5.5"/>',
   's-zalo': '<path d="M12 3.5c5 0 9 3.4 9 7.7s-4 7.7-9 7.7c-1 0-2-.1-2.9-.4L5 20.5l1-3.6c-1.9-1.4-3-3.4-3-5.7 0-4.3 4-7.7 9-7.7Z"/><path d="M8 9h3.5L8 13.5h3.5M14 9v4.5h2.5"/>',
@@ -85,4 +114,10 @@ function I(name, cls = '') {
   return `<svg class="ico${cls ? ' ico-' + cls.split(' ').join(' ico-') : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 }
 
-module.exports = { I, PATHS };
+// Bộ icon chọn cho danh mục / gói cày thuê (khi không dùng ảnh)
+const BOOST_ICONS = ['g-sword', 'g-swords', 'shield', 'g-crown', 'trophy', 'g-medal', 'star', 'g-gem', 'g-coin', 'money', 'fire', 'bolt',
+  'g-sparkles', 'g-target', 'g-crosshair', 'g-rocket', 'g-level', 'chart', 'g-map', 'g-compass', 'g-flag', 'g-castle', 'g-scroll', 'g-book',
+  'g-wand', 'g-potion', 'g-heart', 'g-skull', 'g-ghost', 'g-dice', 'gamepad', 'g-hammer', 'g-leaf', 'g-paw', 'g-snow', 'g-hourglass',
+  'clock', 'gift', 'key', 'users'];
+
+module.exports = { I, PATHS, BOOST_ICONS };

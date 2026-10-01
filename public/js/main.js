@@ -460,4 +460,191 @@
   }
   secBtns.forEach((b) => b.addEventListener('click', () => secOpen(b.dataset.secToggle, true)));
   if (location.hash === '#password' && $('[data-sec-panel="password"]')) secOpen('password', true);
+
+  // ---------------- Cày thuê ----------------
+  // Danh sách vượt quá N ô -> khung cuộn cao đúng N ô đầu
+  const scrollLists = $$('[data-scroll-max]');
+  function sizeScroll() {
+    scrollLists.forEach((l) => {
+      const n = +l.dataset.scrollMax || 0, items = l.children;
+      l.classList.remove('bx-scroll'); l.style.maxHeight = '';
+      if (!n || items.length <= n) return;
+      const top = items[0].offsetTop, cut = items[n];
+      const h = cut.offsetTop - top;
+      if (h <= 0) return; // hàng cuối của N ô nằm cùng hàng với ô N+1 (không xảy ra khi N chia hết số cột)
+      l.style.maxHeight = (h - 4) + 'px';
+      l.classList.add('bx-scroll');
+    });
+  }
+  if (scrollLists.length) {
+    sizeScroll();
+    let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(sizeScroll, 150); });
+    window.addEventListener('load', sizeScroll);
+  }
+  // Mô tả dài: bấm để xem hết
+  $$('[data-expand]').forEach((d) => {
+    if (d.scrollHeight > d.clientHeight + 2) { d.classList.add('can-expand'); d.addEventListener('click', () => { d.classList.toggle('open'); sizeScroll(); }); }
+  });
+
+  const bPage = $('[data-boost-page]');
+  if (bPage) {
+    const gameId = bPage.dataset.game;
+    const form = $('#bForm'), fab = $('.bp-fab'), box = $('#boostCartBox');
+    let subtotal = +($('.ck-cart')?.dataset.subtotal || 0), count = +($('.ck-cart')?.dataset.count || 0);
+    let discount = 0, couponOk = '';
+    const balance = form ? +form.dataset.balance : 0;
+    const post = async (url, body) => {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, Accept: 'application/json' }, body: JSON.stringify(body) });
+      if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); }
+      return r.json();
+    };
+    const renderTotals = () => {
+      if (!form) return;
+      const total = Math.max(0, subtotal - discount);
+      $('[data-b-sub]', form).textContent = money(subtotal);
+      $('.bp-disc', form).hidden = !discount;
+      $('[data-b-disc]', form).textContent = '-' + money(discount);
+      $('[data-b-total]', form).textContent = money(total);
+      $('[data-b-topup]', form).hidden = balance >= total;
+    };
+    const checkCoupon = async (silent) => {
+      const inp = $('#bCoupon'), msg = $('#bCouponMsg');
+      if (!inp) return;
+      const code = inp.value.trim();
+      discount = 0; couponOk = '';
+      if (!code) { msg.textContent = ''; renderTotals(); return; }
+      if (!subtotal) { renderTotals(); return; }
+      try {
+        const j = await post('/api/boost/coupon/check', { game: gameId, code });
+        if (j.ok) { discount = j.discount; couponOk = code.toUpperCase(); }
+        msg.textContent = j.message; msg.className = 'small ' + (j.ok ? 'text-ok' : 'text-err');
+      } catch (e) { if (!silent) msg.textContent = 'Lỗi kết nối'; }
+      renderTotals();
+    };
+    const cartIco = $('.ck-cart')?.closest('.bp-cart')?.querySelector('h2 svg')?.outerHTML;
+    const markInCart = () => {
+      const qty = {};
+      $$('[data-cart-row]').forEach((r) => { qty[r.dataset.cartRow] = +$('[data-cart-input]', r).value; });
+      $$('[data-pkg]').forEach((el) => {
+        let b = $('[data-incart]', el);
+        const n = qty[el.dataset.pkg];
+        if (!n) { b?.remove(); return; }
+        if (!b) {
+          b = document.createElement('span'); b.className = 'bx-incart'; b.dataset.incart = '';
+          ($('.bx-thumb', el) || $('h3', el)).appendChild(b);
+        }
+        b.innerHTML = (cartIco || '') + ' ' + n;
+      });
+    };
+    const apply = (j) => {
+      if (!j.ok) { toast(j.message, '#dc2626'); return false; }
+      $('#bCart').innerHTML = j.html;
+      subtotal = j.subtotal; count = j.count;
+      $$('[data-cart-count]').forEach((c) => { c.textContent = count; });
+      if (form) form.hidden = !count;
+      if (fab) fab.hidden = !count;
+      markInCart();
+      checkCoupon(true);
+      return true;
+    };
+    let busy = false;
+    const send = async (pkg, qty, mode) => {
+      if (busy) return; busy = true;
+      try { return apply(await post('/boost/cart', { package: pkg, qty, mode })); } catch (e) { if (e.message !== 'login') toast('Lỗi kết nối, thử lại', '#dc2626'); } finally { busy = false; }
+    };
+    bPage.addEventListener('click', async (e) => {
+      const add = e.target.closest('[data-boost-add]');
+      if (add) {
+        add.disabled = true;
+        if (await send(add.dataset.boostAdd, 0, 'add')) { toast('Đã thêm vào giỏ'); add.classList.add('added'); setTimeout(() => add.classList.remove('added'), 900); }
+        add.disabled = false;
+        return;
+      }
+      const q = e.target.closest('[data-cart-qty]');
+      if (q) { const inp = $(`[data-cart-input="${q.dataset.cartQty}"]`); send(q.dataset.cartQty, (+inp.value || 0) + (+q.dataset.delta), 'set'); return; }
+      const d = e.target.closest('[data-cart-del]');
+      if (d) send(d.dataset.cartDel, 0, 'set');
+    });
+    bPage.addEventListener('change', (e) => {
+      const inp = e.target.closest('[data-cart-input]');
+      if (inp) send(inp.dataset.cartInput, Math.max(0, parseInt(inp.value, 10) || 0), 'set');
+    });
+    $('#bCouponCheck')?.addEventListener('click', () => checkCoupon(false));
+    $('#bCoupon')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); checkCoupon(false); } });
+    $$('[data-boost-coupon]').forEach((b) => b.addEventListener('click', () => { $('#bCoupon').value = b.dataset.boostCoupon; checkCoupon(false); }));
+
+    // Nút "Xem giỏ" nổi (mobile): ẩn khi giỏ đang nằm trong màn hình
+    if (fab && box) {
+      fab.addEventListener('click', () => box.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      if ('IntersectionObserver' in window) new IntersectionObserver((en) => { fab.classList.toggle('away', en[0].isIntersecting); }, { rootMargin: '0px 0px -30% 0px' }).observe(box);
+    }
+
+    // Điều khoản
+    const tm = $('#termsModal');
+    if (tm) {
+      const close = () => { tm.hidden = true; document.body.classList.remove('no-scroll'); };
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('[data-open-terms]')) { e.preventDefault(); tm.hidden = false; document.body.classList.add('no-scroll'); }
+        if (e.target === tm || e.target.closest('[data-close-terms]')) close();
+        if (e.target.closest('[data-accept-terms]')) { const a = form?.elements.agree; if (a) a.checked = true; close(); }
+      });
+    }
+
+    // Xác nhận thanh toán
+    const cf = $('#boostConfirm');
+    if (form && cf) {
+      let sending = false;
+      const okBtn = $('[data-bcf-ok]', cf), topup = $('[data-bcf-topup]', cf), err = $('[data-bcf-err]', cf);
+      const close = () => { cf.hidden = true; document.body.classList.remove('no-scroll'); };
+      const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      form.addEventListener('submit', async (e) => {
+        if (sending) return;
+        e.preventDefault();
+        if ($('#bCoupon').value.trim().toUpperCase() !== couponOk) await checkCoupon(true);
+        const code = $('#bCoupon').value.trim();
+        const total = Math.max(0, subtotal - discount);
+        const rows = $$('[data-cart-row]').map((r) => `<div><span>${esc($('.ck-info b', r).textContent)} × ${esc($('[data-cart-input]', r).value)}</span><b>${esc($('.ck-line', r).textContent)}</b></div>`).join('');
+        $('[data-bcf-lines]', cf).innerHTML = rows
+          + (discount ? `<div><span>Mã giảm giá <em>${esc(couponOk)}</em></span><b class="bc-minus">-${money(discount)}</b></div>` : '')
+          + `<div class="bc-total"><span>Thanh toán</span><b>${money(total)}</b></div>`;
+        const after = balance - total;
+        const a = $('[data-bcf-after]', cf);
+        a.textContent = money(after); a.classList.toggle('bc-neg', after < 0);
+        let msg = code && !couponOk ? `Mã “${code}” không dùng được. Hãy xóa hoặc đổi mã.` : '';
+        if (after < 0) msg = (msg ? msg + ' ' : '') + `Số dư chưa đủ, cần nạp thêm ${money(-after)}.`;
+        err.hidden = !msg; err.textContent = msg;
+        okBtn.hidden = after < 0 || !!(code && !couponOk);
+        topup.hidden = after >= 0;
+        $('span', okBtn).textContent = 'Xác nhận thanh toán · ' + money(total);
+        cf.hidden = false; document.body.classList.add('no-scroll');
+      });
+      okBtn.addEventListener('click', () => {
+        sending = true; okBtn.disabled = true;
+        $('span', okBtn).textContent = 'Đang xử lý...';
+        form.requestSubmit ? form.requestSubmit() : form.submit();
+      });
+      cf.addEventListener('click', (e) => { if (e.target === cf || e.target.closest('[data-bcf-close]')) close(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !cf.hidden) close(); });
+    }
+  }
+
+  // Chi tiết đơn cày thuê: tự cập nhật khi shop đổi trạng thái
+  const bo = $('[data-boost-order]');
+  if (bo && bo.dataset.open === '1') {
+    const st = bo.dataset.status, at = bo.dataset.updated;
+    let tries = 0;
+    const poll = async () => {
+      if (document.hidden) { setTimeout(poll, 15000); return; }
+      if (++tries > 480) return;
+      try {
+        const r = await fetch('/user/boost/' + encodeURIComponent(bo.dataset.boostOrder) + '/status', { headers: { Accept: 'application/json' } });
+        const j = await r.json();
+        if (j.ok && (j.status !== st || String(j.updated_at) !== at)) {
+          if (!document.querySelector('[data-boost-update] input:focus, [data-boost-update] textarea:focus')) { location.reload(); return; }
+        }
+      } catch (e) { /* thử lại */ }
+      setTimeout(poll, 15000);
+    };
+    setTimeout(poll, 15000);
+  }
 })();

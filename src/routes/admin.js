@@ -26,6 +26,7 @@ router.use((req, res, next) => {
   res.locals.path = req.path;
   res.locals.adminBadges = {
     deposits: db.prepare("SELECT COUNT(*) c FROM deposits WHERE status = 'pending'").get().c,
+    boost: db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE status = 'received'").get().c,
     bank: db.prepare("SELECT COUNT(*) c FROM bank_transactions WHERE status = 'unmatched'").get().c,
   };
   next();
@@ -70,14 +71,18 @@ router.get('/', (req, res) => {
   const sum = (arr, k) => arr.reduce((a, b) => a + (b[k] || 0), 0);
   const today = series[series.length - 1];
   const last7 = series.slice(-7);
-  const totals = db.prepare('SELECT COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(deposits),0) deposits, COALESCE(SUM(orders),0) orders FROM daily_stats').get();
+  const totals = db.prepare('SELECT COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(deposits),0) deposits, COALESCE(SUM(orders),0) orders, COALESCE(SUM(boost_revenue),0) boost FROM daily_stats').get();
+  const boostStats = {
+    today: today.boost_revenue || 0, todayOrders: today.boost_orders || 0, month: sum(series, 'boost_revenue'), monthOrders: sum(series, 'boost_orders'), total: totals.boost,
+    open: db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE status IN ('received','processing','need_info')").get().c,
+  };
 
   res.render('admin/dashboard', {
     title: 'Tổng quan',
     today, series,
     week: { revenue: sum(last7, 'revenue'), orders: sum(last7, 'orders'), deposits: sum(last7, 'deposits') },
     month: { revenue: sum(series, 'revenue'), orders: sum(series, 'orders'), deposits: sum(series, 'deposits'), users: sum(series, 'new_users') },
-    totals,
+    totals, boostStats,
     counts: {
       users: db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'user'").get().c,
       balance: db.prepare('SELECT COALESCE(SUM(balance),0) c FROM users').get().c,
@@ -99,6 +104,8 @@ const SORTABLE = {
   products: { table: 'products', group: 'category_id', order: 'sort_order, id DESC' },
   banners: { table: 'banners', group: 'position', order: 'sort_order, id' },
   'home-blocks': { table: 'home_blocks', group: null, order: 'sort_order, id' },
+  'boost-categories': { table: 'boost_categories', group: 'game_id', order: 'sort_order, id' },
+  'boost-packages': { table: 'boost_packages', group: 'category_id', order: 'sort_order, id' },
 };
 
 function moveItem(kind, id, dir) {
@@ -169,6 +176,9 @@ for (const kind of Object.keys(SORTABLE)) {
     back(req, res, r.ok ? 'success' : 'error', r.ok ? null : r.message);
   });
 }
+
+// Cày thuê: danh mục, gói, đơn, cài đặt
+router.use('/boost', require('./admin-boost'));
 
 // Nội dung form trong modal (trả về HTML không có layout)
 const modal = (res, view, data) => res.render('admin/modals/' + view, data);
@@ -865,11 +875,12 @@ router.post('/coupons/save', (req, res) => {
   if (db.prepare('SELECT id FROM coupons WHERE code = ? AND id != ?').get(code, id)) return back(req, res, 'error', 'Mã đã tồn tại');
   const data = [code, str(req.body.description, 200), type, value, toInt(req.body.max_discount, 0, 0) || null, toInt(req.body.min_order, 0, 0),
     toInt(req.body.game_id, 0) || null, toInt(req.body.usage_limit, 0, 0) || null, toInt(req.body.per_user_limit, 1, 0),
-    H.fromInputDate(req.body.starts_at), H.fromInputDate(req.body.expires_at), bool(req.body.is_public), bool(req.body.is_active)];
+    H.fromInputDate(req.body.starts_at), H.fromInputDate(req.body.expires_at), bool(req.body.is_public), bool(req.body.is_active),
+    ['acc', 'boost'].includes(req.body.scope) ? req.body.scope : 'all'];
   if (id) db.prepare(`UPDATE coupons SET code=?, description=?, type=?, value=?, max_discount=?, min_order=?, game_id=?, usage_limit=?,
-      per_user_limit=?, starts_at=?, expires_at=?, is_public=?, is_active=? WHERE id=?`).run(...data, id);
+      per_user_limit=?, starts_at=?, expires_at=?, is_public=?, is_active=?, scope=? WHERE id=?`).run(...data, id);
   else db.prepare(`INSERT INTO coupons(code, description, type, value, max_discount, min_order, game_id, usage_limit, per_user_limit,
-      starts_at, expires_at, is_public, is_active) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(...data);
+      starts_at, expires_at, is_public, is_active, scope) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(...data);
   require('../services/coupon').clearCouponCache();
   audit(req, id ? 'coupon_update' : 'coupon_create', code);
   back(req, res, 'success', 'Đã lưu mã giảm giá', '/admin/coupons');
@@ -892,8 +903,10 @@ const HOME_BLOCK_INFO = {
   games: { name: 'Danh mục game', icon: 'gamepad', desc: 'Thẻ các game kèm số acc đang bán / đã bán. Chọn hiện tất cả hoặc vài game.', title: 'Danh mục game' },
   coupons: { name: 'Mã khuyến mãi', icon: 'gift', desc: 'Thẻ mã giảm giá đang chạy, bấm để sao chép.', title: 'Mã khuyến mãi', def: { limit: 8 } },
   featured: { name: 'Danh sách acc', icon: 'star', desc: 'Lưới acc theo nguồn: nổi bật, mới nhất, bán chạy, giá rẻ… lọc theo game / danh mục.', title: 'Acc nổi bật', def: { source: 'featured', limit: 12 } },
+  boost: { name: 'Cày thuê nổi bật', icon: 'g-swords', desc: 'Các gói cày thuê bán chạy / mới nhất, bấm vào mở trang gói. Chọn tất cả hoặc 1 game.', title: 'Cày thuê nổi bật', def: { source: 'bestseller', limit: 8 } },
   recent: { name: 'Giao dịch gần đây', icon: 'bag', desc: 'Các đơn mua mới nhất (tên khách được che bớt).', title: 'Giao dịch gần đây', def: { limit: 10 } },
 };
+const BOOST_SOURCES = { bestseller: 'Thuê nhiều nhất', newest: 'Gói mới thêm', cheap: 'Giá rẻ nhất' };
 const PRODUCT_SOURCES = { featured: 'Acc được đánh dấu Nổi bật (xáo ngẫu nhiên)', newest: 'Acc mới đăng', bestseller: 'Bán chạy nhất', cheap: 'Giá rẻ nhất', random: 'Ngẫu nhiên' };
 
 function blockSummary(b) {
@@ -903,6 +916,7 @@ function blockSummary(b) {
   if (b.type === 'coupons') return `Tối đa ${st.limit || 8} mã`;
   if (b.type === 'featured') return `${PRODUCT_SOURCES[st.source || 'featured']} · tối đa ${st.limit || 12} acc`;
   if (b.type === 'recent') return `${st.limit || 10} đơn mới nhất`;
+  if (b.type === 'boost') return `${(BOOST_SOURCES[st.source] || BOOST_SOURCES.bestseller)} · tối đa ${st.limit || 8} gói`;
   return '';
 }
 
@@ -926,7 +940,7 @@ router.get('/home-blocks/form', (req, res) => {
   const info = HOME_BLOCK_INFO[type];
   if (!info) return res.status(404).send('<p class="a-empty">Loại khối không hợp lệ</p>');
   modal(res, 'home-block-form', {
-    b, type, info, sources: PRODUCT_SOURCES,
+    b, type, info, sources: PRODUCT_SOURCES, boostSources: BOOST_SOURCES,
     settings: b ? { ...(info.def || {}), ...H.parseJSON(b.settings, {}) } : { ...(info.def || {}) },
     items: b ? db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id').all(b.id) : [],
     games: db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all(),
@@ -951,6 +965,10 @@ function blockSettingsFromBody(type, body, info) {
     st.category_id = toInt(body.category_id, 0, 0) || null;
   } else if (type === 'recent') {
     st.limit = toInt(body.limit, 10, 1, 30);
+  } else if (type === 'boost') {
+    st.source = BOOST_SOURCES[body.source] ? body.source : 'bestseller';
+    st.limit = toInt(body.limit, 8, 1, 48);
+    st.game_id = toInt(body.game_id, 0, 0) || null;
   }
   return JSON.stringify(st);
 }

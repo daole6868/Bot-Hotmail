@@ -1,0 +1,103 @@
+<%- include('../partials/header') %>
+<% const inCart = Object.fromEntries(cart.items.map((i) => [i.id, i.qty]));
+   const here = `/game/${game.slug}/cay-thue/${category.slug}`;
+   const loginUrl = '/login?next=' + encodeURIComponent(here); %>
+<div class="bp-head">
+  <h1><%- I(category.icon) %> <%= category.name %> <span class="muted">· <%= game.name %></span></h1>
+  <% if (category.description) { %><p class="muted"><%= category.description %></p><% } %>
+  <% if (siblings.length > 1) { %>
+    <div class="bp-chips">
+      <% siblings.forEach(c => { %><a href="/game/<%= game.slug %>/cay-thue/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><span style="color:<%= c.icon_color %>"><%- I(c.icon) %></span> <%= c.name %></a><% }) %>
+    </div>
+  <% } %>
+</div>
+
+<div class="bp-layout" data-boost-page data-game="<%= game.id %>">
+  <section class="bp-main">
+    <% if (!packages.length) { %><div class="empty card pad">Danh mục này chưa có gói dịch vụ nào.</div><% } %>
+    <div class="bx-list bx-list-<%= disp.mode %>" style="--cols-pc:<%= disp.colsPc %>;--cols-m:<%= disp.colsM %>" data-scroll-max="<%= disp.max %>">
+      <% packages.forEach(p => { %><%- include('../partials/boost/item', { it: p, kind: 'pkg', mode: disp.mode, href: '', inCart: inCart[p.id] || 0, loginUrl }) %><% }) %>
+    </div>
+  </section>
+
+  <aside class="bp-side" id="boostCartBox">
+    <div class="card pad bp-cart">
+      <h2><%- I('cart') %> Giỏ hàng <span class="bp-count" data-cart-count><%= cart.count %></span></h2>
+      <p class="muted small bp-cart-note"><%- I('clock') %> Giỏ dùng chung cho mọi danh mục cày thuê của <b><%= game.name %></b>, tự xóa sau <%= cartHours %> giờ.</p>
+      <div id="bCart"><%- include('../partials/boost/cart', { cart }) %></div>
+
+      <% if (user) { %>
+      <form method="post" action="/boost/checkout" class="bp-form" id="bForm" <%= cart.items.length ? '' : 'hidden' %> autocomplete="off" data-balance="<%= user.balance %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="game" value="<%= game.id %>">
+        <input type="hidden" name="back" value="<%= here %>">
+        <h3><%- I('user') %> Thông tin tài khoản game</h3>
+        <label class="label">Tài khoản <span class="req">*</span></label>
+        <input name="account" required maxlength="120" placeholder="Tên đăng nhập / email / SĐT" autocomplete="off">
+        <label class="label">Mật khẩu <span class="req">*</span></label>
+        <input type="password" name="password" required maxlength="120" autocomplete="new-password">
+        <label class="label">Server <span class="muted small">(không bắt buộc)</span></label>
+        <input name="server" maxlength="60" placeholder="VD: Asia, S12...">
+        <label class="label">Ghi chú <span class="muted small">(không bắt buộc)</span></label>
+        <textarea name="note" rows="2" maxlength="1000" placeholder="Yêu cầu thêm cho shop..."></textarea>
+
+        <label class="label">Mã giảm giá</label>
+        <div class="input-group">
+          <input name="coupon" id="bCoupon" maxlength="32" placeholder="Nhập mã KM" autocomplete="off">
+          <button type="button" class="btn btn-ghost" id="bCouponCheck">Áp dụng</button>
+        </div>
+        <div class="small" id="bCouponMsg"></div>
+        <% if (coupons.length) { %><div class="mini-coupons"><% coupons.slice(0, 4).forEach(c => { %><button type="button" class="chip" data-boost-coupon="<%= c.code %>"><%- I('ticket') %> <%= c.code %></button><% }) %></div><% } %>
+
+        <label class="check bp-agree"><input type="checkbox" name="agree" value="1" required> <span>Tôi đồng ý với <a href="#" data-open-terms>điều khoản dịch vụ</a></span></label>
+
+        <div class="bp-total">
+          <div><span>Tạm tính</span><b data-b-sub><%= H.money(cart.subtotal) %></b></div>
+          <div class="bp-disc" hidden><span>Giảm giá</span><b data-b-disc></b></div>
+          <div class="bp-grand"><span>Tổng tiền</span><b data-b-total><%= H.money(cart.subtotal) %></b></div>
+          <div class="muted small"><span>Số dư</span> <b><%= H.money(user.balance) %></b> <a href="/user/deposit" data-b-topup <%= user.balance >= cart.subtotal ? 'hidden' : '' %>>· Nạp thêm</a></div>
+        </div>
+        <button type="submit" class="btn btn-lg btn-block btn-accent"><%- I('check') %> THANH TOÁN</button>
+      </form>
+      <% } else { %>
+        <a href="<%= loginUrl %>" class="btn btn-block btn-accent mt"><%- I('user') %> Đăng nhập để đặt cày thuê</a>
+      <% } %>
+    </div>
+  </aside>
+</div>
+
+<button type="button" class="bp-fab" data-goto-cart <%= cart.count ? '' : 'hidden' %>><%- I('cart') %> Xem giỏ <span data-cart-count><%= cart.count %></span></button>
+
+<!-- Điều khoản -->
+<div class="dp-modal" id="termsModal" hidden>
+  <div class="dp-box bp-terms" role="dialog" aria-modal="true">
+    <h3>Điều khoản dịch vụ cày thuê</h3>
+    <div class="prewrap bp-terms-text"><%= terms %></div>
+    <div class="dp-actions"><button type="button" class="btn btn-ghost" data-close-terms>Đóng</button><button type="button" class="btn btn-primary" data-accept-terms>Tôi đồng ý</button></div>
+  </div>
+</div>
+
+<% if (user) { %>
+<!-- Xác nhận thanh toán -->
+<div class="bc-modal" id="boostConfirm" hidden>
+  <div class="bc-box" role="dialog" aria-modal="true">
+    <div class="bc-head">
+      <span class="bc-icon"><%- I('g-swords') %></span>
+      <div><h3>Xác nhận đặt cày thuê</h3><p><%= game.name %> · kiểm tra lại trước khi thanh toán</p></div>
+      <button type="button" class="bc-x" data-bcf-close aria-label="Đóng"><%- I('x') %></button>
+    </div>
+    <div class="bc-lines" data-bcf-lines></div>
+    <div class="bc-wallet">
+      <div><span>Số dư hiện tại</span><b><%= H.money(user.balance) %></b></div>
+      <div><span>Số dư sau khi thanh toán</span><b data-bcf-after></b></div>
+    </div>
+    <div class="bc-note bc-err" data-bcf-err hidden></div>
+    <div class="bc-actions">
+      <button type="button" class="btn btn-ghost" data-bcf-close>Để sau</button>
+      <button type="button" class="btn btn-accent" data-bcf-ok><%- I('check') %> <span>Xác nhận thanh toán</span></button>
+      <a href="/user/deposit" class="btn btn-accent" data-bcf-topup hidden><%- I('card') %> Nạp thêm tiền</a>
+    </div>
+  </div>
+</div>
+<% } %>
+<%- include('../partials/footer') %>

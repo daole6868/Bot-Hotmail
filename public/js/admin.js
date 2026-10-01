@@ -474,8 +474,8 @@
         if (!r.ok) throw new Error(r.message || 'Lỗi');
         t.checked = r.active;
         const tr = t.closest('tr');
-        if (tr && tr.closest('.a-products, .a-card')) tr.classList.toggle('a-row-off', !r.active);
-        toast(r.active ? 'Đã bật hiển thị' : 'Đã ẩn');
+        if (tr && tr.closest('.a-products, .a-card') && !t.dataset.onMsg) tr.classList.toggle('a-row-off', !r.active);
+        toast(r.active ? (t.dataset.onMsg || 'Đã bật hiển thị') : (t.dataset.offMsg || 'Đã ẩn'));
       } catch (err) {
         t.checked = !want;
         toast(err.message && err.message !== 'Lỗi' ? err.message : 'Không cập nhật được', true);
@@ -716,4 +716,38 @@
       }
     });
   }
+
+  // ---------------- Cày thuê ----------------
+  // Chọn màu icon (ô màu / chấm màu gợi ý) -> đổi màu xem trước
+  document.addEventListener('input', (e) => {
+    const c = e.target.closest('[data-icon-color]');
+    if (c) c.closest('.a-icon-pick').style.setProperty('--ic', c.value);
+  });
+  document.addEventListener('click', async (e) => {
+    const dot = e.target.closest('[data-icon-color-set]');
+    if (dot) {
+      const box = dot.closest('.a-icon-pick'), inp = $('[data-icon-color]', box);
+      inp.value = dot.dataset.iconColorSet; box.style.setProperty('--ic', inp.value);
+      return;
+    }
+    const rv = e.target.closest('[data-bo-reveal]');
+    if (rv) {
+      const box = rv.closest('[data-bo-login]');
+      rv.disabled = true;
+      try {
+        const r = await post(box.dataset.boLogin);
+        if (!r.ok) throw new Error(r.message);
+        $('[data-bo-u]', box).textContent = r.account;
+        $('[data-bo-p]', box).textContent = r.password;
+        $('.a-bo-cred', box).hidden = false;
+        rv.hidden = true;
+      } catch (err) { toast(err.message || 'Không xem được', true); rv.disabled = false; }
+      return;
+    }
+    const cp = e.target.closest('[data-bo-copy]');
+    if (cp) {
+      const t = $('[data-bo-' + cp.dataset.boCopy + ']', cp.closest('[data-bo-login]')).textContent;
+      try { await navigator.clipboard.writeText(t); toast('Đã sao chép'); } catch (err) { toast('Không sao chép được', true); }
+    }
+  });
 })();

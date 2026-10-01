@@ -42,6 +42,50 @@ router.get('/orders/:code', (req, res, next) => {
   res.render('user/order-detail', { title: `Đơn hàng ${o.order_code}`, o, tab: 'orders' });
 });
 
+// ---------- Đơn cày thuê ----------
+const boost = require('../services/boost');
+router.get('/boost', (req, res) => {
+  const status = boost.STATUS[req.query.status] ? req.query.status : '';
+  const result = paginate(db, {
+    select: 'o.code, o.game_name, o.total, o.discount, o.status, o.created_at, o.updated_at, (SELECT GROUP_CONCAT(name || \' ×\' || qty, \', \') FROM boost_order_items i WHERE i.order_id = o.id) AS items',
+    from: 'boost_orders o', where: `WHERE o.user_id = ?${status ? ' AND o.status = ?' : ''}`, params: status ? [req.user.id, status] : [req.user.id],
+    order: 'ORDER BY o.id DESC', page: toInt(req.query.page, 1, 1), perPage: 15,
+  });
+  res.render('user/boost-list', { title: 'Đơn cày thuê', result, query: { status }, status, STATUS: boost.STATUS, tab: 'boost' });
+});
+
+const myBoost = (req) => db.prepare('SELECT * FROM boost_orders WHERE code = ? AND user_id = ?').get(str(req.params.code, 20).toUpperCase(), req.user.id);
+router.get('/boost/:code', (req, res, next) => {
+  const o = myBoost(req);
+  if (!o) return next();
+  const items = db.prepare('SELECT * FROM boost_order_items WHERE order_id = ? ORDER BY id').all(o.id);
+  const events = db.prepare('SELECT * FROM boost_order_events WHERE order_id = ? ORDER BY id').all(o.id);
+  const game = db.prepare('SELECT slug FROM games WHERE id = ?').get(o.game_id);
+  const login = o.status === 'need_info' ? boost.readLogin(o) : null;
+  res.set('Cache-Control', 'no-store');
+  res.render('user/boost-detail', {
+    title: `Đơn cày thuê ${o.code}`, o, items, events, game, login, STATUS: boost.STATUS, open: boost.OPEN.includes(o.status),
+    canCancel: o.status === 'received' && getSettings().boost_self_cancel !== '0', tab: 'boost',
+  });
+});
+router.get('/boost/:code/status', (req, res) => {
+  const o = myBoost(req);
+  if (!o) return res.json({ ok: false });
+  res.json({ ok: true, status: o.status, updated_at: o.updated_at });
+});
+router.post('/boost/:code/cancel', limiters.buy, (req, res) => {
+  const code = str(req.params.code, 20).toUpperCase();
+  const r = boost.customerCancel(req.user.id, code);
+  req.flash(r.ok ? 'success' : 'error', r.ok ? `Đã hủy đơn ${code}, tiền đã hoàn vào số dư` : r.message);
+  res.redirect('/user/boost/' + encodeURIComponent(code));
+});
+router.post('/boost/:code/update', limiters.buy, (req, res) => {
+  const code = str(req.params.code, 20).toUpperCase();
+  const r = boost.customerUpdate(req.user.id, code, req.body);
+  req.flash(r.ok ? 'success' : 'error', r.ok ? 'Đã gửi thông tin mới cho shop' : r.message);
+  res.redirect('/user/boost/' + encodeURIComponent(code));
+});
+
 // ---------- Bảo mật: email, xác minh 2 lớp, thiết bị tin cậy ----------
 router.get('/security', (req, res) => {
   const s = getSettings();

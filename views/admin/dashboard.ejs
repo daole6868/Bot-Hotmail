@@ -8,6 +8,8 @@
   <div class="a-card a-stat"><span>Tổng doanh thu</span><b><%= H.money(totals.revenue) %></b><small>Tổng nạp <%= H.money(totals.deposits) %></small></div>
   <div class="a-card a-stat"><span>Người dùng</span><b><%= counts.users.toLocaleString('vi-VN') %></b><small>Số dư treo <%= H.money(counts.balance) %></small></div>
   <div class="a-card a-stat"><span>Sản phẩm đang bán</span><b><%= counts.available %></b><small>Đã bán <%= counts.sold %> · <%= counts.games %> game</small></div>
+  <a href="/admin/boost/orders?status=open" class="a-card a-stat"><span>Cày thuê hôm nay</span><b><%= H.money(boostStats.today) %></b><small><%= boostStats.todayOrders %> đơn · <%= boostStats.open %> đơn chưa xong</small></a>
+  <div class="a-card a-stat"><span>Cày thuê 30 ngày</span><b><%= H.money(boostStats.month) %></b><small><%= boostStats.monthOrders %> đơn · tổng <%= H.money(boostStats.total) %></small></div>
   <div class="a-card a-stat <%= adminBadges.deposits ? 'warn' : '' %>"><span>Chờ xử lý</span><b><%= adminBadges.deposits %> nạp</b><small><%= adminBadges.bank %> GD bank chưa khớp</small></div>
 </div>
 

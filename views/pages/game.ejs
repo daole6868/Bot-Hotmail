@@ -10,7 +10,7 @@
 
 <section class="section">
   <div class="section-head"><h2><%- I('folder') %> Danh mục <%= game.name %></h2></div>
-  <% if (!categories.length) { %>
+  <% if (!categories.length && !locals.boostTile) { %>
     <div class="empty">Game này chưa có danh mục nào.</div>
   <% } %>
   <div class="cat-grid">
@@ -32,6 +32,24 @@
         </div>
       </a>
     <% }) %>
+    <% if (locals.boostTile) { const BT = boostTile; %>
+      <a href="/game/<%= game.slug %>/cay-thue" class="card cat-card boost-tile">
+        <div class="thumb"><% if (s.boost_tile_image) { %><img src="<%= s.boost_tile_image %>" alt="<%= s.boost_tile_title %>" loading="lazy"><% } else { %><span class="boost-tile-art"><%- I('g-swords') %></span><% } %><span class="boost-tile-badge"><%- I('bolt') %> Cày thuê</span></div>
+        <div class="card-body">
+          <h3><%= s.boost_tile_title || 'Cày thuê' %></h3>
+          <% if (s.boost_tile_desc) { %><p class="muted small card-desc"><%= s.boost_tile_desc %></p><% } %>
+          <div class="stat-boxes">
+            <div class="stat-box"><span class="stat-label"><%- I('layers') %> Gói dịch vụ</span><b><%= BT.pkgs.toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã thuê</span><b><%= BT.sold.toLocaleString('vi-VN') %></b></div>
+          </div>
+          <div class="price-row cat-price">
+            <span class="muted small">Chỉ từ</span>
+            <strong class="price"><%= BT.min_price != null ? H.money(BT.min_price) : 'Liên hệ' %></strong>
+          </div>
+          <span class="btn btn-block btn-primary">Xem dịch vụ</span>
+        </div>
+      </a>
+    <% } %>
   </div>
 </section>
 

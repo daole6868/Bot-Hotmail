@@ -1,0 +1,80 @@
+<%- include('../partials/header') %>
+<%- include('../partials/user-nav') %>
+<% const st = STATUS[o.status];
+   const steps = ['received', 'processing', 'done'];
+   const stepIdx = o.status === 'need_info' ? 0 : steps.indexOf(o.status); %>
+<div class="bo-wrap" data-boost-order="<%= o.code %>" data-status="<%= o.status %>" data-updated="<%= o.updated_at %>" data-open="<%= open ? 1 : 0 %>">
+  <div class="card pad bo-main">
+    <div class="bo-head">
+      <div><h2>Đơn cày thuê <%= o.code %></h2><span class="muted small"><%= o.game_name %> · <%= H.fmtDate(o.created_at) %></span></div>
+      <span class="bo-st bo-<%= st.tone %>"><%= st.label %></span>
+    </div>
+
+    <% if (o.status !== 'cancelled') { %>
+    <div class="bo-steps">
+      <% steps.forEach((k, i) => { %>
+        <div class="bo-step <%= i < stepIdx || o.status === 'done' ? 'is-done' : '' %> <%= i === stepIdx && o.status !== 'done' ? 'is-now' : '' %>"><span><%= i + 1 %></span><b><%= STATUS[k].label %></b></div>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <% if (o.customer_msg) { %><div class="alert <%= o.status === 'need_info' ? 'alert-warning' : o.status === 'cancelled' ? 'alert-error' : 'alert-info' %>"><b>Shop nhắn:</b> <span class="prewrap"><%= o.customer_msg %></span></div><% } %>
+    <% if (o.status === 'cancelled' && o.refunded) { %><div class="alert alert-success">Đã hoàn <b><%= H.money(o.total) %></b> vào số dư của bạn.</div><% } %>
+
+    <% if (o.status === 'need_info') { %>
+    <form method="post" action="/user/boost/<%= o.code %>/update" class="bo-update" data-boost-update autocomplete="off">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <h3><%- I('key') %> Cập nhật thông tin tài khoản game</h3>
+      <label class="label">Tài khoản <span class="req">*</span></label>
+      <input name="account" required maxlength="120" value="<%= login ? login.u : '' %>">
+      <label class="label">Mật khẩu <span class="req">*</span></label>
+      <input type="password" name="password" required maxlength="120" autocomplete="new-password">
+      <label class="label">Server</label>
+      <input name="server" maxlength="60" value="<%= o.server || '' %>">
+      <label class="label">Ghi chú</label>
+      <textarea name="note" rows="2" maxlength="1000"></textarea>
+      <button type="submit" class="btn btn-primary btn-block mt"><%- I('send') %> Gửi thông tin mới</button>
+    </form>
+    <% } %>
+
+    <table class="table bo-items">
+      <thead><tr><th>Gói</th><th>SL</th><th class="right">Thành tiền</th></tr></thead>
+      <tbody>
+      <% items.forEach(i => { %>
+        <tr><td><b><%= i.name %></b><div class="muted small"><%= i.category_name %> · <%= H.money(i.price) %>/<%= i.unit %></div></td><td><%= i.qty %></td><td class="right"><%= H.money(i.line_total) %></td></tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <div class="bc-lines bo-sum">
+      <div><span>Tạm tính</span><b><%= H.money(o.subtotal) %></b></div>
+      <% if (o.discount) { %><div><span>Mã giảm giá <em><%= o.coupon_code %></em></span><b class="bc-minus">-<%= H.money(o.discount) %></b></div><% } %>
+      <div class="bc-total"><span>Đã thanh toán</span><b><%= H.money(o.total) %></b></div>
+    </div>
+    <% if (o.server || o.note) { %>
+    <div class="bo-info muted small">
+      <% if (o.server) { %><div>Server: <b><%= o.server %></b></div><% } %>
+      <% if (o.note) { %><div>Ghi chú: <span class="prewrap"><%= o.note %></span></div><% } %>
+    </div>
+    <% } %>
+
+    <div class="bo-actions">
+      <% if (game) { %><a href="/game/<%= game.slug %>/cay-thue" class="btn btn-ghost"><%- I('g-swords') %> Thuê thêm</a><% } %>
+      <% if (canCancel) { %>
+      <form method="post" action="/user/boost/<%= o.code %>/cancel" data-confirm="Hủy đơn <%= o.code %>? Tiền sẽ được hoàn vào số dư.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-danger"><%- I('x') %> Hủy đơn</button>
+      </form>
+      <% } %>
+    </div>
+  </div>
+
+  <aside class="card pad bo-side">
+    <h3><%- I('clock') %> Tiến trình</h3>
+    <ol class="bo-timeline">
+      <% events.slice().reverse().forEach(e => { const t = STATUS[e.status] || STATUS.received; %>
+        <li class="bo-<%= t.tone %>"><b><%= t.label %></b><span class="muted small"><%= H.fmtDate(e.created_at) %></span><% if (e.message) { %><p class="prewrap small"><%= e.message %></p><% } %></li>
+      <% }) %>
+    </ol>
+  </aside>
+</div>
+<%- include('../partials/footer') %>

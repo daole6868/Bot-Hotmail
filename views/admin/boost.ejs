@@ -1,0 +1,53 @@
+<%- include('_header') %>
+<div class="a-section-head">
+  <div>
+    <h3>Cày thuê theo game</h3>
+    <p class="a-muted a-small">Mỗi game có các danh mục cày thuê, trong mỗi danh mục là các gói. Kéo nút ⠿ để đổi thứ tự.</p>
+  </div>
+  <div class="a-actions">
+    <button type="button" class="a-btn" data-acc-all="open">Mở tất cả</button>
+    <button type="button" class="a-btn" data-acc-all="close">Thu gọn</button>
+  </div>
+</div>
+<% if (!games.length) { %><div class="a-card a-empty">Chưa có game. <a href="/admin/games">Thêm game trước</a>.</div><% } %>
+<% games.forEach(g => { %>
+<section class="a-acc" id="bgame-<%= g.id %>" data-acc="boost-game-<%= g.id %>">
+  <div class="a-acc-head">
+    <button type="button" class="a-acc-toggle" data-acc-toggle>
+      <%- include('partials/thumb', { img: g.image, name: g.name, color: g.color, size: 'sm' }) %>
+      <span class="a-acc-title"><b><%= g.name %></b><small><%= g.cats.length %> danh mục cày thuê<%= g.is_active ? '' : ' · game đang ẩn' %></small></span>
+      <span class="a-chevron"><%- I('caret-down') %></span>
+    </button>
+    <button type="button" class="a-btn a-soft" data-modal-url="/admin/boost/categories/form?game_id=<%= g.id %>" data-modal-title="Thêm danh mục cày thuê – <%= g.name %>"><%- I('plus') %> Thêm danh mục</button>
+  </div>
+  <div class="a-acc-body">
+    <div class="a-table-wrap">
+      <table class="a-table">
+        <thead><tr><th class="a-w-move"></th><th>Danh mục</th><th class="a-num">Gói</th><th class="a-num">Giá từ</th><th class="a-num">Đã thuê</th><th class="a-center">Hiển thị</th><th class="a-right">Thao tác</th></tr></thead>
+        <tbody>
+        <% if (!g.cats.length) { %><tr><td colspan="7" class="a-empty">Game này chưa có danh mục cày thuê.</td></tr><% } %>
+        <% g.cats.forEach((c, i) => { %>
+          <tr class="<%= c.is_active ? '' : 'a-row-off' %>">
+            <td><%- include('partials/move', { kind: 'boost-categories', id: c.id, first: i === 0, last: i === g.cats.length - 1 }) %></td>
+            <td><div class="a-item">
+              <% if (c.image) { %><img src="<%= c.image %>" class="a-avatar sm" alt="" loading="lazy"><% } else { %><span class="a-bx-ico" style="--ic:<%= c.icon_color %>"><%- I(c.icon) %></span><% } %>
+              <div><a href="/admin/boost/categories/<%= c.id %>"><b><%= c.name %></b></a><% if (c.description) { %><div class="a-muted a-small a-trunc"><%= c.description %></div><% } %></div>
+            </div></td>
+            <td class="a-num"><a href="/admin/boost/categories/<%= c.id %>"><%= c.pkg_count %> gói</a></td>
+            <td class="a-num"><%= c.min_price != null ? H.money(c.min_price) : '—' %></td>
+            <td class="a-num"><%= c.sold.toLocaleString('vi-VN') %></td>
+            <td class="a-center"><%- include('partials/switch', { kind: 'boost-categories', id: c.id, on: c.is_active, disabled: false }) %></td>
+            <td class="a-right"><div class="a-actions">
+              <a class="a-btn a-xs a-soft" href="/admin/boost/categories/<%= c.id %>"><%- I('layers') %> Gói</a>
+              <button type="button" class="a-icon-btn" data-modal-url="/admin/boost/categories/form?id=<%= c.id %>" data-modal-title="Sửa danh mục cày thuê" title="Sửa"><%- I('edit') %></button>
+              <form method="post" action="/admin/boost/categories/<%= c.id %>/delete" data-confirm="Xóa danh mục “<%= c.name %>” và các gói bên trong?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+            </div></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<% }) %>
+<%- include('_footer') %>

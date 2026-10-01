@@ -91,6 +91,16 @@
     <p class="a-field-hint">Chọn danh mục thì bỏ qua ô game. Khối tự ẩn nếu không có acc nào phù hợp. Nguồn “Nổi bật” lấy các acc tích “Nổi bật” ở mục Sản phẩm.</p>
   <% } %>
 
+  <% if (type === 'boost') { %>
+    <label>Lấy gói theo</label>
+    <select name="source"><% Object.entries(boostSources).forEach(([k, l]) => { %><option value="<%= k %>" <%= (settings.source || 'bestseller') === k ? 'selected' : '' %>><%= l %></option><% }) %></select>
+    <div class="a-row">
+      <div><label>Chỉ gói của game</label><select name="game_id"><option value="">Mọi game</option><% games.forEach(g => { %><option value="<%= g.id %>" <%= settings.game_id == g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select></div>
+      <div><label>Số gói tối đa</label><input type="number" name="limit" min="1" max="48" value="<%= settings.limit || 8 %>"></div>
+    </div>
+    <p class="a-field-hint">Kiểu hiển thị (Ảnh / Icon) theo mục Cài đặt cày thuê → Gói. Khối tự ẩn nếu chưa có gói nào.</p>
+  <% } %>
+
   <% if (type === 'recent') { %>
     <label>Số đơn hiển thị</label><input type="number" name="limit" min="1" max="30" value="<%= settings.limit || 10 %>">
   <% } %>

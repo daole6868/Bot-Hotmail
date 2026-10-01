@@ -172,7 +172,7 @@ function decryptWith(key, payload) {
   d.setAuthTag(tag);
   return Buffer.concat([d.update(enc), d.final()]).toString('utf8');
 }
-const ENC_COLS = [['products', 'credentials_enc'], ['product_stock', 'data_enc'], ['orders', 'delivered_enc'], ['orders_archive', 'delivered_enc']];
+const ENC_COLS = [['products', 'credentials_enc'], ['product_stock', 'data_enc'], ['orders', 'delivered_enc'], ['orders_archive', 'delivered_enc'], ['boost_orders', 'login_enc']];
 
 // Dữ liệu mã hóa bằng APP_KEY cũ -> giải mã rồi mã hóa lại bằng APP_KEY của VPS hiện tại
 function reencryptAll(oldAppKey) {
@@ -317,6 +317,17 @@ async function sendTelegram(file, caption) {
   if (!j.ok) throw new Error('Telegram báo: ' + (j.description || 'lỗi không rõ'));
 }
 
+/** Gửi tin nhắn ngắn cho admin qua bot Telegram (đơn cày thuê mới...) — chưa cấu hình bot thì bỏ qua */
+async function notifyAdmin(text) {
+  const s = getSettings();
+  const token = s.tg_token_enc ? decrypt(s.tg_token_enc) : '';
+  if (!token || !s.tg_chat_id) return false;
+  const r = await fetch(`${process.env.TG_API_URL || 'https://api.telegram.org'}/bot${token}/sendMessage`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: s.tg_chat_id, text: String(text).slice(0, 4000) }), signal: AbortSignal.timeout(15000),
+  });
+  return (await r.json()).ok;
+}
+
 /** Tạo gói và gửi Telegram (gói > 49MB thì gửi bản chỉ dữ liệu, không kèm ảnh) */
 async function backupToTelegram() {
   const host = String(config.baseUrl).replace(/^https?:\/\//, '');
@@ -385,7 +396,7 @@ function cleanTmp() {
 }
 
 module.exports = {
-  cleanTmp, setJob, getJob,
+  notifyAdmin, cleanTmp, setJob, getJob,
   makePackage, readPackage, restoreFromFile, importDatabase, localBackup, listBackups, deleteBackup, pruneBackups,
   sendTelegram, backupToTelegram, tableCounts, uploadsSize, watchRestart, requestRestart, TMP,
 };

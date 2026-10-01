@@ -1,0 +1,34 @@
+<% const R = '<span class="req" title="Bắt buộc">*</span>'; %>
+<form method="post" action="/admin/boost/categories/save" enctype="multipart/form-data" class="a-form" novalidate data-validate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= c ? c.id : '' %>">
+  <label>Thuộc game <%- R %></label>
+  <select name="game_id" required>
+    <% games.forEach(g => { %><option value="<%= g.id %>" <%= gameId === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %>
+  </select>
+  <label>Tên danh mục cày thuê <%- R %></label>
+  <input name="name" required maxlength="100" value="<%= c ? c.name : '' %>" placeholder="VD: Cày rank, Cày level, Làm nhiệm vụ" autofocus>
+  <label>Mô tả</label>
+  <textarea name="description" rows="2" maxlength="1000"><%= c ? c.description : '' %></textarea>
+  <label>Đường dẫn (slug) <small class="a-muted">để trống tự tạo</small></label>
+  <input name="slug" maxlength="80" value="<%= c ? c.slug : '' %>">
+  <label>Icon <small class="a-muted">(dùng khi hiển thị kiểu Icon, hoặc khi chưa có ảnh)</small></label>
+  <%- include('../partials/icon-picker', { icons, value: c ? c.icon : 'g-sword', colorValue: c ? c.icon_color : '#8b5cf6' }) %>
+  <div class="a-upload-row">
+    <div class="a-upload-preview" data-preview-box>
+      <% if (c && c.image) { %><img src="<%= c.image %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có ảnh</span><% } %>
+    </div>
+    <div class="a-grow">
+      <label>Ảnh <small class="a-muted">(dùng khi hiển thị kiểu Ảnh, gợi ý 400×250)</small></label>
+      <input type="file" name="image" accept="image/*" data-preview-input>
+      <% if (c && c.image) { %><label class="a-check"><input type="checkbox" name="remove_image" value="1"> Xóa ảnh hiện tại</label><% } %>
+    </div>
+  </div>
+  <label class="a-check"><input type="checkbox" name="is_active" <%= !c || c.is_active ? 'checked' : '' %>> Hiển thị</label>
+  <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><%- R %> là thông tin bắt buộc</span>
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= c ? 'Lưu thay đổi' : 'Thêm danh mục' %></button>
+  </div>
+</form>

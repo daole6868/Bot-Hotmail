@@ -1,0 +1,45 @@
+<% const R = '<span class="req" title="Bắt buộc">*</span>'; %>
+<form method="post" action="/admin/boost/packages/save" enctype="multipart/form-data" class="a-form" novalidate data-validate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= p ? p.id : '' %>">
+  <label>Danh mục cày thuê <%- R %></label>
+  <select name="category_id" required>
+    <% categories.forEach(c => { %><option value="<%= c.id %>" <%= catId === c.id ? 'selected' : '' %>><%= c.game_name %> › <%= c.name %></option><% }) %>
+  </select>
+  <label>Tên gói <%- R %></label>
+  <input name="name" required maxlength="150" value="<%= p ? p.name : '' %>" placeholder="VD: Đồng lên Bạc, 10 trận thường" autofocus>
+  <div class="a-row">
+    <div><label>Giá bán (đ) <%- R %></label><input type="number" name="price" required min="1000" step="1000" value="<%= p ? p.price : '' %>"></div>
+    <div><label>Giá gốc (đ) <small class="a-muted">gạch ngang</small></label><input type="number" name="old_price" min="0" step="1000" value="<%= p && p.old_price ? p.old_price : '' %>"></div>
+  </div>
+  <div class="a-row">
+    <div><label>Đơn vị</label><input name="unit" maxlength="20" value="<%= p ? p.unit : 'gói' %>" placeholder="gói, trận, sao, level"></div>
+    <div><label>Thời gian hoàn thành</label><input name="eta" maxlength="60" value="<%= p ? p.eta || '' : '' %>" placeholder="VD: 1-2 ngày"></div>
+  </div>
+  <div class="a-row">
+    <div><label>Số lượng tối thiểu</label><input type="number" name="min_qty" min="1" max="1000" value="<%= p ? p.min_qty : 1 %>"></div>
+    <div><label>Số lượng tối đa</label><input type="number" name="max_qty" min="1" max="1000" value="<%= p ? p.max_qty : 10 %>"></div>
+  </div>
+  <label>Mô tả</label>
+  <textarea name="description" rows="3" maxlength="2000"><%= p ? p.description : '' %></textarea>
+  <label>Icon</label>
+  <%- include('../partials/icon-picker', { icons, value: p ? p.icon : 'star', colorValue: p ? p.icon_color : '#f59e0b' }) %>
+  <div class="a-upload-row">
+    <div class="a-upload-preview" data-preview-box>
+      <% if (p && p.image) { %><img src="<%= p.image %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có ảnh</span><% } %>
+    </div>
+    <div class="a-grow">
+      <label>Ảnh <small class="a-muted">(dùng khi hiển thị kiểu Ảnh)</small></label>
+      <input type="file" name="image" accept="image/*" data-preview-input>
+      <% if (p && p.image) { %><label class="a-check"><input type="checkbox" name="remove_image" value="1"> Xóa ảnh hiện tại</label><% } %>
+    </div>
+  </div>
+  <label class="a-check"><input type="checkbox" name="is_active" <%= !p || p.is_active ? 'checked' : '' %>> Hiển thị</label>
+  <label class="a-check"><input type="checkbox" name="is_paused" <%= p && p.is_paused ? 'checked' : '' %>> Tạm ngưng nhận đơn</label>
+  <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><%- R %> là thông tin bắt buộc</span>
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= p ? 'Lưu thay đổi' : 'Thêm gói' %></button>
+  </div>
+</form>

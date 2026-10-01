@@ -132,6 +132,7 @@ app.use((req, res, next) => {
 app.use('/', require('./src/routes/auth'));
 app.use('/user', require('./src/routes/user'));
 app.use('/admin', require('./src/routes/admin'));
+app.use('/', require('./src/routes/boost')); // cày thuê (trước public: /game/:slug/cay-thue)
 app.use('/', require('./src/routes/public'));
 
 // ---------- 404 & lỗi ----------

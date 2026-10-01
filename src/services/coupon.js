@@ -6,7 +6,7 @@ const { now, money } = require('../utils/helpers');
  * Kiểm tra mã giảm giá cho 1 đơn.
  * @returns {{ok:boolean, message?:string, coupon?:object, discount?:number}}
  */
-function validateCoupon(code, userId, price, gameId) {
+function validateCoupon(code, userId, price, gameId, kind = 'acc') {
   code = String(code || '').trim().toUpperCase();
   if (!code) return { ok: false, message: 'Chưa nhập mã giảm giá' };
   if (!/^[A-Z0-9_-]{2,32}$/.test(code)) return { ok: false, message: 'Mã giảm giá không hợp lệ' };
@@ -17,6 +17,8 @@ function validateCoupon(code, userId, price, gameId) {
   if (c.expires_at && t > c.expires_at) return { ok: false, message: 'Mã đã hết hạn' };
   if (c.usage_limit != null && c.used_count >= c.usage_limit) return { ok: false, message: 'Mã đã hết lượt sử dụng' };
   if (c.game_id && gameId && c.game_id !== gameId) return { ok: false, message: 'Mã không áp dụng cho game này' };
+  // Phạm vi: all = mọi đơn; acc = chỉ mua acc; boost = chỉ đơn cày thuê
+  if (c.scope && c.scope !== 'all' && c.scope !== kind) return { ok: false, message: c.scope === 'boost' ? 'Mã chỉ áp dụng cho đơn cày thuê' : 'Mã chỉ áp dụng khi mua acc' };
   if (price < c.min_order) return { ok: false, message: `Đơn tối thiểu ${money(c.min_order)} để dùng mã này` };
   if (userId && c.per_user_limit) {
     const used = db.prepare('SELECT COUNT(*) n FROM coupon_usages WHERE coupon_id = ? AND user_id = ?').get(c.id, userId).n;
@@ -31,9 +33,10 @@ function validateCoupon(code, userId, price, gameId) {
 // Danh sách mã công khai hiện ở nhiều trang -> nhớ 30 giây (admin sửa mã thì xóa nhớ ngay)
 let pcCache = { at: 0, rows: null };
 function clearCouponCache() { pcCache = { at: 0, rows: null }; }
-function publicCoupons(limit = 6) {
+function publicCoupons(limit = 6, kind = null) {
   if (!pcCache.rows || Date.now() - pcCache.at > 30000) pcCache = { at: Date.now(), rows: loadPublicCoupons() };
-  return pcCache.rows.slice(0, limit);
+  const rows = kind ? pcCache.rows.filter((c) => !c.scope || c.scope === 'all' || c.scope === kind) : pcCache.rows;
+  return rows.slice(0, limit);
 }
 function loadPublicCoupons() {
   const t = now();

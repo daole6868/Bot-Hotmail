@@ -59,6 +59,13 @@ function loadHomeBlocks() {
     } else if (b.type === 'coupons') {
       const gid = toInt(st.game_id);
       b.coupons = publicCoupons(50).filter((c) => !gid || !c.game_id || c.game_id === gid).slice(0, toInt(st.limit, 8, 1, 50));
+    } else if (b.type === 'boost') {
+      const order = { newest: 'p.id DESC', cheap: 'p.price ASC, p.id DESC' }[st.source] || 'p.sold_count DESC, p.id DESC';
+      const gid = toInt(st.game_id);
+      b.packages = db.prepare(`SELECT p.*, c.name AS category_name, c.slug AS category_slug, g.name AS game_name, g.slug AS game_slug
+        FROM boost_packages p JOIN boost_categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
+        WHERE p.is_active = 1 AND c.is_active = 1 AND g.is_active = 1${gid ? ' AND g.id = ?' : ''} ORDER BY ${order} LIMIT ?`)
+        .all(...(gid ? [gid] : []), toInt(st.limit, 8, 1, 48));
     } else if (b.type === 'recent') {
       b.recent = db.prepare(`SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
         WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT ?`).all(toInt(st.limit, 10, 1, 30)).map((o) => ({ ...o, username: maskName(o.username) }));
@@ -84,7 +91,7 @@ router.get('/', (req, res) => {
   const blocks = cached('home', 30000, loadHomeBlocks);
   // Danh sách acc lấy mỗi lần tải trang (nguồn "ngẫu nhiên"/"nổi bật" xáo trộn khác nhau cho từng khách)
   const view = blocks.map((b) => (b.type === 'featured' ? { ...b, products: productsForBlock(b.settings) } : b))
-    .filter((b) => (b.items ? b.items.length : true) && (b.products ? b.products.length : true) && (b.recent ? b.recent.length : true) && (b.games ? b.games.length : true));
+    .filter((b) => (b.items ? b.items.length : true) && (b.products ? b.products.length : true) && (b.recent ? b.recent.length : true) && (b.games ? b.games.length : true) && (b.packages ? b.packages.length : true));
   res.render('pages/home', { title: null, blocks: view });
 });
 
@@ -97,8 +104,11 @@ router.get('/game/:slug', (req, res, next) => {
       (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price,
       (SELECT COALESCE(SUM(sold_count),0) FROM products p WHERE p.category_id = c.id) AS sold
     FROM categories c WHERE c.game_id = ? AND c.is_active = 1 ORDER BY c.sort_order, c.id`).all(game.id);
-  const coupons = publicCoupons(10).filter((c) => !c.game_id || c.game_id === game.id);
-  res.render('pages/game', { title: game.name, game, categories, coupons, breadcrumb: [{ name: game.name }] });
+  const coupons = publicCoupons(10, 'acc').filter((c) => !c.game_id || c.game_id === game.id);
+  // Thẻ "Cày thuê" cạnh các danh mục VIP / Reroll (chỉ hiện khi game có danh mục cày thuê đang bật)
+  const boostTile = db.prepare(`SELECT COUNT(DISTINCT c.id) cats, MIN(p.price) min_price, COALESCE(SUM(p.sold_count), 0) sold, COUNT(p.id) pkgs
+    FROM boost_categories c LEFT JOIN boost_packages p ON p.category_id = c.id AND p.is_active = 1 WHERE c.game_id = ? AND c.is_active = 1`).get(game.id);
+  res.render('pages/game', { title: game.name, game, categories, coupons, boostTile: boostTile.cats ? boostTile : null, breadcrumb: [{ name: game.name }] });
 });
 
 // ================= CẤP 3: DANH SÁCH SẢN PHẨM / THẺ GAME =================
@@ -172,7 +182,7 @@ router.get('/product/:code', (req, res, next) => {
   for (let i = 0; i < 8 && ids.length; i++) pick.push(ids.splice(Math.random() * ids.length | 0, 1)[0]);
   const related = pick.length ? db.prepare(`SELECT ${PRODUCT_SELECT} FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
     WHERE p.id IN (${pick.map(() => '?').join(',')}) AND p.status = 'available'`).all(...pick).map(decorate) : [];
-  const coupons = publicCoupons(10).filter((c) => !c.game_id || c.game_id === p.game_id);
+  const coupons = publicCoupons(10, 'acc').filter((c) => !c.game_id || c.game_id === p.game_id);
   res.render('pages/product', {
     title: p.title, p, related, coupons,
     metaDesc: (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 200) || `${p.title} - ${p.game_name} · ${p.category_name}`,
@@ -207,7 +217,7 @@ router.post('/product/:code/buy', requireLogin, limiters.buy, (req, res) => {
 router.post('/api/coupon/check', limiters.coupon, (req, res) => {
   const p = loadProduct(str(req.body.product, 20));
   if (!p) return res.json({ ok: false, message: 'Sản phẩm không tồn tại' });
-  const v = validateCoupon(req.body.code, req.user?.id, p.price, p.game_id);
+  const v = validateCoupon(req.body.code, req.user?.id, p.price, p.game_id, 'acc');
   if (!v.ok) return res.json({ ok: false, message: v.message });
   res.json({ ok: true, discount: v.discount, total: p.price - v.discount, message: `Áp dụng thành công: giảm ${v.discount.toLocaleString('vi-VN')}đ` });
 });

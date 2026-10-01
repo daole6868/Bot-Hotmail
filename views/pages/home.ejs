@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 <%
   // Trang chủ vẽ theo "Bố cục trang chủ" trong admin: thứ tự, bật/tắt từng khối, khối banner tự thêm
-  const HOME_BLOCKS = ['slider', 'strip', 'games', 'coupons', 'featured', 'recent', 'banner'];
+  const HOME_BLOCKS = ['slider', 'strip', 'games', 'coupons', 'featured', 'recent', 'banner', 'boost'];
 %>
 <% blocks.forEach(block => { if (HOME_BLOCKS.includes(block.type)) { %>
 <%- include('../partials/home/' + block.type, { block }) %>

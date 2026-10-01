@@ -368,6 +368,104 @@ db.function('gmail_norm', { deterministic: true }, (e) => {
   return m ? m[1].split('+')[0].replace(/\./g, '') + '@gmail.com' : String(e || '').toLowerCase().trim();
 });
 
+// ===== CÀY THUÊ: Game -> Danh mục cày thuê -> Gói; giỏ hàng theo game; đơn có 5 trạng thái =====
+db.exec(`CREATE TABLE IF NOT EXISTS boost_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    image TEXT,
+    icon TEXT NOT NULL DEFAULT 'g-sword',
+    icon_color TEXT NOT NULL DEFAULT '#8b5cf6',
+    description TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    UNIQUE(game_id, slug)
+  );
+  CREATE INDEX IF NOT EXISTS idx_bcat_game ON boost_categories(game_id, is_active, sort_order);
+  CREATE TABLE IF NOT EXISTS boost_packages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_id INTEGER NOT NULL REFERENCES boost_categories(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    price INTEGER NOT NULL CHECK(price >= 0),
+    old_price INTEGER,
+    image TEXT,
+    icon TEXT NOT NULL DEFAULT 'star',
+    icon_color TEXT NOT NULL DEFAULT '#f59e0b',
+    description TEXT,
+    unit TEXT NOT NULL DEFAULT 'gói',
+    min_qty INTEGER NOT NULL DEFAULT 1,
+    max_qty INTEGER NOT NULL DEFAULT 10,
+    eta TEXT,
+    is_paused INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    sold_count INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_bpkg_cat ON boost_packages(category_id, is_active, sort_order);
+  CREATE TABLE IF NOT EXISTS boost_carts (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    package_id INTEGER NOT NULL REFERENCES boost_packages(id) ON DELETE CASCADE,
+    qty INTEGER NOT NULL DEFAULT 1,
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    PRIMARY KEY (user_id, package_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_bcart_user_game ON boost_carts(user_id, game_id);
+  CREATE TABLE IF NOT EXISTS boost_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    game_id INTEGER,
+    game_name TEXT,
+    subtotal INTEGER NOT NULL,
+    discount INTEGER NOT NULL DEFAULT 0,
+    total INTEGER NOT NULL,
+    coupon_code TEXT,
+    login_enc TEXT,
+    server TEXT,
+    note TEXT,
+    status TEXT NOT NULL DEFAULT 'received' CHECK(status IN ('received','processing','need_info','done','cancelled')),
+    customer_msg TEXT,
+    admin_note TEXT,
+    refunded INTEGER NOT NULL DEFAULT 0,
+    ip TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    finished_at INTEGER,
+    login_wiped_at INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_border_user ON boost_orders(user_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_border_status ON boost_orders(status, created_at);
+  CREATE TABLE IF NOT EXISTS boost_order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES boost_orders(id) ON DELETE CASCADE,
+    package_id INTEGER,
+    name TEXT NOT NULL,
+    category_name TEXT,
+    unit TEXT,
+    price INTEGER NOT NULL,
+    qty INTEGER NOT NULL,
+    line_total INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_bitem_order ON boost_order_items(order_id);
+  CREATE TABLE IF NOT EXISTS boost_order_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES boost_orders(id) ON DELETE CASCADE,
+    status TEXT,
+    message TEXT,
+    by_admin INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_bevent_order ON boost_order_events(order_id, id);`);
+// Mã giảm giá: phạm vi áp dụng (all / acc / boost); lượt dùng mã cho đơn cày thuê
+addColumn('coupons', 'scope', "TEXT NOT NULL DEFAULT 'all'");
+addColumn('coupon_usages', 'boost_order_id', 'INTEGER');
+addColumn('daily_stats', 'boost_revenue', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('daily_stats', 'boost_orders', 'INTEGER NOT NULL DEFAULT 0');
+
 // Bảo mật tài khoản: xác minh 2 lớp qua email, thiết bị tin cậy, đặt lại mật khẩu, nhật ký email
 addColumn('users', 'email_verified_at', 'INTEGER');
 addColumn('users', 'twofa_enabled', 'INTEGER NOT NULL DEFAULT 0');
@@ -504,7 +602,7 @@ function logActivity(userId, action, detail, ip) {
 
 // Cộng dồn thống kê ngày (giờ VN)
 function bumpStat(field, amount = 1) {
-  const allowed = ['revenue', 'orders', 'deposits', 'deposit_count', 'new_users', 'refunds'];
+  const allowed = ['revenue', 'orders', 'deposits', 'deposit_count', 'new_users', 'refunds', 'boost_revenue', 'boost_orders'];
   if (!allowed.includes(field)) return;
   const day = vnDay();
   db.prepare(`INSERT INTO daily_stats(day, ${field}) VALUES(?, ?)

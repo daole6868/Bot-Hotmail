@@ -27,6 +27,9 @@ router.get('/captcha.svg', (req, res) => {
 
 router.get('/login', (req, res) => {
   if (req.user) return res.redirect(req.user.role === 'admin' && req.session.isAdmin ? '/admin' : '/');
+  // ?next=/duong-dan: đăng nhập xong quay lại đúng trang (chỉ nhận đường dẫn nội bộ)
+  const next = String(req.query.next || '');
+  if (next && /^\/(?!\/)[\w\-/?=&.%]{0,200}$/.test(next)) req.session.returnTo = next;
   res.render('pages/login', {
     title: 'Đăng nhập',
     needCaptcha: (req.session.loginFails || 0) >= CAPTCHA_AFTER,

@@ -29,6 +29,11 @@
     <a href="/admin/orders" class="<%= act('/orders') %>"><%- I('bag') %> Đơn hàng</a>
     <a href="/admin/deposits" class="<%= act('/deposits') %>"><%- I('card') %> Nạp tiền <% if (B.deposits) { %><span class="a-badge"><%= B.deposits %></span><% } %></a>
     <a href="/admin/bank" class="<%= act('/bank') %>"><%- I('bank') %> GD ngân hàng <% if (B.bank) { %><span class="a-badge warn"><%= B.bank %></span><% } %></a>
+    <div class="a-group">Cày thuê</div>
+    <a href="/admin/boost/orders" class="<%= act('/boost/orders') %>"><%- I('g-swords') %> Đơn cày thuê <% if (B.boost) { %><span class="a-badge"><%= B.boost %></span><% } %></a>
+    <a href="/admin/boost" class="<%= P === '/boost' || P.startsWith('/boost/categories') ? 'active' : '' %>"><%- I('layers') %> Danh mục & gói</a>
+    <a href="/admin/boost/settings" class="<%= act('/boost/settings') %>"><%- I('tools') %> Cài đặt cày thuê</a>
+    <div class="a-group">Khuyến mãi & khách</div>
     <a href="/admin/coupons" class="<%= act('/coupons') %>"><%- I('ticket') %> Mã giảm giá</a>
     <a href="/admin/users" class="<%= act('/users') %>"><%- I('users') %> Người dùng</a>
     <div class="a-group">Giao diện</div>

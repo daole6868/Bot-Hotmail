@@ -41,6 +41,8 @@
         <div><label>Giảm tối đa (đ)</label><input type="number" name="max_discount" min="0" value="<%= edit ? edit.max_discount || '' : '' %>"></div>
         <div><label>Đơn tối thiểu (đ)</label><input type="number" name="min_order" min="0" value="<%= edit ? edit.min_order : 0 %>"></div>
       </div>
+      <label>Áp dụng cho đơn</label>
+      <select name="scope"><% [['all', 'Mọi đơn (mua acc + cày thuê)'], ['acc', 'Chỉ mua acc'], ['boost', 'Chỉ đơn cày thuê']].forEach(([v, l]) => { %><option value="<%= v %>" <%= (edit ? edit.scope || 'all' : 'all') === v ? 'selected' : '' %>><%= l %></option><% }) %></select>
       <label>Áp dụng cho game</label>
       <select name="game_id"><option value="">Tất cả game</option><% games.forEach(g => { %><option value="<%= g.id %>" <%= edit && edit.game_id === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select>
       <div class="a-row">
@@ -70,7 +72,7 @@
         <tr>
           <td><b><%= c.code %></b><div class="a-small a-muted"><%= c.description %></div></td>
           <td><%= c.type === 'percent' ? c.value + '%' : H.money(c.value) %><% if (c.max_discount) { %><div class="a-small a-muted">tối đa <%= H.money(c.max_discount) %></div><% } %></td>
-          <td class="a-small">Từ <%= H.money(c.min_order) %><br><%= c.game_name || 'Mọi game' %></td>
+          <td class="a-small">Từ <%= H.money(c.min_order) %><br><%= c.game_name || 'Mọi game' %><% if (c.scope === 'acc') { %> · chỉ mua acc<% } else if (c.scope === 'boost') { %> · chỉ cày thuê<% } %></td>
           <td><%= c.used_count %><%= c.usage_limit ? '/' + c.usage_limit : '' %></td>
           <td class="a-small"><%= c.starts_at ? 'Từ ' + H.fmtDate(c.starts_at) : 'Từ lúc tạo' %><br><%= c.expires_at ? 'Đến ' + H.fmtDate(c.expires_at) : 'Không thời hạn' %></td>
           <td><span class="a-tag <%= why[0] %>"><%= why[1] %></span><% if (why[2]) { %><div class="a-small a-muted"><%= why[2] %></div><% } %></td>

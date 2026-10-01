@@ -31,7 +31,7 @@ const purchaseTx = db.transaction((userId, productId, couponCode, ip) => {
   let discount = 0;
   let coupon = null;
   if (couponCode) {
-    const v = validateCoupon(couponCode, userId, p.price, p.game_id);
+    const v = validateCoupon(couponCode, userId, p.price, p.game_id, 'acc');
     if (!v.ok) throw new OrderError(v.message);
     discount = v.discount;
     coupon = v.coupon;
