@@ -22,7 +22,7 @@
           <h3><%= c.name %></h3>
           <% if (c.description) { %><p class="muted small card-desc"><%= c.description %></p><% } %>
           <div class="stat-boxes">
-            <div class="stat-box"><span class="stat-label"><%- I('layers') %> Gói dịch vụ</span><b><%= (c.pkgs || 0).toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box"><span class="stat-label"><%- I('layers') %> Dịch vụ</span><b><%= (c.pkgs || 0).toLocaleString('vi-VN') %></b></div>
             <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã thuê</span><b><%= (c.sold || 0).toLocaleString('vi-VN') %></b></div>
           </div>
           <div class="price-row cat-price">

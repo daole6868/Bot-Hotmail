@@ -15,6 +15,7 @@
         <h3><%= it.name %></h3>
         <% if (it.description) { %><p class="muted small bx-desc"><%= it.description %></p><% } %>
         <div class="bx-foot"><span class="bx-price"><%- priceHtml %></span><span class="bx-meta"><%- I('layers') %> <%= it.package_count %> gói</span></div>
+        <span class="btn btn-sm btn-primary bx-view">Xem ngay</span>
       </div>
     <% } else { %>
       <%- icoBox %>
@@ -35,18 +36,24 @@
         <% if (it.eta) { %><div class="bx-eta"><%- I('clock') %> <%= it.eta %></div><% } %>
         <% if (it.description) { %><p class="muted small bx-desc" data-expand><%= it.description %></p><% } %>
         <div class="bx-foot"><span class="bx-price"><%- priceHtml %></span></div>
-    <% } else { %>
-      <%- icoBox %>
-      <div class="bx-body">
-        <h3><%= it.name %> <% if (inCart) { %><span class="bx-incart" data-incart><%- I('cart') %> <%= inCart %></span><% } %></h3>
-        <div class="bx-sub"><% if (it.eta) { %><span><%- I('clock') %> <%= it.eta %></span><% } %><span class="bx-price"><%- priceHtml %></span></div>
-        <% if (it.description) { %><p class="muted small bx-desc" data-expand><%= it.description %></p><% } %>
-    <% } %>
         <div class="bx-act">
           <% if (it.is_paused) { %><span class="bx-paused"><%- I('clock') %> Tạm ngưng nhận đơn</span>
           <% } else if (!user) { %><a class="btn btn-sm btn-ghost" href="<%= loginUrl %>"><%- I('user') %> Đăng nhập để thuê</a>
           <% } else { %><button type="button" class="btn btn-sm btn-primary" data-boost-add="<%= it.id %>"><%- I('cart') %> Thêm vào giỏ</button><% } %>
         </div>
       </div>
+    <% } else { %>
+      <%- icoBox %>
+      <div class="bx-body">
+        <h3><%= it.name %> <% if (inCart) { %><span class="bx-incart" data-incart><%- I('cart') %> <%= inCart %></span><% } %></h3>
+        <div class="bx-sub"><span class="bx-price"><%- priceHtml %></span><% if (it.eta) { %><span><%- I('clock') %> <%= it.eta %></span><% } %></div>
+        <% if (it.description) { %><p class="muted small bx-desc" data-expand><%= it.description %></p><% } %>
+        <% if (it.is_paused) { %><span class="bx-paused"><%- I('clock') %> Tạm ngưng nhận đơn</span><% } %>
+      </div>
+      <% if (!it.is_paused) { %>
+        <% if (!user) { %><a class="bx-add-ico" href="<%= loginUrl %>" title="Đăng nhập để thuê" aria-label="Đăng nhập để thuê"><%- I('cart') %></a>
+        <% } else { %><button type="button" class="bx-add-ico" data-boost-add="<%= it.id %>" title="Thêm vào giỏ" aria-label="Thêm vào giỏ"><%- I('cart') %></button><% } %>
+      <% } %>
+    <% } %>
   </div>
 <% } %>
