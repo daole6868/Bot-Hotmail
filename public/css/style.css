@@ -162,13 +162,15 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
 .empty { padding: 40px; text-align: center; color: var(--muted); background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius); margin-bottom: 18px; }
 
 /* ---------- Coupons ---------- */
-.coupon-grid { display: grid; grid-template-columns: repeat(var(--cp-cols, 4), minmax(0, 1fr)); gap: 14px; }
-@media (max-width: 1100px) { .coupon-grid { grid-template-columns: repeat(var(--cp-cols-t, 3), minmax(0, 1fr)); } }
-@media (max-width: 760px) { .coupon-grid { grid-template-columns: repeat(var(--cp-cols-m, 2), minmax(0, 1fr)); gap: 10px; } }
+.coupon-grid { container-type: inline-size; --cp-n: var(--cp-cols, 4); --cp-gap: 14px; display: grid; grid-template-columns: repeat(var(--cp-n), minmax(0, 1fr)); gap: var(--cp-gap); }
+@media (max-width: 1100px) { .coupon-grid { --cp-n: var(--cp-cols-t, 3); } }
+@media (max-width: 760px) { .coupon-grid { --cp-n: var(--cp-cols-m, 2); --cp-gap: 10px; } }
 /* Thẻ mã: tỉ lệ 600 x 350, chữ co giãn theo bề rộng thẻ (cqw) nên thẻ nhỏ trên điện thoại vẫn cân đối */
-.coupon { container-type: inline-size; position: relative; aspect-ratio: var(--cp-ar, 600 / 350); display: flex; background: var(--card); border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border)); border-radius: calc(16px * var(--rk)); overflow: hidden; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.coupon { container-type: inline-size; position: relative; aspect-ratio: var(--cp-ar, 600 / 350); display: flex; background: var(--card); border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border)); border-radius: calc(16px * var(--rk)); overflow: hidden; cursor: pointer; transition: transform .15s, box-shadow .15s;
+  aspect-ratio: auto; min-height: calc((100cqw - (var(--cp-n) - 1) * var(--cp-gap)) / var(--cp-n) * var(--cp-h, 260) / var(--cp-w, 600)); }
+/* tỉ lệ thẻ (admin chỉnh) chỉ là chiều cao tối thiểu: chữ nhiều thì thẻ tự cao thêm, không bị cắt */
 .coupon:hover { transform: translateY(-2px); box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 22%, transparent); }
-.coupon-value { flex: 0 0 36%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqw; background: linear-gradient(145deg, var(--primary), var(--primary2)); color: var(--on-primary, #fff); text-align: center; padding: 3cqw; }
+.coupon-value { flex: 0 0 36%; position: relative; border-radius: calc(15px * var(--rk)) 0 0 calc(15px * var(--rk)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqw; background: linear-gradient(145deg, var(--primary), var(--primary2)); color: var(--on-primary, #fff); text-align: center; padding: 3cqw; }
 .coupon-value b { font-size: clamp(18px, 12cqw, 44px); line-height: 1; font-weight: 900; letter-spacing: -.5px; }
 .coupon-value small { font-size: clamp(9px, 3.6cqw, 13px); font-weight: 700; letter-spacing: 2px; opacity: .9; }
 .coupon-value .coupon-max { letter-spacing: 0; font-weight: 600; }
@@ -177,14 +179,15 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
 .coupon::before, .coupon::after { content: ""; position: absolute; left: calc(36% - 8px); width: 16px; height: 16px; border-radius: 50%; background: var(--bg); z-index: 1; }
 .coupon::before { top: -9px; box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--primary) 35%, var(--border)); }
 .coupon::after { bottom: -9px; box-shadow: inset 0 1px 0 color-mix(in srgb, var(--primary) 35%, var(--border)); }
-.coupon-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: clamp(3px, 1.8cqw, 8px); padding: 4cqw 4.5cqw 4cqw 5.5cqw; }
-.coupon-code { background: none; border: 0; padding: 0; border-radius: 0; line-height: 1.15; font-family: inherit; font-size: clamp(12px, 6.4cqw, 22px); font-weight: 800; color: var(--primary); letter-spacing: .5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.coupon-desc { font-size: clamp(10px, 3.6cqw, 13px); color: var(--text); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.coupon-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: clamp(2px, 1.2cqw, 6px); padding: 3cqw 4cqw 3cqw 5cqw; }
+.coupon-code { flex: 0 0 auto; background: none; border: 0; padding: 0; border-radius: 0; line-height: 1.15; font-family: inherit; font-size: clamp(12px, 6.4cqw, 22px); font-weight: 800; color: var(--primary); letter-spacing: .5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.coupon-desc { flex-shrink: 0; font-size: clamp(10px, 3.6cqw, 13px); color: var(--text); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .coupon-meta { display: flex; flex-wrap: wrap; gap: 2px 8px; font-size: clamp(9px, 3.2cqw, 12px); color: var(--muted); }
 .coupon-meta span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
 .coupon-meta .ico { width: 1.1em; height: 1.1em; }
 .coupon-left { color: var(--primary); font-weight: 600; }
-.coupon-copy { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin-top: auto; padding: clamp(3px, 1.4cqw, 6px) clamp(8px, 3.4cqw, 14px); border-radius: 999px; font-size: clamp(10px, 3.4cqw, 13px); font-weight: 700; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); }
+.coupon-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.coupon-copy { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; padding: clamp(3px, 1.4cqw, 6px) clamp(8px, 3.4cqw, 14px); border-radius: 999px; font-size: clamp(10px, 3.4cqw, 13px); font-weight: 700; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); }
 .coupon-copy .ico { width: 1.1em; height: 1.1em; }
 .coupon:active .coupon-copy { background: var(--primary); color: var(--on-primary, #fff); }
 /* Thẻ nhỏ (điện thoại): bớt chữ để không chật */
@@ -193,7 +196,8 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
   .coupon-value .coupon-max, .coupon-meta .coupon-left { display: none; }
   .coupon-info { justify-content: space-between; gap: 2px; padding: 7px 8px 7px 11px; }
   .coupon-code { font-size: 14px; }
-  .coupon-copy { margin-top: 2px; padding: 3px 9px; }
+  .coupon-copy { padding: 3px 9px; }
+  .coupon-foot { gap: 4px; }
 }
 .chip { display: inline-block; padding: 7px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 999px; color: var(--text); cursor: pointer; font: inherit; font-size: .88rem; white-space: nowrap; }
 .chip:hover, .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
@@ -684,7 +688,7 @@ html[data-theme="dark"] { color-scheme: dark; }
 
 /* Thẻ gần vuông / dọc: mức giảm ở trên, thông tin ở dưới */
 .coupon-grid-v .coupon { flex-direction: column; }
-.coupon-grid-v .coupon-value { flex: 0 0 40%; }
+.coupon-grid-v .coupon-value { flex: 0 0 40%; border-radius: calc(15px * var(--rk)) calc(15px * var(--rk)) 0 0; }
 .coupon-grid-v .coupon-value b { font-size: clamp(20px, 15cqw, 56px); }
 .coupon-grid-v .coupon-value::after { top: auto; bottom: -1px; left: 6%; right: 6%; border-right: 0; border-bottom: 2px dashed color-mix(in srgb, var(--card) 85%, transparent); }
 .coupon-grid-v .coupon::before, .coupon-grid-v .coupon::after { left: auto; top: calc(40% - 8px); bottom: auto; }

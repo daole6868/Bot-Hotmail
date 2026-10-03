@@ -122,7 +122,7 @@ function bannerSize(settings, pos) {
 function couponLayout(settings) {
   const s = settings || {};
   const m = String(s.coupon_size || '').match(/^(\d{2,4})x(\d{2,4})$/);
-  const w = m ? +m[1] : 600, h = m ? +m[2] : 350;
+  const w = m ? +m[1] : 600, h = m ? +m[2] : 260;
   const clamp = (v, d, lo, hi) => { const n = parseInt(v, 10); return n >= lo && n <= hi ? n : d; };
   const pc = clamp(s.coupon_cols_pc, 4, 1, 6), mobile = clamp(s.coupon_cols_m, 2, 1, 3);
   return { w, h, pc, mobile, tablet: Math.min(pc, 3), vertical: w / h < 1.15 };

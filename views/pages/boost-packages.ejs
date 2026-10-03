@@ -27,7 +27,6 @@
   <aside class="bp-side" id="boostCartBox">
     <div class="card pad bp-cart">
       <h2><%- I('cart') %> Giỏ hàng <span class="bp-count" data-cart-count><%= cart.count %></span></h2>
-      <p class="muted small bp-cart-note"><%- I('clock') %> Giỏ dùng chung cho mọi danh mục cày thuê của <b><%= game.name %></b>, tự xóa sau <%= cartHours %> giờ.</p>
       <div id="bCart"><%- include('../partials/boost/cart', { cart }) %></div>
 
       <% if (user) { %>

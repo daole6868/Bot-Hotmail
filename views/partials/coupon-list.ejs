@@ -5,7 +5,7 @@
   const day = (ts) => H.fmtDate(ts).slice(0, 10);
 %>
 <% const L = H.couponLayout(locals.s); %>
-<div class="coupon-grid<%= L.vertical ? ' coupon-grid-v' : '' %>" style="--cp-ar: <%= L.w %> / <%= L.h %>; --cp-cols: <%= L.pc %>; --cp-cols-t: <%= L.tablet %>; --cp-cols-m: <%= L.mobile %>">
+<div class="coupon-grid<%= L.vertical ? ' coupon-grid-v' : '' %>" style="--cp-ar: <%= L.w %> / <%= L.h %>; --cp-w: <%= L.w %>; --cp-h: <%= L.h %>; --cp-cols: <%= L.pc %>; --cp-cols-t: <%= L.tablet %>; --cp-cols-m: <%= L.mobile %>">
   <% coupons.forEach(c => {
        const cond = [];
        if (c.min_order) cond.push('Đơn từ ' + H.money(c.min_order));
@@ -21,11 +21,13 @@
       <div class="coupon-info">
         <code class="coupon-code"><%= c.code %></code>
         <div class="coupon-desc"><%= c.description || cond.join(' · ') || 'Áp dụng cho mọi sản phẩm' %></div>
-        <div class="coupon-meta">
-          <span><%- I('clock') %> <%= c.expires_at ? 'HSD ' + day(c.expires_at) : 'Không thời hạn' %></span>
-          <% if (left != null) { %><span class="coupon-left">Còn <%= left %> lượt</span><% } %>
+        <div class="coupon-foot">
+          <div class="coupon-meta">
+            <span><%- I('clock') %> <%= c.expires_at ? 'HSD ' + day(c.expires_at) : 'Không thời hạn' %></span>
+            <% if (left != null) { %><span class="coupon-left">Còn <%= left %> lượt</span><% } %>
+          </div>
+          <span class="coupon-copy"><%- I('copy') %> Sao chép</span>
         </div>
-        <span class="coupon-copy"><%- I('copy') %> Sao chép</span>
       </div>
     </div>
   <% }) %>

@@ -67,8 +67,15 @@ function loadHomeBlocks() {
         WHERE p.is_active = 1 AND c.is_active = 1 AND pc.is_active = 1 AND g.is_active = 1${gid ? ' AND g.id = ?' : ''} ORDER BY ${order} LIMIT ?`)
         .all(...(gid ? [gid] : []), toInt(st.limit, 8, 1, 48));
     } else if (b.type === 'recent') {
-      b.recent = db.prepare(`SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
-        WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT ?`).all(toInt(st.limit, 10, 1, 30)).map((o) => ({ ...o, username: maskName(o.username) }));
+      // Đơn mua acc + đơn cày thuê (không tính đơn đã hủy / hoàn tiền), mới nhất trước
+      const lim = toInt(st.limit, 10, 1, 30);
+      b.recent = db.prepare(`SELECT * FROM (
+          SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
+            WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT ?)
+        UNION ALL SELECT * FROM (
+          SELECT 'Cày thuê: ' || (SELECT GROUP_CONCAT(name, ', ') FROM boost_order_items i WHERE i.order_id = b.id), b.total, b.created_at, u.username
+            FROM boost_orders b JOIN users u ON u.id = b.user_id WHERE b.status != 'cancelled' ORDER BY b.id DESC LIMIT ?)
+        ORDER BY created_at DESC LIMIT ?`).all(lim, lim, lim).map((o) => ({ ...o, username: maskName(o.username) }));
     }
   }
   return blocks;
