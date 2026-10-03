@@ -3,7 +3,7 @@
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <div class="a-grid-2">
     <div class="a-card">
-      <h3><%- I('cart') %> Giỏ hàng & đơn</h3>
+      <h3><%- I('cart') %> Giỏ hàng & đơn <small class="a-muted">(dùng chung cày thuê & nạp game)</small></h3>
       <div class="a-row">
         <div><label>Giỏ tự xóa sau (giờ)</label><input type="number" name="cart_hours" min="1" max="720" value="<%= s.boost_cart_hours %>"></div>
         <div><label>Tối đa đơn chưa xong / khách</label><input type="number" name="max_open" min="1" max="100" value="<%= s.boost_max_open %>"></div>
@@ -14,11 +14,13 @@
       <label class="a-check"><input type="checkbox" name="self_cancel" value="1" <%= s.boost_self_cancel !== '0' ? 'checked' : '' %>> Cho khách tự hủy đơn khi còn “Nhận đơn” (tự hoàn tiền)</label>
       <label class="a-check"><input type="checkbox" name="mail_on_boost" value="1" <%= s.mail_on_boost !== '0' ? 'checked' : '' %>> Gửi email cho khách mỗi khi đổi trạng thái</label>
       <label class="a-check"><input type="checkbox" name="tg_notify" value="1" <%= s.boost_tg_notify !== '0' ? 'checked' : '' %>> Báo đơn mới qua Telegram <small class="a-muted">(dùng bot ở Bảo trì dữ liệu)</small></label>
-      <p class="a-field-hint">Tên, ảnh, mô tả và kiểu hiển thị của từng mục Cày thuê chỉnh ở <a href="/admin/categories">Danh mục</a> (bấm Sửa danh mục loại Cày thuê).</p>
+      <p class="a-field-hint">Tên, ảnh, mô tả và kiểu hiển thị của từng mục Cày thuê chỉnh ở <a href="/admin/categories">Danh mục</a> (bấm Sửa danh mục loại Cày thuê / Nạp game).</p>
     </div>
     <div class="a-card">
-      <h3><%- I('list') %> Điều khoản dịch vụ</h3>
+      <h3><%- I('list') %> Điều khoản dịch vụ cày thuê</h3>
       <textarea name="terms" rows="12" maxlength="5000"><%= s.boost_terms %></textarea>
+      <h3><%- I('g-gem') %> Điều khoản nạp game</h3>
+      <textarea name="topup_terms" rows="8" maxlength="5000"><%= s.topup_terms %></textarea>
     </div>
   </div>
   <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt</button>

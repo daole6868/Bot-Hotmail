@@ -76,7 +76,7 @@
     <div class="a-table-wrap"><table class="a-table">
       <thead><tr><th>Lúc</th><th>Người nhận</th><th>Loại</th><th>Trạng thái</th></tr></thead>
       <% if (!logs.length) { %><tr><td colspan="4" class="a-muted">Chưa có email nào</td></tr><% } %>
-      <% const tn = { otp: 'Mã xác minh', reset: 'Đặt lại mật khẩu', password_changed: 'Đổi mật khẩu', login_alert: 'Thiết bị mới', welcome: 'Chào mừng', order: 'Mua hàng', deposit: 'Nạp tiền', test: 'Thử nghiệm' }; %>
+      <% const tn = { otp: 'Mã xác minh', reset: 'Đặt lại mật khẩu', password_changed: 'Đổi mật khẩu', login_alert: 'Thiết bị mới', welcome: 'Chào mừng', order: 'Mua hàng', boost: 'Cày thuê / Nạp game', deposit: 'Nạp tiền', test: 'Thử nghiệm' }; %>
       <% logs.forEach(l => { %><tr>
         <td class="a-small a-muted"><%= H.fmtDate(l.created_at) %></td>
         <td class="a-small"><%= l.to_email.replace(/^(.{2})[^@]*/, '$1***') %></td>

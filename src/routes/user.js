@@ -42,17 +42,20 @@ router.get('/orders/:code', (req, res, next) => {
   res.render('user/order-detail', { title: `Đơn hàng ${o.order_code}`, o, tab: 'orders' });
 });
 
-// ---------- Đơn cày thuê ----------
+// ---------- Đơn cày thuê (/user/boost) + đơn nạp game (/user/topup): chung bảng, khác kind ----------
 const boost = require('../services/boost');
-router.get('/boost', (req, res) => {
-  const status = boost.STATUS[req.query.status] ? req.query.status : '';
+const orderList = (kind) => (req, res) => {
+  const STATUS = boost.statusMap(kind);
+  const status = STATUS[req.query.status] ? req.query.status : '';
   const result = paginate(db, {
     select: 'o.code, o.game_name, o.total, o.discount, o.status, o.created_at, o.updated_at, (SELECT GROUP_CONCAT(name || \' ×\' || qty, \', \') FROM boost_order_items i WHERE i.order_id = o.id) AS items',
-    from: 'boost_orders o', where: `WHERE o.user_id = ?${status ? ' AND o.status = ?' : ''}`, params: status ? [req.user.id, status] : [req.user.id],
+    from: 'boost_orders o', where: `WHERE o.user_id = ? AND o.kind = ?${status ? ' AND o.status = ?' : ''}`, params: status ? [req.user.id, kind, status] : [req.user.id, kind],
     order: 'ORDER BY o.id DESC', page: toInt(req.query.page, 1, 1), perPage: 15,
   });
-  res.render('user/boost-list', { title: 'Đơn cày thuê', result, query: { status }, status, STATUS: boost.STATUS, tab: 'boost' });
-});
+  res.render('user/boost-list', { title: `Đơn ${boost.kindOf(kind).name.toLowerCase()}`, result, query: { status }, status, STATUS, kind, base: `/user/${kind}`, tab: kind });
+};
+router.get('/boost', orderList('boost'));
+router.get('/topup', orderList('topup'));
 
 const myBoost = (req) => db.prepare('SELECT * FROM boost_orders WHERE code = ? AND user_id = ?').get(str(req.params.code, 20).toUpperCase(), req.user.id);
 router.get('/boost/:code', (req, res, next) => {
@@ -61,11 +64,11 @@ router.get('/boost/:code', (req, res, next) => {
   const items = db.prepare('SELECT * FROM boost_order_items WHERE order_id = ? ORDER BY id').all(o.id);
   const events = db.prepare('SELECT * FROM boost_order_events WHERE order_id = ? ORDER BY id').all(o.id);
   const game = db.prepare('SELECT slug FROM games WHERE id = ?').get(o.game_id);
-  const login = o.status === 'need_info' ? boost.readLogin(o) : null;
+  const login = o.status === 'need_info' && o.method === 'login' ? boost.readLogin(o) : null;
   res.set('Cache-Control', 'no-store');
   res.render('user/boost-detail', {
-    title: `Đơn cày thuê ${o.code}`, o, items, events, game, login, STATUS: boost.STATUS, open: boost.OPEN.includes(o.status),
-    canCancel: o.status === 'received' && getSettings().boost_self_cancel !== '0', tab: 'boost',
+    title: `Đơn ${boost.kindOf(o.kind).name.toLowerCase()} ${o.code}`, o, items, events, game, login, STATUS: boost.statusMap(o.kind), open: boost.OPEN.includes(o.status),
+    K: boost.kindOf(o.kind), canCancel: o.status === 'received' && getSettings().boost_self_cancel !== '0', tab: o.kind === 'topup' ? 'topup' : 'boost',
   });
 });
 router.get('/boost/:code/status', (req, res) => {

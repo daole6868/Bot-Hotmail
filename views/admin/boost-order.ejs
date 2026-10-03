@@ -16,6 +16,14 @@
       <tr><th>Đặt lúc</th><td><%= H.fmtDate(o.created_at) %></td></tr>
     </table>
 
+    <% if (o.method === 'uid') { %>
+    <h3><%- I('user') %> Thông tin nạp (UID)</h3>
+    <div class="a-bo-cred a-bo-uid">
+      <div><span>UID</span><code><%= o.uid %></code><button type="button" class="a-icon-btn" data-copy="<%= o.uid %>" title="Sao chép"><%- I('copy') %></button></div>
+      <div><span>Tên nhân vật</span><code><%= o.char_name || '—' %></code></div>
+      <div><span>Server</span><code><%= o.server || '—' %></code></div>
+    </div>
+    <% } else { %>
     <h3><%- I('key') %> Tài khoản game</h3>
     <% if (o.login_enc) { %>
       <div class="a-bo-login" data-bo-login="/admin/boost/orders/<%= o.id %>/login">
@@ -27,8 +35,9 @@
       </div>
       <p class="a-field-hint">Mỗi lần xem được ghi vào nhật ký. Tự xóa sau khi đơn xong / hủy theo cài đặt.</p>
     <% } else { %><p class="a-muted"><%= o.login_wiped_at ? 'Đã tự xóa lúc ' + H.fmtDate(o.login_wiped_at) : 'Không có' %></p><% } %>
+    <% } %>
 
-    <h3>Gói đã thuê</h3>
+    <h3><%= o.kind === 'topup' ? 'Gói đã nạp' : 'Gói đã thuê' %></h3>
     <div class="a-table-wrap"><table class="a-table">
       <thead><tr><th>Gói</th><th class="a-num">Đơn giá</th><th class="a-num">SL</th><th class="a-num">Thành tiền</th></tr></thead>
       <% items.forEach(i => { %><tr><td><b><%= i.name %></b><div class="a-muted a-small"><%= i.category_name %></div></td><td class="a-num"><%= H.money(i.price) %></td><td class="a-num"><%= i.qty %> <%= i.unit %></td><td class="a-num"><%= H.money(i.line_total) %></td></tr><% }) %>
@@ -41,7 +50,7 @@
       <% if (o.status === 'cancelled') { %>
         <p class="a-muted">Đơn đã hủy<%= o.refunded ? ' và đã hoàn ' + H.money(o.total) + ' cho khách' : '' %>.</p>
       <% } else { %>
-      <form method="post" action="/admin/boost/orders/<%= o.id %>/status" class="a-form" data-bo-status>
+      <form method="post" action="/admin/boost/orders/<%= o.id %>/status" class="a-form" enctype="multipart/form-data" data-bo-status>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="a-bo-status">
           <% Object.entries(STATUS).forEach(([k, v]) => { %>
@@ -49,7 +58,10 @@
           <% }) %>
         </div>
         <label>Lời nhắn cho khách <small class="a-muted">(hiện trong đơn và email)</small></label>
-        <textarea name="message" rows="3" maxlength="1000" placeholder="VD: Đang cày, dự kiến xong tối nay / Mật khẩu sai, vui lòng cập nhật lại"></textarea>
+        <textarea name="message" rows="3" maxlength="1000" placeholder="<%= o.kind === 'topup' ? 'VD: Đã nạp xong / UID không tồn tại, vui lòng kiểm tra lại' : 'VD: Đang cày, dự kiến xong tối nay / Mật khẩu sai, vui lòng cập nhật lại' %>"></textarea>
+        <label>Ảnh xác nhận <small class="a-muted">(không bắt buộc — VD ảnh chụp đã nạp xong, khách xem trong đơn)</small></label>
+        <input type="file" name="proof" accept="image/*">
+        <% if (o.proof) { %><a href="<%= o.proof %>" target="_blank" rel="noopener" class="a-bo-proof"><img src="<%= o.proof %>" alt="Ảnh xác nhận" loading="lazy"></a><p class="a-field-hint">Tải ảnh mới sẽ thay ảnh hiện tại.</p><% } %>
         <p class="a-field-hint">Chọn “Đã hủy – hoàn tiền” sẽ tự hoàn <b><%= H.money(o.total) %></b> vào số dư khách.</p>
         <button class="a-btn a-primary"><%- I('save') %> Cập nhật</button>
       </form>

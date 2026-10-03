@@ -24,10 +24,23 @@
       <input type="radio" name="sale_type" value="boost" <%= type === 'boost' ? 'checked' : '' %> <%= locked && type !== 'boost' ? 'disabled' : '' %>>
       <span class="a-choice-box"><span class="a-type-badge boost"><%- I('g-swords') %> Cày thuê</span><b>Dịch vụ cày thuê</b><small>Bên trong có danh mục con (cày rank, cày level...), mỗi danh mục con chứa các gói.</small></span>
     </label>
+    <label class="a-choice-item <%= locked && type !== 'topup' ? 'is-disabled' : '' %>">
+      <input type="radio" name="sale_type" value="topup" <%= type === 'topup' ? 'checked' : '' %> <%= locked && type !== 'topup' ? 'disabled' : '' %>>
+      <span class="a-choice-box"><span class="a-type-badge topup"><%- I('g-gem') %> Nạp game</span><b>Nạp game</b><small>Chứa thẳng các gói nạp (không có danh mục con). Khách nhập UID hoặc tài khoản.</small></span>
+    </label>
+  </div>
+
+  <div class="a-topup-only">
+    <label>Khách nhập thông tin nạp bằng <%- R %></label>
+    <div class="a-choice a-choice-2">
+      <label class="a-choice-item"><input type="radio" name="topup_method" value="uid" <%= topupMethod === 'uid' ? 'checked' : '' %>><span class="a-choice-box"><b>UID</b><small>Khách nhập UID (2 lần cho chắc), tên nhân vật, server. Shop không cần đăng nhập.</small></span></label>
+      <label class="a-choice-item"><input type="radio" name="topup_method" value="login" <%= topupMethod !== 'uid' ? 'checked' : '' %>><span class="a-choice-box"><b>LOG (tài khoản / mật khẩu)</b><small>Khách nhập tài khoản + mật khẩu game, shop đăng nhập để nạp. Được mã hóa và tự xóa như cày thuê.</small></span></label>
+    </div>
   </div>
 
   <div class="a-boost-only">
     <% [['cat', 'Danh mục con'], ['pkg', 'Gói']].forEach(([lv, name]) => { const d = boostDisp[lv]; %>
+    <div class="<%= lv === 'cat' ? 'a-boost-cat' : '' %>">
     <label>Hiển thị <%= name %> ngoài web</label>
     <div class="a-row a-row-4">
       <select name="<%= lv %>_mode" title="Kiểu hiển thị"><option value="image" <%= d.mode === 'image' ? 'selected' : '' %>>Kiểu Ảnh</option><option value="icon" <%= d.mode === 'icon' ? 'selected' : '' %>>Kiểu Icon</option></select>
@@ -35,12 +48,13 @@
       <select name="<%= lv %>_cols_m" title="Số cột trên điện thoại (kiểu Ảnh)"><% [1,2,3].forEach(n => { %><option value="<%= n %>" <%= d.colsM === n ? 'selected' : '' %>>ĐT: <%= n %> cột</option><% }) %></select>
       <input type="number" name="<%= lv %>_max" min="1" max="200" value="<%= d.max %>" title="Số ô hiện tối đa, nhiều hơn thì cuộn">
     </div>
+    </div>
     <% }) %>
     <p class="a-field-hint">Kiểu Icon: hàng ngang, 1 cột trên điện thoại, 2 cột trên PC (bỏ qua số cột). Ô cuối: số ô hiện tối đa, nhiều hơn thì nằm trong khung cuộn.</p>
   </div>
 
-  <label>Mô tả</label>
-  <input name="description" maxlength="1000" value="<%= c ? c.description : '' %>">
+  <label>Mô tả <small class="a-muted a-topup-only-inline">(Nạp game: hiện trong khung phía trên các gói)</small></label>
+  <textarea name="description" rows="2" maxlength="1000"><%= c ? c.description : '' %></textarea>
   <label>Đường dẫn (slug) <small class="a-muted">để trống tự tạo</small></label>
   <input name="slug" maxlength="80" value="<%= c ? c.slug : '' %>">
   <div class="a-upload-row">

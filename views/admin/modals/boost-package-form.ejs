@@ -3,9 +3,9 @@
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <input type="hidden" name="_back" value="">
   <input type="hidden" name="id" value="<%= p ? p.id : '' %>">
-  <label>Danh mục con <%- R %></label>
+  <label>Danh mục <%- R %></label>
   <select name="category_id" required>
-    <% categories.forEach(c => { %><option value="<%= c.id %>" <%= catId === c.id ? 'selected' : '' %>><%= c.game_name %> › <%= c.parent_name %> › <%= c.name %></option><% }) %>
+    <% categories.forEach(c => { %><option value="<%= c.id %>" <%= catId === c.id ? 'selected' : '' %>><%= c.sale_type === 'topup' ? `Nạp game › ${c.game_name} › ${c.parent_name}` : `${c.game_name} › ${c.parent_name} › ${c.name}` %></option><% }) %>
   </select>
   <label>Tên gói <%- R %></label>
   <input name="name" required maxlength="150" value="<%= p ? p.name : '' %>" placeholder="VD: Đồng lên Bạc, 10 trận thường" autofocus>
@@ -17,6 +17,9 @@
     <div><label>Đơn vị</label><input name="unit" maxlength="20" value="<%= p ? p.unit : 'gói' %>" placeholder="gói, trận, sao, level"></div>
     <div><label>Thời gian hoàn thành</label><input name="eta" maxlength="60" value="<%= p ? p.eta || '' : '' %>" placeholder="VD: 1-2 ngày"></div>
   </div>
+  <label>Nhãn nổi bật <small class="a-muted">(không bắt buộc, hiện ở góc gói)</small></label>
+  <input name="badge" maxlength="20" value="<%= p ? p.badge || '' : '' %>" placeholder="VD: Bán chạy, Hot, -20%" list="badgeList">
+  <datalist id="badgeList"><option value="Bán chạy"><option value="Hot"><option value="Mới"><option value="Giá tốt"><option value="-10%"><option value="-20%"></datalist>
   <div class="a-row">
     <div><label>Số lượng tối thiểu</label><input type="number" name="min_qty" min="1" max="1000" value="<%= p ? p.min_qty : 1 %>"></div>
     <div><label>Số lượng tối đa</label><input type="number" name="max_qty" min="1" max="1000" value="<%= p ? p.max_qty : 10 %>"></div>

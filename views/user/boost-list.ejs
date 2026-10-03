@@ -1,15 +1,15 @@
 <%- include('../partials/header') %>
 <%- include('../partials/user-nav') %>
 <div class="chips bo-filter">
-  <a href="/user/boost" class="chip <%= !status ? 'active' : '' %>">Tất cả</a>
-  <% Object.entries(STATUS).forEach(([k, v]) => { %><a href="/user/boost?status=<%= k %>" class="chip <%= status === k ? 'active' : '' %>"><%= v.label %></a><% }) %>
+  <a href="<%= base %>" class="chip <%= !status ? 'active' : '' %>">Tất cả</a>
+  <% Object.entries(STATUS).forEach(([k, v]) => { %><a href="<%= base %>?status=<%= k %>" class="chip <%= status === k ? 'active' : '' %>"><%= v.label %></a><% }) %>
 </div>
 <div class="card">
   <div class="table-wrap">
   <table class="table table-cards">
-    <thead><tr><th>Mã đơn</th><th>Dịch vụ</th><th>Thanh toán</th><th>Trạng thái</th><th>Thời gian</th><th></th></tr></thead>
+    <thead><tr><th>Mã đơn</th><th><%= kind === 'topup' ? 'Gói nạp' : 'Dịch vụ' %></th><th>Thanh toán</th><th>Trạng thái</th><th>Thời gian</th><th></th></tr></thead>
     <tbody>
-    <% if (!result.rows.length) { %><tr><td colspan="6" class="center muted tc-empty">Chưa có đơn cày thuê</td></tr><% } %>
+    <% if (!result.rows.length) { %><tr><td colspan="6" class="center muted tc-empty">Chưa có đơn <%= kind === 'topup' ? 'nạp game' : 'cày thuê' %></td></tr><% } %>
     <% result.rows.forEach(o => { %>
       <tr>
         <td class="tc-head"><b><%= o.code %></b></td>

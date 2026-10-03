@@ -488,7 +488,7 @@
 
   const bPage = $('[data-boost-page]');
   if (bPage) {
-    const gameId = bPage.dataset.game;
+    const gameId = bPage.dataset.game, catId = bPage.dataset.cat || '';
     const form = $('#bForm'), fab = $('.bp-fab'), box = $('#boostCartBox');
     let subtotal = +($('.ck-cart')?.dataset.subtotal || 0), count = +($('.ck-cart')?.dataset.count || 0);
     let discount = 0, couponOk = '';
@@ -515,7 +515,7 @@
       if (!code) { msg.textContent = ''; renderTotals(); return; }
       if (!subtotal) { renderTotals(); return; }
       try {
-        const j = await post('/api/boost/coupon/check', { game: gameId, code });
+        const j = await post('/api/boost/coupon/check', { game: gameId, cat: catId, code });
         if (j.ok) { discount = j.discount; couponOk = code.toUpperCase(); }
         msg.textContent = j.message; msg.className = 'small ' + (j.ok ? 'text-ok' : 'text-err');
       } catch (e) { if (!silent) msg.textContent = 'Lỗi kết nối'; }
@@ -600,11 +600,15 @@
       form.addEventListener('submit', async (e) => {
         if (sending) return;
         e.preventDefault();
+        const u1 = form.elements.uid, u2 = form.elements.uid2, ue = $('[data-uid-err]', form);
+        if (u1 && u2 && u1.value.trim() !== u2.value.trim()) { if (ue) ue.hidden = false; u2.focus(); toast('Hai lần nhập UID không khớp', '#dc2626'); return; }
+        if (ue) ue.hidden = true;
         if ($('#bCoupon').value.trim().toUpperCase() !== couponOk) await checkCoupon(true);
         const code = $('#bCoupon').value.trim();
         const total = Math.max(0, subtotal - discount);
         const rows = $$('[data-cart-row]').map((r) => `<div><span>${esc($('.ck-info b', r).textContent)} × ${esc($('[data-cart-input]', r).value)}</span><b>${esc($('.ck-line', r).textContent)}</b></div>`).join('');
-        $('[data-bcf-lines]', cf).innerHTML = rows
+        const who = u1 ? `<div><span>UID</span><b>${esc(u1.value.trim())}${form.elements.server?.value.trim() ? ' · ' + esc(form.elements.server.value.trim()) : ''}</b></div>` : '';
+        $('[data-bcf-lines]', cf).innerHTML = who + rows
           + (discount ? `<div><span>Mã giảm giá <em>${esc(couponOk)}</em></span><b class="bc-minus">-${money(discount)}</b></div>` : '')
           + `<div class="bc-total"><span>Thanh toán</span><b>${money(total)}</b></div>`;
         const after = balance - total;

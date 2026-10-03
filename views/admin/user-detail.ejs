@@ -35,7 +35,7 @@
 </div>
 <% const empty = (n, cols) => n ? '' : `<tr><td colspan="${cols}" class="a-muted">Chưa có</td></tr>`;
    const dst = { pending: ['yellow', 'Chờ'], success: ['green', 'Thành công'], cancelled: ['', 'Hủy'], expired: ['red', 'Quá hạn'] };
-   const btl = { deposit: 'Nạp tiền', purchase: 'Mua hàng', refund: 'Hoàn tiền', admin: 'Điều chỉnh' }; %>
+   const btl = { deposit: 'Nạp tiền', purchase: 'Mua hàng', boost: 'Cày thuê', topup: 'Nạp game', refund: 'Hoàn tiền', admin: 'Điều chỉnh' }; %>
 <div class="a-grid-2">
   <div class="a-card"><h3>Đơn hàng gần đây</h3>
     <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Tổng</th><th>Trạng thái</th><th>Lúc</th></tr></thead>

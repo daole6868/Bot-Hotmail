@@ -64,16 +64,16 @@ function loadHomeBlocks() {
       const gid = toInt(st.game_id);
       b.packages = db.prepare(`SELECT p.*, c.name AS category_name, c.slug AS category_slug, g.name AS game_name, g.slug AS game_slug, pc.slug AS parent_slug
         FROM boost_packages p JOIN boost_categories c ON c.id = p.category_id JOIN categories pc ON pc.id = c.parent_id JOIN games g ON g.id = c.game_id
-        WHERE p.is_active = 1 AND c.is_active = 1 AND pc.is_active = 1 AND g.is_active = 1${gid ? ' AND g.id = ?' : ''} ORDER BY ${order} LIMIT ?`)
+        WHERE p.is_active = 1 AND c.is_active = 1 AND pc.is_active = 1 AND pc.sale_type = 'boost' AND g.is_active = 1${gid ? ' AND g.id = ?' : ''} ORDER BY ${order} LIMIT ?`)
         .all(...(gid ? [gid] : []), toInt(st.limit, 8, 1, 48));
     } else if (b.type === 'recent') {
-      // Đơn mua acc + đơn cày thuê (không tính đơn đã hủy / hoàn tiền), mới nhất trước
+      // Đơn mua acc + đơn cày thuê / nạp game (không tính đơn đã hủy / hoàn tiền), mới nhất trước
       const lim = toInt(st.limit, 10, 1, 30);
       b.recent = db.prepare(`SELECT * FROM (
           SELECT o.product_title, o.total, o.created_at, u.username FROM orders o JOIN users u ON u.id = o.user_id
             WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT ?)
         UNION ALL SELECT * FROM (
-          SELECT 'Cày thuê: ' || (SELECT GROUP_CONCAT(name, ', ') FROM boost_order_items i WHERE i.order_id = b.id), b.total, b.created_at, u.username
+          SELECT (CASE b.kind WHEN 'topup' THEN 'Nạp game: ' ELSE 'Cày thuê: ' END) || (SELECT GROUP_CONCAT(name, ', ') FROM boost_order_items i WHERE i.order_id = b.id), b.total, b.created_at, u.username
             FROM boost_orders b JOIN users u ON u.id = b.user_id WHERE b.status != 'cancelled' ORDER BY b.id DESC LIMIT ?)
         ORDER BY created_at DESC LIMIT ?`).all(lim, lim, lim).map((o) => ({ ...o, username: maskName(o.username) }));
     }
@@ -112,10 +112,10 @@ router.get('/game/:slug', (req, res, next) => {
       (SELECT COALESCE(SUM(sold_count),0) FROM products p WHERE p.category_id = c.id) AS sold
     FROM categories c WHERE c.game_id = ? AND c.is_active = 1 ORDER BY c.sort_order, c.id`).all(game.id);
   const coupons = publicCoupons(10, 'acc').filter((c) => !c.game_id || c.game_id === game.id);
-  // Danh mục loại Cày thuê: số gói / lượt thuê / giá từ lấy theo các gói trong danh mục con
+  // Danh mục loại Cày thuê / Nạp game (gói nằm trong danh mục con ẩn): số gói / lượt thuê / giá từ lấy theo các gói trong danh mục con
   const bStat = db.prepare(`SELECT COUNT(p.id) pkgs, MIN(p.price) min_price, COALESCE(SUM(p.sold_count), 0) sold
     FROM boost_categories b JOIN boost_packages p ON p.category_id = b.id AND p.is_active = 1 WHERE b.parent_id = ? AND b.is_active = 1`);
-  categories.forEach((c) => { if (c.sale_type === 'boost') Object.assign(c, bStat.get(c.id)); });
+  categories.forEach((c) => { if (c.sale_type === 'boost' || c.sale_type === 'topup') Object.assign(c, bStat.get(c.id)); });
   res.render('pages/game', { title: game.name, game, categories, coupons, breadcrumb: [{ name: game.name }] });
 });
 

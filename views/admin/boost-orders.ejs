@@ -1,18 +1,18 @@
 <%- include('_header') %>
 <div class="a-chip-row a-mb">
-  <a class="a-btn a-xs <%= !query.status ? 'a-primary' : '' %>" href="/admin/boost/orders">Tất cả</a>
-  <a class="a-btn a-xs <%= query.status === 'open' ? 'a-primary' : '' %>" href="/admin/boost/orders?status=open">Chưa xong <b><%= (counts.received || 0) + (counts.processing || 0) + (counts.need_info || 0) %></b></a>
-  <% Object.entries(STATUS).forEach(([k, v]) => { %><a class="a-btn a-xs <%= query.status === k ? 'a-primary' : '' %>" href="/admin/boost/orders?status=<%= k %>"><%= v.label %> <b><%= counts[k] || 0 %></b></a><% }) %>
+  <a class="a-btn a-xs <%= !query.status ? 'a-primary' : '' %>" href="<%= base %>">Tất cả</a>
+  <a class="a-btn a-xs <%= query.status === 'open' ? 'a-primary' : '' %>" href="<%= base %>?status=open">Chưa xong <b><%= (counts.received || 0) + (counts.processing || 0) + (counts.need_info || 0) %></b></a>
+  <% Object.entries(STATUS).forEach(([k, v]) => { %><a class="a-btn a-xs <%= query.status === k ? 'a-primary' : '' %>" href="<%= base %>?status=<%= k %>"><%= v.label %> <b><%= counts[k] || 0 %></b></a><% }) %>
 </div>
 <div class="a-card">
   <form class="a-filter" method="get">
     <input type="hidden" name="status" value="<%= query.status %>">
-    <input name="q" value="<%= query.q %>" placeholder="Mã đơn CT…, username">
+    <input name="q" value="<%= query.q %>" placeholder="Mã đơn <%= kind === 'topup' ? 'NG' : 'CT' %>…, username">
     <select name="game"><option value="">-- Game --</option><% games.forEach(g => { %><option value="<%= g.id %>" <%= query.game === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select>
     <button class="a-btn">Lọc</button>
   </form>
   <div class="a-table-wrap"><table class="a-table">
-    <thead><tr><th>Mã đơn</th><th>Khách</th><th>Dịch vụ</th><th>Tổng</th><th>Trạng thái</th><th>Đặt lúc</th><th></th></tr></thead>
+    <thead><tr><th>Mã đơn</th><th>Khách</th><th><%= kind === 'topup' ? 'Gói nạp' : 'Dịch vụ' %></th><th>Tổng</th><th>Trạng thái</th><th>Đặt lúc</th><th></th></tr></thead>
     <% if (!result.rows.length) { %><tr><td colspan="7" class="a-muted">Không có đơn</td></tr><% } %>
     <% result.rows.forEach(o => { const st = STATUS[o.status]; %>
       <tr>

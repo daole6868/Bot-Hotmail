@@ -17,8 +17,10 @@ function validateCoupon(code, userId, price, gameId, kind = 'acc') {
   if (c.expires_at && t > c.expires_at) return { ok: false, message: 'Mã đã hết hạn' };
   if (c.usage_limit != null && c.used_count >= c.usage_limit) return { ok: false, message: 'Mã đã hết lượt sử dụng' };
   if (c.game_id && gameId && c.game_id !== gameId) return { ok: false, message: 'Mã không áp dụng cho game này' };
-  // Phạm vi: all = mọi đơn; acc = chỉ mua acc; boost = chỉ đơn cày thuê
-  if (c.scope && c.scope !== 'all' && c.scope !== kind) return { ok: false, message: c.scope === 'boost' ? 'Mã chỉ áp dụng cho đơn cày thuê' : 'Mã chỉ áp dụng khi mua acc' };
+  // Phạm vi: all = mọi đơn; acc = chỉ mua acc; boost = chỉ đơn cày thuê; topup = chỉ đơn nạp game
+  if (c.scope && c.scope !== 'all' && c.scope !== kind) {
+    return { ok: false, message: { boost: 'Mã chỉ áp dụng cho đơn cày thuê', topup: 'Mã chỉ áp dụng cho đơn nạp game', acc: 'Mã chỉ áp dụng khi mua acc' }[c.scope] || 'Mã không áp dụng cho đơn này' };
+  }
   if (price < c.min_order) return { ok: false, message: `Đơn tối thiểu ${money(c.min_order)} để dùng mã này` };
   if (userId && c.per_user_limit) {
     const used = db.prepare('SELECT COUNT(*) n FROM coupon_usages WHERE coupon_id = ? AND user_id = ?').get(c.id, userId).n;

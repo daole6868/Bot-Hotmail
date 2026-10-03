@@ -15,21 +15,21 @@
   <% } %>
   <div class="cat-grid">
     <% categories.forEach(c => { %>
-      <% if (c.sale_type === 'boost') { %>
+      <% if (c.sale_type === 'boost' || c.sale_type === 'topup') { const tp = c.sale_type === 'topup'; %>
       <a href="/game/<%= game.slug %>/<%= c.slug %>" class="card cat-card boost-tile">
-        <div class="thumb"><% if (c.image) { %><img src="<%= c.image %>" alt="<%= c.name %>" loading="lazy"><% } else { %><span class="boost-tile-art"><%- I('g-swords') %></span><% } %></div>
+        <div class="thumb"><% if (c.image) { %><img src="<%= c.image %>" alt="<%= c.name %>" loading="lazy"><% } else { %><span class="boost-tile-art"><%- I(tp ? 'g-gem' : 'g-swords') %></span><% } %></div>
         <div class="card-body">
           <h3><%= c.name %></h3>
           <% if (c.description) { %><p class="muted small card-desc"><%= c.description %></p><% } %>
           <div class="stat-boxes">
-            <div class="stat-box"><span class="stat-label"><%- I('layers') %> Dịch vụ</span><b><%= (c.pkgs || 0).toLocaleString('vi-VN') %></b></div>
-            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã thuê</span><b><%= (c.sold || 0).toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box"><span class="stat-label"><%- I('layers') %> <%= tp ? 'Gói nạp' : 'Dịch vụ' %></span><b><%= (c.pkgs || 0).toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> <%= tp ? 'Đã nạp' : 'Đã thuê' %></span><b><%= (c.sold || 0).toLocaleString('vi-VN') %></b></div>
           </div>
           <div class="price-row cat-price">
             <span class="muted small">Chỉ từ</span>
             <strong class="price"><%= c.min_price != null ? H.money(c.min_price) : 'Liên hệ' %></strong>
           </div>
-          <span class="btn btn-block btn-primary">Xem dịch vụ</span>
+          <span class="btn btn-block btn-primary"><%= tp ? 'Nạp ngay' : 'Xem dịch vụ' %></span>
         </div>
       </a>
       <% } else { %>

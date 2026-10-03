@@ -1,5 +1,5 @@
 <%#
-  1 ô danh mục / gói cày thuê.  it, kind: 'cat' | 'pkg', mode: 'image' | 'icon', href (danh mục), inCart (số lượng trong giỏ), loginUrl
+  1 ô danh mục / gói cày thuê / nạp game.  it, kind: 'cat' | 'pkg', mode: 'image' | 'icon', href (danh mục), inCart (số lượng trong giỏ), loginUrl, topup
 %>
 <% const isCat = kind === 'cat';
    const icoBox = `<span class="bx-ico" style="--ic:${it.icon_color || '#8b5cf6'}">${I(it.icon || 'star')}</span>`;
@@ -7,6 +7,8 @@
      ? (it.min_price != null ? `<span class="muted small">Từ</span> <b class="price">${H.money(it.min_price)}</b>` : '<span class="muted small">Chưa có gói</span>')
      : `${it.old_price && it.old_price > it.price ? `<del class="muted small">${H.money(it.old_price)}</del> ` : ''}<b class="price">${H.money(it.price)}</b><span class="muted small">/${it.unit}</span>`;
 %>
+<% const hasBadge = !isCat && !!it.badge;
+   const loginTxt = typeof topup !== 'undefined' && topup ? 'Đăng nhập để nạp' : 'Đăng nhập để thuê'; %>
 <% if (isCat) { %>
   <a href="<%= href %>" class="bx-item bx-<%= mode %> card">
     <% if (mode === 'image') { %>
@@ -29,7 +31,7 @@
   <div class="bx-item bx-<%= mode %> card<%= it.is_paused ? ' is-paused' : '' %>" data-pkg="<%= it.id %>">
     <% if (mode === 'image') { %>
       <div class="bx-thumb"><% if (it.image) { %><img src="<%= it.image %>" alt="<%= it.name %>" loading="lazy"><% } else { %><span class="bx-thumb-ico" style="--ic:<%= it.icon_color %>"><%- I(it.icon) %></span><% } %>
-        <% if (inCart) { %><span class="bx-incart" data-incart><%- I('cart') %> <%= inCart %></span><% } %></div>
+        <% if (inCart) { %><span class="bx-incart" data-incart><%- I('cart') %> <%= inCart %></span><% } %><% if (hasBadge) { %><span class="bx-badge"><%= it.badge %></span><% } %></div>
       <div class="bx-body">
         <h3><%= it.name %></h3>
         <% if (it.eta) { %><div class="bx-eta"><%- I('clock') %> <%= it.eta %></div><% } %>
@@ -37,12 +39,12 @@
         <div class="bx-foot"><span class="bx-price"><%- priceHtml %></span></div>
         <div class="bx-act">
           <% if (it.is_paused) { %><span class="bx-paused"><%- I('clock') %> Tạm ngưng nhận đơn</span>
-          <% } else if (!user) { %><a class="btn btn-sm btn-ghost" href="<%= loginUrl %>"><%- I('user') %> Đăng nhập để thuê</a>
+          <% } else if (!user) { %><a class="btn btn-sm btn-ghost" href="<%= loginUrl %>"><%- I('user') %> <%= loginTxt %></a>
           <% } else { %><button type="button" class="btn btn-sm btn-primary" data-boost-add="<%= it.id %>"><%- I('cart') %> Thêm vào giỏ</button><% } %>
         </div>
       </div>
     <% } else { %>
-      <%- icoBox %>
+      <%- icoBox %><% if (hasBadge) { %><span class="bx-badge"><%= it.badge %></span><% } %>
       <div class="bx-body">
         <h3><%= it.name %> <% if (inCart) { %><span class="bx-incart" data-incart><%- I('cart') %> <%= inCart %></span><% } %></h3>
         <div class="bx-sub"><span class="bx-price"><%- priceHtml %></span><% if (it.eta) { %><span><%- I('clock') %> <%= it.eta %></span><% } %></div>
@@ -50,7 +52,7 @@
         <% if (it.is_paused) { %><span class="bx-paused"><%- I('clock') %> Tạm ngưng nhận đơn</span><% } %>
       </div>
       <% if (!it.is_paused) { %>
-        <% if (!user) { %><a class="bx-add-ico" href="<%= loginUrl %>" title="Đăng nhập để thuê" aria-label="Đăng nhập để thuê"><%- I('cart') %></a>
+        <% if (!user) { %><a class="bx-add-ico" href="<%= loginUrl %>" title="<%= loginTxt %>" aria-label="<%= loginTxt %>"><%- I('cart') %></a>
         <% } else { %><button type="button" class="bx-add-ico" data-boost-add="<%= it.id %>" title="Thêm vào giỏ" aria-label="Thêm vào giỏ"><%- I('cart') %></button><% } %>
       <% } %>
     <% } %>

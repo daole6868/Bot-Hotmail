@@ -469,6 +469,16 @@ addColumn('daily_stats', 'boost_orders', 'INTEGER NOT NULL DEFAULT 0');
 // -> bên trong là danh mục con (boost_categories.parent_id) -> gói. options = cài đặt hiển thị riêng của danh mục cày thuê
 addColumn('categories', 'options', 'TEXT');
 addColumn('boost_orders', 'contact', 'TEXT');
+// Nạp game dùng chung bộ máy đơn với cày thuê: kind = 'boost' | 'topup'; method = 'login' (tài khoản/mật khẩu) | 'uid'
+addColumn('boost_orders', 'kind', "TEXT NOT NULL DEFAULT 'boost'");
+addColumn('boost_orders', 'method', "TEXT NOT NULL DEFAULT 'login'");
+addColumn('boost_orders', 'uid', 'TEXT');
+addColumn('boost_orders', 'char_name', 'TEXT');
+addColumn('boost_orders', 'proof', 'TEXT'); // ảnh xác nhận đã nạp / đã xong
+db.exec('CREATE INDEX IF NOT EXISTS idx_border_kind ON boost_orders(kind, status, created_at)');
+addColumn('boost_packages', 'badge', 'TEXT'); // nhãn trên gói: Bán chạy / Hot / -20%
+addColumn('daily_stats', 'topup_revenue', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('daily_stats', 'topup_orders', 'INTEGER NOT NULL DEFAULT 0');
 // Thẻ mã giảm giá thấp hơn: kích cỡ mặc định cũ 600x350 -> 600x260 (1 lần)
 if (!db.prepare("SELECT 1 FROM settings WHERE key = 'mig_coupon_260'").get()) {
   db.prepare("UPDATE settings SET value = '600x260' WHERE key = 'coupon_size' AND value = '600x350'").run();
@@ -650,7 +660,7 @@ function logActivity(userId, action, detail, ip) {
 
 // Cộng dồn thống kê ngày (giờ VN)
 function bumpStat(field, amount = 1) {
-  const allowed = ['revenue', 'orders', 'deposits', 'deposit_count', 'new_users', 'refunds', 'boost_revenue', 'boost_orders'];
+  const allowed = ['revenue', 'orders', 'deposits', 'deposit_count', 'new_users', 'refunds', 'boost_revenue', 'boost_orders', 'topup_revenue', 'topup_orders'];
   if (!allowed.includes(field)) return;
   const day = vnDay();
   db.prepare(`INSERT INTO daily_stats(day, ${field}) VALUES(?, ?)

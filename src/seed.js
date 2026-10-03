@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS = {
   boost_cart_hours: '24', boost_self_cancel: '1', boost_wipe_days: '7', boost_max_open: '5', boost_tg_notify: '1', mail_on_boost: '1',
   boost_tile_title: 'Cày thuê', boost_tile_desc: 'Thuê cày cấp, nhiệm vụ, farm nguyên liệu — làm nhanh, uy tín',
   boost_terms: '1. Shop chỉ đăng nhập để thực hiện đúng gói bạn đã chọn, không thay đổi thông tin tài khoản.\n2. Vui lòng tắt xác minh 2 lớp / cung cấp mã khi được yêu cầu.\n3. Không đăng nhập vào tài khoản trong thời gian shop đang xử lý đơn.\n4. Đơn bị hủy do không đăng nhập được sẽ được hoàn tiền vào số dư.',
+  topup_terms: '1. Vui lòng nhập chính xác UID / server / tài khoản. Shop không chịu trách nhiệm khi bạn nhập sai thông tin.\n2. Thời gian nạp thường từ 5 – 30 phút, cao điểm có thể lâu hơn.\n3. Không đăng nhập vào tài khoản trong thời gian shop đang nạp (với hình thức đăng nhập).\n4. Đơn không thực hiện được sẽ được hoàn tiền vào số dư.',
   nify_enabled: '1', acn_enabled: '0', acn_bank: 'ACBnew', acn_interval: '5', acn_extra_pct: '20',
   site_name: 'ShopAcc.VN',
   site_slogan: 'Shop acc game uy tín - Giao dịch tự động 24/7',

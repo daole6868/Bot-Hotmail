@@ -134,17 +134,18 @@ const TEMPLATES = {
   }),
   boost: (d) => {
     const colors = { received: '#2563eb', processing: '#d97706', need_info: '#ea580c', done: '#16a34a', cancelled: '#dc2626' };
-    const titles = { received: 'Đã nhận đơn cày thuê', processing: 'Đơn cày thuê đang được xử lý', need_info: 'Đơn cày thuê cần bổ sung thông tin', done: 'Đơn cày thuê đã hoàn thành 🎉', cancelled: 'Đơn cày thuê đã hủy' };
+    const k = (d.kindName || 'Cày thuê').toLowerCase();
+    const titles = { received: `Đã nhận đơn ${k}`, processing: `Đơn ${k} đang được xử lý`, need_info: `Đơn ${k} cần bổ sung thông tin`, done: `Đơn ${k} đã hoàn thành 🎉`, cancelled: `Đơn ${k} đã hủy` };
     const items = (d.items || []).map((i) => row(i.name + ' x' + i.qty, money(i.line)));
     return {
       subject: `[${d.code}] ${d.label}`,
       html: layout({
         title: titles[d.status] || d.label,
-        intro: `Xin chào <b>${esc(d.username)}</b>, đơn cày thuê <b>${esc(d.code)}</b> của bạn: <b style="color:${colors[d.status] || '#111'}">${esc(d.label)}</b>.`,
+        intro: `Xin chào <b>${esc(d.username)}</b>, đơn ${esc(k)} <b>${esc(d.code)}</b> của bạn: <b style="color:${colors[d.status] || '#111'}">${esc(d.label)}</b>.`,
         body: table([...items, row('Tổng tiền', money(d.total)), ...(d.msg ? [row('Lời nhắn từ shop', esc(d.msg))] : []),
           ...(d.refunded ? [row('Hoàn tiền', `<span style="color:#16a34a">+${money(d.total)} vào số dư</span>`)] : [])]),
-        button: { text: d.status === 'need_info' ? 'Bổ sung thông tin ngay' : 'Xem đơn cày thuê', url: `${config.baseUrl}/user/boost/${d.code}` },
-        note: d.status === 'need_info' ? 'Shop chưa đăng nhập được vào tài khoản của bạn. Vui lòng mở đơn và cập nhật lại tài khoản / mật khẩu.' : '',
+        button: { text: d.status === 'need_info' ? 'Bổ sung thông tin ngay' : 'Xem đơn', url: `${config.baseUrl}/user/boost/${d.code}` },
+        note: d.status === 'need_info' ? 'Shop cần bạn kiểm tra / bổ sung thông tin. Vui lòng mở đơn và cập nhật lại.' : '',
       }),
     };
   },

@@ -26,7 +26,8 @@ router.use((req, res, next) => {
   res.locals.path = req.path;
   res.locals.adminBadges = {
     deposits: db.prepare("SELECT COUNT(*) c FROM deposits WHERE status = 'pending'").get().c,
-    boost: db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE status = 'received'").get().c,
+    ...Object.fromEntries(['boost', 'topup'].map((k) => [k, 0])),
+    ...Object.fromEntries(db.prepare("SELECT kind, COUNT(*) c FROM boost_orders WHERE status = 'received' GROUP BY kind").all().map((r) => [r.kind, r.c])),
     bank: db.prepare("SELECT COUNT(*) c FROM bank_transactions WHERE status = 'unmatched'").get().c,
   };
   next();
@@ -71,10 +72,14 @@ router.get('/', (req, res) => {
   const sum = (arr, k) => arr.reduce((a, b) => a + (b[k] || 0), 0);
   const today = series[series.length - 1];
   const last7 = series.slice(-7);
-  const totals = db.prepare('SELECT COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(deposits),0) deposits, COALESCE(SUM(orders),0) orders, COALESCE(SUM(boost_revenue),0) boost FROM daily_stats').get();
+  const totals = db.prepare('SELECT COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(deposits),0) deposits, COALESCE(SUM(orders),0) orders, COALESCE(SUM(boost_revenue),0) boost, COALESCE(SUM(topup_revenue),0) topup FROM daily_stats').get();
   const boostStats = {
     today: today.boost_revenue || 0, todayOrders: today.boost_orders || 0, month: sum(series, 'boost_revenue'), monthOrders: sum(series, 'boost_orders'), total: totals.boost,
-    open: db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE status IN ('received','processing','need_info')").get().c,
+    open: db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE kind = 'boost' AND status IN ('received','processing','need_info')").get().c,
+  };
+  const topupStats = {
+    today: today.topup_revenue || 0, todayOrders: today.topup_orders || 0, month: sum(series, 'topup_revenue'), monthOrders: sum(series, 'topup_orders'), total: totals.topup,
+    open: db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE kind = 'topup' AND status IN ('received','processing','need_info')").get().c,
   };
 
   res.render('admin/dashboard', {
@@ -82,7 +87,7 @@ router.get('/', (req, res) => {
     today, series,
     week: { revenue: sum(last7, 'revenue'), orders: sum(last7, 'orders'), deposits: sum(last7, 'deposits') },
     month: { revenue: sum(series, 'revenue'), orders: sum(series, 'orders'), deposits: sum(series, 'deposits'), users: sum(series, 'new_users') },
-    totals, boostStats,
+    totals, boostStats, topupStats,
     counts: {
       users: db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'user'").get().c,
       balance: db.prepare('SELECT COALESCE(SUM(balance),0) c FROM users').get().c,
@@ -256,11 +261,13 @@ router.get('/categories/form', (req, res) => {
   const c = req.query.id ? db.prepare('SELECT * FROM categories WHERE id = ?').get(toInt(req.query.id)) : null;
   if (c) {
     c.product_count = db.prepare('SELECT COUNT(*) n FROM products WHERE category_id = ?').get(c.id).n
-      + db.prepare('SELECT COUNT(*) n FROM boost_categories WHERE parent_id = ?').get(c.id).n;
+      + (c.sale_type === 'topup'
+        ? db.prepare('SELECT COUNT(*) n FROM boost_packages p JOIN boost_categories b ON b.id = p.category_id WHERE b.parent_id = ?').get(c.id).n
+        : db.prepare('SELECT COUNT(*) n FROM boost_categories WHERE parent_id = ?').get(c.id).n);
   }
   const games = db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all();
   const disp = require('./boost').display;
-  modal(res, 'category-form', { c, games, gameId: c ? c.game_id : toInt(req.query.game_id), boostDisp: { cat: disp('cat', c), pkg: disp('pkg', c) } });
+  modal(res, 'category-form', { c, games, gameId: c ? c.game_id : toInt(req.query.game_id), boostDisp: { cat: disp('cat', c), pkg: disp('pkg', c) }, topupMethod: c ? require('../services/boost').methodOf(c) : 'uid' });
 });
 
 router.post('/categories/save', (req, res) => {
@@ -282,19 +289,25 @@ router.post('/categories/save', (req, res) => {
     removeImage(old.image);
     image = null;
   }
-  const saleType = ['reroll', 'boost'].includes(req.body.sale_type) ? req.body.sale_type : 'vip';
+  const saleType = ['reroll', 'boost', 'topup'].includes(req.body.sale_type) ? req.body.sale_type : 'vip';
   if (old && old.sale_type !== saleType) {
     // Không cho đổi loại khi đã có hàng bên trong (acc VIP, kho acc Reroll và gói cày thuê lưu khác nhau)
     const n = db.prepare('SELECT COUNT(*) c FROM products WHERE category_id = ?').get(old.id).c;
     if (n) return back(req, res, 'error', `Danh mục đã có ${n} sản phẩm, không thể đổi loại. Hãy tạo danh mục mới.`);
+    if (old.sale_type === 'topup') {
+      const k = db.prepare('SELECT COUNT(*) c FROM boost_packages p JOIN boost_categories b ON b.id = p.category_id WHERE b.parent_id = ?').get(old.id).c;
+      if (k) return back(req, res, 'error', `Danh mục đã có ${k} gói nạp, không thể đổi loại. Hãy tạo danh mục mới.`);
+      db.prepare('DELETE FROM boost_categories WHERE parent_id = ?').run(old.id); // danh mục con ẩn (trống)
+    }
     const b = db.prepare('SELECT COUNT(*) c FROM boost_categories WHERE parent_id = ?').get(old.id).c;
     if (b) return back(req, res, 'error', `Danh mục đã có ${b} danh mục con cày thuê, không thể đổi loại. Hãy tạo danh mục mới.`);
   }
-  // Cày thuê: cài đặt hiển thị riêng (danh mục con + gói)
+  // Cày thuê: cài đặt hiển thị riêng (danh mục con + gói). Nạp game: hiển thị gói + hình thức nhập (UID / tài khoản)
   let options = old?.options || null;
-  if (saleType === 'boost') {
+  if (saleType === 'boost' || saleType === 'topup') {
     const o = {};
-    for (const lv of ['cat', 'pkg']) {
+    if (saleType === 'topup') o.method = req.body.topup_method === 'uid' ? 'uid' : 'login';
+    for (const lv of saleType === 'topup' ? ['pkg'] : ['cat', 'pkg']) {
       o[`${lv}_mode`] = req.body[`${lv}_mode`] === 'icon' ? 'icon' : 'image';
       o[`${lv}_cols_pc`] = String(toInt(req.body[`${lv}_cols_pc`], 4, 1, 6));
       o[`${lv}_cols_m`] = String(toInt(req.body[`${lv}_cols_m`], 2, 1, 3));
@@ -305,6 +318,7 @@ router.post('/categories/save', (req, res) => {
   const data = [gameId, name, slug, image, str(req.body.description, 1000), bool(req.body.is_active), saleType, options];
   if (old) {
     db.prepare('UPDATE categories SET game_id=?, name=?, slug=?, image=?, description=?, is_active=?, sale_type=?, options=? WHERE id=?').run(...data, id);
+    if (saleType === 'topup') db.prepare('UPDATE boost_categories SET name = ? WHERE parent_id = ?').run(name, id);
     // chuyển danh mục cày thuê sang game khác -> danh mục con đi theo (giỏ hàng tính theo game)
     if (old.game_id !== gameId) db.prepare('UPDATE boost_categories SET game_id = ? WHERE parent_id = ?').run(gameId, id);
   } else {
@@ -321,7 +335,7 @@ router.post('/categories/:id/delete', (req, res) => {
   const sold = db.prepare("SELECT COUNT(*) n FROM products WHERE category_id = ? AND status = 'sold'").get(c.id).n;
   if (sold) return back(req, res, 'error', `Danh mục có ${sold} sản phẩm đã bán. Hãy tắt hiển thị thay vì xóa.`);
   const rented = db.prepare('SELECT COUNT(*) n FROM boost_order_items i JOIN boost_packages p ON p.id = i.package_id JOIN boost_categories b ON b.id = p.category_id WHERE b.parent_id = ?').get(c.id).n;
-  if (rented) return back(req, res, 'error', `Danh mục cày thuê đã có ${rented} lượt thuê. Hãy tắt hiển thị thay vì xóa.`);
+  if (rented) return back(req, res, 'error', `Danh mục ${c.sale_type === 'topup' ? 'nạp game' : 'cày thuê'} đã có ${rented} ${c.sale_type === 'topup' ? 'lượt nạp' : 'lượt thuê'}. Hãy tắt hiển thị thay vì xóa.`);
   db.prepare('SELECT b.image FROM boost_categories b WHERE b.parent_id = ? UNION ALL SELECT p.image FROM boost_packages p JOIN boost_categories b ON b.id = p.category_id WHERE b.parent_id = ?')
     .all(c.id, c.id).forEach((r) => removeImage(r.image));
   db.prepare('SELECT images FROM products WHERE category_id = ?').all(c.id).forEach((r) => H.parseJSON(r.images, []).forEach(removeImage));
@@ -333,7 +347,7 @@ router.post('/categories/:id/delete', (req, res) => {
 
 // ======================= SẢN PHẨM (CẤP 3) =======================
 function categoryOptions() {
-  return db.prepare("SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type != 'boost' ORDER BY g.sort_order, c.sort_order, c.id").all();
+  return db.prepare("SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type IN ('vip','reroll') ORDER BY g.sort_order, c.sort_order, c.id").all();
 }
 
 const PRODUCT_ROW_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.images, p.status, p.views, p.sold_count, p.is_featured,
@@ -479,7 +493,7 @@ router.post('/products/save', (req, res) => {
   const categoryId = toInt(req.body.category_id);
   const title = str(req.body.title, 200);
   const price = toInt(req.body.price, -1, -1);
-  if (!title || price < 0 || !db.prepare("SELECT 1 FROM categories WHERE id = ? AND sale_type != 'boost'").get(categoryId)) {
+  if (!title || price < 0 || !db.prepare("SELECT 1 FROM categories WHERE id = ? AND sale_type IN ('vip','reroll')").get(categoryId)) {
     return back(req, res, 'error', 'Vui lòng nhập tên, giá và chọn danh mục');
   }
   const cat = categoryInfo(categoryId);
@@ -910,7 +924,7 @@ router.post('/coupons/save', (req, res) => {
   const data = [code, str(req.body.description, 200), type, value, toInt(req.body.max_discount, 0, 0) || null, toInt(req.body.min_order, 0, 0),
     toInt(req.body.game_id, 0) || null, toInt(req.body.usage_limit, 0, 0) || null, toInt(req.body.per_user_limit, 1, 0),
     H.fromInputDate(req.body.starts_at), H.fromInputDate(req.body.expires_at), bool(req.body.is_public), bool(req.body.is_active),
-    ['acc', 'boost'].includes(req.body.scope) ? req.body.scope : 'all'];
+    ['acc', 'boost', 'topup'].includes(req.body.scope) ? req.body.scope : 'all'];
   if (id) db.prepare(`UPDATE coupons SET code=?, description=?, type=?, value=?, max_discount=?, min_order=?, game_id=?, usage_limit=?,
       per_user_limit=?, starts_at=?, expires_at=?, is_public=?, is_active=?, scope=? WHERE id=?`).run(...data, id);
   else db.prepare(`INSERT INTO coupons(code, description, type, value, max_discount, min_order, game_id, usage_limit, per_user_limit,
@@ -978,7 +992,7 @@ router.get('/home-blocks/form', (req, res) => {
     settings: b ? { ...(info.def || {}), ...H.parseJSON(b.settings, {}) } : { ...(info.def || {}) },
     items: b ? db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id').all(b.id) : [],
     games: db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all(),
-    categories: type === 'featured' ? db.prepare("SELECT c.id, c.name, g.name AS game FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type != 'boost' ORDER BY g.sort_order, c.sort_order").all() : [],
+    categories: type === 'featured' ? db.prepare("SELECT c.id, c.name, g.name AS game FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type IN ('vip','reroll') ORDER BY g.sort_order, c.sort_order").all() : [],
   });
 });
 

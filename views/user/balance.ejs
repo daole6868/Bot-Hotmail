@@ -4,7 +4,7 @@
   <div class="table-wrap">
   <table class="table table-cards">
     <thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th><th>Số dư sau</th><th>Nội dung</th></tr></thead>
-    <% const tl = { deposit: 'Nạp tiền', purchase: 'Mua hàng', refund: 'Hoàn tiền', admin: 'Điều chỉnh' }; %>
+    <% const tl = { deposit: 'Nạp tiền', purchase: 'Mua hàng', boost: 'Cày thuê', topup: 'Nạp game', refund: 'Hoàn tiền', admin: 'Điều chỉnh' }; %>
     <% if (!result.rows.length) { %><tr><td colspan="5" class="center muted tc-empty">Chưa có biến động</td></tr><% } %>
     <% result.rows.forEach(l => { %>
       <tr><td data-label="Thời gian" class="muted small"><%= H.fmtDate(l.created_at) %></td><td class="tc-head"><b><%= tl[l.type] || l.type %></b></td>
