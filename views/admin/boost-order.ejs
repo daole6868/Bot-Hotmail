@@ -1,0 +1,78 @@
+<%- include('_header') %>
+<% const st = STATUS[o.status]; %>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3>Đơn <%= o.code %> <span class="a-tag <%= st.tone %>"><%= st.label %></span></h3>
+    <table class="a-table a-kv">
+      <tr><th>Khách hàng</th><td><a href="/admin/users/<%= o.user_id %>"><%= o.username %></a> <%= o.email ? '(' + o.email + ')' : '' %></td></tr>
+      <tr><th>Liên hệ</th><td><b><%= o.contact || '—' %></b></td></tr>
+      <tr><th>Game</th><td><%= o.game_name %></td></tr>
+      <tr><th>Tạm tính</th><td><%= H.money(o.subtotal) %></td></tr>
+      <tr><th>Giảm giá</th><td><%= o.discount ? '-' + H.money(o.discount) + ' (' + o.coupon_code + ')' : '—' %></td></tr>
+      <tr><th>Thanh toán</th><td><b><%= H.money(o.total) %></b><%= o.refunded ? ' · đã hoàn tiền' : '' %></td></tr>
+      <tr><th>Server</th><td><%= o.server || '—' %></td></tr>
+      <tr><th>Ghi chú của khách</th><td class="a-prewrap"><%= o.note || '—' %></td></tr>
+      <tr><th>IP đặt</th><td><%= o.ip %></td></tr>
+      <tr><th>Đặt lúc</th><td><%= H.fmtDate(o.created_at) %></td></tr>
+    </table>
+
+    <h3><%- I('key') %> Tài khoản game</h3>
+    <% if (o.login_enc) { %>
+      <div class="a-bo-login" data-bo-login="/admin/boost/orders/<%= o.id %>/login">
+        <button type="button" class="a-btn a-soft" data-bo-reveal><%- I('eye') %> Xem tài khoản / mật khẩu</button>
+        <div class="a-bo-cred" hidden>
+          <div><span>Tài khoản</span><code data-bo-u></code><button type="button" class="a-icon-btn" data-bo-copy="u" title="Sao chép"><%- I('copy') %></button></div>
+          <div><span>Mật khẩu</span><code data-bo-p></code><button type="button" class="a-icon-btn" data-bo-copy="p" title="Sao chép"><%- I('copy') %></button></div>
+        </div>
+      </div>
+      <p class="a-field-hint">Mỗi lần xem được ghi vào nhật ký. Tự xóa sau khi đơn xong / hủy theo cài đặt.</p>
+    <% } else { %><p class="a-muted"><%= o.login_wiped_at ? 'Đã tự xóa lúc ' + H.fmtDate(o.login_wiped_at) : 'Không có' %></p><% } %>
+
+    <h3>Gói đã thuê</h3>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Gói</th><th class="a-num">Đơn giá</th><th class="a-num">SL</th><th class="a-num">Thành tiền</th></tr></thead>
+      <% items.forEach(i => { %><tr><td><b><%= i.name %></b><div class="a-muted a-small"><%= i.category_name %></div></td><td class="a-num"><%= H.money(i.price) %></td><td class="a-num"><%= i.qty %> <%= i.unit %></td><td class="a-num"><%= H.money(i.line_total) %></td></tr><% }) %>
+    </table></div>
+  </div>
+
+  <div>
+    <div class="a-card">
+      <h3><%- I('refresh') %> Cập nhật trạng thái</h3>
+      <% if (o.status === 'cancelled') { %>
+        <p class="a-muted">Đơn đã hủy<%= o.refunded ? ' và đã hoàn ' + H.money(o.total) + ' cho khách' : '' %>.</p>
+      <% } else { %>
+      <form method="post" action="/admin/boost/orders/<%= o.id %>/status" class="a-form" data-bo-status>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="a-bo-status">
+          <% Object.entries(STATUS).forEach(([k, v]) => { %>
+            <label class="a-bo-st"><input type="radio" name="status" value="<%= k %>" <%= k === o.status ? 'checked' : '' %>><span class="a-tag <%= v.tone %>"><%= v.label %></span></label>
+          <% }) %>
+        </div>
+        <label>Lời nhắn cho khách <small class="a-muted">(hiện trong đơn và email)</small></label>
+        <textarea name="message" rows="3" maxlength="1000" placeholder="VD: Đang cày, dự kiến xong tối nay / Mật khẩu sai, vui lòng cập nhật lại"></textarea>
+        <p class="a-field-hint">Chọn “Đã hủy – hoàn tiền” sẽ tự hoàn <b><%= H.money(o.total) %></b> vào số dư khách.</p>
+        <button class="a-btn a-primary"><%- I('save') %> Cập nhật</button>
+      </form>
+      <% } %>
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('edit') %> Ghi chú nội bộ</h3>
+      <form method="post" action="/admin/boost/orders/<%= o.id %>/note" class="a-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <textarea name="admin_note" rows="3" maxlength="2000" placeholder="Chỉ admin thấy"><%= o.admin_note || '' %></textarea>
+        <button class="a-btn"><%- I('save') %> Lưu ghi chú</button>
+      </form>
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('clock') %> Lịch sử</h3>
+      <ol class="a-bo-timeline">
+        <% events.forEach(e => { const t = STATUS[e.status] || STATUS.received; %>
+          <li><span class="a-tag <%= t.tone %>"><%= t.label %></span> <span class="a-muted a-small"><%= H.fmtDate(e.created_at) %> · <%= e.by_admin ? 'Admin' : 'Hệ thống / khách' %></span><% if (e.message) { %><div class="a-prewrap a-small"><%= e.message %></div><% } %></li>
+        <% }) %>
+      </ol>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

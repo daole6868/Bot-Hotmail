@@ -1,0 +1,24 @@
+<%# Giỏ cày thuê của 1 game (thay bằng AJAX mỗi khi đổi) %>
+<div class="ck-cart" data-count="<%= cart.count %>" data-subtotal="<%= cart.subtotal %>">
+  <% if (!cart.items.length) { %>
+    <div class="ck-empty"><%- I('cart') %><span>Giỏ hàng trống. Bấm <b>Thêm vào giỏ</b> ở gói bạn muốn thuê.</span></div>
+  <% } %>
+  <% cart.items.forEach(it => { %>
+    <div class="ck-row" data-cart-row="<%= it.id %>">
+      <span class="bx-ico bx-ico-sm" style="--ic:<%= it.icon_color %>"><%- I(it.icon) %></span>
+      <div class="ck-info">
+        <b><%= it.name %></b>
+        <span class="muted small"><%= it.category_name %> · <%= H.money(it.price) %>/<%= it.unit %></span>
+        <% if (it.is_paused) { %><span class="ck-warn small"><%- I('alert') %> Gói đang tạm ngưng, hãy xóa khỏi giỏ</span><% } %>
+      </div>
+      <div class="ck-qty">
+        <button type="button" data-cart-qty="<%= it.id %>" data-delta="-1" aria-label="Giảm" <%= it.qty <= it.min_qty ? 'disabled' : '' %>>−</button>
+        <input type="number" value="<%= it.qty %>" min="<%= it.min_qty %>" max="<%= it.max_qty %>" data-cart-input="<%= it.id %>" aria-label="Số lượng">
+        <button type="button" data-cart-qty="<%= it.id %>" data-delta="1" aria-label="Tăng" <%= it.qty >= it.max_qty ? 'disabled' : '' %>>+</button>
+      </div>
+      <b class="ck-line"><%= H.money(it.line) %></b>
+      <button type="button" class="ck-del" data-cart-del="<%= it.id %>" aria-label="Xóa gói"><%- I('trash') %></button>
+    </div>
+  <% }) %>
+  <% if (cart.items.length) { %><div class="ck-subtotal"><span>Tạm tính (<%= cart.count %>)</span><b><%= H.money(cart.subtotal) %></b></div><% } %>
+</div>

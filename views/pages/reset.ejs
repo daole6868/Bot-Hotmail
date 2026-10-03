@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <div class="auth-icon"><%- I('lock') %></div>
+    <h1>Đặt mật khẩu mới</h1>
+    <% if (!valid) { %>
+      <div class="alert alert-error">Link đặt lại mật khẩu đã hết hạn hoặc đã được sử dụng.</div>
+      <a href="/forgot" class="btn btn-block btn-primary">Gửi lại link mới</a>
+    <% } else { %>
+      <% if (locals.error) { %><div class="alert alert-error"><%= error %></div><% } %>
+      <form method="post" action="/reset/<%= token %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label class="label">Mật khẩu mới <span class="req">*</span> <span class="muted small">(8-72 ký tự, có chữ và số)</span></label>
+        <input type="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password" autofocus>
+        <label class="label">Nhập lại mật khẩu mới <span class="req">*</span></label>
+        <input type="password" name="password2" required minlength="8" maxlength="72" autocomplete="new-password">
+        <button class="btn btn-lg btn-block btn-primary">Lưu mật khẩu mới</button>
+      </form>
+      <p class="muted small center">Sau khi đổi, mọi thiết bị đang đăng nhập sẽ bị đăng xuất.</p>
+    <% } %>
+  </div>
+</div>
+<%- include('../partials/footer') %>

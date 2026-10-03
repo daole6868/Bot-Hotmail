@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Vui lòng đăng nhập | <%= s.site_name || 'Shop' %></title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <script src="/js/theme-init.js?v=<%= assetV %>"></script>
+  <link rel="stylesheet" href="/css/fonts.css?v=<%= assetV %>">
+  <link rel="stylesheet" href="/css/style.css?v=<%= assetV %>">
+</head>
+<body class="gate-body">
+  <div class="auth-wrap">
+    <div class="card auth-card gate-card">
+      <a href="/" class="gate-logo"><% if (s.logo) { %><img src="<%= s.logo %>" alt="<%= s.site_name %>"><% } else { %><b><%= s.site_name || 'Shop' %></b><% } %></a>
+      <h1>Vui lòng đăng nhập để tiếp tục</h1>
+      <div class="gate-actions">
+        <a href="/login" class="btn btn-lg btn-block btn-primary">Đăng nhập</a>
+        <a href="/register" class="btn btn-lg btn-block btn-ghost">Đăng ký</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

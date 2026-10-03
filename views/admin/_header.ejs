@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= title %> | Admin <%= s.site_name || 'ShopAcc' %></title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/fonts.css?v=<%= locals.assetV || 1 %>">
+  <link rel="stylesheet" href="/css/admin.css?v=<%= locals.assetV || 1 %>">
+</head>
+<body class="admin">
+<% const B = locals.adminBadges || {}; const P = locals.path || ''; const act = (p) => (p === '/' ? P === '/' : P.startsWith(p)) ? 'active' : ''; %>
+<aside class="a-side" id="aSide">
+  <a href="/admin" class="a-logo <%= s.logo ? 'has-img' : '' %>">
+    <% if (s.logo) { %><img src="<%= s.logo %>" alt="<%= s.site_name || 'Logo' %>"><small>Quản trị</small>
+    <% } else { %><span class="a-logo-mark"><%- I('gamepad') %></span><span><%= s.site_name || 'ShopAcc' %><small>Quản trị</small></span><% } %>
+  </a>
+  <nav>
+    <div class="a-group">Tổng quan</div>
+    <a href="/admin" class="<%= act('/') %>"><%- I('chart') %> Dashboard</a>
+    <div class="a-group">Sản phẩm</div>
+    <a href="/admin/games" class="<%= act('/games') %>"><%- I('gamepad') %> Game</a>
+    <a href="/admin/categories" class="<%= act('/categories') %>"><%- I('folder') %> Danh mục</a>
+    <a href="/admin/vip" class="<%= act('/vip') || (P.startsWith('/products') ? 'active' : '') %>"><%- I('star') %> Acc VIP</a>
+    <a href="/admin/reroll" class="<%= act('/reroll') %>"><%- I('refresh') %> Reroll</a>
+    <a href="/admin/boost" class="<%= P === '/boost' || P.startsWith('/boost/c') || P.startsWith('/boost/categories') ? 'active' : '' %>"><%- I('g-swords') %> Cày thuê</a>
+    <a href="/admin/attributes" class="<%= act('/attributes') %>"><%- I('tag') %> Thuộc tính</a>
+    <div class="a-group">Kinh doanh</div>
+    <a href="/admin/orders" class="<%= act('/orders') %>"><%- I('bag') %> Đơn hàng</a>
+    <a href="/admin/boost/orders" class="<%= act('/boost/orders') %>"><%- I('g-swords') %> Đơn cày thuê <% if (B.boost) { %><span class="a-badge"><%= B.boost %></span><% } %></a>
+    <a href="/admin/deposits" class="<%= act('/deposits') %>"><%- I('card') %> Nạp tiền <% if (B.deposits) { %><span class="a-badge"><%= B.deposits %></span><% } %></a>
+    <a href="/admin/bank" class="<%= act('/bank') %>"><%- I('bank') %> GD ngân hàng <% if (B.bank) { %><span class="a-badge warn"><%= B.bank %></span><% } %></a>
+    <div class="a-group">Khuyến mãi & khách</div>
+    <a href="/admin/coupons" class="<%= act('/coupons') %>"><%- I('ticket') %> Mã giảm giá</a>
+    <a href="/admin/users" class="<%= act('/users') %>"><%- I('users') %> Người dùng</a>
+    <div class="a-group">Giao diện</div>
+    <a href="/admin/home-layout" class="<%= act('/home-layout') %>"><%- I('list') %> Bố cục trang chủ</a>
+    <a href="/admin/banners" class="<%= act('/banners') %>"><%- I('image') %> Sidebar & Popup</a>
+    <a href="/admin/footer" class="<%= act('/footer') %>"><%- I('layers') %> Footer</a>
+    <a href="/admin/settings" class="<%= P === '/settings' ? 'active' : '' %>"><%- I('tools') %> Cài đặt thông tin</a>
+    <a href="/admin/settings/bank" class="<%= act('/settings/bank') %>"><%- I('bank') %> Cài đặt bank</a>
+    <a href="/admin/boost/settings" class="<%= act('/boost/settings') %>"><%- I('g-swords') %> Cài đặt cày thuê</a>
+    <a href="/admin/settings/email" class="<%= act('/settings/email') %>"><%- I('mail') %> Email & Bảo mật</a>
+    <div class="a-group">Hệ thống</div>
+    <a href="/admin/security" class="<%= act('/security') %>"><%- I('shield') %> Bảo mật</a>
+    <a href="/admin/antispam" class="<%= act('/antispam') %>"><%- I('bolt') %> Chống spam & DDoS</a>
+    <a href="/admin/logs" class="<%= act('/logs') %>"><%- I('list') %> Nhật ký</a>
+    <a href="/admin/maintenance" class="<%= act('/maintenance') %>"><%- I('broom') %> Bảo trì dữ liệu</a>
+  </nav>
+</aside>
+<div class="a-main">
+  <header class="a-top">
+    <button class="a-icon-btn a-menu" data-toggle-side aria-label="Menu"><%- I('menu') %></button>
+    <div class="a-title"><small>Quản trị</small><h1><%= title %></h1></div>
+    <div class="a-top-right">
+      <a href="/" target="_blank" class="a-btn a-ghost"><%- I('globe') %> <span class="a-hide-sm">Xem web</span></a>
+      <a href="/admin/profile" class="a-btn a-ghost"><%- I('user') %> <span class="a-hide-sm"><%= user.username %></span></a>
+      <form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-danger-soft" title="Đăng xuất"><%- I('logout') %> <span class="a-hide-sm">Đăng xuất</span></button></form>
+    </div>
+  </header>
+  <div class="a-content">
+  <% (locals.flashes || []).forEach(f => { %><div class="a-alert a-alert-<%= f.type %>"><%- I(f.type === 'success' ? 'check' : 'alert') %> <span><%= f.msg %></span></div><% }) %>

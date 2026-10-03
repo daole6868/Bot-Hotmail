@@ -1,0 +1,7 @@
+<div class="a-move" data-sort-kind="<%= kind %>" data-sort-id="<%= id %>">
+  <span class="a-grip" title="Giữ và kéo để đổi vị trí" aria-label="Kéo để đổi vị trí" role="button" tabindex="-1"><svg viewBox="0 0 24 24" class="ico"><circle cx="9" cy="6" r="1.4" fill="currentColor"/><circle cx="15" cy="6" r="1.4" fill="currentColor"/><circle cx="9" cy="12" r="1.4" fill="currentColor"/><circle cx="15" cy="12" r="1.4" fill="currentColor"/><circle cx="9" cy="18" r="1.4" fill="currentColor"/><circle cx="15" cy="18" r="1.4" fill="currentColor"/></svg></span>
+  <span class="a-arrows">
+    <button type="button" class="a-arrow" data-move="/admin/<%= kind %>/<%= id %>/move" data-dir="up" <%= first ? 'disabled' : '' %> aria-label="Lên"><svg viewBox="0 0 24 24" class="ico" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 14 5-5 5 5"/></svg></button>
+    <button type="button" class="a-arrow" data-move="/admin/<%= kind %>/<%= id %>/move" data-dir="down" <%= last ? 'disabled' : '' %> aria-label="Xuống"><svg viewBox="0 0 24 24" class="ico" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></button>
+  </span>
+</div>

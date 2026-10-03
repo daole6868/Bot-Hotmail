@@ -1,0 +1,15 @@
+<%
+  // Khối banner tự thêm: lưới ảnh, số ảnh / hàng và tỉ lệ ảnh do admin chọn
+  const st = block.settings || {};
+  const w = +st.w || 1200, h = +st.h || 400, pc = +st.cols_pc || 1, m = +st.cols_m || 1;
+%>
+<section class="section home-banner" style="--hb-ar: <%= w %> / <%= h %>; --hb-cols: <%= pc %>; --hb-cols-t: <%= Math.min(pc, 2) %>; --hb-cols-m: <%= m %>">
+  <% if (block.title && st.show_title) { %><div class="section-head"><h2><%- I('image') %> <%= block.title %></h2></div><% } %>
+  <div class="hb-grid">
+    <% block.items.forEach(it => { %>
+      <% if (it.link) { %><a class="hb-item" href="<%= it.link %>"<%- /^https?:/i.test(it.link) ? ' target="_blank" rel="noopener nofollow"' : '' %>><% } else { %><div class="hb-item"><% } %>
+        <img src="<%= it.image %>" alt="<%= it.title || block.title || '' %>" loading="lazy">
+      <%- it.link ? '</a>' : '</div>' %>
+    <% }) %>
+  </div>
+</section>

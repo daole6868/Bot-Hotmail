@@ -1,0 +1,7 @@
+<%- include('../partials/header') %>
+<div class="section-head"><h1>Kết quả tìm kiếm: "<%= q %>"</h1></div>
+<% if (q.length < 2) { %><div class="empty">Nhập ít nhất 2 ký tự để tìm kiếm.</div>
+<% } else if (!result.rows.length) { %><div class="empty">Không tìm thấy sản phẩm phù hợp.</div><% } %>
+<div class="product-grid"><% result.rows.forEach(p => { %><%- include('../partials/product-card', { p }) %><% }) %></div>
+<%- include('../partials/pagination', { result, query }) %>
+<%- include('../partials/footer') %>

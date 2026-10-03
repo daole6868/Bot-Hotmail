@@ -1,3 +1,7 @@
+node_modules/
 .env
-__pycache__/
-*.pyc
+data/
+public/uploads/*
+!public/uploads/.gitkeep
+public/img/catalog/
+*.log

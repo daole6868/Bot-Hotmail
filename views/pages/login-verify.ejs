@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <div class="auth-icon"><%- I('shield') %></div>
+    <h1>Xác minh đăng nhập</h1>
+    <p class="muted center">Để bảo vệ tài khoản, chúng tôi đã gửi <b>mã 6 số</b> tới email <b><%= email %></b>. Mã có hiệu lực 10 phút.</p>
+    <% if (locals.error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <% if (locals.info) { %><div class="alert alert-success"><%= info %></div><% } %>
+    <form method="post" action="/login/verify" autocomplete="off">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="label">Mã xác minh <span class="req">*</span></label>
+      <input type="text" name="code" class="otp-input" inputmode="numeric" pattern="[0-9 ]{6,7}" maxlength="7" required autofocus autocomplete="one-time-code" placeholder="••••••">
+      <label class="check"><input type="checkbox" name="trust" value="1" checked> Tin cậy thiết bị này (không hỏi lại mã trên thiết bị này một thời gian)</label>
+      <button class="btn btn-lg btn-block btn-primary"><%- I('check') %> Xác minh</button>
+    </form>
+    <form method="post" action="/login/resend" class="center">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-ghost btn-sm" data-resend-wait="<%= wait %>" <%= wait > 0 ? 'disabled' : '' %>>Gửi lại mã<%= wait > 0 ? ` (${wait}s)` : '' %></button>
+    </form>
+    <p class="center muted small">Không thấy email? Hãy kiểm tra mục <b>Spam / Quảng cáo</b>. <a href="/login">Đăng nhập lại</a></p>
+  </div>
+</div>
+<%- include('../partials/footer') %>

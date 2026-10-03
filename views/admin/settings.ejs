@@ -1,0 +1,78 @@
+<%- include('_header') %>
+<% const host = String(baseUrl || '').replace(/^https?:\/\//, '').replace(/\/.*$/, ''); %>
+<form method="post" action="/admin/settings" enctype="multipart/form-data" class="a-form" data-share-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div>
+      <div class="a-card">
+        <h3><%- I('globe') %> Thông tin website</h3>
+
+        <label>Tên website</label>
+        <input name="site_name" value="<%= s.site_name %>" maxlength="100" placeholder="VD: Gachaz.online" data-share="name">
+        <p class="a-field-hint">Hiện ở: tiêu đề tab trình duyệt (VD “Reroll giá rẻ | <b>Tên website</b>”), tiêu đề khi chia sẻ link, và chỗ tên shop ở đầu trang khi <b>chưa có logo</b>.</p>
+
+        <label>Slogan</label>
+        <input name="site_slogan" value="<%= s.site_slogan %>" maxlength="200" data-share="slogan">
+        <p class="a-field-hint">Hiện ở: tiêu đề tab trình duyệt của <b>trang chủ</b> (“Tên website - Slogan”) nếu bạn để trống ô “Tiêu đề trang chủ” bên dưới.</p>
+
+        <label>Logo</label>
+        <div class="a-upload-row">
+          <div class="a-upload-preview a-logo-preview" data-preview-box><% if (s.logo) { %><img src="<%= s.logo %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có logo</span><% } %></div>
+          <div class="a-grow">
+            <input type="file" name="logo" accept="image/*" data-preview-input>
+            <% if (s.logo) { %><label class="a-check"><input type="checkbox" name="remove_logo" value="1"> Xóa logo (quay lại hiện tên website)</label><% } %>
+            <p class="a-field-hint">Có logo thì đầu trang, chân trang và trang quản trị <b>chỉ hiện logo</b>, không hiện tên shop. Nên dùng ảnh nền trong suốt (PNG), cao khoảng 80px.</p>
+          </div>
+        </div>
+
+        <label>Thông báo chạy chữ</label>
+        <textarea name="notice" rows="2"><%= s.notice %></textarea>
+        <p class="a-field-hint">Hiện ở: dải chữ chạy ngang dưới menu, mọi trang. Để trống = ẩn.</p>
+      </div>
+
+      <div class="a-card">
+        <h3><%- I('shield') %> Hệ thống</h3>
+        <label class="a-check"><input type="checkbox" name="allow_register" <%= s.allow_register !== '0' ? 'checked' : '' %>> Cho phép đăng ký tài khoản mới</label>
+        <label class="a-check"><input type="checkbox" name="maintenance_mode" <%= s.maintenance_mode === '1' ? 'checked' : '' %>> Bật chế độ bảo trì (chỉ admin truy cập)</label>
+        <p class="a-field-hint">Thông tin liên hệ, mạng xã hội và chân trang sửa ở mục <a href="/admin/footer">Footer</a>. Tài khoản ngân hàng sửa ở <a href="/admin/settings/bank">Cài đặt bank</a>.</p>
+      </div>
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('link') %> Khi chia sẻ link & tìm trên Google</h3>
+      <p class="a-field-hint a-mt0">Đây là khung hiện ra khi dán link web vào Zalo, Facebook, Messenger, Discord… và dòng mô tả trên kết quả Google.</p>
+
+      <label>Tiêu đề trang chủ <small class="a-muted">(trống = “Tên website - Slogan”)</small></label>
+      <input name="seo_title" value="<%= s.seo_title %>" maxlength="120" data-share="title">
+
+      <label>Mô tả <small class="a-muted">(nên 120–160 ký tự)</small></label>
+      <textarea name="site_description" rows="3" maxlength="300" data-share="desc"><%= s.site_description %></textarea>
+      <p class="a-field-hint">Hiện ở: dòng mô tả dưới tiêu đề khi chia sẻ link và trên Google. Trang sản phẩm tự dùng mô tả của sản phẩm (nếu có).</p>
+
+      <label>Ảnh khi chia sẻ link <small class="a-muted">(gợi ý 1200 × 630 px)</small></label>
+      <div class="a-upload-row">
+        <div class="a-upload-preview" data-preview-box><% if (s.og_image) { %><img src="<%= s.og_image %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có ảnh</span><% } %></div>
+        <div class="a-grow">
+          <input type="file" name="og_image" accept="image/*" data-preview-input data-share="img">
+          <% if (s.og_image) { %><label class="a-check"><input type="checkbox" name="remove_og_image" value="1"> Xóa ảnh chia sẻ</label><% } %>
+          <p class="a-field-hint">Trống thì dùng logo. Trang sản phẩm tự dùng ảnh đầu tiên của sản phẩm.</p>
+        </div>
+      </div>
+
+      <label>Xem trước</label>
+      <div class="a-share-card">
+        <% const shareImg = s.og_image || s.logo; %>
+        <div class="a-share-img" data-share-img <%= shareImg ? '' : 'hidden' %>><% if (shareImg) { %><img src="<%= shareImg %>" alt=""><% } %></div>
+        <div class="a-share-body">
+          <div class="a-share-url"><%= baseUrl %>/</div>
+          <b data-share-out="title"><%= s.seo_title || ((s.site_name || 'ShopAcc') + (s.site_slogan ? ' - ' + s.site_slogan : '')) %></b>
+          <p data-share-out="desc"><%= s.site_description %></p>
+          <span class="a-share-host"><%= host %></span>
+        </div>
+      </div>
+      <p class="a-field-hint">Zalo/Facebook lưu lại khung xem trước một thời gian. Sau khi đổi, link đã chia sẻ trước đó có thể vẫn hiện nội dung cũ; với Facebook có thể làm mới tại “Facebook Sharing Debugger”.</p>
+    </div>
+  </div>
+  <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt thông tin</button></div>
+</form>
+<%- include('_footer') %>

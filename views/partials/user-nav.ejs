@@ -1,0 +1,9 @@
+<div class="user-nav">
+  <a href="/user" class="<%= tab === 'profile' ? 'active' : '' %>"><%- I('user') %> Tài khoản</a>
+  <a href="/user/orders" class="<%= tab === 'orders' ? 'active' : '' %>"><%- I('bag') %> Lịch sử mua</a>
+  <a href="/user/boost" class="<%= tab === 'boost' ? 'active' : '' %>"><%- I('g-swords') %> Đơn cày thuê</a>
+  <a href="/user/deposit" class="<%= tab === 'deposit' ? 'active' : '' %>"><%- I('card') %> Nạp tiền</a>
+  <a href="/user/balance" class="<%= tab === 'balance' ? 'active' : '' %>"><%- I('chart') %> Biến động số dư</a>
+  <a href="/user/security" class="<%= tab === 'security' ? 'active' : '' %>"><%- I('shield') %> Bảo mật</a>
+  <a href="#" data-ui-open><%- I('palette') %> Cài đặt giao diện</a>
+</div>

@@ -1,0 +1,108 @@
+<%- include('../partials/header') %>
+<%- include('../partials/user-nav') %>
+<%
+  const verified = user.email && user.email_verified_at;
+  const uaName = (ua) => {
+    ua = ua || '';
+    const os = /Windows/.test(ua) ? 'Windows' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iPhone / iPad' : /Mac OS/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'Thiết bị';
+    const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Trình duyệt';
+    return br + ' trên ' + os;
+  };
+%>
+<div class="card pad">
+  <h2><%- I('mail') %> Email & mật khẩu</h2>
+  <% if (!ready) { %><div class="alert alert-warning">Shop chưa bật gửi email nên chưa dùng được xác minh email và xác minh 2 lớp.</div><% } %>
+  <div class="sec-item">
+    <%- I('mail') %>
+    <div><b><%= user.email || 'Chưa có email' %></b>
+      <span class="muted small"><% if (verified) { %><span class="badge-ok">Đã xác minh</span><% } else if (user.email) { %><span class="badge-warn">Chưa xác minh</span><% } else { %>Thêm email để nhận mã xác minh, lấy lại mật khẩu và thông báo đơn hàng.<% } %></span>
+    </div>
+  </div>
+
+  <% if (ready && pendingEmail) { %>
+    <form method="post" action="/user/email/verify" class="sec-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <p class="muted">Nhập mã 6 số vừa gửi tới <b><%= pendingEmail %></b> (hiệu lực 10 phút):</p>
+      <div class="input-group">
+        <input type="text" name="code" class="otp-input" inputmode="numeric" maxlength="7" required autocomplete="one-time-code" placeholder="••••••">
+        <button class="btn btn-primary">Xác minh</button>
+      </div>
+    </form>
+    <div class="sec-actions">
+      <form method="post" action="/user/email"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="email" value="<%= pendingEmail %>">
+        <details><summary class="btn btn-ghost btn-sm" data-resend-wait="<%= wait %>">Gửi lại mã</summary>
+          <div class="input-group mt"><input type="password" name="password" required placeholder="Mật khẩu hiện tại" autocomplete="current-password"><button class="btn btn-ghost">Gửi lại</button></div></details>
+      </form>
+      <form method="post" action="/user/email/cancel"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm">Hủy</button></form>
+    </div>
+  <% } %>
+
+  <div class="sec-actions">
+    <% if (ready && !pendingEmail) { %><button type="button" class="btn btn-ghost btn-sm" data-sec-toggle="email" aria-expanded="<%= !user.email %>"><%= user.email ? (verified ? 'Đổi email' : 'Xác minh / đổi email') : 'Thêm email' %></button><% } %>
+    <button type="button" class="btn btn-ghost btn-sm" data-sec-toggle="password" aria-expanded="false"><%- I('lock') %> Đổi mật khẩu</button>
+  </div>
+
+  <% if (ready && !pendingEmail) { %>
+    <form method="post" action="/user/email" class="sec-form" data-sec-panel="email" <%= user.email ? 'hidden' : '' %>>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="label">Email <%= user.email ? '(để nguyên nếu chỉ muốn xác minh email hiện tại)' : '' %></label>
+      <input type="email" name="email" value="<%= user.email || '' %>" maxlength="100" required>
+      <label class="label">Mật khẩu hiện tại <span class="req">*</span></label>
+      <input type="password" name="password" required autocomplete="current-password">
+      <button class="btn btn-primary">Gửi mã xác minh</button>
+    </form>
+  <% } %>
+
+  <form method="post" action="/user/password" class="sec-form" data-sec-panel="password" hidden>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="from" value="security">
+    <label class="label">Mật khẩu hiện tại <span class="req">*</span></label>
+    <input type="password" name="current" required autocomplete="current-password">
+    <label class="label">Mật khẩu mới <span class="req">*</span></label>
+    <input type="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Ít nhất 8 ký tự, có chữ và số">
+    <label class="label">Nhập lại mật khẩu mới <span class="req">*</span></label>
+    <input type="password" name="password2" required minlength="8" maxlength="72" autocomplete="new-password">
+    <button class="btn btn-primary">Cập nhật mật khẩu</button>
+  </form>
+</div>
+
+<div class="card pad">
+  <h2><%- I('shield') %> Xác minh 2 lớp (2FA)</h2>
+  <div class="sec-item">
+    <%- I('shield') %>
+    <div><b>Trạng thái: <%- active ? '<span class="badge-ok">Đang bật</span>' : '<span class="badge-warn">Đang tắt</span>' %></b>
+      <span class="muted small">
+        <% if (mode === 'required') { %><% if (!user.email) { %>Hãy thêm email để được bảo vệ.<% } %>
+        <% } else if (mode === 'off') { %>Shop đang tắt tính năng này.
+        <% } else if (!verified) { %>Cần xác minh email trước khi bật.<% } %>
+      </span>
+    </div>
+    <% if (mode === 'optional' && ready && user.role !== 'admin') { %>
+      <details class="sec-toggle"><summary class="btn btn-sm <%= user.twofa_enabled ? 'btn-ghost' : 'btn-primary' %>"><%= user.twofa_enabled ? 'Tắt' : 'Bật' %> 2FA</summary>
+        <form method="post" action="/user/2fa" class="input-group mt">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="enable" value="<%= user.twofa_enabled ? '0' : '1' %>">
+          <input type="password" name="password" required placeholder="Mật khẩu hiện tại" autocomplete="current-password">
+          <button class="btn <%= user.twofa_enabled ? 'btn-danger' : 'btn-primary' %>">Xác nhận</button>
+        </form>
+      </details>
+    <% } %>
+  </div>
+</div>
+
+<div class="card pad">
+  <h2><%- I('monitor') %> Thiết bị tin cậy</h2>
+  <% if (!devices.length) { %><p class="muted">Chưa có thiết bị nào. Thiết bị sẽ được thêm khi bạn <b>nhập mã xác minh</b> (lúc đăng nhập có tích “Tin cậy thiết bị này”, hoặc khi xác minh email ở mục trên).</p><% } %>
+  <div class="sec-list">
+    <% devices.forEach(d => { %>
+      <div class="sec-item">
+        <%- I('monitor') %>
+        <div><b><%= uaName(d.user_agent) %> <% if (d.device_hash === currentDevice) { %><span class="badge-ok">Thiết bị này</span><% } %></b>
+          <span class="muted small">IP <%= d.ip || '—' %> · Xác minh <%= H.fmtDate(d.last_verified_at) %> · Dùng gần nhất <%= H.fmtDate(d.last_seen_at) %></span></div>
+        <form method="post" action="/user/devices/<%= d.id %>/delete" data-confirm="Xóa thiết bị này khỏi danh sách tin cậy?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm">Xóa</button></form>
+      </div>
+    <% }) %>
+  </div>
+  <% if (devices.length) { %>
+    <form method="post" action="/user/devices/clear" class="mt" data-confirm="Xóa mọi thiết bị tin cậy và đăng xuất khỏi các thiết bị khác?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Xóa tất cả & đăng xuất thiết bị khác</button></form>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

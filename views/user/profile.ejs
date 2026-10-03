@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<%- include('../partials/user-nav') %>
+<div class="stat-cards">
+  <div class="card stat"><span>Số dư</span><b class="price"><%= H.money(user.balance) %></b></div>
+  <div class="card stat"><span>Tổng nạp</span><b><%= H.money(user.total_deposit) %></b></div>
+  <div class="card stat"><span>Đã chi tiêu</span><b><%= H.money(user.total_spent) %></b></div>
+  <div class="card stat"><span>Đơn đã mua</span><b><%= stats.orders %></b></div>
+</div>
+<div class="card pad">
+  <h2>Thông tin</h2>
+  <table class="table">
+    <tr><th>Tên đăng nhập</th><td><%= user.username %></td></tr>
+    <tr><th>Email</th><td><%= user.email || '—' %></td></tr>
+    <tr><th>Ngày tham gia</th><td><%= H.fmtDate(user.created_at) %></td></tr>
+  </table>
+</div>
+<div class="card pad">
+  <h2>Đơn hàng gần đây</h2>
+  <% if (!recentOrders.length) { %><p class="muted">Bạn chưa mua sản phẩm nào.</p><% } else { %>
+  <table class="table table-cards">
+    <thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Tổng</th><th>Thời gian</th></tr></thead>
+    <% recentOrders.forEach(o => { %>
+      <tr><td class="tc-head"><a href="/user/orders/<%= o.order_code %>"><%= o.order_code %></a></td><td class="tc-full"><%= o.product_title %></td><td data-label="Tổng" class="price"><%= H.money(o.total) %></td><td data-label="Thời gian" class="muted"><%= H.fmtDate(o.created_at) %></td></tr>
+    <% }) %>
+  </table><% } %>
+</div>
+<%- include('../partials/footer') %>
