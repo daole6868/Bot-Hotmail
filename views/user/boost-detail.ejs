@@ -29,6 +29,8 @@
       <input name="account" required maxlength="120" value="<%= login ? login.u : '' %>">
       <label class="label">Mật khẩu <span class="req">*</span></label>
       <input type="password" name="password" required maxlength="120" autocomplete="new-password">
+      <label class="label">Thông tin liên hệ <span class="req">*</span></label>
+      <input name="contact" required maxlength="120" value="<%= o.contact || '' %>" placeholder="Zalo / SĐT / Facebook">
       <label class="label">Server</label>
       <input name="server" maxlength="60" value="<%= o.server || '' %>">
       <label class="label">Ghi chú</label>
@@ -50,8 +52,9 @@
       <% if (o.discount) { %><div><span>Mã giảm giá <em><%= o.coupon_code %></em></span><b class="bc-minus">-<%= H.money(o.discount) %></b></div><% } %>
       <div class="bc-total"><span>Đã thanh toán</span><b><%= H.money(o.total) %></b></div>
     </div>
-    <% if (o.server || o.note) { %>
+    <% if (o.server || o.note || o.contact) { %>
     <div class="bo-info muted small">
+      <% if (o.contact) { %><div>Liên hệ: <b><%= o.contact %></b></div><% } %>
       <% if (o.server) { %><div>Server: <b><%= o.server %></b></div><% } %>
       <% if (o.note) { %><div>Ghi chú: <span class="prewrap"><%= o.note %></span></div><% } %>
     </div>

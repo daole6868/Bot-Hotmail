@@ -468,6 +468,7 @@ addColumn('daily_stats', 'boost_orders', 'INTEGER NOT NULL DEFAULT 0');
 // Cày thuê nằm trong "Danh mục" như VIP / Reroll: danh mục loại 'boost' (sửa tên, ảnh, mô tả, thứ tự được)
 // -> bên trong là danh mục con (boost_categories.parent_id) -> gói. options = cài đặt hiển thị riêng của danh mục cày thuê
 addColumn('categories', 'options', 'TEXT');
+addColumn('boost_orders', 'contact', 'TEXT'); // Zalo / SĐT / Facebook để shop liên hệ khách
 addColumn('boost_categories', 'parent_id', 'INTEGER REFERENCES categories(id) ON DELETE CASCADE');
 db.exec('CREATE INDEX IF NOT EXISTS idx_bcat_parent ON boost_categories(parent_id, is_active, sort_order)');
 {

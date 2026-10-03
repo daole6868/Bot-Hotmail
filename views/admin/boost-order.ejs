@@ -5,6 +5,7 @@
     <h3>Đơn <%= o.code %> <span class="a-tag <%= st.tone %>"><%= st.label %></span></h3>
     <table class="a-table a-kv">
       <tr><th>Khách hàng</th><td><a href="/admin/users/<%= o.user_id %>"><%= o.username %></a> <%= o.email ? '(' + o.email + ')' : '' %></td></tr>
+      <tr><th>Liên hệ</th><td><b><%= o.contact || '—' %></b></td></tr>
       <tr><th>Game</th><td><%= o.game_name %></td></tr>
       <tr><th>Tạm tính</th><td><%= H.money(o.subtotal) %></td></tr>
       <tr><th>Giảm giá</th><td><%= o.discount ? '-' + H.money(o.discount) + ' (' + o.coupon_code + ')' : '—' %></td></tr>

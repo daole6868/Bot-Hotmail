@@ -100,8 +100,8 @@ const checkoutTx = db.transaction((userId, gameId, f, ip) => {
 
   const code = genCode();
   const login = encrypt(JSON.stringify({ u: f.account, p: f.password }));
-  const id = db.prepare(`INSERT INTO boost_orders(code, user_id, game_id, game_name, subtotal, discount, total, coupon_code, login_enc, server, note, ip)
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(code, userId, gameId, game?.name || '', subtotal, discount, total, coupon?.code || null, login, f.server || null, f.note || null, ip).lastInsertRowid;
+  const id = db.prepare(`INSERT INTO boost_orders(code, user_id, game_id, game_name, subtotal, discount, total, coupon_code, login_enc, server, note, contact, ip)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(code, userId, gameId, game?.name || '', subtotal, discount, total, coupon?.code || null, login, f.server || null, f.note || null, f.contact, ip).lastInsertRowid;
   const insItem = db.prepare('INSERT INTO boost_order_items(order_id, package_id, name, category_name, unit, price, qty, line_total) VALUES(?,?,?,?,?,?,?,?)');
   const sold = db.prepare('UPDATE boost_packages SET sold_count = sold_count + ? WHERE id = ?');
   for (const it of items) { insItem.run(id, it.id, it.name, it.category_name, it.unit, it.price, it.qty, it.line); sold.run(it.qty, it.id); }
@@ -115,16 +115,18 @@ const checkoutTx = db.transaction((userId, gameId, f, ip) => {
   db.prepare('DELETE FROM boost_carts WHERE user_id = ? AND game_id = ?').run(userId, gameId);
   bumpStat('boost_revenue', total);
   bumpStat('boost_orders', 1);
-  return { id, code, total, items, game: game?.name };
+  return { id, code, total, items, game: game?.name, contact: f.contact };
 });
 
 function checkout(userId, gameId, f, ip) {
   f = {
     account: String(f.account || '').trim().slice(0, 120), password: String(f.password || '').slice(0, 120),
     server: String(f.server || '').trim().slice(0, 60), note: String(f.note || '').trim().slice(0, 1000), coupon: String(f.coupon || '').trim().slice(0, 32),
+    contact: String(f.contact || '').trim().slice(0, 120),
   };
   if (!f.account) return { ok: false, message: 'Vui lòng nhập tài khoản game' };
   if (!f.password) return { ok: false, message: 'Vui lòng nhập mật khẩu game' };
+  if (!f.contact) return { ok: false, message: 'Vui lòng nhập thông tin liên hệ (Zalo / SĐT / Facebook)' };
   try {
     const r = checkoutTx.immediate(userId, gameId, f, ip);
     logActivity(userId, 'boost_order', `${r.code} ${r.total}`, ip);
@@ -189,9 +191,11 @@ function customerUpdate(userId, code, f) {
   if (!o) return { ok: false, message: 'Không tìm thấy đơn' };
   if (o.status !== 'need_info') return { ok: false, message: 'Đơn không ở trạng thái cần bổ sung thông tin' };
   const account = String(f.account || '').trim().slice(0, 120); const password = String(f.password || '').slice(0, 120);
+  const contact = String(f.contact || '').trim().slice(0, 120);
   if (!account || !password) return { ok: false, message: 'Vui lòng nhập đủ tài khoản và mật khẩu' };
-  db.prepare('UPDATE boost_orders SET login_enc = ?, server = ?, note = COALESCE(NULLIF(?, \'\'), note), updated_at = unixepoch() WHERE id = ?')
-    .run(encrypt(JSON.stringify({ u: account, p: password })), String(f.server || '').trim().slice(0, 60) || null, String(f.note || '').trim().slice(0, 1000), o.id);
+  if (!contact) return { ok: false, message: 'Vui lòng nhập thông tin liên hệ (Zalo / SĐT / Facebook)' };
+  db.prepare('UPDATE boost_orders SET login_enc = ?, server = ?, contact = ?, note = COALESCE(NULLIF(?, \'\'), note), updated_at = unixepoch() WHERE id = ?')
+    .run(encrypt(JSON.stringify({ u: account, p: password })), String(f.server || '').trim().slice(0, 60) || null, contact, String(f.note || '').trim().slice(0, 1000), o.id);
   return setStatus(o.id, 'received', 'Khách đã cập nhật thông tin đăng nhập', null);
 }
 
@@ -215,7 +219,7 @@ function notifyNewOrder(r, userId) {
   if (u?.email) require('./mailer').sendLater(u.email, 'boost', { username: u.username, code: r.code, status: 'received', label: STATUS.received.label, total: r.total, items: r.items });
   if (s.boost_tg_notify !== '0') {
     const lines = r.items.map((i) => `• ${i.name} x${i.qty} = ${money(i.line)}`).join('\n');
-    require('./backup').notifyAdmin(`🛠 Đơn cày thuê mới ${r.code}\n${r.game} — ${u?.username}\n${lines}\nTổng: ${money(r.total)}`).catch(() => {});
+    require('./backup').notifyAdmin(`🛠 Đơn cày thuê mới ${r.code}\n${r.game} — ${u?.username}\nLiên hệ: ${r.contact}\n${lines}\nTổng: ${money(r.total)}`).catch(() => {});
   }
 }
 
