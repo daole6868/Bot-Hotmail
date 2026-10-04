@@ -22,7 +22,7 @@ const DEFAULTS = {
   rate: 8, max_len: 1000,
   tg_notify: true, tg_reply: true,
   ai_on: false, ai_mode: 'offline', ai_name: 'Trợ lý ảo', ai_info: '', ai_max: 20, ai_day: 300,
-  keep_days: 90,
+  keep_hours: 2160, // tự xóa cuộc chat không hoạt động sau N giờ (tối thiểu 1 giờ, mặc định 90 ngày)
   quick: [
     { t: 'Chào khách', b: 'Chào bạn 👋 Shop có thể giúp gì cho bạn ạ?' },
     { t: 'Hướng dẫn nạp tiền', b: 'Bạn vào mục Nạp tiền, quét mã QR hoặc chuyển khoản đúng nội dung, tiền sẽ tự cộng sau 1–3 phút ạ.' },
@@ -220,14 +220,29 @@ function openStream(req, res, client) {
 }
 
 // ---------- Dọn dữ liệu cũ (gọi từ bảo trì hằng ngày) ----------
+const keepHours = (c = cfg()) => int(c.keep_hours ?? (c.keep_days ? c.keep_days * 24 : undefined), 2160, 1, 87600);
+
+/** Xóa hẳn 1 cuộc chat: toàn bộ tin nhắn + ảnh đã gửi trong chat (file trên ổ đĩa) */
+const deleteConvTx = db.transaction((id) => {
+  const imgs = db.prepare('SELECT image FROM chat_msgs WHERE conv_id = ? AND image IS NOT NULL').all(id).map((r) => r.image);
+  db.prepare('DELETE FROM chat_msgs WHERE conv_id = ?').run(id);
+  db.prepare('DELETE FROM chat_signals WHERE conv_id = ?').run(id);
+  db.prepare('DELETE FROM chat_tg WHERE conv_id = ?').run(id);
+  db.prepare('DELETE FROM chat_convs WHERE id = ?').run(id);
+  return imgs;
+});
+function deleteConv(id) {
+  const imgs = deleteConvTx.immediate(id);
+  const { removeImage } = require('../utils/upload');
+  imgs.forEach(removeImage);
+  signal(id, 'conv', { deleted: true });
+  return imgs.length;
+}
+
 function purge() {
-  const c = cfg();
-  const cut = nowS() - int(c.keep_days, 90, 1, 3650) * 86400;
-  const ids = db.prepare('SELECT id FROM chat_convs WHERE last_at < ? LIMIT 5000').all(cut).map((r) => r.id);
-  for (const id of ids) {
-    db.prepare('DELETE FROM chat_msgs WHERE conv_id = ?').run(id);
-    db.prepare('DELETE FROM chat_convs WHERE id = ?').run(id);
-  }
+  const cut = nowS() - keepHours() * 3600;
+  const ids = db.prepare('SELECT id FROM chat_convs WHERE last_at < ? LIMIT 2000').all(cut).map((r) => r.id);
+  for (const id of ids) deleteConv(id);
   db.prepare('DELETE FROM chat_tg WHERE created_at < ?').run(cut);
   db.prepare('DELETE FROM chat_presence WHERE seen_at < ?').run(nowS() - 86400);
   db.prepare('DELETE FROM chat_signals WHERE created_at < ?').run(nowS() - 300);
@@ -237,5 +252,5 @@ function purge() {
 module.exports = {
   DEFAULTS, cfg, inHours, vnToday, agentsOnline, viewingConv, touchPresence,
   newVisitor, visitorOf, convById, convOf, createConv, msgView, addMsg, recent, signal, markSeen, sentLastMinute, newConvsFromIp,
-  userOrders, orderRef, bus, openStream, convRow, purge, int, nowS,
+  userOrders, orderRef, bus, openStream, convRow, purge, deleteConv, keepHours, int, nowS,
 };

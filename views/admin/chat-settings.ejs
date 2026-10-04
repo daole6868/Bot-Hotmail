@@ -48,8 +48,9 @@
         <div><label>Tin tối đa / phút / khách</label><input type="number" name="rate" min="2" max="60" value="<%= cfg.rate %>"></div>
         <div><label>Độ dài tối đa 1 tin (ký tự)</label><input type="number" name="max_len" min="100" max="3000" value="<%= cfg.max_len %>"></div>
       </div>
-      <label>Tự xóa cuộc chat không hoạt động sau (ngày)</label>
-      <input type="number" name="keep_days" min="7" max="3650" value="<%= cfg.keep_days %>">
+      <% const kd = keepHours % 24 === 0; %>
+      <label>Tự xóa cuộc chat không hoạt động sau <small class="a-muted">(xóa cả tin nhắn và ảnh, tối thiểu 1 giờ)</small></label>
+      <div class="a-keep"><input type="number" name="keep_n" min="1" max="87600" value="<%= kd ? keepHours / 24 : keepHours %>"><select name="keep_unit"><option value="h" <%= kd ? '' : 'selected' %>>giờ</option><option value="d" <%= kd ? 'selected' : '' %>>ngày</option></select></div>
     </div>
 
     <div class="a-card">

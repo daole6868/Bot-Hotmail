@@ -985,3 +985,5 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
   .a-qr-row textarea { grid-column: 1 / -1; grid-row: 2; }
   .a-staff-add, .a-staff-row { grid-template-columns: minmax(0, 1fr); }
 }
+
+.a-keep { display: grid; grid-template-columns: minmax(0, 1fr) 110px; gap: 8px; }

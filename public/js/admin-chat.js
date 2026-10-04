@@ -210,7 +210,7 @@
 
   // ---------- Thao tác ----------
   async function act(a, extra = {}) {
-    if (a === 'delete' && !confirm('Xóa vĩnh viễn cuộc chat này?')) return;
+    if (a === 'delete' && !confirm('Xóa vĩnh viễn cuộc chat này (toàn bộ tin nhắn và ảnh)?')) return;
     if (a === 'block' && !confirm('Chặn khách này gửi tin nhắn?')) return;
     const j = await api(`/admin/chat/c/${cur}/action`, { json: { act: a, ...extra } });
     if (!j.ok) return toast(j.message, true);

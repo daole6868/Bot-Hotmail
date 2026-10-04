@@ -176,10 +176,8 @@ router.post('/c/:id/action', (req, res) => {
   else if (act === 'note') set('note = ?', str(req.body.note, 1000) || null);
   else if (act === 'delete') {
     if (req.agent.role !== 'admin') return fail(res, 'Chỉ admin được xóa cuộc chat', 403);
-    db.prepare('DELETE FROM chat_msgs WHERE conv_id = ?').run(conv.id);
-    db.prepare('DELETE FROM chat_convs WHERE id = ?').run(conv.id);
-    audit(req, 'chat_delete', `#${conv.id} ${conv.name}`);
-    chat.signal(conv.id, 'conv', { deleted: true });
+    const n = chat.deleteConv(conv.id);
+    audit(req, 'chat_delete', `#${conv.id} ${conv.name} (${n} ảnh)`);
     return res.json({ ok: true, deleted: true });
   } else return fail(res, 'Thao tác không hợp lệ');
   chat.signal(conv.id, 'conv', { act });
@@ -206,7 +204,7 @@ router.post('/viewing', (req, res) => {
 // ---------- Cài đặt (chỉ admin) ----------
 router.get('/settings', adminOnly, (req, res) => {
   const staff = db.prepare('SELECT id, username, email, staff_name, staff_tg FROM users WHERE staff = 1 ORDER BY id').all();
-  res.render('admin/chat-settings', { title: 'Cài đặt chat', cfg: chat.cfg(), staff, tg: bot.tgStatus(), tgReady: !!getSettings().tg_token_enc, tgChat: getSettings().tg_chat_id || '', ai: require('../services/ai').status() });
+  res.render('admin/chat-settings', { title: 'Cài đặt chat', cfg: chat.cfg(), keepHours: chat.keepHours(), staff, tg: bot.tgStatus(), tgReady: !!getSettings().tg_token_enc, tgChat: getSettings().tg_chat_id || '', ai: require('../services/ai').status() });
 });
 router.post('/settings', adminOnly, (req, res) => {
   const b = req.body; const D = chat.DEFAULTS; const I = (k, min, max) => toInt(b[k], D[k], min, max); const B = (k) => !!H.bool(b[k]);
@@ -220,7 +218,7 @@ router.post('/settings', adminOnly, (req, res) => {
     rate: I('rate', 2, 60), max_len: I('max_len', 100, 3000),
     tg_notify: B('tg_notify'), tg_reply: B('tg_reply'),
     ai_on: B('ai_on'), ai_mode: b.ai_mode === 'always' ? 'always' : 'offline', ai_name: str(b.ai_name, 40) || D.ai_name, ai_info: str(b.ai_info, 8000), ai_max: I('ai_max', 1, 500), ai_day: I('ai_day', 1, 100000),
-    keep_days: I('keep_days', 7, 3650),
+    keep_hours: Math.min(87600, Math.max(1, toInt(b.keep_n, 90, 1, 87600) * (b.keep_unit === 'h' ? 1 : 24))),
     quick: titles.map((t, i) => ({ t: str(t, 40).trim(), b: str(bodies[i], 1000).trim() })).filter((q) => q.t && q.b).slice(0, 50),
   };
   setSetting('chat_cfg', JSON.stringify(c));
