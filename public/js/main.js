@@ -39,6 +39,28 @@
       });
   }
 
+  // Nút Hỗ trợ: bấm để mở / đóng; tự mở khi vào web rồi thu lại sau N giây (admin chỉnh)
+  const sp = $('[data-support]');
+  if (sp) {
+    const btn = $('[data-sp-toggle]', sp);
+    let timer = 0;
+    const setOpen = (o) => { sp.classList.toggle('open', o); btn.setAttribute('aria-expanded', o ? 'true' : 'false'); };
+    btn.addEventListener('click', () => { clearTimeout(timer); setOpen(!sp.classList.contains('open')); });
+    $('[data-sp-close]', sp).addEventListener('click', () => { clearTimeout(timer); setOpen(false); });
+    document.addEventListener('click', (e) => { if (!e.target.closest('[data-support]') && sp.classList.contains('open')) { clearTimeout(timer); setOpen(false); } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+    ['pointerenter', 'touchstart', 'focusin'].forEach((ev) => sp.addEventListener(ev, () => clearTimeout(timer), { passive: true }));
+    const n = +sp.dataset.auto || 0;
+    let seen = false; try { seen = sp.dataset.once === '1' && sessionStorage.getItem('sp_auto') === '1'; } catch (e) { /* bỏ qua */ }
+    if (n > 0 && !seen && getComputedStyle(sp).display !== 'none') {
+      setTimeout(() => {
+        setOpen(true);
+        try { sessionStorage.setItem('sp_auto', '1'); } catch (e) { /* bỏ qua */ }
+        timer = setTimeout(() => setOpen(false), n * 1000);
+      }, 700);
+    }
+  }
+
   // Toggle menu / dropdown
   // Menu điện thoại: lớp phủ phía sau -> chạm ra ngoài chỉ đóng menu, không bấm nhầm banner / link bên dưới
   const mnav = $('#mobileNav');

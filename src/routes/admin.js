@@ -1148,6 +1148,34 @@ const FOOTER_KEYS = ['footer_about_title', 'footer_about_text', 'footer_col1_tit
   'footer_col2_links', 'footer_col3_title', 'footer_col3_links', 'social_facebook', 'social_zalo', 'social_tiktok',
   'social_youtube', 'social_telegram', 'footer_text'];
 
+// ======================= HỖ TRỢ (nút / thanh liên hệ nhanh) =======================
+const supportSvc = require('../services/support');
+router.get('/support', (req, res) => res.render('admin/support', { title: 'Hỗ trợ', cfg: supportSvc.config(), TYPES: supportSvc.TYPES }));
+router.post('/support', (req, res) => {
+  const b = req.body;
+  const arr = (k) => [].concat(b[k] ?? []);
+  const types = arr('ch_type'); const titles = arr('ch_title'); const descs = arr('ch_desc'); const values = arr('ch_value'); const ons = arr('ch_on');
+  const channels = types.slice(0, 20).map((t, i) => ({
+    type: supportSvc.TYPES[t] ? t : 'website', title: str(titles[i], 40), desc: str(descs[i], 80), value: str(values[i], 300).trim(), on: ons[i] === '1',
+  })).filter((c) => c.value || c.title);
+  // link không hợp lệ (VD javascript:...) -> bỏ kênh đó, vẫn lưu các kênh còn lại
+  const bad = [];
+  for (let i = channels.length - 1; i >= 0; i--) {
+    const c = channels[i]; const href = c.value ? supportSvc.TYPES[c.type].link(c.value) : '';
+    if (href && !supportSvc.SAFE_LINK.test(href)) { bad.unshift(c.title || supportSvc.TYPES[c.type].name); channels.splice(i, 1); }
+  }
+  const cfg = {
+    enabled: bool(b.enabled), mode: b.mode === 'side' ? 'side' : 'corner', side: b.side === 'left' ? 'left' : 'right',
+    corner: ['tl', 'tr', 'bl', 'br'].includes(b.corner) ? b.corner : 'br', auto: toInt(b.auto, 2, 0, 60), once: bool(b.once),
+    device: ['all', 'pc', 'mobile'].includes(b.device) ? b.device : 'all',
+    title: str(b.title, 60) || 'Hỗ trợ nhanh', subtitle: str(b.subtitle, 80), label: str(b.label, 20) || 'Hỗ trợ',
+    color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#2563eb', channels,
+  };
+  setSetting('support_cfg', JSON.stringify(cfg));
+  audit(req, 'support_update', cfg.enabled ? 'bật' : 'tắt');
+  back(req, res, bad.length ? 'error' : 'success', bad.length ? `Đã lưu. Bỏ kênh có đường dẫn không hợp lệ: ${bad.join(', ')}` : 'Đã lưu cài đặt Hỗ trợ', '/admin/support');
+});
+
 router.get('/footer', (req, res) => res.render('admin/footer', { title: 'Footer', s: getSettings() }));
 
 router.post('/footer', (req, res) => {

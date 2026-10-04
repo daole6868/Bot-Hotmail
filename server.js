@@ -91,6 +91,10 @@ app.use(session({
 
 // ---------- Biến dùng chung cho view ----------
 const { db } = require('./src/db');
+// Nút Hỗ trợ: tính lại khi cài đặt đổi (so theo chuỗi cấu hình)
+const supportSvc = require('./src/services/support');
+let supportCache = { raw: null, v: null };
+const supportView = (s) => { if (supportCache.raw !== s.support_cfg) supportCache = { raw: s.support_cfg, v: supportSvc.forView(s) }; return supportCache.v; };
 let navCache = { at: 0, games: [], sideLeft: [], sideRight: [], popup: null };
 app.use((req, res, next) => {
   if (Date.now() - navCache.at > 30000) {
@@ -102,8 +106,10 @@ app.use((req, res, next) => {
       popup: db.prepare("SELECT * FROM banners WHERE position = 'popup' AND is_active = 1 ORDER BY sort_order LIMIT 1").get() || null,
     };
   }
+  const s0 = getSettings();
   Object.assign(res.locals, {
-    s: getSettings(), H, I, baseUrl: config.baseUrl, currentUrl: req.originalUrl, turnstileSiteKey: config.turnstile.siteKey, nav: navCache, currentPath: req.path, query: {}, breadcrumb: null, layoutAdmin: false, user: null,
+    support: supportView(s0),
+    s: s0, H, I, baseUrl: config.baseUrl, currentUrl: req.originalUrl, turnstileSiteKey: config.turnstile.siteKey, nav: navCache, currentPath: req.path, query: {}, breadcrumb: null, layoutAdmin: false, user: null,
   });
   next();
 });

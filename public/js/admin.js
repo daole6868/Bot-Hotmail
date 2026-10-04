@@ -933,5 +933,34 @@
     } catch (e) { out.textContent = 'Lỗi kết nối'; }
     aiTest.disabled = false;
   });
+
+  // ---------- Hỗ trợ: danh sách kênh liên hệ ----------
+  const spf = $('[data-sp-form]');
+  if (spf) {
+    const list = $('[data-sp-list]', spf); const types = JSON.parse($('[data-sp-types]').textContent);
+    const sync = (row) => { $('input[name=ch_on]', row).value = $('[data-sp-on]', row).checked ? '1' : '0'; };
+    spf.addEventListener('change', (e) => {
+      const row = e.target.closest('[data-sp-row]'); if (!row) return;
+      if (e.target.matches('[data-sp-on]')) sync(row);
+      if (e.target.matches('[data-sp-type]')) {
+        const t = types[e.target.value]; const tile = $('[data-sp-tile]', row);
+        tile.style.background = t.color; tile.innerHTML = t.icon;
+        $('[data-sp-value]', row).placeholder = t.hint;
+        $('[data-sp-desc]', row).placeholder = 'Mô tả ngắn' + (t.desc ? ` (VD: ${t.desc})` : '');
+      }
+    });
+    spf.addEventListener('click', (e) => {
+      const row = e.target.closest('[data-sp-row]');
+      if (e.target.closest('[data-sp-add]')) {
+        list.insertAdjacentHTML('beforeend', $('[data-sp-tpl]').innerHTML);
+        $('[data-sp-empty]')?.remove(); $('[data-sp-value]', list.lastElementChild).focus(); return;
+      }
+      if (!row) return;
+      if (e.target.closest('[data-sp-del]')) row.remove();
+      if (e.target.closest('[data-sp-up]') && row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling);
+      if (e.target.closest('[data-sp-down]') && row.nextElementSibling) row.parentNode.insertBefore(row.nextElementSibling, row);
+    });
+    spf.addEventListener('submit', () => $$('[data-sp-row]', spf).forEach(sync));
+  }
 })();
 
