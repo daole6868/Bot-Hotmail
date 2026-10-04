@@ -1180,6 +1180,7 @@ a.bx-icon { align-items: center; }
 .sp-ic-chat { background: linear-gradient(135deg, var(--primary), var(--primary2)); }
 .ch-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: .72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg); line-height: 1; }
 .ch-badge[hidden] { display: none; }
+.sp-item-badge { position: static; margin-left: auto; flex-shrink: 0; border: 0; }
 .sp-btn { position: relative; }
 .ch-fab { position: fixed; bottom: 20px; z-index: 46; width: 56px; height: 56px; border-radius: 50%; border: 0; cursor: pointer; background: linear-gradient(135deg, var(--primary), var(--primary2)); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 26px color-mix(in srgb, var(--ch-c) 50%, transparent); transition: transform .15s; }
 .ch-fab:hover { transform: scale(1.06); }
