@@ -173,6 +173,7 @@ router.post('/ai', (req, res) => {
 });
 router.post('/ai/test', async (req, res) => {
   const p = ai.PROVIDERS[req.body?.provider] ? req.body.provider : null;
+  console.log(`[ai] thử kết nối ${p || ai.status().provider}, bản PM2 ${process.env.NODE_APP_INSTANCE ?? '-'}, workspace: ${getSettings().ai_anthropic_workspace || '(trống)'}`);
   const name = ai.PROVIDERS[p || ai.status().provider].name;
   try { res.json({ ok: true, message: `${name}: kết nối thành công. AI trả lời: “${await ai.test(p)}”` }); } catch (e) {
     res.json({ ok: false, message: `${name}: ${e instanceof ai.AiError ? e.message : 'Lỗi: ' + e.message}` });

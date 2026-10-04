@@ -82,8 +82,14 @@ async function complete(system, user, { json = false, ms = 300000, s = getSettin
       j = await post('https://api.anthropic.com/v1/messages', fbHeaders, fb ? { ...body, fallbacks: 'default' } : body, ms);
     } catch (e) {
       // bị từ chối vì workspace / chế độ dự phòng -> thử lại 1 lần không có chế độ dự phòng
+      const wsErr = /workspace/i.test(e.raw || '');
+      if (wsErr && !s.ai_anthropic_workspace && !fb) throw new AiError('API key này chưa gắn workspace và ô Workspace ID đang TRỐNG. Vào AI viết bài → mục Anthropic (Claude) → nhập Workspace ID → bấm Lưu cài đặt AI.');
+      if (wsErr && s.ai_anthropic_workspace) throw new AiError(`Workspace ID đã lưu (${s.ai_anthropic_workspace}) không đúng hoặc API key không thuộc tổ chức có workspace này. Kiểm tra lại ID trong Claude Console → Settings → Workspaces.`);
       if (!fb || e.status !== 400 || !/workspace|fallback/i.test(e.raw || '')) throw e;
-      j = await post('https://api.anthropic.com/v1/messages', headers, body, ms);
+      try { j = await post('https://api.anthropic.com/v1/messages', headers, body, ms); } catch (e2) {
+        if (/workspace/i.test(e2.raw || '')) throw new AiError('API key này chưa gắn workspace và ô Workspace ID đang TRỐNG. Vào AI viết bài → mục Anthropic (Claude) → nhập Workspace ID → bấm Lưu cài đặt AI.');
+        throw e2;
+      }
     }
     if (j.stop_reason === 'refusal') throw new AiError('AI từ chối viết nội dung này, hãy đổi cách ra lệnh');
     return (j.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
@@ -166,6 +172,7 @@ function startWrite(userId, input) {
   if (db.prepare("SELECT 1 FROM ai_jobs WHERE user_id = ? AND status = 'running'").get(userId)) throw new AiError('AI đang viết 1 bài khác, vui lòng đợi xong');
   const s = getSettings(); const st = status(s);
   if (!st.ready) throw new AiError('Chưa cài đặt AI. Vào Admin -> AI viết bài để nhập API key');
+  console.log(`[ai] viết bài ${st.provider}/${st.model}, bản PM2 ${process.env.NODE_APP_INSTANCE ?? '-'}, workspace: ${s.ai_anthropic_workspace || '(trống)'}`);
   const id = db.prepare('INSERT INTO ai_jobs(user_id, provider, model, input) VALUES(?,?,?,?)').run(userId, st.provider, st.model, JSON.stringify(input)).lastInsertRowid;
   setImmediate(async () => {
     try {
