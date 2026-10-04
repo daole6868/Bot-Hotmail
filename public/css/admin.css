@@ -791,3 +791,4 @@ details.a-footer-col [data-fc-add] { margin-bottom: 14px; }
 }
 .a-ai-count { text-align: right; margin-top: 4px; }
 .a-ai-box textarea[data-ai=prompt] { min-height: 140px; max-height: 70vh; }
+.a-ai-grid [data-ai="length-custom"] { margin-top: 8px; }

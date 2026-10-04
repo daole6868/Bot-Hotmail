@@ -900,6 +900,7 @@
         if (g && g.dataset.gid && !$('[name=game_id]', pf).value) $('[name=game_id]', pf).value = g.dataset.gid;
         $$('[data-count]', pf).forEach(countOne); seoCheck();
       };
+      ai('length')?.addEventListener('change', () => { const c = ai('length-custom'); c.hidden = ai('length').value !== 'custom'; if (!c.hidden) c.focus(); });
       const cnt = $('[data-ai-count]', pf);
       if (cnt) ai('prompt').addEventListener('input', () => { cnt.textContent = ai('prompt').value.length.toLocaleString('vi-VN'); });
       aiBtn.addEventListener('click', async () => {
@@ -908,7 +909,7 @@
         aiBtn.disabled = true; st.textContent = 'Đang gửi yêu cầu...';
         try {
           const r = await (await fetch('/admin/ai/write', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf, Accept: 'application/json' },
-            body: JSON.stringify({ prompt: ai('prompt').value, keyword: ai('keyword').value, game: ai('game').value, length: ai('length').value, tone: ai('tone').value }) })).json();
+            body: JSON.stringify({ prompt: ai('prompt').value, keyword: ai('keyword').value, game: ai('game').value, length: ai('length').value === 'custom' ? (ai('length-custom').value || 1000) : ai('length').value, tone: ai('tone').value }) })).json();
           if (!r.ok) throw new Error(r.message);
           for (;;) {
             await new Promise((ok) => setTimeout(ok, 3000));

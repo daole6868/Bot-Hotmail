@@ -63,8 +63,43 @@ function friendlyError(status, raw) {
   return `AI báo lỗi ${status}: ${short}`;
 }
 
+/**
+ * Claude: gọi kiểu streaming (bài dài viết vài phút, kiểu thường dễ bị máy chủ cắt) rồi ghép lại -> giống kết quả thường.
+ * Lỗi trước khi bắt đầu (sai key, workspace...) vẫn trả JSON như post().
+ */
+async function postStream(url, headers, body, ms) {
+  let r;
+  try {
+    r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify({ ...body, stream: true }), signal: AbortSignal.timeout(ms) });
+  } catch (e) {
+    throw new AiError(e.name === 'TimeoutError' ? 'AI trả lời quá lâu, vui lòng thử lại' : 'Không kết nối được tới máy chủ AI: ' + e.message);
+  }
+  let text;
+  try { text = await r.text(); } catch (e) { throw new AiError(e.name === 'TimeoutError' ? 'AI viết quá lâu, hãy giảm số chữ rồi thử lại' : 'Mất kết nối khi AI đang viết: ' + e.message); }
+  if (!r.ok) {
+    let j = null; try { j = JSON.parse(text); } catch { /* không phải JSON */ }
+    const raw = String(j?.error?.message || j?.message || text || '');
+    console.error(`[ai] ${new URL(url).hostname} lỗi ${r.status}: ${raw.slice(0, 300)}`);
+    const e = new AiError(friendlyError(r.status, raw)); e.status = r.status; e.raw = raw;
+    throw e;
+  }
+  let out = ''; let stop = null;
+  for (const line of text.split('\n')) {
+    if (!line.startsWith('data:')) continue;
+    let ev; try { ev = JSON.parse(line.slice(5)); } catch { continue; }
+    if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') out += ev.delta.text;
+    else if (ev.type === 'message_delta' && ev.delta?.stop_reason) stop = ev.delta.stop_reason;
+    else if (ev.type === 'error') {
+      const raw = String(ev.error?.message || 'lỗi không rõ');
+      console.error(`[ai] ${new URL(url).hostname} lỗi giữa chừng: ${raw.slice(0, 300)}`);
+      const e = new AiError(friendlyError(ev.error?.type === 'overloaded_error' ? 529 : 500, raw)); e.raw = raw; throw e;
+    }
+  }
+  return { content: [{ type: 'text', text: out }], stop_reason: stop };
+}
+
 /** Gửi 1 yêu cầu tới AI đang chọn (hoặc provider truyền vào) -> văn bản trả lời */
-async function complete(system, user, { json = false, ms = 300000, s = getSettings(), provider = null } = {}) {
+async function complete(system, user, { json = false, ms = 300000, s = getSettings(), provider = null, maxTokens = 16000 } = {}) {
   const p = PROVIDERS[provider] ? provider : PROVIDERS[s.ai_provider] ? s.ai_provider : 'openai';
   const key = keyOf(s, p); const model = modelOf(s, p);
   if (!key) throw new AiError(`Chưa nhập API key cho ${PROVIDERS[p].name}`);
@@ -73,30 +108,31 @@ async function complete(system, user, { json = false, ms = 300000, s = getSettin
   if (p === 'anthropic') {
     const headers = { 'x-api-key': key, 'anthropic-version': '2023-06-01' };
     if (s.ai_anthropic_workspace) headers['anthropic-workspace-id'] = s.ai_anthropic_workspace; // key không gắn sẵn workspace
-    const body = { model, max_tokens: 16000, system, messages: [{ role: 'user', content: user }] };
+    const body = { model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: user }] };
     // Model dự phòng khi bị từ chối: không dùng với key cấp tổ chức (có Workspace ID) — chế độ này không nhận header workspace
     const fb = CLAUDE_FALLBACK.includes(model) && !s.ai_anthropic_workspace;
     const fbHeaders = fb ? { ...headers, 'anthropic-beta': 'server-side-fallback-2026-07-01' } : headers;
     let j;
     try {
-      j = await post('https://api.anthropic.com/v1/messages', fbHeaders, fb ? { ...body, fallbacks: 'default' } : body, ms);
+      j = await postStream('https://api.anthropic.com/v1/messages', fbHeaders, fb ? { ...body, fallbacks: 'default' } : body, ms);
     } catch (e) {
       // bị từ chối vì workspace / chế độ dự phòng -> thử lại 1 lần không có chế độ dự phòng
       const wsErr = /workspace/i.test(e.raw || '');
       if (wsErr && !s.ai_anthropic_workspace && !fb) throw new AiError('API key này chưa gắn workspace và ô Workspace ID đang TRỐNG. Vào AI viết bài → mục Anthropic (Claude) → nhập Workspace ID → bấm Lưu cài đặt AI.');
       if (wsErr && s.ai_anthropic_workspace) throw new AiError(`Workspace ID đã lưu (${s.ai_anthropic_workspace}) không đúng hoặc API key không thuộc tổ chức có workspace này. Kiểm tra lại ID trong Claude Console → Settings → Workspaces.`);
       if (!fb || e.status !== 400 || !/workspace|fallback/i.test(e.raw || '')) throw e;
-      try { j = await post('https://api.anthropic.com/v1/messages', headers, body, ms); } catch (e2) {
+      try { j = await postStream('https://api.anthropic.com/v1/messages', headers, body, ms); } catch (e2) {
         if (/workspace/i.test(e2.raw || '')) throw new AiError('API key này chưa gắn workspace và ô Workspace ID đang TRỐNG. Vào AI viết bài → mục Anthropic (Claude) → nhập Workspace ID → bấm Lưu cài đặt AI.');
         throw e2;
       }
     }
     if (j.stop_reason === 'refusal') throw new AiError('AI từ chối viết nội dung này, hãy đổi cách ra lệnh');
+    if (j.stop_reason === 'max_tokens') throw new AiError('Bài quá dài nên AI bị cắt giữa chừng. Hãy giảm số chữ rồi thử lại.');
     return (j.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
   }
   if (p === 'gemini') {
     const body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: user }] }] };
-    if (json) body.generationConfig = { responseMimeType: 'application/json' };
+    body.generationConfig = { maxOutputTokens: maxTokens, ...(json ? { responseMimeType: 'application/json' } : {}) };
     const j = await post(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'x-goog-api-key': key }, body, ms);
     const c = j.candidates?.[0];
     if (!c) throw new AiError('AI không trả lời (có thể bị bộ lọc an toàn chặn), hãy đổi cách ra lệnh');
@@ -125,9 +161,12 @@ function linkList() {
   return [...games.map((g) => `- Game ${g.name}: [[game:${g.slug}]]`), ...cats.map((c) => `- ${c.gname} › ${c.name}: [[cat:${c.gslug}/${c.slug}]]`)].join('\n');
 }
 
+// Độ dài bài: số chữ (200 – 5000); giá trị cũ short / medium / long vẫn hiểu
+const wordsOf = (v) => ({ short: 600, medium: 1000, long: 1600 }[v] || Math.min(5000, Math.max(200, parseInt(v, 10) || 1000)));
+
 function buildPrompt(input, s = getSettings()) {
   const site = s.site_name || 'shop';
-  const words = { short: 600, medium: 1000, long: 1600 }[input.length] || 1000;
+  const words = wordsOf(input.length);
   const system = `Bạn là chuyên gia viết nội dung chuẩn SEO tiếng Việt cho website "${site}" — shop bán tài khoản game, nạp game và dịch vụ cày thuê.
 Yêu cầu bắt buộc:
 - Viết tiếng Việt tự nhiên, có dấu, hữu ích thật sự cho người chơi; không nhồi nhét từ khóa.
@@ -143,7 +182,7 @@ Chỉ trả về đúng 1 đối tượng JSON (không kèm chữ nào khác) v�
     `Yêu cầu: ${input.prompt}`,
     input.keyword ? `Từ khóa chính: ${input.keyword}` : '',
     input.game ? `Game liên quan: ${input.game}` : '',
-    `Độ dài khoảng ${words} chữ, 3-5 câu hỏi thường gặp.`,
+    `Độ dài phần nội dung khoảng ${words} chữ (cố gắng sát con số này), ${words <= 600 ? '2-3' : words >= 2500 ? '5-8' : '3-5'} câu hỏi thường gặp.`,
     `Giọng văn: ${input.tone || s.ai_tone || 'thân thiện, dễ hiểu, chuyên nghiệp'}.`,
   ].filter(Boolean).join('\n');
   return { system, user };
@@ -177,7 +216,8 @@ function startWrite(userId, input) {
   setImmediate(async () => {
     try {
       const { system, user } = buildPrompt(input, s);
-      const out = parseResult(await complete(system, user, { json: true, s }));
+      const w = wordsOf(input.length);
+      const out = parseResult(await complete(system, user, { json: true, s, ms: 600000, maxTokens: Math.min(32000, Math.max(8000, w * 4 + 3000)) }));
       db.prepare("UPDATE ai_jobs SET status = 'done', result = ?, finished_at = unixepoch() WHERE id = ?").run(JSON.stringify(out), id);
     } catch (e) {
       db.prepare("UPDATE ai_jobs SET status = 'error', error = ?, finished_at = unixepoch() WHERE id = ?").run(e instanceof AiError ? e.message : 'Lỗi: ' + e.message, id);
@@ -195,7 +235,7 @@ function job(id, userId) {
 
 /** Thử kết nối (nút "Thử kết nối" trong admin) */
 async function test(provider) {
-  const t = await complete('Bạn là trợ lý. Trả lời ngắn gọn.', 'Trả lời đúng 1 từ: OK', { ms: 60000, provider });
+  const t = await complete('Bạn là trợ lý. Trả lời ngắn gọn.', 'Trả lời đúng 1 từ: OK', { ms: 60000, provider, maxTokens: 1000 });
   return String(t).trim().slice(0, 100);
 }
 

@@ -19,7 +19,10 @@
             <div class="a-ai-wide"><label>Từ khóa chính</label><input data-ai="keyword" maxlength="80" placeholder="VD: acc honkai star rail"></div>
             <div class="a-ai-wide"><label>Giọng văn</label><input data-ai="tone" maxlength="200" placeholder="VD: thân thiện, dễ hiểu"></div>
             <div><label>Game</label><select data-ai="game"><option value="">-- Không --</option><% games.forEach(g => { %><option value="<%= g.name %>" data-gid="<%= g.id %>"><%= g.name %></option><% }) %></select></div>
-            <div><label>Độ dài</label><select data-ai="length"><option value="short">Ngắn ~600 chữ</option><option value="medium" selected>Vừa ~1000 chữ</option><option value="long">Dài ~1600 chữ</option></select></div>
+            <div><label>Độ dài</label>
+              <select data-ai="length"><% [[300, 'Rất ngắn ~300 chữ'], [600, 'Ngắn ~600 chữ'], [1000, 'Vừa ~1000 chữ'], [1500, 'Khá dài ~1500 chữ'], [2000, 'Dài ~2000 chữ'], [3000, 'Rất dài ~3000 chữ'], [4000, 'Chuyên sâu ~4000 chữ'], [5000, 'Tối đa ~5000 chữ']].forEach(([v, l]) => { %><option value="<%= v %>" <%= v === 1000 ? 'selected' : '' %>><%= l %></option><% }) %><option value="custom">Tự nhập số chữ...</option></select>
+              <input type="number" data-ai="length-custom" min="200" max="5000" step="100" placeholder="Số chữ (200 – 5000)" hidden>
+            </div>
           </div>
           <div class="a-ai-actions"><button type="button" class="a-btn a-primary" data-ai-write><%- I('g-sparkles') %> AI viết bài</button><span class="a-muted a-small" data-ai-status></span></div>
           <p class="a-field-hint">AI viết xong sẽ điền vào form bên dưới (chưa đăng). Bạn đọc lại, sửa nếu cần rồi bấm <b>Đăng bài</b>. Viết lại sẽ thay nội dung đang có.</p>

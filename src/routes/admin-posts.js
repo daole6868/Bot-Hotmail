@@ -181,7 +181,7 @@ router.post('/ai/test', async (req, res) => {
 });
 router.post('/ai/write', (req, res) => {
   const b = req.body;
-  const input = { prompt: str(b.prompt, 20000), keyword: str(b.keyword, 80), game: str(b.game, 80), length: ['short', 'medium', 'long'].includes(b.length) ? b.length : 'medium', tone: str(b.tone, 200) };
+  const input = { prompt: str(b.prompt, 20000), keyword: str(b.keyword, 80), game: str(b.game, 80), length: toInt(b.length, 1000, 200, 5000), tone: str(b.tone, 200) };
   if (input.prompt.length < 5) return res.json({ ok: false, message: 'Hãy nhập yêu cầu cho AI (VD: Viết bài hướng dẫn mua acc Genshin Impact cho người mới)' });
   try {
     const id = ai.startWrite(req.user.id, input);
