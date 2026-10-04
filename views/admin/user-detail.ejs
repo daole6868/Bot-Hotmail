@@ -5,6 +5,7 @@
     <table class="a-table a-kv">
       <tr><th>ID</th><td><%= u.id %></td></tr>
       <tr><th>Email</th><td><%= u.email || '—' %></td></tr>
+      <tr><th>Vai trò</th><td><% if (u.role === 'admin') { %><span class="a-tag purple">Admin</span><% } else if (u.ctv_role === 'manager') { %><span class="a-tag red">Quản lý</span><% } else if (u.ctv_role === 'seller') { %><span class="a-tag blue">CTV bán hàng</span><% } %><% if (u.role !== 'admin' && u.staff) { %> <span class="a-tag green">CSKH</span><% } %><% if (u.role !== 'admin' && !u.ctv_role && !u.staff) { %>User<% } %><% if (u.ctv_paused && (u.ctv_role || u.staff)) { %> <span class="a-tag">Tạm dừng</span><% } %><% if (u.role !== 'admin' && (u.ctv_role || u.staff) ) { %> <a href="/admin/ctv/<%= u.id %>" class="a-small">Xem CTV</a><% } %></td></tr>
       <tr><th>Số dư</th><td><b><%= H.money(u.balance) %></b></td></tr>
       <tr><th>Tổng nạp / Chi tiêu</th><td><%= H.money(u.total_deposit) %> / <%= H.money(u.total_spent) %></td></tr>
       <tr><th>Đăng ký</th><td><%= H.fmtDate(u.created_at) %> · IP <%= u.register_ip || '' %></td></tr>

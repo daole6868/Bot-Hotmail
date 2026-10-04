@@ -12,7 +12,7 @@
       <tr>
         <td><%= u.id %></td><td><b><%= u.username %></b></td><td class="a-small"><%= u.email || '' %></td>
         <td><b><%= H.money(u.balance) %></b></td><td><%= H.money(u.total_deposit) %></td><td><%= H.money(u.total_spent) %></td>
-        <td><%- u.role === 'admin' ? '<span class="a-tag purple">Admin</span>' : 'User' %></td>
+        <td><% if (u.role === 'admin') { %><span class="a-tag purple">Admin</span><% } else if (u.ctv_role === 'manager') { %><span class="a-tag red">Quản lý</span><% } else if (u.ctv_role === 'seller') { %><span class="a-tag blue">CTV bán hàng</span><% } %><% if (u.role !== 'admin' && u.staff) { %> <span class="a-tag green">CSKH</span><% } %><% if (u.role !== 'admin' && !u.ctv_role && !u.staff) { %>User<% } %><% if (u.ctv_paused && (u.ctv_role || u.staff)) { %> <span class="a-tag">Tạm dừng</span><% } %></td>
         <td><%- u.status === 'active' ? '<span class="a-tag green">Hoạt động</span>' : '<span class="a-tag red">Khóa</span>' %></td>
         <td class="a-small a-muted"><%= H.fmtDate(u.last_login_at) %><div><%= u.last_login_ip || '' %></div></td>
         <td><a href="/admin/users/<%= u.id %>" class="a-btn a-xs">Chi tiết</a></td>
