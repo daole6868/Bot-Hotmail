@@ -54,7 +54,11 @@
   // ---------- Vẽ khung chat ----------
   function build() {
     panel = document.createElement('div');
-    panel.className = 'ch-panel ch-' + (root.dataset.pos || 'br');
+    panel.className = 'ch-panel ch-' + (root.dataset.pos || 'br') + (root.dataset.layout === 'corner' ? '' : ' ch-center');
+    if (root.dataset.layout !== 'corner') {
+      const bd = document.createElement('div'); bd.className = 'ch-backdrop'; bd.addEventListener('click', close);
+      document.body.appendChild(bd); panel.backdrop = bd;
+    }
     panel.style.cssText = root.getAttribute('style') || '';
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-label', root.dataset.title);
@@ -253,7 +257,7 @@
   async function openChat() {
     if (!panel) build();
     open = true; clearTimeout(pollT);
-    panel.classList.add('open'); document.documentElement.classList.add('ch-lock');
+    panel.classList.add('open'); panel.backdrop?.classList.add('open'); document.documentElement.classList.add('ch-lock');
     document.querySelector('[data-support]')?.classList.remove('open');
     if (!S) {
       $('[data-ch-list]', panel).innerHTML = '<div class="ch-sys">Đang tải...</div>';
@@ -269,7 +273,7 @@
   }
   function close() {
     open = false;
-    panel?.classList.remove('open'); document.documentElement.classList.remove('ch-lock');
+    panel?.classList.remove('open'); panel?.backdrop?.classList.remove('open'); document.documentElement.classList.remove('ch-lock');
     disconnect();
     if (store.get('gz_chat')) pollT = setTimeout(pollUnread, 25000);
   }

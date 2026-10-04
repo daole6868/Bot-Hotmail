@@ -61,7 +61,7 @@
         <span class="a-chat-av" style="background:${color(c.id)}">${initial(c.name)}</span>
         <span class="a-cl-tx"><span class="a-cl-top"><b>${esc(c.name)}</b><small>${when(c.at)}</small></span>
           <span class="a-cl-bot"><span class="a-cl-last">${c.last_from && c.last_from !== 'user' ? (c.last_from === 'ai' ? 'AI: ' : 'Bạn: ') : ''}${esc(c.last)}</span>${c.unread ? `<i class="a-cl-n">${c.unread > 99 ? '99+' : c.unread}</i>` : ''}</span>
-          <span class="a-cl-tags">${c.guest ? '<em>Khách lạ</em>' : ''}${c.status === 'closed' ? '<em>Đã đóng</em>' : ''}${c.blocked ? '<em class="red">Đã chặn</em>' : ''}${c.assignee ? `<em>${esc(staffName(c.assignee) || 'Đã nhận')}</em>` : ''}</span></span>
+          <span class="a-cl-tags">${c.note ? `<em class="note" title="${esc(c.note)}">📝 ${esc(c.note.length > 28 ? c.note.slice(0, 28) + '…' : c.note)}</em>` : ''}${c.guest ? '<em>Khách lạ</em>' : ''}${c.status === 'closed' ? '<em>Đã đóng</em>' : ''}${c.blocked ? '<em class="red">Đã chặn</em>' : ''}${c.assignee ? `<em>${esc(staffName(c.assignee) || 'Đã nhận')}</em>` : ''}</span></span>
       </button>`).join('') : '<div class="a-chat-none">Không có cuộc chat nào</div>';
   }
   function navBadge() {
@@ -126,6 +126,7 @@
     const c = convs.get(cur); if (!c) return;
     $('[data-cm-av]').style.background = color(c.id); $('[data-cm-av]').innerHTML = initial(c.name);
     $('[data-cm-name]').textContent = c.name;
+    const ne = $('[data-note-edit]'); ne.textContent = c.note ? '📝 ' + c.note : '+ Ghi chú'; ne.classList.toggle('has', !!c.note);
     $('[data-cm-sub]').textContent = `#${c.id} · ${c.guest ? 'Khách chưa đăng nhập' : 'Thành viên'}${c.assignee ? ' · ' + (staffName(c.assignee) || 'đã nhận') + ' xử lý' : ''}${c.blocked ? ' · ĐÃ CHẶN' : ''}`;
     const st = $('[data-act-toggle=status]'); st.textContent = c.status === 'closed' ? 'Mở lại' : 'Đóng chat'; st.dataset.v = c.status === 'closed' ? 'open' : 'close';
     const ai = $('[data-act-toggle=ai]'); ai.classList.toggle('on', !c.ai_off); ai.title = c.ai_off ? 'AI đang tắt cho cuộc chat này — bấm để bật' : 'AI được phép trả lời cuộc chat này — bấm để tắt'; ai.dataset.v = c.ai_off ? 'ai_on' : 'ai_off';
@@ -175,17 +176,25 @@
   }
   ci.addEventListener('click', async (e) => {
     const o = e.target.closest('[data-order]'); if (o) return showOrder(o.dataset.order);
-    if (e.target.closest('[data-note-save]')) {
-      const j = await api(`/admin/chat/c/${cur}/action`, { json: { act: 'note', note: $('[data-note]', ci).value } });
-      if (j.ok) { curInfo.note = $('[data-note]', ci).value; toast('Đã lưu ghi chú'); } else toast(j.message, true);
+    if (e.target.closest('[data-note-save]')) saveNote($('[data-note]', ci).value.trim());
+  });
+  // Thông tin khách: chỉ hiện khi bấm avatar / tên, bấm ✕ để đóng
+  box.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-info-toggle]')) box.classList.toggle('show-info');
+    if (e.target.closest('[data-note-edit]') && cur) {
+      const c = convs.get(cur);
+      const v = prompt('Ghi chú nội bộ cho khách này (khách không thấy). Để trống = xóa ghi chú:', c.note || '');
+      if (v === null) return;
+      saveNote(v.trim());
     }
   });
-  box.addEventListener('click', (e) => {
-    if (e.target.closest('[data-info-toggle]')) {
-      if (matchMedia('(max-width: 1300px)').matches) box.classList.toggle('show-info');
-      else { const hide = !box.classList.contains('hide-info'); box.classList.toggle('hide-info', hide); }
-    }
-  });
+  async function saveNote(note) {
+    const j = await api(`/admin/chat/c/${cur}/action`, { json: { act: 'note', note } });
+    if (!j.ok) return toast(j.message, true);
+    convs.set(cur, { ...convs.get(cur), ...j.conv, unread: 0 });
+    if (curInfo) { curInfo.note = j.conv.note; const ta = $('[data-note]', ci); if (ta) ta.value = j.conv.note; }
+    header(); renderList(); toast('Đã lưu ghi chú');
+  }
   async function showOrder(key) {
     const [t, id] = key.split(':');
     const j = await api(`/admin/chat/order/${t}/${id}`);

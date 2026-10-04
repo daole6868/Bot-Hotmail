@@ -16,7 +16,7 @@ const int = (v, d, min, max) => { const n = parseInt(v, 10); return Number.isFin
 
 const DEFAULTS = {
   enabled: false, title: 'Chat với shop', agent_name: 'Shop', greeting: 'Xin chào 👋 Shop có thể giúp gì cho bạn?', color: '#4f6bed',
-  in_support: true, position: 'br',
+  in_support: true, position: 'br', layout: 'center',
   hours_on: false, open: '08:00', close: '23:00', offline_msg: 'Shop đang ngoài giờ làm việc. Bạn cứ để lại tin nhắn, shop sẽ trả lời sớm nhất có thể!',
   guest: true, guest_limit: 10, guest_contact: true, guest_images: false, guest_ip_day: 5,
   rate: 8, max_len: 1000,
@@ -201,7 +201,7 @@ function send(cl, event, data, id) {
 /** Dòng hiển thị ở danh sách cuộc chat (admin) */
 function convRow(c) {
   if (!c) return null;
-  return { id: c.id, name: c.name || 'Khách', guest: !c.user_id, user_id: c.user_id, last: c.last_msg || '', last_from: c.last_from, at: c.last_at, unread: c.unread_admin, status: c.status, assignee: c.assignee, blocked: !!c.blocked, ai_off: !!c.ai_off };
+  return { id: c.id, name: c.name || 'Khách', guest: !c.user_id, user_id: c.user_id, last: c.last_msg || '', last_from: c.last_from, at: c.last_at, unread: c.unread_admin, status: c.status, assignee: c.assignee, blocked: !!c.blocked, ai_off: !!c.ai_off, note: c.note || '' };
 }
 
 // Giới hạn số kết nối SSE mỗi IP (mỗi bản PM2)

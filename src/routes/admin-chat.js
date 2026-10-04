@@ -214,7 +214,7 @@ router.post('/settings', adminOnly, (req, res) => {
   const titles = [].concat(b.q_t || []); const bodies = [].concat(b.q_b || []);
   const c = {
     enabled: B('enabled'), title: str(b.title, 60) || D.title, agent_name: str(b.agent_name, 40) || D.agent_name, greeting: str(b.greeting, 300), color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : D.color,
-    in_support: B('in_support'), position: ['br', 'bl'].includes(b.position) ? b.position : 'br',
+    in_support: B('in_support'), position: ['br', 'bl'].includes(b.position) ? b.position : 'br', layout: b.layout === 'corner' ? 'corner' : 'center',
     hours_on: B('hours_on'), open: hm(b.open, D.open), close: hm(b.close, D.close), offline_msg: str(b.offline_msg, 300) || D.offline_msg,
     guest: B('guest'), guest_limit: I('guest_limit', 1, 200), guest_contact: B('guest_contact'), guest_images: B('guest_images'), guest_ip_day: I('guest_ip_day', 1, 100),
     rate: I('rate', 2, 60), max_len: I('max_len', 100, 3000),

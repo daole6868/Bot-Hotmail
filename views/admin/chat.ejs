@@ -18,8 +18,8 @@
     <div class="a-chat-empty" data-cm-empty><%- I('chat') %><p>Chọn một cuộc chat để bắt đầu</p></div>
     <header class="a-chat-mh" hidden>
       <button type="button" class="a-icon-btn a-chat-back" data-cm-back aria-label="Quay lại"><%- I('chevron-left') %></button>
-      <div class="a-chat-av" data-cm-av></div>
-      <div class="a-chat-mt"><b data-cm-name></b><small data-cm-sub></small></div>
+      <button type="button" class="a-chat-av a-chat-who" data-cm-av data-info-toggle title="Xem thông tin khách"></button>
+      <div class="a-chat-mt"><div class="a-chat-nm"><button type="button" class="a-chat-who" data-cm-name data-info-toggle title="Xem thông tin khách"></button><button type="button" class="a-chat-note" data-note-edit title="Ghi chú nội bộ (khách không thấy)"></button></div><small data-cm-sub></small></div>
       <div class="a-chat-acts">
         <button type="button" class="a-btn a-soft a-btn-sm" data-act-toggle="status"></button>
         <button type="button" class="a-icon-btn" data-act-toggle="ai" title=""><%- I('g-sparkles') %></button>
@@ -34,7 +34,6 @@
             <% if (me.role === 'admin') { %><button type="button" data-act="delete" class="a-text-danger">Xóa cuộc chat</button><% } %>
           </div>
         </div>
-        <button type="button" class="a-icon-btn a-chat-infobtn" data-info-toggle title="Thông tin khách"><%- I('user') %></button>
       </div>
     </header>
     <div class="a-chat-msgs" data-msgs hidden></div>
@@ -53,7 +52,7 @@
     </footer>
   </section>
 
-  <aside class="a-chat-info" data-ci hidden></aside>
+  <aside class="a-chat-info" data-ci></aside>
 </div>
 <div class="a-chat-lb" data-lb hidden><img alt=""></div>
 <script type="application/json" data-chat-boot><%- JSON.stringify({ convs, quick, staff, agentName: cfg.agent_name, aiName: cfg.ai_name }).replace(/</g, '\\u003c') %></script>

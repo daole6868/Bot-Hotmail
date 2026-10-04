@@ -1253,8 +1253,16 @@ a.bx-icon { align-items: center; }
 .ch-lb { position: fixed; inset: 0; z-index: 130; background: rgba(0, 0, 0, .88); display: flex; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
 .ch-lb img { max-width: 100%; max-height: 100%; border-radius: 10px; }
 .ch-lb button { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; color: #000; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.ch-backdrop { position: fixed; inset: 0; z-index: 119; background: rgba(0, 0, 0, .55); backdrop-filter: blur(2px); display: none; }
+.ch-backdrop.open { display: block; }
+.ch-panel.ch-center { left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(760px, calc(100vw - 48px)); height: min(760px, calc(100vh - 48px)); height: min(760px, calc(100dvh - 48px)); border-radius: 20px; }
+.ch-panel.ch-center .ch-body { padding: 18px 22px 8px; }
+.ch-panel.ch-center .ch-row { max-width: 72%; }
+.ch-panel.ch-center .ch-img img { max-width: 320px; max-height: 340px; }
+html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { overflow: hidden; }
 @media (max-width: 560px) {
-  .ch-panel, .ch-panel.ch-br, .ch-panel.ch-bl { inset: 0; width: auto; height: 100%; border-radius: 0; border: 0; }
+  .ch-panel, .ch-panel.ch-br, .ch-panel.ch-bl, .ch-panel.ch-center { inset: 0; width: auto; height: 100%; border-radius: 0; border: 0; transform: none; }
+  .ch-backdrop.open { display: none; }
   html.ch-lock, html.ch-lock body { overflow: hidden; }
   .ch-fab { bottom: 16px; width: 52px; height: 52px; }
   .ch-fab.ch-br { right: 16px; } .ch-fab.ch-bl { left: 16px; }
