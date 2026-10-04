@@ -13,14 +13,14 @@
           <p class="a-muted">Chưa nhập API key AI. Vào <a href="/admin/ai">AI viết bài</a> để chọn nhà cung cấp (ChatGPT, Claude, Gemini...) và nhập API key.</p>
         <% } else { %>
           <label>Ra lệnh cho AI <span class="req">*</span></label>
-          <textarea data-ai="prompt" rows="3" maxlength="2000" placeholder="VD: Viết bài hướng dẫn người mới mua acc Honkai: Star Rail, so sánh acc khởi đầu và acc VIP, có mẹo nạp game an toàn"></textarea>
-          <div class="a-row a-row-4">
-            <div><label>Từ khóa chính</label><input data-ai="keyword" maxlength="80" placeholder="VD: acc honkai star rail"></div>
+          <textarea data-ai="prompt" rows="4" maxlength="2000" placeholder="VD: Viết bài hướng dẫn người mới mua acc Honkai: Star Rail, so sánh acc khởi đầu và acc VIP, có mẹo nạp game an toàn"></textarea>
+          <div class="a-ai-grid">
+            <div class="a-ai-wide"><label>Từ khóa chính</label><input data-ai="keyword" maxlength="80" placeholder="VD: acc honkai star rail"></div>
+            <div class="a-ai-wide"><label>Giọng văn</label><input data-ai="tone" maxlength="200" placeholder="VD: thân thiện, dễ hiểu"></div>
             <div><label>Game</label><select data-ai="game"><option value="">-- Không --</option><% games.forEach(g => { %><option value="<%= g.name %>" data-gid="<%= g.id %>"><%= g.name %></option><% }) %></select></div>
-            <div><label>Độ dài</label><select data-ai="length"><option value="short">Ngắn (~600 chữ)</option><option value="medium" selected>Vừa (~1000 chữ)</option><option value="long">Dài (~1600 chữ)</option></select></div>
-            <div><label>Giọng văn</label><input data-ai="tone" maxlength="200" placeholder="mặc định theo cài đặt"></div>
+            <div><label>Độ dài</label><select data-ai="length"><option value="short">Ngắn ~600 chữ</option><option value="medium" selected>Vừa ~1000 chữ</option><option value="long">Dài ~1600 chữ</option></select></div>
           </div>
-          <div class="a-actions"><button type="button" class="a-btn a-primary" data-ai-write><%- I('g-sparkles') %> AI viết bài</button><span class="a-muted a-small" data-ai-status></span></div>
+          <div class="a-ai-actions"><button type="button" class="a-btn a-primary" data-ai-write><%- I('g-sparkles') %> AI viết bài</button><span class="a-muted a-small" data-ai-status></span></div>
           <p class="a-field-hint">AI viết xong sẽ điền vào form bên dưới (chưa đăng). Bạn đọc lại, sửa nếu cần rồi bấm <b>Đăng bài</b>. Viết lại sẽ thay nội dung đang có.</p>
         <% } %>
       </details>

@@ -732,3 +732,14 @@ a.a-stat { color: inherit; text-decoration: none; }
 .a-ai-test-out { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: #f5f6fa; overflow-wrap: anywhere; word-break: break-word; line-height: 1.5; max-width: 100%; }
 .a-ai-test-out.is-ok { background: #effbf3; color: #166534; }
 .a-ai-test-out.is-err { background: #fdf1f1; color: #991b1b; }
+.a-ai-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+.a-ai-grid > div { min-width: 0; }
+.a-ai-grid select { white-space: nowrap; text-overflow: ellipsis; }
+.a-ai-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 18px 0 4px; }
+.a-ai-actions .a-btn { min-height: 44px; padding: 0 22px; }
+.a-ai-actions [data-ai-status]:empty { display: none; }
+@media (max-width: 640px) {
+  .a-ai-grid .a-ai-wide { grid-column: 1 / -1; }
+  .a-ai-actions { flex-direction: column; align-items: stretch; }
+  .a-ai-actions .a-btn { width: 100%; justify-content: center; }
+}
