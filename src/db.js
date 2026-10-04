@@ -477,6 +477,70 @@ addColumn('boost_orders', 'char_name', 'TEXT');
 addColumn('boost_orders', 'proof', 'TEXT'); // ảnh xác nhận đã nạp / đã xong
 db.exec('CREATE INDEX IF NOT EXISTS idx_border_kind ON boost_orders(kind, status, created_at)');
 addColumn('boost_packages', 'badge', 'TEXT'); // nhãn trên gói: Bán chạy / Hot / -20%
+
+// SEO riêng cho game / danh mục (để trống -> web tự tạo từ tên + mô tả)
+for (const t of ['games', 'categories']) { addColumn(t, 'seo_title', 'TEXT'); addColumn(t, 'seo_desc', 'TEXT'); }
+
+// Bài viết (Tin tức / Hướng dẫn) + chuyên mục
+db.exec(`CREATE TABLE IF NOT EXISTS post_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    description TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1
+  );
+  CREATE TABLE IF NOT EXISTS posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    excerpt TEXT,
+    content TEXT NOT NULL DEFAULT '',
+    cover TEXT,
+    category_id INTEGER REFERENCES post_categories(id) ON DELETE SET NULL,
+    game_id INTEGER REFERENCES games(id) ON DELETE SET NULL,
+    focus_kw TEXT,
+    seo_title TEXT,
+    seo_desc TEXT,
+    faq TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
+    published_at INTEGER,
+    author_id INTEGER,
+    views INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_posts_pub ON posts(status, published_at);
+  CREATE INDEX IF NOT EXISTS idx_posts_cat ON posts(category_id, status, published_at);
+  CREATE INDEX IF NOT EXISTS idx_posts_game ON posts(game_id, status, published_at);
+  CREATE TABLE IF NOT EXISTS ai_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    status TEXT NOT NULL DEFAULT 'running',
+    provider TEXT,
+    model TEXT,
+    input TEXT,
+    result TEXT,
+    error TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    finished_at INTEGER
+  );
+  CREATE TABLE IF NOT EXISTS conv_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    event TEXT NOT NULL,
+    value INTEGER NOT NULL DEFAULT 0,
+    ref TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    sent_at INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_conv_user ON conv_events(user_id, sent_at);`);
+if (!db.prepare('SELECT 1 FROM post_categories LIMIT 1').get()) {
+  const ins = db.prepare('INSERT INTO post_categories(name, slug, sort_order) VALUES(?,?,?)');
+  [['Tin tức', 'tin-game'], ['Hướng dẫn', 'huong-dan'], ['Khuyến mãi', 'khuyen-mai']].forEach(([n, s], i) => ins.run(n, s, i));
+}
+// Nguồn khách (UTM / gclid lúc đăng ký) -> biết khách đến từ quảng cáo nào
+addColumn('users', 'signup_source', 'TEXT');
 addColumn('daily_stats', 'topup_revenue', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('daily_stats', 'topup_orders', 'INTEGER NOT NULL DEFAULT 0');
 // Thẻ mã giảm giá thấp hơn: kích cỡ mặc định cũ 600x350 -> 600x260 (1 lần)

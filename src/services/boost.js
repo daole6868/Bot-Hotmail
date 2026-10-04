@@ -177,6 +177,7 @@ function checkout(userId, gameId, raw, ip, kind = 'boost', parent = null) {
   try {
     const r = checkoutTx.immediate(userId, gameId, f, ip, kind, kind === 'topup' ? (parent?.id || 0) : 0);
     logActivity(userId, kind === 'topup' ? 'topup_order' : 'boost_order', `${r.code} ${r.total}`, ip);
+    require('./tracking').track(userId, 'purchase', r.total, r.code);
     notifyNewOrder(r, userId);
     return { ok: true, ...r };
   } catch (e) {

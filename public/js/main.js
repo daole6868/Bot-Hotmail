@@ -1,5 +1,20 @@
 (function () {
   'use strict';
+
+  // Nguồn khách: link quảng cáo (utm_*, gclid) hoặc trang giới thiệu -> cookie gz_src 30 ngày, lưu vào tài khoản lúc đăng ký
+  try {
+    const q = new URLSearchParams(location.search);
+    const has = /(?:^|;\s*)gz_src=/.test(document.cookie);
+    let src = null;
+    if (q.get('utm_source') || q.get('utm_campaign') || q.get('gclid') || q.get('gbraid') || q.get('wbraid') || q.get('fbclid')) {
+      src = { s: q.get('utm_source') || (q.get('gclid') || q.get('gbraid') || q.get('wbraid') ? 'google-ads' : 'facebook'), m: q.get('utm_medium') || (q.get('fbclid') ? 'social' : 'cpc'), c: q.get('utm_campaign') || '' };
+      if (q.get('gclid') || q.get('gbraid') || q.get('wbraid')) src.g = 1;
+    } else if (!has && document.referrer) {
+      const h = new URL(document.referrer).hostname.replace(/^www\./, '');
+      if (h && h !== location.hostname.replace(/^www\./, '')) src = { s: h, m: /google\.|bing\.|coccoc\.|yahoo\./.test(h) ? 'organic' : 'referral' };
+    }
+    if (src) document.cookie = 'gz_src=' + encodeURIComponent(JSON.stringify(src)) + '; Max-Age=2592000; Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+  } catch (e) { /* bỏ qua */ }
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const csrf = $('meta[name="csrf-token"]')?.content || '';

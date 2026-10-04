@@ -288,6 +288,10 @@ function createAccount(req, res, { username, email, hash }, verified) {
   }
   bumpStat('new_users', 1);
   logActivity(id, 'register', null, ip);
+  const tracking = require('../services/tracking');
+  const src = tracking.sourceFromCookie(req.headers.cookie);
+  if (src) db.prepare('UPDATE users SET signup_source = ? WHERE id = ?').run(src, id);
+  tracking.track(id, 'sign_up');
   if (verified) sec.trustDevice({ id }, req, res); // vừa nhập đúng mã trên thiết bị này -> thiết bị tin cậy
   if (email) mailer.sendLater(email, 'welcome', { username });
 

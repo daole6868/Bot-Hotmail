@@ -1,0 +1,8 @@
+<%# Tiêu đề / mô tả SEO riêng (để trống -> web tự tạo). it: game / danh mục đang sửa %>
+<details class="a-seo-box" <%= it && (it.seo_title || it.seo_desc) ? 'open' : '' %>>
+  <summary><%- I('globe') %> SEO trên Google <small class="a-muted">(không bắt buộc — để trống web tự tạo)</small></summary>
+  <label>Tiêu đề SEO <small class="a-muted" data-count-for="seo_title">50–60 ký tự</small></label>
+  <input name="seo_title" maxlength="70" value="<%= it ? it.seo_title || '' : '' %>" data-count="seo_title" placeholder="VD: Mua acc Genshin Impact giá rẻ, uy tín">
+  <label>Mô tả SEO <small class="a-muted" data-count-for="seo_desc">120–160 ký tự</small></label>
+  <textarea name="seo_desc" rows="2" maxlength="170" data-count="seo_desc" placeholder="Đoạn mô tả hiện dưới tiêu đề trên Google"><%= it ? it.seo_desc || '' : '' %></textarea>
+</details>

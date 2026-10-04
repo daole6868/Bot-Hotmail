@@ -66,6 +66,12 @@ function loadHomeBlocks() {
         FROM boost_packages p JOIN boost_categories c ON c.id = p.category_id JOIN categories pc ON pc.id = c.parent_id JOIN games g ON g.id = c.game_id
         WHERE p.is_active = 1 AND c.is_active = 1 AND pc.is_active = 1 AND pc.sale_type = 'boost' AND g.is_active = 1${gid ? ' AND g.id = ?' : ''} ORDER BY ${order} LIMIT ?`)
         .all(...(gid ? [gid] : []), toInt(st.limit, 8, 1, 48));
+    } else if (b.type === 'posts') {
+      const cat = toInt(st.category_id);
+      b.posts = db.prepare(`SELECT p.title, p.slug, p.excerpt, p.cover, p.published_at, p.views, c.name AS cat_name, g.image AS game_image
+        FROM posts p LEFT JOIN post_categories c ON c.id = p.category_id LEFT JOIN games g ON g.id = p.game_id
+        WHERE p.status = 'published' AND p.published_at <= unixepoch()${cat ? ' AND p.category_id = ?' : ''} ORDER BY p.published_at DESC LIMIT ?`)
+        .all(...(cat ? [cat] : []), toInt(st.limit, 4, 1, 12));
     } else if (b.type === 'recent') {
       // Đơn mua acc + đơn cày thuê / nạp game (không tính đơn đã hủy / hoàn tiền), mới nhất trước
       const lim = toInt(st.limit, 10, 1, 30);
@@ -98,7 +104,7 @@ router.get('/', (req, res) => {
   const blocks = cached('home', 30000, loadHomeBlocks);
   // Danh sách acc lấy mỗi lần tải trang (nguồn "ngẫu nhiên"/"nổi bật" xáo trộn khác nhau cho từng khách)
   const view = blocks.map((b) => (b.type === 'featured' ? { ...b, products: productsForBlock(b.settings) } : b))
-    .filter((b) => (b.items ? b.items.length : true) && (b.products ? b.products.length : true) && (b.recent ? b.recent.length : true) && (b.games ? b.games.length : true) && (b.packages ? b.packages.length : true));
+    .filter((b) => (b.items ? b.items.length : true) && (b.products ? b.products.length : true) && (b.recent ? b.recent.length : true) && (b.games ? b.games.length : true) && (b.packages ? b.packages.length : true) && (b.posts ? b.posts.length : true));
   res.render('pages/home', { title: null, blocks: view });
 });
 
@@ -116,7 +122,11 @@ router.get('/game/:slug', (req, res, next) => {
   const bStat = db.prepare(`SELECT COUNT(p.id) pkgs, MIN(p.price) min_price, COALESCE(SUM(p.sold_count), 0) sold
     FROM boost_categories b JOIN boost_packages p ON p.category_id = b.id AND p.is_active = 1 WHERE b.parent_id = ? AND b.is_active = 1`);
   categories.forEach((c) => { if (c.sale_type === 'boost' || c.sale_type === 'topup') Object.assign(c, bStat.get(c.id)); });
-  res.render('pages/game', { title: game.name, game, categories, coupons, breadcrumb: [{ name: game.name }] });
+  res.render('pages/game', {
+    title: game.name, game, categories, coupons, breadcrumb: [{ name: game.name }],
+    seoTitle: game.seo_title, metaDesc: game.seo_desc || game.description || `Mua acc ${game.name} giá rẻ, uy tín, giao tự động 24/7. ${categories.map((c) => c.name).slice(0, 5).join(', ')}.`,
+    metaImage: game.image,
+  });
 });
 
 // ================= CẤP 3: DANH SÁCH SẢN PHẨM / THẺ GAME =================
@@ -149,11 +159,25 @@ router.get('/game/:slug/:cat', (req, res, next) => {
   const siblings = db.prepare('SELECT name, slug FROM categories WHERE game_id = ? AND is_active = 1 ORDER BY sort_order, id').all(game.id);
   res.render('pages/category', {
     title: `${category.name} - ${game.name}`, game, category, siblings, result, query: q,
+    seoTitle: category.seo_title, metaDesc: category.seo_desc || category.description || `${category.name} ${game.name}: ${result.total} tài khoản đang bán, giá chỉ từ ${result.rows.length ? Math.min(...result.rows.map((r) => r.price)).toLocaleString('vi-VN') + 'đ' : 'rẻ'}. Giao acc tự động 24/7.`,
+    metaImage: category.image || game.image,
     breadcrumb: [{ name: game.name, url: `/game/${game.slug}` }, { name: category.name }],
   });
 });
 
 // ================= CHI TIẾT SẢN PHẨM =================
+// Dữ liệu cấu trúc Product -> Google có thể hiện giá + tình trạng còn hàng
+function productLd(p) {
+  const base = String(require('../config').baseUrl).replace(/\/$/, '');
+  const abs = (u) => (/^https?:/.test(u) ? u : base + u);
+  return {
+    '@context': 'https://schema.org', '@type': 'Product', name: p.title, sku: p.code,
+    ...(p.imageList.length ? { image: p.imageList.slice(0, 5).map(abs) } : {}),
+    description: (p.description || `${p.title} - ${p.game_name}`).replace(/\s+/g, ' ').trim().slice(0, 500),
+    brand: { '@type': 'Brand', name: p.game_name }, category: p.category_name,
+    offers: { '@type': 'Offer', url: `${base}/product/${p.code}`, priceCurrency: 'VND', price: p.price, availability: p.status === 'available' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut', itemCondition: 'https://schema.org/UsedCondition' },
+  };
+}
 function loadProduct(code) {
   const p = db.prepare(`SELECT ${PRODUCT_SELECT}, p.description, p.category_id, g.id AS game_id, c.is_active AS cat_active, g.is_active AS game_active
     FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id WHERE p.code = ?`).get(code);
@@ -195,6 +219,7 @@ router.get('/product/:code', (req, res, next) => {
     title: p.title, p, related, coupons,
     metaDesc: (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 200) || `${p.title} - ${p.game_name} · ${p.category_name}`,
     metaImage: p.imageList[0] || null,
+    jsonLd: [productLd(p)],
     breadcrumb: [
       { name: p.game_name, url: `/game/${p.game_slug}` },
       { name: p.category_name, url: `/game/${p.game_slug}/${p.category_slug}` },

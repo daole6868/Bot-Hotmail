@@ -55,6 +55,10 @@ function renderPackages(req, res, game, parent, category) {
     desc: topup ? parent.description : category.description,
     coupons: boostCoupons(game.id, kind), terms: (topup ? s.topup_terms : s.boost_terms) || '', cartHours: boost.cartHours(s),
     breadcrumb: crumbs,
+    seoTitle: topup ? parent.seo_title : null,
+    metaDesc: (topup ? parent.seo_desc || parent.description : category.description)
+      || `${topup ? parent.name : category.name} ${game.name}${packages.length ? `: ${packages.length} gói, giá từ ${Math.min(...packages.map((p) => p.price)).toLocaleString('vi-VN')}đ` : ''}. Uy tín, nhanh chóng.`,
+    metaImage: (topup ? parent.image : category.image) || game.image,
   });
 }
 
@@ -68,6 +72,7 @@ router.get('/game/:slug/:cat', (req, res, next) => {
   res.render('pages/boost-cats', {
     title: `${parent.name} - ${game.name}`, game, parent, categories: categoriesOf(parent.id), disp: display('cat', parent),
     coupons: boostCoupons(game.id),
+    seoTitle: parent.seo_title, metaDesc: parent.seo_desc || parent.description || `Dịch vụ ${parent.name} ${game.name} uy tín, nhanh, an toàn.`, metaImage: parent.image || game.image,
     breadcrumb: [{ name: game.name, url: `/game/${game.slug}` }, { name: parent.name }],
   });
 });

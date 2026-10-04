@@ -750,4 +750,187 @@
       try { await navigator.clipboard.writeText(t); toast('Đã sao chép'); } catch (err) { toast('Không sao chép được', true); }
     }
   });
+  // ---------- Đếm ký tự ô SEO (tiêu đề / mô tả) ----------
+  const COUNT = { title: [30, 65], seo_title: [50, 60], seo_desc: [120, 160] };
+  function countOne(inp) {
+    const k = inp.dataset.count; const out = inp.form && $(`[data-count-for="${k}"]`, inp.form);
+    if (!out || !COUNT[k]) return;
+    const n = inp.value.trim().length; const [a, b] = COUNT[k];
+    out.textContent = n ? `${n} ký tự (nên ${a}–${b})` : `${a}–${b} ký tự`;
+    out.classList.toggle('a-count-ok', n >= a && n <= b);
+    out.classList.toggle('a-count-bad', n > 0 && (n < a || n > b));
+  }
+  document.addEventListener('input', (e) => { if (e.target.matches && e.target.matches('[data-count]')) countOne(e.target); });
+  new MutationObserver(() => $$('[data-count]').forEach((i) => { if (!i.dataset.counted) { i.dataset.counted = '1'; countOne(i); } })).observe(document.body, { childList: true, subtree: true });
+  $$('[data-count]').forEach((i) => { i.dataset.counted = '1'; countOne(i); });
+
+  // ---------- Viết bài: trình soạn thảo + chấm điểm SEO + AI ----------
+  const pf = $('[data-post-form]');
+  if (pf) {
+    const ed = $('[data-editor]', pf), src = $('[data-editor-src]', pf), hidden = $('#postContent'), fileIn = $('[data-editor-file]', pf);
+    let htmlMode = false;
+    const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const html = () => (htmlMode ? src.value : ed.innerHTML);
+    const exec = (c, v) => { ed.focus(); document.execCommand(c, false, v); seoCheck(); };
+    try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) { /* bỏ qua */ }
+    let savedRange = null;
+    const saveSel = () => { const sel = getSelection(); if (sel.rangeCount && ed.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange(); };
+    const restoreSel = () => { ed.focus(); if (savedRange) { const sel = getSelection(); sel.removeAllRanges(); sel.addRange(savedRange); } };
+    ed.addEventListener('keyup', saveSel); ed.addEventListener('mouseup', saveSel); ed.addEventListener('input', () => { saveSel(); seoCheck(); });
+    // Dán từ web khác: chỉ lấy chữ + định dạng cơ bản (máy chủ cũng lọc lại khi lưu)
+    ed.addEventListener('paste', (e) => {
+      const t = e.clipboardData?.getData('text/plain');
+      if (t && !e.clipboardData.getData('text/html')) return;
+      if (t) { e.preventDefault(); exec('insertHTML', t.split(/\n{2,}/).map((x) => `<p>${esc(x).replace(/\n/g, '<br>')}</p>`).join('')); }
+    });
+    $('.a-editor-bar', pf).addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+    $('.a-editor-bar', pf).addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-cmd]'); if (!b) return;
+      const c = b.dataset.cmd;
+      if (c === 'html') {
+        htmlMode = !htmlMode;
+        if (htmlMode) { src.value = ed.innerHTML.replace(/(<\/(p|h2|h3|ul|ol|blockquote|table)>)/g, '$1\n'); }
+        else ed.innerHTML = src.value;
+        src.hidden = !htmlMode; ed.hidden = htmlMode; b.classList.toggle('on', htmlMode);
+        $$('.a-editor-bar button:not([data-cmd=html])', pf).forEach((x) => { x.disabled = htmlMode; });
+        return;
+      }
+      if (htmlMode) return;
+      if (c === 'h2' || c === 'h3' || c === 'p') return exec('formatBlock', `<${c}>`);
+      if (c === 'quote') return exec('formatBlock', '<blockquote>');
+      if (c === 'bold' || c === 'italic' || c === 'undo' || c === 'redo') return exec(c);
+      if (c === 'ul') return exec('insertUnorderedList');
+      if (c === 'ol') return exec('insertOrderedList');
+      if (c === 'link') {
+        saveSel();
+        const u = prompt('Dán đường dẫn (VD /game/genshin-impact hoặc https://...):');
+        if (!u) return;
+        if (!/^(https?:\/\/|\/)/i.test(u.trim())) { toast('Link phải bắt đầu bằng / hoặc https://', true); return; }
+        restoreSel();
+        if (getSelection().isCollapsed) exec('insertHTML', `<a href="${esc(u.trim())}">${esc(u.trim())}</a>`); else exec('createLink', u.trim());
+        return;
+      }
+      if (c === 'image') { saveSel(); fileIn.click(); return; }
+      if (c === 'card') {
+        saveSel();
+        const g = $('[data-post-game] option:checked', pf);
+        const def = g && g.value ? `[[game:${g.dataset.slug}]]` : '[[game:duong-dan-game]]';
+        const v = prompt('Mã thẻ sản phẩm:\n[[game:duong-dan-game]]  -  trang game\n[[cat:game/danh-muc]]  -  danh mục\n[[sp:MÃ_ACC]]  -  1 acc', def);
+        if (!v) return;
+        if (!/^\[\[(game|cat|sp):[\w/-]+\]\]$/.test(v.trim())) { toast('Mã không đúng dạng', true); return; }
+        restoreSel(); exec('insertParagraph'); exec('insertText', v.trim()); exec('insertParagraph');
+      }
+    });
+    fileIn.addEventListener('change', async () => {
+      const f = fileIn.files[0]; if (!f) return;
+      const fd = new FormData(); fd.append('_csrf', csrf); fd.append('image', f);
+      toast('Đang tải ảnh...');
+      try {
+        const r = await (await fetch('/admin/posts/upload', { method: 'POST', body: fd, headers: { 'x-csrf-token': csrf, Accept: 'application/json' } })).json();
+        if (!r.ok) throw new Error(r.message);
+        const alt = prompt('Mô tả ảnh (giúp Google hiểu ảnh, VD: Đội hình Genshin Impact):', $('[name=focus_kw]', pf).value || '') || '';
+        restoreSel(); exec('insertHTML', `<img src="${esc(r.url)}" alt="${esc(alt)}">`);
+      } catch (err) { toast(err.message || 'Không tải được ảnh', true); }
+      fileIn.value = '';
+    });
+    // Enter trong ô nhập không tự gửi form (tránh lưu nhầm trạng thái)
+    pf.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('input:not([type=checkbox]):not([type=file])')) e.preventDefault(); });
+    pf.addEventListener('submit', (e) => {
+      if (e.submitter?.dataset.confirm && !confirm(e.submitter.dataset.confirm)) { e.preventDefault(); return; }
+      pf.elements.act.value = e.submitter?.dataset.act || '';
+      hidden.value = html();
+    });
+
+    // --- Chấm điểm SEO (giống Yoast) ---
+    const val = (n) => ($(`[name="${n}"]`, pf)?.value || '').trim();
+    const norm = (t) => t.toLowerCase().normalize('NFC');
+    const slugify = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+    const base = pf.dataset.base;
+    function seoCheck() {
+      const tmp = document.createElement('div'); tmp.innerHTML = html();
+      const text = tmp.textContent.replace(/\[\[[^\]]+\]\]/g, ' ').replace(/\s+/g, ' ').trim();
+      const words = (text.match(/\S+/g) || []).length;
+      const kw = norm(val('focus_kw')); const title = val('title'); const st = val('seo_title') || title;
+      const sd = val('seo_desc') || val('excerpt'); const slug = val('slug') || slugify(title);
+      const first = norm((tmp.querySelector('p')?.textContent || text).slice(0, 300));
+      const h2s = [...tmp.querySelectorAll('h2,h3')].map((h) => norm(h.textContent));
+      const imgs = [...tmp.querySelectorAll('img')];
+      const links = [...tmp.querySelectorAll('a[href]')].map((a) => a.getAttribute('href'));
+      const internal = links.filter((h) => h.startsWith('/')).length + (html().match(/\[\[(game|cat|sp):/g) || []).length;
+      const count = kw ? (norm(text).split(kw).length - 1) : 0;
+      const density = words && kw ? (count * kw.split(/\s+/).length / words) * 100 : 0;
+      const checks = [
+        [!!kw, 'Đã nhập từ khóa chính', 'Nhập từ khóa chính để chấm điểm đầy đủ'],
+        [kw && norm(st).includes(kw), 'Từ khóa có trong tiêu đề SEO', 'Thêm từ khóa vào tiêu đề'],
+        [st.length >= 40 && st.length <= 65, `Độ dài tiêu đề SEO tốt (${st.length} ký tự)`, `Tiêu đề SEO nên 50–60 ký tự (hiện ${st.length})`],
+        [sd.length >= 120 && sd.length <= 160, `Độ dài mô tả tốt (${sd.length} ký tự)`, `Mô tả SEO nên 120–160 ký tự (hiện ${sd.length})`],
+        [kw && norm(sd).includes(kw), 'Từ khóa có trong mô tả', 'Thêm từ khóa vào mô tả SEO'],
+        [kw && slug.includes(slugify(kw)), 'Từ khóa có trong đường dẫn', 'Đường dẫn nên chứa từ khóa'],
+        [kw && first.includes(kw), 'Từ khóa xuất hiện ở đoạn đầu', 'Nhắc từ khóa trong đoạn mở đầu'],
+        [kw && h2s.some((h) => h.includes(kw)), 'Từ khóa có trong tiêu đề H2/H3', 'Thêm từ khóa vào ít nhất 1 tiêu đề H2'],
+        [words >= 800, `Độ dài bài tốt (${words} chữ)`, `Bài nên từ 800 chữ trở lên (hiện ${words})`],
+        [h2s.length >= 2, `Có ${h2s.length} tiêu đề H2/H3`, 'Chia bài bằng ít nhất 2 tiêu đề H2'],
+        [kw && density >= 0.3 && density <= 3, `Mật độ từ khóa hợp lý (${density.toFixed(1)}%)`, kw ? `Mật độ từ khóa ${density.toFixed(1)}% (nên 0.5–2.5%)` : 'Mật độ từ khóa'],
+        [internal >= 1, `Có ${internal} liên kết / thẻ tới trang trong web`, 'Thêm link hoặc thẻ sản phẩm tới trang trong web'],
+        [!imgs.length ? !!($('[data-preview-box] img', pf)) : imgs.every((i) => i.alt.trim()), imgs.length ? 'Ảnh trong bài đều có mô tả (alt)' : 'Có ảnh bìa', imgs.length ? 'Thêm mô tả (alt) cho mọi ảnh' : 'Thêm ảnh bìa hoặc ảnh trong bài'],
+      ];
+      const ok = checks.filter((c) => c[0]).length; const score = Math.round(ok / checks.length * 100);
+      const ring = $('[data-seo-ring]', pf); ring.textContent = score;
+      ring.className = 'a-seo-ring ' + (score >= 80 ? 'good' : score >= 50 ? 'mid' : 'bad');
+      $('[data-seo-label]', pf).textContent = score >= 80 ? 'Tốt — sẵn sàng đăng' : score >= 50 ? 'Tạm được — nên sửa thêm' : 'Cần cải thiện';
+      $('[data-seo-checks]', pf).innerHTML = checks.map((c) => `<li class="${c[0] ? 'ok' : 'no'}">${esc(c[0] ? c[1] : c[2])}</li>`).join('');
+      $('[data-gp-url]', pf).textContent = `${base.replace(/^https?:\/\//, '')} › tin-tuc › ${slug}`;
+      $('[data-gp-title]', pf).textContent = st.length > 60 ? st.slice(0, 58) + '…' : (st || 'Tiêu đề bài viết');
+      $('[data-gp-desc]', pf).textContent = (sd || text).slice(0, 158) + ((sd || text).length > 158 ? '…' : '');
+    }
+    pf.addEventListener('input', (e) => { if (e.target.matches('[data-seo-in], [name=excerpt], [data-editor-src]')) seoCheck(); });
+    pf.addEventListener('change', seoCheck);
+    seoCheck();
+
+    // --- AI viết bài ---
+    const aiBtn = $('[data-ai-write]', pf);
+    if (aiBtn) {
+      const st = $('[data-ai-status]', pf);
+      const ai = (k) => $(`[data-ai="${k}"]`, pf);
+      const fill = (r) => {
+        const set = (n, v) => { const el = $(`[name="${n}"]`, pf); if (el && v != null) el.value = v; };
+        set('title', r.title); set('slug', r.slug); set('excerpt', r.excerpt); set('focus_kw', r.focus_kw); set('seo_title', r.seo_title); set('seo_desc', r.seo_desc); set('faq', r.faq);
+        if (htmlMode) src.value = r.content; else ed.innerHTML = r.content;
+        const g = ai('game').selectedOptions[0];
+        if (g && g.dataset.gid && !$('[name=game_id]', pf).value) $('[name=game_id]', pf).value = g.dataset.gid;
+        $$('[data-count]', pf).forEach(countOne); seoCheck();
+      };
+      aiBtn.addEventListener('click', async () => {
+        if (ai('prompt').value.trim().length < 5) { toast('Hãy nhập yêu cầu cho AI', true); ai('prompt').focus(); return; }
+        if (ed.textContent.trim().length > 50 && !confirm('AI sẽ thay toàn bộ nội dung đang có trong form. Tiếp tục?')) return;
+        aiBtn.disabled = true; st.textContent = 'Đang gửi yêu cầu...';
+        try {
+          const r = await (await fetch('/admin/ai/write', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf, Accept: 'application/json' },
+            body: JSON.stringify({ prompt: ai('prompt').value, keyword: ai('keyword').value, game: ai('game').value, length: ai('length').value, tone: ai('tone').value }) })).json();
+          if (!r.ok) throw new Error(r.message);
+          for (;;) {
+            await new Promise((ok) => setTimeout(ok, 3000));
+            const j = await (await fetch('/admin/ai/jobs/' + r.id, { headers: { Accept: 'application/json' } })).json();
+            if (!j.ok) throw new Error(j.message);
+            if (j.status === 'error') throw new Error(j.error);
+            if (j.status === 'done') { fill(j.result); st.textContent = '✅ AI đã viết xong và điền vào form. Đọc lại, sửa nếu cần rồi bấm Đăng bài.'; toast('AI đã viết xong'); break; }
+            st.textContent = `AI đang viết bài... ${j.seconds}s (thường mất 30–120 giây)`;
+          }
+        } catch (err) { st.textContent = ''; toast(err.message || 'AI lỗi', true); }
+        aiBtn.disabled = false;
+      });
+    }
+  }
+
+  // ---------- Cài đặt AI: thử kết nối ----------
+  const aiTest = $('[data-ai-test]');
+  if (aiTest) aiTest.addEventListener('click', async () => {
+    aiTest.disabled = true; const out = $('[data-ai-test-out]'); out.textContent = 'Đang thử...'; out.className = 'a-small';
+    try {
+      const r = await (await fetch('/admin/ai/test', { method: 'POST', headers: { 'x-csrf-token': csrf, Accept: 'application/json' } })).json();
+      out.textContent = r.message; out.className = 'a-small ' + (r.ok ? 'a-text-ok' : 'a-text-err');
+    } catch (e) { out.textContent = 'Lỗi kết nối'; }
+    aiTest.disabled = false;
+  });
 })();
+

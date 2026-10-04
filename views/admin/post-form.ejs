@@ -1,0 +1,125 @@
+<%- include('_header') %>
+<% const isPub = p.status === 'published'; const sch = isPub && p.published_at > Date.now() / 1000; %>
+<form method="post" action="/admin/posts/save" enctype="multipart/form-data" class="a-form a-post-form" id="postForm" data-post-form data-base="<%= baseUrl.replace(/\/$/, '') %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="id" value="<%= p.id || '' %>">
+  <input type="hidden" name="act" value="">
+  <textarea name="content" id="postContent" hidden><%= p.content || '' %></textarea>
+  <div class="a-post-layout">
+    <div class="a-post-main">
+      <details class="a-card a-ai-box" <%= p.id ? '' : 'open' %> data-ai-box>
+        <summary><%- I('g-sparkles') %> <b>Viết bằng AI</b> <small class="a-muted"><%= aiStatus.ready ? aiName + ' · ' + aiStatus.model : 'chưa cài đặt' %></small></summary>
+        <% if (!aiStatus.ready) { %>
+          <p class="a-muted">Chưa nhập API key AI. Vào <a href="/admin/ai">AI viết bài</a> để chọn nhà cung cấp (ChatGPT, Claude, Gemini...) và nhập API key.</p>
+        <% } else { %>
+          <label>Ra lệnh cho AI <span class="req">*</span></label>
+          <textarea data-ai="prompt" rows="3" maxlength="2000" placeholder="VD: Viết bài hướng dẫn người mới mua acc Honkai: Star Rail, so sánh acc khởi đầu và acc VIP, có mẹo nạp game an toàn"></textarea>
+          <div class="a-row a-row-4">
+            <div><label>Từ khóa chính</label><input data-ai="keyword" maxlength="80" placeholder="VD: acc honkai star rail"></div>
+            <div><label>Game</label><select data-ai="game"><option value="">-- Không --</option><% games.forEach(g => { %><option value="<%= g.name %>" data-gid="<%= g.id %>"><%= g.name %></option><% }) %></select></div>
+            <div><label>Độ dài</label><select data-ai="length"><option value="short">Ngắn (~600 chữ)</option><option value="medium" selected>Vừa (~1000 chữ)</option><option value="long">Dài (~1600 chữ)</option></select></div>
+            <div><label>Giọng văn</label><input data-ai="tone" maxlength="200" placeholder="mặc định theo cài đặt"></div>
+          </div>
+          <div class="a-actions"><button type="button" class="a-btn a-primary" data-ai-write><%- I('g-sparkles') %> AI viết bài</button><span class="a-muted a-small" data-ai-status></span></div>
+          <p class="a-field-hint">AI viết xong sẽ điền vào form bên dưới (chưa đăng). Bạn đọc lại, sửa nếu cần rồi bấm <b>Đăng bài</b>. Viết lại sẽ thay nội dung đang có.</p>
+        <% } %>
+      </details>
+
+      <div class="a-card">
+        <label>Tiêu đề bài viết <span class="req">*</span> <small class="a-muted" data-count-for="title"></small></label>
+        <input name="title" required maxlength="200" value="<%= p.title || '' %>" class="a-post-title" placeholder="VD: Kinh nghiệm mua acc Genshin Impact cho người mới" data-count="title" data-seo-in>
+        <label>Đường dẫn <small class="a-muted">để trống tự tạo từ tiêu đề</small></label>
+        <div class="a-input-prefix"><span>/tin-tuc/</span><input name="slug" maxlength="80" value="<%= p.slug || '' %>" data-seo-in></div>
+
+        <label>Nội dung</label>
+        <div class="a-editor" data-editor-wrap>
+          <div class="a-editor-bar">
+            <button type="button" data-cmd="h2" title="Tiêu đề lớn (H2)"><b>H2</b></button>
+            <button type="button" data-cmd="h3" title="Tiêu đề nhỏ (H3)"><b>H3</b></button>
+            <button type="button" data-cmd="p" title="Đoạn văn">¶</button>
+            <span class="a-editor-sep"></span>
+            <button type="button" data-cmd="bold" title="In đậm"><b>B</b></button>
+            <button type="button" data-cmd="italic" title="In nghiêng"><i>I</i></button>
+            <button type="button" data-cmd="ul" title="Danh sách chấm">• —</button>
+            <button type="button" data-cmd="ol" title="Danh sách số">1.</button>
+            <button type="button" data-cmd="quote" title="Trích dẫn">❝</button>
+            <span class="a-editor-sep"></span>
+            <button type="button" data-cmd="link" title="Chèn link"><%- I('link') %></button>
+            <button type="button" data-cmd="image" title="Chèn ảnh"><%- I('image') %></button>
+            <button type="button" data-cmd="card" title="Chèn thẻ sản phẩm / game"><%- I('gamepad') %></button>
+            <span class="a-editor-sep"></span>
+            <button type="button" data-cmd="undo" title="Hoàn tác">↶</button>
+            <button type="button" data-cmd="redo" title="Làm lại">↷</button>
+            <button type="button" data-cmd="html" title="Sửa HTML" class="a-editor-html-btn">HTML</button>
+          </div>
+          <div class="a-editor-area" contenteditable="true" data-editor><%- p.content || '<p></p>' %></div>
+          <textarea class="a-editor-src" data-editor-src hidden spellcheck="false"></textarea>
+          <input type="file" accept="image/*" data-editor-file hidden>
+        </div>
+        <p class="a-field-hint">Thẻ sản phẩm: chèn mã <code>[[game:duong-dan-game]]</code>, <code>[[cat:game/danh-muc]]</code> hoặc <code>[[sp:MÃ_ACC]]</code> trên 1 dòng riêng — ngoài web hiện thành khung có ảnh, giá và nút Xem ngay.</p>
+
+        <label>Tóm tắt <small class="a-muted">(hiện ở danh sách bài, 1-2 câu)</small></label>
+        <textarea name="excerpt" rows="2" maxlength="400"><%= p.excerpt || '' %></textarea>
+        <label>Câu hỏi thường gặp <small class="a-muted">(không bắt buộc — Google có thể hiện ngay trên kết quả tìm kiếm)</small></label>
+        <textarea name="faq" rows="5" maxlength="20000" placeholder="Dòng đầu là câu hỏi, các dòng sau là câu trả lời. Mỗi cặp cách nhau 1 dòng trống.&#10;&#10;Mua acc có an toàn không?&#10;An toàn nếu bạn đổi mật khẩu ngay sau khi nhận.&#10;&#10;Nạp qua UID cần gì?&#10;Chỉ cần UID và server."><%= faqText %></textarea>
+      </div>
+    </div>
+
+    <aside class="a-post-side">
+      <div class="a-card">
+        <h3><%- I('send') %> Đăng bài</h3>
+        <p class="a-small">Trạng thái: <b class="<%= isPub ? (sch ? 'a-text-warn' : 'a-text-ok') : '' %>"><%= isPub ? (sch ? 'Hẹn giờ ' + H.fmtDate(p.published_at) : 'Đã đăng') : 'Nháp (chưa hiện ngoài web)' %></b></p>
+        <label>Thời gian đăng <small class="a-muted">để trống = đăng ngay</small></label>
+        <input type="datetime-local" name="published_at" value="<%= p.published_at ? H.toInputDate(p.published_at) : '' %>" data-date-preview>
+        <small class="a-muted" data-date-out>Chọn giờ trong tương lai để hẹn giờ đăng</small>
+        <div class="a-post-btns">
+          <% if (!isPub) { %><button class="a-btn" data-act="draft"><%- I('save') %> Lưu nháp</button><% } %>
+          <button class="a-btn a-primary" data-act="publish"><%- I('send') %> <%= isPub ? 'Cập nhật' : 'Đăng bài' %></button>
+        </div>
+        <% if (p.id) { %>
+          <div class="a-post-btns">
+            <a class="a-btn a-ghost" href="/tin-tuc/<%= p.slug %>?preview=1" target="_blank" rel="noopener"><%- I('eye') %> Xem trước</a>
+            <% if (isPub) { %><button class="a-btn a-danger-soft" data-act="unpublish" data-confirm="Gỡ bài khỏi web (chuyển về Nháp)?"><%- I('x') %> Gỡ bài</button><% } %>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="a-card">
+        <h3><%- I('folder') %> Phân loại</h3>
+        <label>Chuyên mục</label>
+        <select name="category_id"><option value="">-- Không --</option><% cats.forEach(c => { %><option value="<%= c.id %>" <%= p.category_id === c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select>
+        <label>Game liên quan</label>
+        <select name="game_id" data-post-game><option value="">-- Không --</option><% games.forEach(g => { %><option value="<%= g.id %>" data-slug="<%= g.slug %>" <%= p.game_id === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select>
+      </div>
+
+      <div class="a-card">
+        <h3><%- I('image') %> Ảnh bìa</h3>
+        <div class="a-upload-preview a-post-cover" data-preview-box>
+          <% if (p.cover) { %><img src="<%= p.cover %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có ảnh (gợi ý 1200×675)</span><% } %>
+        </div>
+        <input type="file" name="cover" accept="image/*" data-preview-input>
+        <% if (p.cover) { %><label class="a-check"><input type="checkbox" name="remove_cover" value="1"> Xóa ảnh bìa</label><% } %>
+        <p class="a-field-hint">Không có ảnh bìa -> dùng ảnh của game liên quan.</p>
+      </div>
+
+      <div class="a-card a-seo-card">
+        <h3><%- I('globe') %> SEO</h3>
+        <label>Từ khóa chính <small class="a-muted">(cụm từ muốn lên top Google)</small></label>
+        <input name="focus_kw" maxlength="80" value="<%= p.focus_kw || '' %>" placeholder="VD: acc genshin impact" data-seo-in>
+        <label>Tiêu đề SEO <small class="a-muted" data-count-for="seo_title">50–60 ký tự</small></label>
+        <input name="seo_title" maxlength="70" value="<%= p.seo_title || '' %>" placeholder="để trống = dùng tiêu đề bài" data-count="seo_title" data-seo-in>
+        <label>Mô tả SEO <small class="a-muted" data-count-for="seo_desc">120–160 ký tự</small></label>
+        <textarea name="seo_desc" rows="3" maxlength="170" placeholder="để trống = dùng tóm tắt" data-count="seo_desc" data-seo-in><%= p.seo_desc || '' %></textarea>
+        <div class="a-gpreview" data-gpreview>
+          <small class="a-muted">Xem trước trên Google</small>
+          <div class="a-gp-url" data-gp-url></div>
+          <div class="a-gp-title" data-gp-title></div>
+          <div class="a-gp-desc" data-gp-desc></div>
+        </div>
+        <div class="a-seo-score"><span class="a-seo-ring" data-seo-ring>0</span><div><b data-seo-label>Điểm SEO</b><small class="a-muted">Cập nhật ngay khi bạn gõ</small></div></div>
+        <ul class="a-seo-checks" data-seo-checks></ul>
+      </div>
+    </aside>
+  </div>
+</form>
+<%- include('_footer') %>

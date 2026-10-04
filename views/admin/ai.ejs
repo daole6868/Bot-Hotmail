@@ -1,0 +1,41 @@
+<%- include('_header') %>
+<form method="post" action="/admin/ai" class="a-form" autocomplete="off">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('g-sparkles') %> Nhà cung cấp AI</h3>
+      <p class="a-muted a-small">Chọn AI dùng để viết bài. Mỗi nhà cung cấp có API key riêng (lấy trong trang quản lý tài khoản của họ, trả phí theo lượng dùng). API key được mã hóa, chỉ hiện 1 lần lúc nhập.</p>
+      <label>Đang dùng</label>
+      <select name="ai_provider"><% Object.entries(PROVIDERS).forEach(([k, v]) => { %><option value="<%= k %>" <%= st.provider === k ? 'selected' : '' %>><%= v.name %><%= st.hasKey[k] ? ' ✓' : '' %></option><% }) %></select>
+      <p class="a-small">Trạng thái: <b class="<%= st.ready ? 'a-text-ok' : 'a-text-err' %>"><%= st.ready ? 'Sẵn sàng (' + st.model + ')' : 'Chưa nhập API key cho nhà cung cấp đang chọn' %></b></p>
+      <div class="a-actions"><button type="button" class="a-btn" data-ai-test <%= st.ready ? '' : 'disabled' %>><%- I('bolt') %> Thử kết nối</button><span data-ai-test-out class="a-small"></span></div>
+      <p class="a-field-hint">Lưu cài đặt trước rồi mới bấm Thử kết nối.</p>
+      <h3><%- I('edit') %> Cách viết</h3>
+      <label>Giọng văn mặc định</label>
+      <input name="ai_tone" maxlength="200" value="<%= s.ai_tone || '' %>" placeholder="VD: thân thiện, dễ hiểu, chuyên nghiệp">
+      <label>Thông tin thêm cho AI <small class="a-muted">(về shop, điều cần nhấn mạnh, điều không được viết)</small></label>
+      <textarea name="ai_extra" rows="5" maxlength="2000" placeholder="VD: Shop có bảo hành theo mô tả từng acc, hỗ trợ qua Zalo 24/7. Không nhắc tên shop khác."><%= s.ai_extra || '' %></textarea>
+    </div>
+    <div class="a-card">
+      <h3><%- I('key') %> API key & model</h3>
+      <% Object.entries(PROVIDERS).forEach(([k, v]) => { %>
+      <details class="a-seo-box" <%= st.provider === k ? 'open' : '' %>>
+        <summary><%= v.name %> <% if (st.hasKey[k]) { %><span class="a-tag green">đã có key</span><% } %></summary>
+        <% if (k === 'custom') { %>
+          <label>Địa chỉ API <small class="a-muted">(VD https://openrouter.ai/api/v1)</small></label>
+          <input name="ai_custom_url" maxlength="200" value="<%= s.ai_custom_url || '' %>" placeholder="https://...">
+        <% } %>
+        <label>Model</label>
+        <input name="model_<%= k %>" maxlength="80" value="<%= s['ai_model_' + k] || v.models[0] || '' %>" list="models_<%= k %>" placeholder="tên model">
+        <datalist id="models_<%= k %>"><% v.models.forEach(m => { %><option value="<%= m %>"><% }) %></datalist>
+        <label>API key <small class="a-muted"><%= st.hasKey[k] ? '(để trống = giữ key cũ)' : '' %></small></label>
+        <input type="password" name="key_<%= k %>" maxlength="300" autocomplete="new-password" placeholder="<%= v.keyHint %>">
+        <% if (st.hasKey[k]) { %><label class="a-check"><input type="checkbox" name="clear_<%= k %>" value="1"> Xóa API key này</label><% } %>
+      </details>
+      <% }) %>
+      <p class="a-field-hint">Model có thể gõ tên bất kỳ mà nhà cung cấp hỗ trợ (danh sách gợi ý có thể cũ, xem tên model mới nhất trên trang của họ).</p>
+    </div>
+  </div>
+  <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt AI</button>
+</form>
+<%- include('_footer') %>

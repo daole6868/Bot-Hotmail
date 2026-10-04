@@ -184,6 +184,7 @@ for (const kind of Object.keys(SORTABLE)) {
 
 // Cày thuê: danh mục, gói, đơn, cài đặt
 router.use('/boost', require('./admin-boost'));
+router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google
 
 // Nội dung form trong modal (trả về HTML không có layout)
 const modal = (res, view, data) => res.render('admin/modals/' + view, data);
@@ -202,7 +203,7 @@ router.get('/games/form', (req, res) => {
 });
 
 router.post('/games/save', (req, res) => {
-  const id = toInt(req.body.id);
+  let id = toInt(req.body.id);
   const name = str(req.body.name, 100);
   if (!name) return back(req, res, 'error', 'Tên game không được trống');
   let slug = H.slugify(req.body.slug || name);
@@ -224,8 +225,9 @@ router.post('/games/save', (req, res) => {
     db.prepare('UPDATE games SET name=?, slug=?, image=?, description=?, color=?, is_active=?, is_hot=? WHERE id=?').run(...data, id);
   } else {
     const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM games').get().n;
-    db.prepare('INSERT INTO games(name, slug, image, description, color, is_active, is_hot, sort_order) VALUES(?,?,?,?,?,?,?,?)').run(...data, next);
+    id = db.prepare('INSERT INTO games(name, slug, image, description, color, is_active, is_hot, sort_order) VALUES(?,?,?,?,?,?,?,?)').run(...data, next).lastInsertRowid;
   }
+  saveSeo('games', id, req.body);
   audit(req, old ? 'game_update' : 'game_create', name);
   back(req, res, 'success', old ? 'Đã cập nhật game' : 'Đã thêm game', '/admin/games');
 });
@@ -240,6 +242,9 @@ router.post('/games/:id/delete', (req, res) => {
   audit(req, 'game_delete', g.name);
   back(req, res, 'success', 'Đã xóa game', '/admin/games');
 });
+
+// Tiêu đề / mô tả SEO riêng (để trống -> tự tạo)
+const saveSeo = (table, id, b) => db.prepare(`UPDATE ${table} SET seo_title = ?, seo_desc = ? WHERE id = ?`).run(str(b.seo_title, 70) || null, str(b.seo_desc, 170) || null, id);
 
 // ======================= DANH MỤC CON (CẤP 2) =======================
 router.get('/categories', (req, res) => {
@@ -271,7 +276,7 @@ router.get('/categories/form', (req, res) => {
 });
 
 router.post('/categories/save', (req, res) => {
-  const id = toInt(req.body.id);
+  let id = toInt(req.body.id);
   const gameId = toInt(req.body.game_id);
   const name = str(req.body.name, 100);
   if (!name || !db.prepare('SELECT 1 FROM games WHERE id = ?').get(gameId)) return back(req, res, 'error', 'Thiếu tên hoặc game');
@@ -323,8 +328,9 @@ router.post('/categories/save', (req, res) => {
     if (old.game_id !== gameId) db.prepare('UPDATE boost_categories SET game_id = ? WHERE parent_id = ?').run(gameId, id);
   } else {
     const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM categories WHERE game_id = ?').get(gameId).n;
-    db.prepare('INSERT INTO categories(game_id, name, slug, image, description, is_active, sale_type, options, sort_order) VALUES(?,?,?,?,?,?,?,?,?)').run(...data, next);
+    id = db.prepare('INSERT INTO categories(game_id, name, slug, image, description, is_active, sale_type, options, sort_order) VALUES(?,?,?,?,?,?,?,?,?)').run(...data, next).lastInsertRowid;
   }
+  saveSeo('categories', id, req.body);
   audit(req, old ? 'category_update' : 'category_create', name);
   back(req, res, 'success', old ? 'Đã cập nhật danh mục' : 'Đã thêm danh mục', '/admin/categories');
 });
@@ -952,6 +958,7 @@ const HOME_BLOCK_INFO = {
   coupons: { name: 'Mã khuyến mãi', icon: 'gift', desc: 'Thẻ mã giảm giá đang chạy, bấm để sao chép.', title: 'Mã khuyến mãi', def: { limit: 8 } },
   featured: { name: 'Danh sách acc', icon: 'star', desc: 'Lưới acc theo nguồn: nổi bật, mới nhất, bán chạy, giá rẻ… lọc theo game / danh mục.', title: 'Acc nổi bật', def: { source: 'featured', limit: 12 } },
   boost: { name: 'Cày thuê nổi bật', icon: 'g-swords', desc: 'Các gói cày thuê bán chạy / mới nhất, bấm vào mở trang gói. Chọn tất cả hoặc 1 game.', title: 'Cày thuê nổi bật', def: { source: 'bestseller', limit: 8 } },
+  posts: { name: 'Bài viết mới', icon: 'g-book', desc: 'Các bài Tin tức / Hướng dẫn mới nhất, chọn 1 chuyên mục hoặc tất cả.', title: 'Tin tức & Hướng dẫn', def: { limit: 4 } },
   recent: { name: 'Giao dịch gần đây', icon: 'bag', desc: 'Các đơn mua mới nhất (tên khách được che bớt).', title: 'Giao dịch gần đây', def: { limit: 10 } },
 };
 const BOOST_SOURCES = { bestseller: 'Thuê nhiều nhất', newest: 'Gói mới thêm', cheap: 'Giá rẻ nhất' };
@@ -964,6 +971,7 @@ function blockSummary(b) {
   if (b.type === 'coupons') return `Tối đa ${st.limit || 8} mã`;
   if (b.type === 'featured') return `${PRODUCT_SOURCES[st.source || 'featured']} · tối đa ${st.limit || 12} acc`;
   if (b.type === 'recent') return `${st.limit || 10} đơn mới nhất`;
+  if (b.type === 'posts') return `${st.limit || 4} bài mới nhất`;
   if (b.type === 'boost') return `${(BOOST_SOURCES[st.source] || BOOST_SOURCES.bestseller)} · tối đa ${st.limit || 8} gói`;
   return '';
 }
@@ -992,6 +1000,7 @@ router.get('/home-blocks/form', (req, res) => {
     settings: b ? { ...(info.def || {}), ...H.parseJSON(b.settings, {}) } : { ...(info.def || {}) },
     items: b ? db.prepare('SELECT * FROM home_block_items WHERE block_id = ? ORDER BY sort_order, id').all(b.id) : [],
     games: db.prepare('SELECT id, name FROM games ORDER BY sort_order, id').all(),
+    postCats: type === 'posts' ? db.prepare('SELECT id, name FROM post_categories ORDER BY sort_order, id').all() : [],
     categories: type === 'featured' ? db.prepare("SELECT c.id, c.name, g.name AS game FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type IN ('vip','reroll') ORDER BY g.sort_order, c.sort_order").all() : [],
   });
 });
@@ -1013,6 +1022,9 @@ function blockSettingsFromBody(type, body, info) {
     st.category_id = toInt(body.category_id, 0, 0) || null;
   } else if (type === 'recent') {
     st.limit = toInt(body.limit, 10, 1, 30);
+  } else if (type === 'posts') {
+    st.limit = toInt(body.limit, 4, 1, 12);
+    st.category_id = toInt(body.category_id, 0, 0) || null;
   } else if (type === 'boost') {
     st.source = BOOST_SOURCES[body.source] ? body.source : 'bestseller';
     st.limit = toInt(body.limit, 8, 1, 48);

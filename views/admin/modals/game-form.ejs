@@ -24,6 +24,7 @@
     <label class="a-check"><input type="checkbox" name="is_active" <%= !g || g.is_active ? 'checked' : '' %>> Hiển thị</label>
     <label class="a-check"><input type="checkbox" name="is_hot" <%= g && g.is_hot ? 'checked' : '' %>> Gắn nhãn HOT</label>
   </div>
+  <%- include('../partials/seo-fields', { it: g }) %>
   <div class="a-modal-foot">
     <span class="a-muted a-small a-foot-note"><span class="req">*</span> là thông tin bắt buộc</span>
     <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>

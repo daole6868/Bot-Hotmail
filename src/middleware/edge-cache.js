@@ -20,8 +20,13 @@ const RULES = [
   { re: /^\/game\/[\w-]+$/, params: [] },
   { re: /^\/game\/[\w-]+\/[\w-]+$/, params: ['q', 'min', 'max', 'sort', 'page'] },
   { re: /^\/game\/[\w-]+\/[\w-]+\/[\w-]+$/, params: [] },
+  { re: /^\/tin-tuc$/, params: ['page'] },
+  { re: /^\/tin-tuc\/chuyen-muc\/[\w-]+$/, params: ['page'] },
+  { re: /^\/tin-tuc\/[\w-]+$/, params: ['preview'] },
 ];
 const ruleOf = (path) => RULES.find((r) => r.re.test(path));
+// Tham số của link quảng cáo: giữ nguyên (Google Ads cần gclid trên đường dẫn để đo chuyển đổi), không coi là tham số lạ
+const TRACK = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'ttclid'];
 const hasSession = (req) => /(?:^|;\s*)sid=/.test(req.headers.cookie || '');
 const edgeSeconds = () => {
   const n = parseInt(getSettings().edge_cache_seconds, 10);
@@ -39,10 +44,11 @@ function middleware(req, res, next) {
     if (qs >= 0) {
       const src = new URLSearchParams(req.originalUrl.slice(qs + 1));
       const keys = [...src.keys()];
-      const bad = !keys.length || keys.some((k, i) => !rule.params.includes(k) || !src.get(k) || keys.indexOf(k) !== i);
+      const allowed = (k) => rule.params.includes(k) || (TRACK.includes(k) && src.get(k).length <= 300);
+      const bad = !keys.length || keys.some((k, i) => !allowed(k) || !src.get(k) || keys.indexOf(k) !== i);
       if (bad) {
         const keep = new URLSearchParams();
-        for (const k of rule.params) { const v = src.get(k); if (v) keep.set(k, v); }
+        for (const k of [...rule.params, ...TRACK]) { const v = src.get(k); if (v && allowed(k)) keep.set(k, v); }
         const clean = keep.toString();
         res.setHeader('Cache-Control', `public, max-age=300, s-maxage=3600`);
         return res.redirect(301, req.path + (clean ? '?' + clean : ''));

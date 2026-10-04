@@ -101,6 +101,14 @@
     <p class="a-field-hint">Kiểu hiển thị (Ảnh / Icon) theo mục Cài đặt cày thuê → Gói. Khối tự ẩn nếu chưa có gói nào.</p>
   <% } %>
 
+  <% if (type === 'posts') { %>
+    <div class="a-row">
+      <div><label>Chuyên mục</label><select name="category_id"><option value="">Tất cả</option><% postCats.forEach(c => { %><option value="<%= c.id %>" <%= settings.category_id == c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select></div>
+      <div><label>Số bài</label><input type="number" name="limit" min="1" max="12" value="<%= settings.limit || 4 %>"></div>
+    </div>
+    <p class="a-field-hint">Khối tự ẩn nếu chưa có bài viết nào được đăng.</p>
+  <% } %>
+
   <% if (type === 'recent') { %>
     <label>Số đơn hiển thị</label><input type="number" name="limit" min="1" max="30" value="<%= settings.limit || 10 %>">
   <% } %>

@@ -67,6 +67,7 @@
       <% if (c && c.image) { %><label class="a-check"><input type="checkbox" name="remove_image" value="1"> Xóa ảnh hiện tại</label><% } %>
     </div>
   </div>
+  <%- include('../partials/seo-fields', { it: c }) %>
   <label class="a-check"><input type="checkbox" name="is_active" <%= !c || c.is_active ? 'checked' : '' %>> Hiển thị</label>
   <div class="a-modal-foot">
     <span class="a-muted a-small a-foot-note"><%- R %> là thông tin bắt buộc</span>

@@ -15,6 +15,7 @@ const { I } = require('./src/utils/icons');
 const maintenance = require('./src/services/maintenance');
 
 runSeed();
+require('./src/services/posts').seedSamples(); // 4 bài mẫu (Nháp), chỉ chèn 1 lần
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -25,16 +26,19 @@ app.disable('x-powered-by');
 app.locals.assetV = Date.now().toString(36);
 
 // ---------- Bảo mật HTTP headers ----------
+const gAllow = (domains) => () => { const s = getSettings(); return s.ga4_id || s.gads_id ? domains : "'self'"; };
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
     directives: {
       'default-src': ["'self'"],
-      'script-src': ["'self'", 'https://challenges.cloudflare.com'],
-      'frame-src': ['https://challenges.cloudflare.com'],
+      // Google Analytics / Ads: chỉ mở cho tên miền của Google khi admin đã nhập mã (SEO & Google)
+      'script-src': ["'self'", 'https://challenges.cloudflare.com', gAllow('https://*.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://www.google.com')],
+      'connect-src': ["'self'", gAllow('https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.googleadservices.com https://pagead2.googlesyndication.com')],
+      'frame-src': ['https://challenges.cloudflare.com', gAllow('https://td.doubleclick.net https://www.googletagmanager.com')],
       'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      'img-src': ["'self'", 'data:', 'blob:', 'https://img.vietqr.io'], // blob: để xem trước ảnh trước khi upload
+      'img-src': ["'self'", 'data:', 'blob:', 'https://img.vietqr.io', gAllow('https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.com.vn')], // blob: để xem trước ảnh trước khi upload
       'form-action': ["'self'"],
       'frame-ancestors': ["'none'"],
       'upgrade-insecure-requests': config.isProd ? [] : null,
@@ -61,6 +65,7 @@ app.use(require('./src/middleware/edge-cache').middleware);
 
 // Webhook ngân hàng đặt TRƯỚC session/CSRF (xác thực bằng token riêng)
 app.use('/api', require('./src/routes/api'));
+app.use(require('./src/routes/seo')); // robots.txt, sitemap.xml (không cần phiên)
 
 // Chống spam / DDoS lớp 1: khách không có cookie phiên bị đếm theo IP ngay tại đây, trước khi đọc form / phiên / database
 const shield = require('./src/services/shield');
@@ -123,6 +128,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Đo chuyển đổi Google (đăng ký / nạp tiền / mua hàng): gửi ở lần mở trang tiếp theo của khách
+const tracking = require('./src/services/tracking');
+app.use((req, res, next) => {
+  if (!req.user || req.method !== 'GET' || req.xhr || req.path.startsWith('/admin') || !(req.get('accept') || '').includes('text/html')) return next();
+  const ev = tracking.pending(req.user.id);
+  if (ev.length) {
+    res.locals.gtagEvents = ev.map((e) => ({ e: e.event, v: e.value, r: e.ref }));
+    res.on('finish', () => { if (res.statusCode === 200) tracking.markSent(ev.map((e) => e.id)); });
+  }
+  next();
+});
+
 // Chế độ bảo trì: chỉ admin vào được
 app.use((req, res, next) => {
   if (res.locals.s.maintenance_mode === '1' && !(req.user && req.user.role === 'admin')
@@ -135,6 +152,7 @@ app.use((req, res, next) => {
 app.use('/', require('./src/routes/auth'));
 app.use('/user', require('./src/routes/user'));
 app.use('/admin', require('./src/routes/admin'));
+app.use('/', require('./src/routes/posts')); // tin tức / hướng dẫn
 app.use('/', require('./src/routes/boost')); // cày thuê (trước public: /game/:slug/cay-thue)
 app.use('/', require('./src/routes/public'));
 

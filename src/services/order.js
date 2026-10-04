@@ -82,6 +82,7 @@ function purchase(userId, productId, couponCode, ip) {
   try {
     const r = purchaseTx.immediate(userId, productId, couponCode, ip);
     logActivity(userId, 'purchase', `${r.code} - ${money(r.total)}`, ip);
+    require('./tracking').track(userId, 'purchase', r.total, r.code);
     return { ok: true, ...r };
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, message: e.message };

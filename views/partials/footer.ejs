@@ -79,5 +79,11 @@
 <%- include('ui-settings') %>
 <script src="/js/slow.js?v=<%= locals.assetV || 1 %>" defer></script>
 <script src="/js/main.js?v=<%= locals.assetV || 1 %>" defer></script>
+<% const G = locals.s || {}; const gid = G.ga4_id || G.gads_id; if (gid && !locals.preview) { %>
+<script async src="https://www.googletagmanager.com/gtag/js?id=<%= encodeURIComponent(gid) %>"></script>
+<script src="/js/gtag-init.js?v=<%= locals.assetV || 1 %>" defer data-ga4="<%= G.ga4_id || '' %>" data-ads="<%= G.gads_id || '' %>"
+  data-l-signup="<%= G.gads_label_signup || '' %>" data-l-deposit="<%= G.gads_label_deposit || '' %>" data-l-purchase="<%= G.gads_label_purchase || '' %>"
+  data-events="<%= JSON.stringify(locals.gtagEvents || []) %>"></script>
+<% } %>
 </body>
 </html>

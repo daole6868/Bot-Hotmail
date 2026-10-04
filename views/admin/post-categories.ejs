@@ -1,0 +1,40 @@
+<%- include('_header') %>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3>Chuyên mục bài viết</h3>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Tên</th><th>Đường dẫn</th><th class="a-num">Bài</th><th class="a-center">Hiển thị</th><th class="a-right"></th></tr></thead>
+      <% if (!cats.length) { %><tr><td colspan="5" class="a-empty">Chưa có chuyên mục.</td></tr><% } %>
+      <% cats.forEach(c => { %>
+        <tr class="<%= c.is_active ? '' : 'a-row-off' %>">
+          <td><b><%= c.name %></b><% if (c.description) { %><div class="a-muted a-small a-trunc"><%= c.description %></div><% } %></td>
+          <td class="a-small a-muted">/tin-tuc/chuyen-muc/<%= c.slug %></td>
+          <td class="a-num"><%= c.n %></td>
+          <td class="a-center"><%= c.is_active ? '✓' : '—' %></td>
+          <td class="a-right"><div class="a-actions">
+            <a class="a-icon-btn" href="/admin/post-categories?id=<%= c.id %>" title="Sửa"><%- I('edit') %></a>
+            <form method="post" action="/admin/post-categories/<%= c.id %>/delete" data-confirm="Xóa chuyên mục “<%= c.name %>”? Bài viết bên trong vẫn giữ (không còn chuyên mục)."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+          </div></td>
+        </tr>
+      <% }) %>
+    </table></div>
+  </div>
+  <div class="a-card">
+    <h3><%= edit ? 'Sửa chuyên mục' : 'Thêm chuyên mục' %></h3>
+    <form method="post" action="/admin/post-categories/save" class="a-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="id" value="<%= edit ? edit.id : '' %>">
+      <label>Tên chuyên mục <span class="req">*</span></label>
+      <input name="name" required maxlength="80" value="<%= edit ? edit.name : '' %>" placeholder="VD: Hướng dẫn">
+      <label>Đường dẫn <small class="a-muted">để trống tự tạo</small></label>
+      <input name="slug" maxlength="80" value="<%= edit ? edit.slug : '' %>">
+      <label>Mô tả <small class="a-muted">(mô tả trên Google)</small></label>
+      <textarea name="description" rows="2" maxlength="300"><%= edit ? edit.description || '' : '' %></textarea>
+      <label>Thứ tự</label>
+      <input type="number" name="sort_order" min="0" max="999" value="<%= edit ? edit.sort_order : 0 %>">
+      <label class="a-check"><input type="checkbox" name="is_active" <%= !edit || edit.is_active ? 'checked' : '' %>> Hiển thị</label>
+      <div class="a-actions"><button class="a-btn a-primary"><%- I('save') %> <%= edit ? 'Lưu thay đổi' : 'Thêm chuyên mục' %></button><% if (edit) { %><a class="a-btn a-ghost" href="/admin/post-categories">Hủy</a><% } %></div>
+    </form>
+  </div>
+</div>
+<%- include('_footer') %>

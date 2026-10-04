@@ -1,0 +1,14 @@
+<%- include('../partials/header') %>
+<div class="section-head"><h1><%- I('g-book') %> <%= cat ? cat.name : 'Tin tức & Hướng dẫn' %></h1></div>
+<% if (cats.length) { %>
+<div class="chips post-chips">
+  <a href="/tin-tuc" class="chip <%= !cat ? 'active' : '' %>">Tất cả</a>
+  <% cats.forEach(c => { %><a href="/tin-tuc/chuyen-muc/<%= c.slug %>" class="chip <%= cat && cat.slug === c.slug ? 'active' : '' %>"><%= c.name %> <span class="post-n"><%= c.n %></span></a><% }) %>
+</div>
+<% } %>
+<% if (!result.rows.length) { %><div class="empty">Chưa có bài viết nào.</div><% } %>
+<div class="post-grid">
+  <% result.rows.forEach(it => { %><%- include('../partials/post-card', { it }) %><% }) %>
+</div>
+<%- include('../partials/pagination', { result, query }) %>
+<%- include('../partials/footer') %>

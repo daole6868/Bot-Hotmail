@@ -3,12 +3,26 @@
   const NAV = locals.nav || { games: [], sideLeft: [], sideRight: [] };
   const U = locals.user;
   const siteName = S.site_name || 'ShopAcc';
-  const pageTitle = locals.title ? `${locals.title} | ${siteName}` : (S.seo_title || (siteName + (S.site_slogan ? ' - ' + S.site_slogan : '')));
+  const pageTitle = locals.seoTitle || (locals.title ? `${locals.title} | ${siteName}` : (S.seo_title || (siteName + (S.site_slogan ? ' - ' + S.site_slogan : ''))));
   // Khung xem trước khi chia sẻ link (Zalo, Facebook...) và mô tả trên Google
   const base = String(locals.baseUrl || '').replace(/\/$/, '');
   const abs = (u) => !u ? '' : /^https?:\/\//.test(u) ? u : base + u;
   const metaDesc = String(locals.metaDesc || S.site_description || '').slice(0, 300);
   const metaImage = abs(locals.metaImage || S.og_image || S.logo);
+  // SEO: địa chỉ chính của trang (bỏ tham số lọc, chỉ giữ số trang) + trang không cần lên Google
+  const cPath = locals.currentPath || '/';
+  const cPage = (/[?&]page=(\d+)/.exec(locals.currentUrl || '') || [])[1];
+  const canonical = base + (locals.canonical || (cPath + (cPage && cPage !== '1' ? '?page=' + cPage : '')));
+  const noindex = locals.noindex || locals.code || /^\/(user|login|register|forgot|reset|search|admin|boost\/|verify)/.test(cPath);
+  // Dữ liệu cấu trúc (Google hiện đường dẫn, giá, câu hỏi thường gặp... ngay trên kết quả tìm kiếm)
+  const ld = [...(locals.jsonLd || [])];
+  if (locals.breadcrumb && locals.breadcrumb.length) {
+    ld.push({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ name: 'Trang chủ', url: '/' }, ...locals.breadcrumb].map((b, i) => ({ '@type': 'ListItem', position: i + 1, name: b.name, ...(b.url || i === locals.breadcrumb.length ? { item: base + (b.url || cPath) } : {}) })) });
+  }
+  if (cPath === '/') {
+    ld.push({ '@context': 'https://schema.org', '@type': 'WebSite', name: siteName, url: base + '/', potentialAction: { '@type': 'SearchAction', target: base + '/search?q={search_term_string}', 'query-input': 'required name=search_term_string' } });
+    ld.push({ '@context': 'https://schema.org', '@type': 'Organization', name: siteName, url: base + '/', ...(S.logo ? { logo: abs(S.logo) } : {}) });
+  }
 %><!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -16,11 +30,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= pageTitle %></title>
   <meta name="description" content="<%= metaDesc %>">
+  <% if (noindex) { %><meta name="robots" content="noindex, nofollow"><% } else { %><link rel="canonical" href="<%= canonical %>"><% } %>
+  <% if (S.gsc_verify && cPath === '/') { %><meta name="google-site-verification" content="<%= S.gsc_verify %>"><% } %>
+  <% ld.forEach(x => { %><script type="application/ld+json"><%- JSON.stringify(x).replace(/</g, '\\u003c') %></script>
+  <% }) %>
   <meta property="og:type" content="<%= locals.metaImage ? 'product' : 'website' %>">
   <meta property="og:site_name" content="<%= siteName %>">
   <meta property="og:title" content="<%= pageTitle %>">
   <meta property="og:description" content="<%= metaDesc %>">
-  <meta property="og:url" content="<%= base + (locals.currentUrl || '/') %>">
+  <meta property="og:url" content="<%= noindex ? base + (locals.currentUrl || '/') : canonical %>">
   <% if (metaImage) { %><meta property="og:image" content="<%= metaImage %>">
   <meta name="twitter:card" content="summary_large_image"><% } %>
   <meta name="csrf-token" content="<%= locals.csrfToken || '' %>">
@@ -73,6 +91,7 @@
       <% NAV.games.forEach(g => { %>
         <a href="/game/<%= g.slug %>" class="<%= (locals.currentPath || '').startsWith('/game/' + g.slug) ? 'active' : '' %>"><%= g.name %><% if (g.is_hot) { %> <span class="badge-hot">HOT</span><% } %></a>
       <% }) %>
+      <a href="/tin-tuc" class="<%= (locals.currentPath || '').startsWith('/tin-tuc') ? 'active' : '' %>"><%- I('g-book') %> Tin tức</a>
       <a href="/user/deposit"><%- I('card') %> Nạp tiền</a>
       <button type="button" class="catbar-ui" data-ui-open><%- I('palette') %> Cài đặt giao diện</button>
     </div>
