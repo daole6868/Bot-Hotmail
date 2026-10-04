@@ -1,0 +1,21 @@
+<%# Chi tiết tài khoản ngoài trang sản phẩm: nhân vật / vũ khí 5★ 4★ (a = p.acc, g = nhãn theo game) %>
+<% const secs = [['c5', 'Nhân vật 5★', 'c', 5], ['c4', 'Nhân vật 4★', 'c', 4], ['w5', g.w + ' 5★', 'w', 5], ['w4', g.w + ' 4★', 'w', 4]].filter(x => (a[x[0]] || []).length); %>
+<% if (secs.length) { %>
+<section class="section card pad acd">
+  <h2 class="section-title"><%- I('star') %> Chi tiết tài khoản</h2>
+  <% secs.forEach(function (sec) { %>
+    <div class="acd-sec">
+      <h3><%= sec[1] %> <small><%= a[sec[0]].length %></small></h3>
+      <div class="acd-grid">
+        <% a[sec[0]].forEach(function (it) { %>
+          <div class="acd-item r<%= sec[3] %>">
+            <span class="acd-ic"><% if (it.ic) { %><img src="<%= it.ic %>" alt="<%= it.n %>" loading="lazy" width="64" height="64"><% } else { %><%= it.n.slice(0, 1) %><% } %></span>
+            <span class="acd-badge"><%= sec[2] === 'c' ? g.c + (it.k || 0) : g.r + (it.r || 1) %></span>
+            <b><%= it.n %></b>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% }) %>
+</section>
+<% } %>

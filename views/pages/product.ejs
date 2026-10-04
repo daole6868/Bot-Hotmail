@@ -133,6 +133,7 @@
 </div>
 <% } %>
 
+<% if (p.acc) { %><%- include('../partials/acc-detail', { a: p.acc, g: p.accGame }) %><% } %>
 <% if (p.description) { %>
 <section class="section card pad pd-desc">
   <h2><%- I('list') %> Mô tả</h2>

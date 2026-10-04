@@ -1082,3 +1082,27 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-hoyo-w { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 10px; background: var(--bg); }
 .a-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #c2c8d6; vertical-align: middle; }
 .a-dot.on { background: var(--green); box-shadow: 0 0 0 3px rgba(34, 197, 94, .18); }
+
+/* ---------- Chi tiết tài khoản (form sản phẩm) ---------- */
+.a-acc-detail { margin-top: 16px; padding: 4px 14px 14px; border: 1px solid #dfe6f6; border-radius: 14px; background: #fbfcff; }
+.a-acc-detail .a-fieldset-title { justify-content: space-between; }
+.a-acc-fetch { margin-left: auto; }
+.a-fieldset-title .a-acc-fetch .ico { color: inherit; }
+.a-acc-sec { margin-top: 12px; }
+.a-acc-sh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: .86rem; }
+.a-acc-sh small { background: var(--bg); color: var(--muted); padding: 0 8px; border-radius: 99px; font-size: .72rem; font-weight: 700; }
+.a-acc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.a-acc-chips:empty { display: none; }
+.a-acc-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 4px; border-radius: 99px; background: #fff; border: 1px solid var(--border); font-size: .8rem; }
+.a-acc-chip img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; background: var(--bg); }
+.a-acc-chip b { font-weight: 600; padding-left: 4px; }
+.a-acc-chip i { font-style: normal; font-size: .7rem; font-weight: 800; color: var(--primary); background: var(--primary-l); padding: 1px 6px; border-radius: 99px; }
+.a-acc-chip button { border: 0; background: transparent; color: var(--muted); width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.a-acc-chip button:hover { background: var(--red); color: #fff; }
+.a-acc-chip button .ico { width: 12px; height: 12px; }
+.a-acc-add { display: grid; grid-template-columns: minmax(0, 1fr) 76px auto; gap: 6px; margin-top: 6px; }
+.a-hoyo-box { max-width: 460px; }
+.a-hoyo-prog { height: 8px; border-radius: 99px; background: var(--bg); overflow: hidden; margin: 14px 0 10px; }
+.a-hoyo-bar { height: 100%; width: 3%; background: linear-gradient(90deg, var(--primary), var(--primary2)); border-radius: 99px; transition: width .4s; }
+.a-hoyo-msg { font-size: .86rem; color: var(--text); min-height: 2.6em; }
+@media (max-width: 600px) { .a-acc-detail .a-row-3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .a-acc-detail .a-row-3 > :first-child { grid-column: 1 / -1; } }

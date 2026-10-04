@@ -173,7 +173,7 @@ function toggleItem(kind, id) {
 
 // Kéo thả (nút 6 chấm): nhận danh sách id theo thứ tự mới của các dòng đang hiện trên trang.
 // Trang có phân trang chỉ gửi 1 phần -> giữ nguyên các vị trí của phần còn lại, chỉ đổi chỗ giữa các id được gửi.
-const REORDERABLE = { ...SORTABLE, attributes: { table: 'attributes', group: null, order: 'sort_order, id' } };
+const REORDERABLE = { ...SORTABLE };
 function reorderItems(kind, ids) {
   const s = REORDERABLE[kind];
   ids = [...new Set(ids.map((x) => toInt(x)).filter(Boolean))].slice(0, 500);
@@ -511,7 +511,11 @@ router.get('/products/form', (req, res) => {
   if (!cat) return res.status(404).send('<p class="a-empty">Không tìm thấy danh mục</p>');
   if (!p.id) p.type = cat.sale_type === 'reroll' ? 'stock' : 'account';
   if (p.type === 'account') Object.assign(p, splitCredentials(p.credentials));
-  modal(res, 'product-form', { p, cat, attrs: loadAttributes() });
+  const hoyo = require('../services/hoyo');
+  modal(res, 'product-form', {
+    p, cat, hoyoOn: hoyo.hasToken(), hoyoGames: hoyo.GAMES, hoyoServers: hoyo.SERVERS,
+    hoyoGamesJson: JSON.stringify(hoyo.GAMES), hoyoServersJson: JSON.stringify(hoyo.SERVERS),
+  });
 });
 
 router.get('/products/new', (req, res) => res.redirect('/admin/products'));
@@ -532,12 +536,6 @@ router.get('/products/:id/edit', (req, res, next) => {
   }
   res.render('admin/product-form', { title: 'Sửa sản phẩm', p, categories: categoryOptions(req), stock, query: {} });
 });
-
-function parseAttrs(body) {
-  const keys = [].concat(body.attr_k || []);
-  const vals = [].concat(body.attr_v || []);
-  return keys.map((k, i) => ({ k: str(k, 60), v: str(vals[i], 200) })).filter((a) => a.k && a.v).slice(0, 30);
-}
 
 function addStockLines(productId, text) {
   const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 5000);
@@ -595,15 +593,24 @@ router.post('/products/save', (req, res) => {
   } else if (!old && !String(req.body.stock_lines || '').trim()) {
     return back(req, res, 'error', 'Vui lòng nhập ít nhất 1 acc (mỗi dòng: tài khoản | mật khẩu)');
   }
-  const data = [categoryId, code, title, price, oldPrice, JSON.stringify(images), JSON.stringify(parseAttrs(req.body)),
+  // Chi tiết tài khoản (thay thuộc tính): chỉ đổi khi form có gửi lên
+  let accDetail = old ? old.acc_detail : null;
+  let accBrief = old ? old.acc_brief : null;
+  if (req.body.acc_detail !== undefined) {
+    const hoyo = require('../services/hoyo');
+    let d = null; try { d = hoyo.sanitize(JSON.parse(String(req.body.acc_detail || 'null'))); } catch { d = null; }
+    accDetail = d ? JSON.stringify(d) : null;
+    accBrief = d ? JSON.stringify(hoyo.brief(d)) : null;
+  }
+  const data = [categoryId, code, title, price, oldPrice, JSON.stringify(images), old ? old.attributes : '[]',
     str(req.body.description, 5000), credEnc, status, bool(req.body.is_featured)];
   let pid = id;
   if (old) {
     db.prepare(`UPDATE products SET category_id=?, code=?, title=?, price=?, old_price=?, images=?, attributes=?, description=?,
-      credentials_enc=?, status=?, is_featured=?, updated_at=unixepoch() WHERE id=?`).run(...data, id);
+      credentials_enc=?, status=?, is_featured=?, acc_detail=?, acc_brief=?, updated_at=unixepoch() WHERE id=?`).run(...data, accDetail, accBrief, id);
   } else {
-    pid = db.prepare(`INSERT INTO products(category_id, code, title, price, old_price, images, attributes, description, credentials_enc, status, is_featured, type, owner_id)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(...data, type, req.perm === 'seller' ? req.user.id : null).lastInsertRowid;
+    pid = db.prepare(`INSERT INTO products(category_id, code, title, price, old_price, images, attributes, description, credentials_enc, status, is_featured, acc_detail, acc_brief, type, owner_id)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(...data, accDetail, accBrief, type, req.perm === 'seller' ? req.user.id : null).lastInsertRowid;
   }
   let msg = old ? 'Đã cập nhật sản phẩm' : 'Đã thêm sản phẩm';
   if (type === 'stock' && req.body.stock_lines) {
@@ -618,9 +625,9 @@ router.post('/products/:id/duplicate', (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(toInt(req.params.id));
   if (!ownsProduct(req, p)) return back(req, res, 'error', 'Không tìm thấy');
   // Bản sao ở trạng thái ẩn, không sao chép thông tin đăng nhập / kho mã (tránh bán trùng 1 acc)
-  db.prepare(`INSERT INTO products(category_id, code, title, type, price, old_price, images, attributes, description, status, sort_order, owner_id)
-    VALUES(?,?,?,?,?,?,?,?,?,'hidden',?,?)`).run(p.category_id, randomCode(8), p.title + ' (bản sao)', p.type, p.price, p.old_price,
-    '[]', p.attributes, p.description, p.sort_order, p.owner_id);
+  db.prepare(`INSERT INTO products(category_id, code, title, type, price, old_price, images, attributes, description, status, sort_order, owner_id, acc_detail, acc_brief)
+    VALUES(?,?,?,?,?,?,?,?,?,'hidden',?,?,?,?)`).run(p.category_id, randomCode(8), p.title + ' (bản sao)', p.type, p.price, p.old_price,
+    '[]', p.attributes, p.description, p.sort_order, p.owner_id, p.acc_detail, p.acc_brief);
   audit(req, 'product_duplicate', p.code);
   back(req, res, 'success', 'Đã nhân bản (đang ẩn). Hãy sửa, thêm ảnh và thông tin đăng nhập rồi bật hiển thị.');
 });
@@ -701,66 +708,6 @@ router.post('/products/import', (req, res) => {
   })();
   audit(req, 'product_import', `cat ${categoryId}: ${ok}`);
   back(req, res, 'success', `Đã nhập ${ok} acc${bad ? `, ${bad} dòng lỗi định dạng` : ''}`);
-});
-
-// ======================= THUỘC TÍNH (tên + nhiều giá trị, dùng khi thêm sản phẩm) =======================
-function loadAttributes() {
-  return db.prepare('SELECT * FROM attributes ORDER BY sort_order, id').all()
-    .map((a) => ({ ...a, values: H.parseJSON(a.values_json, []) }));
-}
-function parseValues(text) {
-  const seen = new Set();
-  return String(text || '').split(/\r?\n|,/).map((v) => str(v, 100)).filter((v) => {
-    const k = v.toLowerCase();
-    if (!v || seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  }).slice(0, 200);
-}
-
-router.get('/attributes', (req, res) => res.render('admin/attributes', { title: 'Thuộc tính', attrs: loadAttributes() }));
-
-router.get('/attributes/form', (req, res) => {
-  const a = req.query.id ? loadAttributes().find((x) => x.id === toInt(req.query.id)) : null;
-  modal(res, 'attribute-form', { a });
-});
-
-router.post('/attributes/save', (req, res) => {
-  const id = toInt(req.body.id);
-  const name = str(req.body.name, 60);
-  const values = parseValues(req.body.values);
-  if (!name) return back(req, res, 'error', 'Vui lòng nhập tên thuộc tính');
-  if (!values.length) return back(req, res, 'error', 'Vui lòng nhập ít nhất 1 giá trị');
-  if (db.prepare('SELECT id FROM attributes WHERE name = ? COLLATE NOCASE AND id != ?').get(name, id)) return back(req, res, 'error', 'Tên thuộc tính đã tồn tại');
-  if (id) db.prepare('UPDATE attributes SET name = ?, values_json = ? WHERE id = ?').run(name, JSON.stringify(values), id);
-  else {
-    const next = db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 n FROM attributes').get().n;
-    db.prepare('INSERT INTO attributes(name, values_json, sort_order) VALUES(?,?,?)').run(name, JSON.stringify(values), next);
-  }
-  audit(req, id ? 'attribute_update' : 'attribute_create', name);
-  back(req, res, 'success', id ? 'Đã cập nhật thuộc tính' : 'Đã thêm thuộc tính', '/admin/attributes');
-});
-
-router.post('/attributes/:id/delete', (req, res) => {
-  const a = db.prepare('SELECT name FROM attributes WHERE id = ?').get(toInt(req.params.id));
-  if (a) { db.prepare('DELETE FROM attributes WHERE id = ?').run(toInt(req.params.id)); audit(req, 'attribute_delete', a.name); }
-  back(req, res, 'success', 'Đã xóa thuộc tính (sản phẩm đã gắn vẫn giữ nguyên)', '/admin/attributes');
-});
-
-router.post('/attributes/:id/move', (req, res) => {
-  const ids = db.prepare('SELECT id FROM attributes ORDER BY sort_order, id').all().map((r) => r.id);
-  const id = toInt(req.params.id);
-  const i = ids.indexOf(id);
-  const j = req.body.dir === 'up' ? i - 1 : i + 1;
-  let ok = false;
-  if (i >= 0 && j >= 0 && j < ids.length) {
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-    const upd = db.prepare('UPDATE attributes SET sort_order = ? WHERE id = ?');
-    db.transaction(() => ids.forEach((x, k) => upd.run(k, x)))();
-    ok = true;
-  }
-  if (req.get('x-csrf-token')) return res.json({ ok });
-  back(req, res, ok ? 'success' : 'error', ok ? null : 'Không thể di chuyển', '/admin/attributes');
 });
 
 // ======================= ĐƠN HÀNG =======================

@@ -1271,3 +1271,17 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
   .ch-fab.ch-br { right: 16px; } .ch-fab.ch-bl { left: 16px; }
   .ch-compose textarea { font-size: 16px; }
 }
+
+/* ---------- Chi tiết tài khoản (trang sản phẩm) ---------- */
+.acd-sec + .acd-sec { margin-top: 18px; }
+.acd-sec h3 { display: flex; align-items: center; gap: 8px; font-size: .98rem; margin: 0 0 10px; }
+.acd-sec h3 small { font-size: .74rem; color: var(--muted); background: var(--bg2); padding: 1px 9px; border-radius: 99px; }
+.acd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; }
+.acd-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px 9px; border-radius: calc(12px * var(--rk)); background: var(--card2); border: 1px solid var(--border); text-align: center; min-width: 0; }
+.acd-item b { font-size: .76rem; font-weight: 600; line-height: 1.25; width: 100%; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.acd-ic { width: 64px; height: 64px; border-radius: calc(12px * var(--rk)); overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.4rem; color: #fff; }
+.acd-ic img { width: 100%; height: 100%; object-fit: cover; }
+.acd-item.r5 .acd-ic { background: linear-gradient(160deg, #a5662f, #e3a64f); }
+.acd-item.r4 .acd-ic { background: linear-gradient(160deg, #5e4aa0, #9a78d6); }
+.acd-badge { position: absolute; top: 4px; right: 4px; font-size: .68rem; font-weight: 800; padding: 1px 6px; border-radius: 99px; background: rgba(0, 0, 0, .62); color: #fff; }
+@media (max-width: 560px) { .acd-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; } .acd-ic { width: 52px; height: 52px; } .acd-item { padding: 6px 3px 7px; } .acd-item b { font-size: .7rem; } }

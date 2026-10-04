@@ -47,37 +47,44 @@
   </div>
   <input type="file" name="images" accept="image/*" multiple data-preview-multi-input>
 
-  <div class="a-attr-section" data-attr-section data-attrs="<%= JSON.stringify(attrs.map(a => ({ n: a.name, v: a.values }))) %>">
-    <div class="a-toggle-row">
-      <div><b>Thuộc tính hiển thị</b><div class="a-muted a-small">Rank, Server, Số skin... hiện trên thẻ và trang sản phẩm</div></div>
-      <label class="a-switch"><input type="checkbox" data-attr-toggle <%= p.attrList.length ? 'checked' : '' %>><span></span></label>
+  <% if (isVip) { %>
+  <input type="hidden" name="acc_detail" data-acc-field value="<%= p.acc_detail || '' %>">
+  <div class="a-acc-detail" data-acc-box data-guess="<%= /zenless|zzz/i.test(cat.game_name) ? 'zzz' : /star ?rail|hsr|honkai/i.test(cat.game_name) ? 'hsr' : /genshin/i.test(cat.game_name) ? 'genshin' : '' %>" data-games="<%= hoyoGamesJson %>" data-servers="<%= hoyoServersJson %>">
+    <div class="a-fieldset-title"><%- I('star') %> Chi tiết tài khoản
+      <% if (hoyoOn) { %><button type="button" class="a-btn a-btn-sm a-primary a-acc-fetch" data-hoyo-open><%- I('download') %> Lấy dữ liệu HoYoLAB</button>
+      <% } else { %><small class="a-muted">Bật “Máy lấy dữ liệu HoYoLAB” ở <a href="/admin/api#hoyo" target="_blank">Kết nối API</a> để lấy tự động</small><% } %>
     </div>
-    <div class="a-attr-body" data-attr-body <%= p.attrList.length ? '' : 'hidden' %>>
-      <div class="a-chips" data-attr-chips>
-        <% p.attrList.forEach(a => { %>
-          <span class="a-chip a-chip-attr"><b><%= a.k %>:</b> <%= a.v %><input type="hidden" name="attr_k" value="<%= a.k %>"><input type="hidden" name="attr_v" value="<%= a.v %>"><button type="button" data-attr-remove aria-label="Bỏ"><%- I('x') %></button></span>
-        <% }) %>
-      </div>
-      <button type="button" class="a-btn a-soft a-sm" data-attr-open><%- I('plus') %> Thêm thuộc tính</button>
-      <% if (!attrs.length) { %><p class="a-muted a-small">Chưa có thuộc tính nào. Tạo trước ở mục <a href="/admin/attributes" target="_blank">Thuộc tính</a>.</p><% } %>
-    </div>
+    <div class="a-acc-view" data-acc-view></div>
+    <p class="a-field-hint">AR/cấp, máy chủ, nhân vật và vũ khí 5★/4★ hiện cho khách xem. Bấm “Lấy dữ liệu HoYoLAB” để tự điền từ acc (chỉ Genshin / Star Rail / ZZZ).</p>
   </div>
 
-  <!-- Cửa sổ chọn thuộc tính + giá trị -->
-  <div class="a-picker" data-attr-picker hidden>
-    <div class="a-picker-box">
-      <div class="a-picker-head"><b>Thêm thuộc tính</b><button type="button" class="a-icon-btn" data-attr-close aria-label="Đóng"><%- I('x') %></button></div>
-      <label>Thuộc tính</label>
-      <select data-attr-name><option value="">-- Chọn thuộc tính --</option><% attrs.forEach(a => { %><option value="<%= a.name %>"><%= a.name %></option><% }) %></select>
-      <label>Giá trị</label>
-      <select data-attr-value disabled><option value="">-- Chọn thuộc tính trước --</option></select>
-      <div class="a-picker-error" data-attr-error hidden></div>
-      <div class="a-picker-foot">
-        <button type="button" class="a-btn a-ghost" data-attr-close>Hủy</button>
-        <button type="button" class="a-btn a-soft" data-attr-add><%- I('plus') %> Thêm</button>
+  <!-- Popup lấy dữ liệu HoYoLAB -->
+  <div class="a-picker" data-hoyo-picker hidden>
+    <div class="a-picker-box a-hoyo-box">
+      <div class="a-picker-head"><b>Lấy dữ liệu HoYoLAB</b><button type="button" class="a-icon-btn" data-hoyo-close aria-label="Đóng"><%- I('x') %></button></div>
+      <div data-hoyo-form>
+        <label>Game</label>
+        <select data-hoyo-game><% Object.entries(hoyoGames).forEach(([k, g]) => { %><option value="<%= k %>"><%= g.name %></option><% }) %></select>
+        <div class="a-row">
+          <div><label>Tài khoản HoYoLAB</label><input data-hoyo-user autocomplete="off" placeholder="email / tên đăng nhập"></div>
+          <div><label>Mật khẩu</label><input type="password" data-hoyo-pass autocomplete="new-password"></div>
+        </div>
+        <label>Máy chủ <small class="a-muted">(để kiểm tra acc đúng máy chủ)</small></label>
+        <select data-hoyo-server><option value="">Tự động theo UID</option><% hoyoServers.forEach(sv => { %><option value="<%= sv %>"><%= sv %></option><% }) %></select>
+        <div class="a-picker-error" data-hoyo-error hidden></div>
+        <div class="a-picker-foot">
+          <button type="button" class="a-btn a-ghost" data-hoyo-close>Hủy</button>
+          <button type="button" class="a-btn a-primary" data-hoyo-start><%- I('download') %> Lấy thông tin</button>
+        </div>
+      </div>
+      <div data-hoyo-run hidden>
+        <div class="a-hoyo-prog"><div class="a-hoyo-bar" data-hoyo-bar></div></div>
+        <p class="a-hoyo-msg" data-hoyo-msg>Đang gửi yêu cầu...</p>
+        <div class="a-picker-foot"><button type="button" class="a-btn a-ghost" data-hoyo-cancel>Hủy lượt này</button></div>
       </div>
     </div>
   </div>
+  <% } %>
 
   <label>Mô tả</label>
   <textarea name="description" rows="3" maxlength="5000"><%= p.description || '' %></textarea>

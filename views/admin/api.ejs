@@ -62,7 +62,7 @@
 
   <div class="a-card" id="hoyo">
     <h3><%- I('g-sparkles') %> HoYoLAB worker <span class="a-tag <%= hoyo.workers.some(w => w.online) ? 'green' : '' %>"><%= hoyo.workers.some(w => w.online) ? 'đang bật' : 'chưa bật' %></span></h3>
-    <p class="a-muted a-small">Máy tính chạy công cụ <code>tools/hoyolab-worker</code> sẽ tự đăng nhập HoYoLAB để lấy nhân vật / vũ khí khi bấm “Lấy dữ liệu HoYoLAB” trong form sản phẩm.</p>
+    <p class="a-muted a-small">Máy worker nhận việc khi bấm “Lấy dữ liệu HoYoLAB” trong form sản phẩm. Cách kết nối: <code>docs/hoyolab-worker-api.md</code>.</p>
     <% if (hoyo.newToken) { %>
       <div class="a-hoyo-token"><span>Mã worker mới (chỉ hiện 1 lần):</span><code><%= hoyo.newToken %></code><button type="button" class="a-icon-btn" data-copy="<%= hoyo.newToken %>" title="Sao chép"><%- I('copy') %></button></div>
     <% } %>

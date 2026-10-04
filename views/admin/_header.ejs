@@ -48,7 +48,6 @@
     <a href="/admin/reroll" class="<%= act('/reroll') %>"><%- I('refresh') %> Reroll</a>
     <a href="/admin/boost" class="<%= P === '/boost' || P.startsWith('/boost/c') || P.startsWith('/boost/categories') ? 'active' : '' %>"><%- I('g-swords') %> Cày thuê</a>
     <a href="/admin/boost/topup" class="<%= P === '/boost/topup' || P.startsWith('/boost/topup/') ? 'active' : '' %>"><%- I('g-gem') %> Nạp game</a>
-    <a href="/admin/attributes" class="<%= act('/attributes') %>"><%- I('tag') %> Thuộc tính</a>
     <div class="a-group">Kinh doanh</div>
     <a href="/admin/orders" class="<%= act('/orders') %>"><%- I('bag') %> Đơn hàng</a>
     <a href="/admin/boost/orders" class="<%= act('/boost/orders') %>"><%- I('g-swords') %> Đơn cày thuê <% if (B.boost) { %><span class="a-badge"><%= B.boost %></span><% } %></a>

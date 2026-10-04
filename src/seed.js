@@ -184,20 +184,6 @@ function seedDemoProducts() {
   })();
 }
 
-// Thuộc tính mẫu (chỉ tạo 1 lần; admin xóa đi thì không tạo lại)
-function seedAttributes() {
-  if (getSettings().attributes_seeded === '1') return;
-  if (db.prepare('SELECT COUNT(*) c FROM attributes').get().c === 0) {
-    const ins = db.prepare('INSERT INTO attributes(name, values_json, sort_order) VALUES(?,?,?)');
-    [
-      ['Rank', ['Đồng', 'Bạc', 'Vàng', 'Bạch Kim', 'Kim Cương', 'Tinh Anh', 'Cao Thủ', 'Chiến Tướng', 'Chiến Thần']],
-      ['Loại đăng ký', ['Garena', 'Facebook', 'Google', 'Email', 'Số điện thoại', 'Apple ID']],
-      ['Server', ['Việt Nam', 'Asia', 'America', 'Europe']],
-      ['Tình trạng', ['Trắng thông tin', 'Có thể đổi thông tin', 'Liên kết đầy đủ']],
-    ].forEach(([n, v], i) => ins.run(n, JSON.stringify(v), i));
-  }
-  setSetting('attributes_seeded', '1');
-}
 
 // Ảnh mẫu cho dải ảnh chạy trang chủ (300x150) - chỉ tạo 1 lần để test, admin thay bằng ảnh thật
 function seedStrip() {
@@ -245,7 +231,6 @@ function migrateHomeBanners() {
 function runSeed() {
   ensureSettings();
   ensureAdmin();
-  seedAttributes();
   if (config.seedCatalog) seedCatalog();
   seedStrip();
   if (config.seedDemo) seedDemoProducts();

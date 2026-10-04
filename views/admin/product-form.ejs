@@ -24,13 +24,6 @@
     </div>
     <label>Mô tả</label><textarea name="description" rows="5" maxlength="5000"><%= p.description || '' %></textarea>
 
-    <label>Thuộc tính hiển thị (Rank, Skin, Tướng...)</label>
-    <div id="attrList">
-      <% (p.attrList.length ? p.attrList : [{k:'',v:''}]).forEach(a => { %>
-        <div class="a-attr"><input name="attr_k" placeholder="Tên" value="<%= a.k %>"><input name="attr_v" placeholder="Giá trị" value="<%= a.v %>"><button type="button" class="a-btn a-xs a-danger" data-remove-attr><%- I('x') %></button></div>
-      <% }) %>
-    </div>
-    <button type="button" class="a-btn a-xs" data-add-attr>+ Thêm thuộc tính</button>
   </div>
 
   <div class="a-card">

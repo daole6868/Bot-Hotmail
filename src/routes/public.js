@@ -25,14 +25,27 @@ function maskName(n) {
   return n.length <= 3 ? n[0] + '**' : n.slice(0, 2) + '***' + n.slice(-1);
 }
 
+const { GAMES: HOYO_GAMES } = require('../services/hoyo');
+// Dòng tóm tắt "Chi tiết tài khoản" cho thẻ sản phẩm (acc chưa có chi tiết -> dùng thuộc tính cũ)
+function accRows(b) {
+  if (!b) return null;
+  const g = HOYO_GAMES[b.g] || { lv: 'Cấp', w: 'Vũ khí' };
+  return [[g.lv, b.lv || ''], ['Máy chủ', b.sv || ''], ['Nhân vật 5★', b.n5 || ''], [g.w + ' 5★', b.w5 || '']].filter((r) => r[1] !== '').map(([k, v]) => ({ k, v }));
+}
 function decorate(p) {
   p.imageList = parseJSON(p.images, []);
   p.attrList = parseJSON(p.attributes, []);
+  const rows = accRows(parseJSON(p.acc_brief, null));
+  if (rows && rows.length) p.attrList = rows;
+  if (p.acc_detail) {
+    p.acc = parseJSON(p.acc_detail, null);
+    if (p.acc) p.accGame = HOYO_GAMES[p.acc.game] || { lv: 'Cấp', c: 'C', w: 'Vũ khí', r: 'R' };
+  }
   p.discountPercent = p.old_price && p.old_price > p.price ? Math.round((1 - p.price / p.old_price) * 100) : 0;
   return p;
 }
 
-const PRODUCT_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.images, p.attributes, p.status, p.sold_count, p.views,
+const PRODUCT_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.images, p.attributes, p.acc_brief, p.status, p.sold_count, p.views,
   p.is_featured, p.created_at, c.name AS category_name, c.slug AS category_slug, g.name AS game_name, g.slug AS game_slug,
   (CASE WHEN p.type = 'stock' THEN (SELECT COUNT(*) FROM product_stock s WHERE s.product_id = p.id AND s.is_sold = 0) ELSE NULL END) AS stock_left`;
 
@@ -179,7 +192,7 @@ function productLd(p) {
   };
 }
 function loadProduct(code) {
-  const p = db.prepare(`SELECT ${PRODUCT_SELECT}, p.description, p.category_id, g.id AS game_id, c.is_active AS cat_active, g.is_active AS game_active
+  const p = db.prepare(`SELECT ${PRODUCT_SELECT}, p.description, p.acc_detail, p.category_id, g.id AS game_id, c.is_active AS cat_active, g.is_active AS game_active
     FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id WHERE p.code = ?`).get(code);
   if (!p || p.status === 'hidden' || !p.cat_active || !p.game_active) return null;
   return decorate(p);
