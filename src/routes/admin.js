@@ -35,7 +35,7 @@ router.use(requireStaff);
 router.use((req, res, next) => {
   const p = req.path;
   if (req.perm === 'admin') return next();
-  if (p === '/me' || p.startsWith('/me/')) return next(); // ví & tổng quan của chính CTV
+  if (p === '/me' || p.startsWith('/me/')) return req.perm === 'seller' ? next() : res.redirect(req.perm === 'support' ? '/admin/chat' : '/admin'); // ví & tổng quan: chỉ CTV bán hàng
   if (req.perm === 'manager') return MANAGER_BLOCK.some((x) => p === x || p.startsWith(x + '/')) ? denied(res) : next();
   if (p === '/') return res.redirect(req.perm === 'support' ? '/admin/chat' : '/admin/me');
   if (req.perm === 'seller' && SELLER_ALLOW.some((re) => re.test(p))) return next();

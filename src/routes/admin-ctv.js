@@ -143,7 +143,7 @@ function statsOf(userId, types = null) {
   return rows;
 }
 router.get('/me', (req, res) => {
-  if (req.perm === 'admin') return res.redirect('/admin');
+  if (req.perm !== 'seller') return res.redirect(req.perm === 'support' ? '/admin/chat' : '/admin');
   const u = userById(req.user.id);
   const types = req.perm === 'seller' ? ctv.allowedTypes(u.id) : [];
   const kinds = ['vip', 'reroll', 'boost', 'topup'].filter((k) => types.includes(k));
@@ -161,7 +161,7 @@ router.get('/me', (req, res) => {
   });
 });
 router.get('/me/wallet', (req, res) => {
-  if (req.perm === 'admin') return res.redirect('/admin');
+  if (req.perm !== 'seller') return res.redirect(req.perm === 'support' ? '/admin/chat' : '/admin');
   const u = userById(req.user.id);
   let bank = {}; try { bank = JSON.parse(u.ctv_bank || '{}') || {}; } catch { bank = {}; }
   res.render('admin/ctv-wallet', {
@@ -171,7 +171,7 @@ router.get('/me/wallet', (req, res) => {
   });
 });
 router.post('/me/withdraw', (req, res) => {
-  if (req.perm === 'admin') return res.redirect('/admin');
+  if (req.perm !== 'seller') return res.redirect(req.perm === 'support' ? '/admin/chat' : '/admin');
   const r = ctv.withdraw(req.user.id, req.body);
   if (!r.ok) return back(req, res, 'error', r.message, '/admin/me/wallet');
   audit(req, 'ctv_withdraw', `${r.code} ${req.body.amount}`);

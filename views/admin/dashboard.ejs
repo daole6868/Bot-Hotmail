@@ -2,7 +2,7 @@
 <% if (!s.bank_account) { %><div class="a-alert a-alert-error"><%- I('alert') %> Chưa cấu hình tài khoản ngân hàng — khách chưa nạp tiền được. <a href="/admin/settings/bank">Cài đặt bank ngay</a></div><% } %>
 <div class="a-card a-card-flush">
   <div class="a-card-head a-pad"><h3><%- I('chart') %> Doanh thu</h3></div>
-  <div class="a-table-wrap"><table class="a-table a-rev">
+  <div class="a-table-wrap"><table class="a-table a-rev a-nocards">
     <thead><tr><th></th><th>Hôm nay</th><th>7 ngày</th><th>30 ngày</th><th>Tất cả</th></tr></thead>
     <% const R = ['today', 'd7', 'd30', 'all']; %>
     <% KINDS.forEach(([k, label]) => { %>
@@ -81,7 +81,7 @@
     </table>
     <% if (lowStock.length) { %>
       <h3 class="a-mt"><%- I('alert') %> Sản phẩm kho sắp hết</h3>
-      <table class="a-table"><% lowStock.forEach(p => { %><tr><td><a href="/admin/products/<%= p.id %>/edit"><%= p.title %></a></td><td><b class="a-red">Còn <%= p.left_count %></b></td></tr><% }) %></table>
+      <table class="a-table"><thead><tr><th>Sản phẩm</th><th>Còn</th></tr></thead><% lowStock.forEach(p => { %><tr><td><a href="/admin/products/<%= p.id %>/edit"><%= p.title %></a></td><td><b class="a-red">Còn <%= p.left_count %></b></td></tr><% }) %></table>
     <% } %>
   </div>
 </div>

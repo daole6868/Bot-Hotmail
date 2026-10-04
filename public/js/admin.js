@@ -113,7 +113,7 @@
   // ---------------- Bảng dạng thẻ trên điện thoại ----------------
   // Gắn nhãn cột (lấy từ <th>) vào từng ô; CSS ở màn hẹp biến mỗi dòng thành 1 khung "Nhãn ..... Giá trị"
   function labelTables(root) {
-    $$('table.a-table:not(.a-kv)', root).forEach((tb) => {
+    $$('table.a-table:not(.a-kv):not(.a-nocards)', root).forEach((tb) => {
       tb.classList.add('a-cards');
       const heads = [];
       $$('thead th', tb).forEach((th) => { const n = +th.colSpan || 1; for (let i = 0; i < n; i++) heads.push(th.textContent.trim()); });

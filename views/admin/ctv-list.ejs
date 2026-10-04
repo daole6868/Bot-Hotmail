@@ -35,7 +35,7 @@
         <td class="a-small"><%= u.ctv_role === 'seller' ? (u.grants.join(', ') || 'Chưa cấp') : '—' %></td>
         <td><%= u.ctv_role === 'seller' ? u.ctv_rate + '%' : '—' %></td>
         <td><%= H.money(u.earned) %></td>
-        <td><b><%= H.money(u.ctv_balance) %></b><% if (u.pending) { %><div class="a-small a-text-warn"><%= u.pending %> lệnh rút chờ</div><% } %></td>
+        <td><% if (u.ctv_role === 'seller' || u.ctv_balance) { %><b><%= H.money(u.ctv_balance) %></b><% } else { %><span class="a-muted">—</span><% } %><% if (u.pending) { %><div class="a-small a-text-warn"><%= u.pending %> lệnh rút chờ</div><% } %></td>
         <td><a class="a-btn a-xs" href="/admin/ctv/<%= u.id %>">Chi tiết</a></td>
       </tr>
     <% }) %>

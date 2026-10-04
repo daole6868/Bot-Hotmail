@@ -1,10 +1,13 @@
 <%- include('_header') %>
 <% const tot = (k) => Object.keys(stats).reduce((a, t) => a + stats[t][k].earn, 0); %>
+<% const isSeller = u.ctv_role === 'seller'; %>
+<% if (isSeller) { %>
 <div class="a-stats a-stats-3">
   <div class="a-card a-stat"><span>Số dư hiện tại</span><b><%= H.money(u.ctv_balance) %></b><small>Rút tối thiểu 10.000đ</small></div>
   <div class="a-card a-stat"><span>Đã nhận 30 ngày</span><b><%= H.money(tot('d30')) %></b><small>Hôm nay <%= H.money(tot('today')) %></small></div>
   <div class="a-card a-stat"><span>Đã nhận tất cả</span><b><%= H.money(tot('all')) %></b><small><%= role %><%= u.ctv_paused ? ' · tạm dừng' : '' %></small></div>
 </div>
+<% } %>
 
 <div class="a-grid-2">
   <div class="a-card">
@@ -54,7 +57,7 @@
       <p class="a-field-hint">Cấp cả game: CTV bán được ở mọi danh mục của game (acc, cày thuê, nạp game). Cấp 1 danh mục Cày thuê: CTV tự thêm danh mục con và gói bên trong.</p>
       <% } %>
     <% } %>
-    <% if (editable) { %>
+    <% if (editable && isSeller) { %>
     <h3 class="a-mt"><%- I('money') %> Điều chỉnh số dư</h3>
     <form method="post" action="/admin/ctv/<%= u.id %>/adjust" class="a-form a-grant-add">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -66,6 +69,7 @@
   </div>
 </div>
 
+<% if (isSeller || ledger.length) { %>
 <div class="a-grid-2">
   <div class="a-card a-card-flush">
     <h3 class="a-pad"><%- I('list') %> Biến động số dư</h3>
@@ -84,4 +88,5 @@
     </table></div>
   </div>
 </div>
+<% } %>
 <%- include('_footer') %>

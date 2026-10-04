@@ -1042,6 +1042,7 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-ctv-todo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 18px; }
 .a-ctv-todo .a-stat { color: var(--text); }
 .a-rev th, .a-rev td { white-space: nowrap; }
+.a-rev th:first-child { position: sticky; left: 0; z-index: 1; background: #fff; }
 .a-rev td b { display: block; }
 .a-rev td small { color: var(--muted); font-size: .74rem; }
 .a-rev tr.a-rev-total th, .a-rev tr.a-rev-total td { background: var(--primary-l); }

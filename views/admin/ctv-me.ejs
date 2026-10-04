@@ -24,7 +24,7 @@
 <% if (kinds.length) { %>
 <div class="a-card a-card-flush">
   <h3 class="a-pad"><%- I('chart') %> Doanh thu của bạn</h3>
-  <div class="a-table-wrap"><table class="a-table a-rev">
+  <div class="a-table-wrap"><table class="a-table a-rev a-nocards">
     <thead><tr><th>Bạn nhận</th><th>Hôm nay</th><th>7 ngày</th><th>30 ngày</th><th>Tất cả</th></tr></thead>
     <% kinds.forEach(k => { %>
       <tr><th><%= KIND_NAME[k] %></th><% ['today', 'd7', 'd30', 'all'].forEach(r => { const x = stats[k][r]; %><td><b><%= H.money(x.earn) %></b><small><%= x.n %> đơn · giá bán <%= H.money(x.sold) %></small></td><% }) %></tr>
@@ -36,7 +36,8 @@
 <div class="a-card a-card-flush">
   <h3 class="a-pad"><%- I('list') %> Biến động gần đây <a href="/admin/me/wallet" class="a-small">Xem tất cả</a></h3>
   <div class="a-table-wrap"><table class="a-table">
-    <% if (!ledger.length) { %><tr><td class="a-empty">Chưa có</td></tr><% } %>
+    <thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th><th>Số dư</th></tr></thead>
+    <% if (!ledger.length) { %><tr><td colspan="4" class="a-empty">Chưa có</td></tr><% } %>
     <% ledger.forEach(l => { %><tr><td class="a-small a-muted"><%= H.fmtDate(l.created_at) %></td><td><%= LEDGER_NAME[l.type] || l.type %><div class="a-small a-muted"><%= l.ref || '' %> <%= l.note || '' %></div></td><td class="<%= l.amount > 0 ? 'a-text-ok' : 'a-text-err' %>"><b><%= l.amount > 0 ? '+' : '' %><%= H.money(l.amount) %></b></td><td><%= H.money(l.balance_after) %></td></tr><% }) %>
   </table></div>
 </div>
