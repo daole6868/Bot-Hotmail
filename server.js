@@ -103,7 +103,7 @@ const popupView = (s) => { if (popupCache.raw !== s.popup_cfg) popupCache = { ra
 const chatSvc = require('./src/services/chat');
 let chatCache = { raw: null, v: null };
 const chatView = (s) => {
-  if (chatCache.raw !== s.chat_cfg) { const c = chatSvc.cfg(s); chatCache = { raw: s.chat_cfg, v: c.enabled ? { title: c.title, greeting: c.greeting, color: c.color, agent: c.agent_name, in_support: c.in_support, position: c.position, layout: c.layout } : null }; }
+  if (chatCache.raw !== s.chat_cfg) { const c = chatSvc.cfg(s); chatCache = { raw: s.chat_cfg, v: c.enabled ? { title: c.title, greeting: c.greeting, agent: c.agent_name, in_support: c.in_support, position: c.position, layout: c.layout } : null }; }
   return chatCache.v;
 };
 let navCache = { at: 0, games: [], sideLeft: [], sideRight: [] };

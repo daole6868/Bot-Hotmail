@@ -15,7 +15,7 @@ const nowS = () => Math.floor(Date.now() / 1000);
 const int = (v, d, min, max) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : d; };
 
 const DEFAULTS = {
-  enabled: false, title: 'Chat với shop', agent_name: 'Shop', greeting: 'Xin chào 👋 Shop có thể giúp gì cho bạn?', color: '#4f6bed',
+  enabled: false, title: 'Chat với shop', agent_name: 'Shop', greeting: 'Xin chào 👋 Shop có thể giúp gì cho bạn?',
   in_support: true, position: 'br', layout: 'center',
   hours_on: false, open: '08:00', close: '23:00', offline_msg: 'Shop đang ngoài giờ làm việc. Bạn cứ để lại tin nhắn, shop sẽ trả lời sớm nhất có thể!',
   // Khách lạ (chưa đăng nhập)

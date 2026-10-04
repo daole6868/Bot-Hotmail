@@ -50,14 +50,14 @@
 <% const PP = locals.popup; if (PP && !locals.layoutAdmin && (PP.pages === 'all' || locals.currentPath === '/')) { %>
 <% function ppImg() { if (!PP.image) return; %><<%= PP.img_link ? 'a' : 'div' %> class="popup-img<%= PP.img_style !== 'full' || PP.img_w < 100 ? ' popup-img-in' : '' %>" style="width:<%= PP.img_w %>%"<% if (PP.img_link) { %> href="<%= PP.img_link %>"<% } %>><img src="<%= PP.image %>" alt="<%= PP.title %>"<% if (PP.ratio) { %> style="aspect-ratio:<%= PP.ratio %>"<% } %>></<%= PP.img_link ? 'a' : 'div' %>><% } %>
 <div class="popup" id="sitePopup" data-popup-id="<%= PP.v %>" data-delay="<%= PP.delay %>" data-repeat="<%= PP.repeat %>" hidden>
-  <div class="popup-box<%= PP.body ? '' : ' popup-imgonly' %>" role="dialog" aria-modal="true" style="--pw:<%= PP.width %>px;--pbg:<%= PP.bg %>;--ptx:<%= PP.text %>;--prad:<%= PP.radius %>px">
+  <div class="popup-box<%= PP.body ? '' : ' popup-imgonly' %>" role="dialog" aria-modal="true" style="--pw:<%= PP.width %>px">
     <button class="popup-close" data-close-popup aria-label="Đóng"><%- I('x') %></button>
     <div class="popup-inner">
       <% if (PP.img_pos !== 'bottom') ppImg(); %>
       <% if (PP.body) { %><div class="popup-body">
-        <% if (PP.title) { %><h3 class="popup-title" style="color:<%= PP.title_color %>;font-size:<%= PP.title_size %>px;text-align:<%= PP.title_align %>"><%= PP.title %></h3><% } %>
+        <% if (PP.title) { %><h3 class="popup-title" style="<%= PP.title_theme === false ? 'color:' + PP.title_color + ';' : '' %>font-size:<%= PP.title_size %>px;text-align:<%= PP.title_align %>"><%= PP.title %></h3><% } %>
         <% if (PP.content) { %><div class="popup-content"><%- PP.content %></div><% } %>
-        <% if (PP.btn_text) { %><a class="popup-btn" href="<%= PP.btn_link || '#' %>" style="background:<%= PP.btn_bg %>;color:<%= PP.btn_color %>"<%- PP.btn_link ? '' : ' data-close-popup' %>><%= PP.btn_text %></a><% } %>
+        <% if (PP.btn_text) { %><a class="popup-btn" href="<%= PP.btn_link || '#' %>"<%- PP.btn_link ? '' : ' data-close-popup' %>><%= PP.btn_text %></a><% } %>
       </div><% } %>
       <% if (PP.img_pos === 'bottom') ppImg(); %>
     </div>
@@ -87,8 +87,8 @@
 <%- include('ui-settings') %>
 <% const CH = !locals.layoutAdmin && locals.chat; const chInSp = CH && CH.in_support && locals.support && locals.support.device === 'all'; %>
 <% if (locals.support && !locals.layoutAdmin) { %><%- include('support', { sp: locals.support, chat: chInSp ? CH : null }) %><% } %>
-<% if (CH) { %><div id="gzChat" hidden data-layout="<%= CH.layout %>" data-title="<%= CH.title %>" data-greeting="<%= CH.greeting %>" data-agent="<%= CH.agent %>" data-pos="<%= locals.support && chInSp ? (locals.support.mode === 'side' ? locals.support.side === 'left' ? 'bl' : 'br' : locals.support.corner.endsWith('l') ? 'bl' : 'br') : CH.position %>" style="--ch-c:<%= CH.color %>"></div>
-<% if (!chInSp) { %><button type="button" class="ch-fab ch-<%= CH.position %>" data-chat-open aria-label="<%= CH.title %>" style="--ch-c:<%= CH.color %>"><%- I('chat') %><span class="ch-badge" data-chat-badge hidden></span></button><% } %><% } %>
+<% if (CH) { %><div id="gzChat" hidden data-layout="<%= CH.layout %>" data-title="<%= CH.title %>" data-greeting="<%= CH.greeting %>" data-agent="<%= CH.agent %>" data-pos="<%= locals.support && chInSp ? (locals.support.mode === 'side' ? locals.support.side === 'left' ? 'bl' : 'br' : locals.support.corner.endsWith('l') ? 'bl' : 'br') : CH.position %>"></div>
+<% if (!chInSp) { %><button type="button" class="ch-fab ch-<%= CH.position %>" data-chat-open aria-label="<%= CH.title %>"><%- I('chat') %><span class="ch-badge" data-chat-badge hidden></span></button><% } %><% } %>
 <script src="/js/slow.js?v=<%= locals.assetV || 1 %>" defer></script>
 <script src="/js/main.js?v=<%= locals.assetV || 1 %>" defer></script>
 <% const G = locals.s || {}; const gid = G.ga4_id || G.gads_id; if (gid && !locals.preview) { %>

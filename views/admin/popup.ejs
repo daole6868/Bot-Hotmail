@@ -19,9 +19,6 @@
         <h3><%- I('square') %> Khung popup</h3>
         <div class="a-row">
           <div><label>Chiều rộng (px)</label><input type="number" name="width" min="260" max="1200" value="<%= cfg.width %>" data-pp></div>
-          <div><label>Bo góc (px)</label><input type="number" name="radius" min="0" max="40" value="<%= cfg.radius %>" data-pp></div>
-          <div><label>Màu nền</label><input type="color" name="bg" value="<%= cfg.bg %>" data-pp></div>
-          <div><label>Màu chữ nội dung</label><input type="color" name="text" value="<%= cfg.text %>" data-pp></div>
         </div>
       </div>
 
@@ -53,7 +50,7 @@
         <h3><%- I('edit') %> Tiêu đề</h3>
         <input name="title" maxlength="150" value="<%= cfg.title %>" placeholder="VD: Khuyến mãi nạp game tháng 10" data-pp>
         <div class="a-row">
-          <div><label>Màu chữ</label><input type="color" name="title_color" value="<%= cfg.title_color %>" data-pp></div>
+          <div><label>Màu chữ</label><div class="a-pp-tc"><label class="a-check"><input type="checkbox" name="title_theme" value="1" <%= cfg.title_theme !== false ? 'checked' : '' %> data-pp> <span>Theo giao diện</span></label><input type="color" name="title_color" value="<%= cfg.title_color %>" data-pp <%= cfg.title_theme !== false ? 'hidden' : '' %>></div></div>
           <div><label>Cỡ chữ (px)</label><input type="number" name="title_size" min="12" max="60" value="<%= cfg.title_size %>" data-pp></div>
           <div><label>Căn lề</label><select name="title_align" data-pp><% [['left', 'Trái'], ['center', 'Giữa'], ['right', 'Phải']].forEach(([v, l]) => { %><option value="<%= v %>" <%= cfg.title_align === v ? 'selected' : '' %>><%= l %></option><% }) %></select></div>
         </div>
@@ -93,10 +90,6 @@
         <div class="a-row">
           <div><label>Chữ trên nút <small class="a-muted">(để trống = ẩn)</small></label><input name="btn_text" maxlength="60" value="<%= cfg.btn_text %>" placeholder="VD: Xem ngay" data-pp></div>
           <div><label>Link</label><input name="btn_link" maxlength="300" value="<%= cfg.btn_link %>" placeholder="để trống = bấm để đóng popup"></div>
-        </div>
-        <div class="a-row">
-          <div><label>Màu nút</label><input type="color" name="btn_bg" value="<%= cfg.btn_bg %>" data-pp></div>
-          <div><label>Màu chữ nút</label><input type="color" name="btn_color" value="<%= cfg.btn_color %>" data-pp></div>
         </div>
       </div>
     </div>

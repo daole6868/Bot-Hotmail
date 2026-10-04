@@ -12,7 +12,6 @@
       <label>Lời chào (hiện đầu khung chat)</label>
       <textarea name="greeting" rows="2" maxlength="300"><%= cfg.greeting %></textarea>
       <div class="a-row">
-        <div><label>Màu chủ đạo</label><input type="color" name="color" value="<%= cfg.color %>"></div>
         <div><label>Khung chat trên máy tính</label><select name="layout"><option value="center" <%= cfg.layout !== 'corner' ? 'selected' : '' %>>Giữa màn hình (to, dễ nhìn)</option><option value="corner" <%= cfg.layout === 'corner' ? 'selected' : '' %>>Góc màn hình (nhỏ gọn)</option></select></div>
       </div>
       <div class="a-row">
