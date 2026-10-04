@@ -41,11 +41,12 @@
 
   // ---------- Danh sách cuộc chat ----------
   const convs = new Map(); boot.convs.forEach((c) => convs.set(c.id, c));
-  let filter = 'all'; let seg = 'all'; let q = ''; let cur = null; let curInfo = null; const msgs = new Map(); let seenUser = 0;
+  let filter = 'all'; let seg = 'all'; let q = ''; let found = null; let cur = null; let curInfo = null; const msgs = new Map(); let seenUser = 0;
   const initial = (n) => esc((n || '?').trim().slice(0, 1).toUpperCase());
   const color = (id) => `hsl(${(id * 67) % 360} 62% 52%)`;
   const staffName = (id) => (boot.staff.find((s) => s.id === id) || {}).name || '';
   function matches(c) {
+    if (q && found && !found.has(c.id)) return false;
     if (seg === 'member' && c.guest) return false;
     if (seg === 'guest' && !c.guest) return false;
     if (filter === 'unread' && !c.unread) return false;
@@ -75,11 +76,12 @@
     const j = await api(`/admin/chat/list?f=${filter}&s=${seg}&q=${encodeURIComponent(q)}`);
     if (!j.ok) return;
     if (!q && filter === 'all' && seg === 'all') convs.clear();
+    found = q ? new Set(j.convs.map((c) => c.id)) : null;
     setCounts(j.counts);
     j.convs.forEach((c) => convs.set(c.id, c));
     renderList(); navBadge();
   }
-  $('[data-cl-q]').addEventListener('input', (e) => { q = e.target.value.trim(); clearTimeout(listT); listT = setTimeout(reloadList, 300); });
+  $('[data-cl-q]').addEventListener('input', (e) => { const v = e.target.value.trim(); if (v === q) return; q = v; clearTimeout(listT); listT = setTimeout(reloadList, 300); });
   $('[data-cl-tabs]').addEventListener('click', (e) => {
     const b = e.target.closest('[data-f]'); if (!b) return;
     $$('[data-cl-tabs] button').forEach((x) => x.classList.toggle('on', x === b));

@@ -367,6 +367,9 @@ db.function('gmail_norm', { deterministic: true }, (e) => {
   const m = String(e || '').toLowerCase().trim().match(/^([^@]+)@(gmail|googlemail)\.com$/);
   return m ? m[1].split('+')[0].replace(/\./g, '') + '@gmail.com' : String(e || '').toLowerCase().trim();
 });
+// Bỏ dấu + chữ thường để tìm kiếm tiếng Việt: "LÊ QUANG ĐẠO" ~ "le quang dao"
+const vnFold = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+db.function('vn_fold', { deterministic: true }, vnFold);
 
 // ===== CÀY THUÊ: Game -> Danh mục cày thuê -> Gói; giỏ hàng theo game; đơn có 5 trạng thái =====
 db.exec(`CREATE TABLE IF NOT EXISTS boost_categories (

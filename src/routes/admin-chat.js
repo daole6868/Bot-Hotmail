@@ -74,8 +74,13 @@ function listConvs(req) {
   if (SEG_SQL[req.query.s]) where.push(SEG_SQL[req.query.s]);
   const q = str(req.query.q, 60).trim();
   if (q) {
-    where.push('(c.name LIKE ? OR c.contact LIKE ? OR c.last_msg LIKE ? OR c.id = ? OR c.user_id IN (SELECT id FROM users WHERE username LIKE ?' + (req.agent.role === 'admin' ? ' OR email LIKE ?' : '') + '))');
-    args.push(`%${q}%`, `%${q}%`, `%${q}%`, toInt(q, 0), `%${q}%`); if (req.agent.role === 'admin') args.push(`%${q}%`);
+    const id = /^#?\d+$/.test(q) ? toInt(q.replace('#', ''), 0) : 0;
+    const k = '%' + q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[%_]/g, '') + '%';
+    // tên, SĐT/liên hệ, ghi chú, nội dung tin nhắn (bỏ dấu, không phân biệt hoa thường), mã #id, username/email
+    where.push(`(c.id = ? OR vn_fold(c.name) LIKE ? OR vn_fold(c.contact) LIKE ? OR vn_fold(c.note) LIKE ?
+      OR EXISTS (SELECT 1 FROM chat_msgs m WHERE m.conv_id = c.id AND vn_fold(m.body) LIKE ?)
+      OR c.user_id IN (SELECT id FROM users WHERE vn_fold(username) LIKE ?${req.agent.role === 'admin' ? ' OR vn_fold(email) LIKE ?' : ''}))`);
+    args.push(id, k, k, k, k, k); if (req.agent.role === 'admin') args.push(k);
   }
   const before = toInt(req.query.before, 0, 0);
   if (before) { where.push('c.last_at < ?'); args.push(before); }
