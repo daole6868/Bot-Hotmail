@@ -58,6 +58,7 @@ code { background: var(--card2); padding: 2px 6px; border-radius: calc(6px * var
 .btn-sm { padding: 7px 12px; font-size: .88rem; } .btn-xs { padding: 4px 9px; font-size: .78rem; border-radius: calc(7px * var(--rk)); }
 .btn-lg { padding: 14px 22px; font-size: 1.05rem; } .btn-block { width: 100%; }
 input, select, textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: calc(10px * var(--rk)); padding: 11px 13px; font: inherit; outline: none; transition: .15s; }
+textarea { resize: vertical; max-width: 100%; }
 input:focus, select:focus, textarea:focus { border-color: var(--primary2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary2) 20%, transparent); }
 .label { display: block; margin: 12px 0 6px; font-weight: 600; font-size: .9rem; }
 .check { display: flex; align-items: center; gap: 8px; margin: 12px 0; cursor: pointer; }
