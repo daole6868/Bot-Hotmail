@@ -28,6 +28,7 @@ const SELLER_ALLOW = [
   /^\/(vip|reroll)$/, /^\/products\/(rows|form|save|bulk|import-form|import)$/, /^\/products\/\d+\/(edit|duplicate|delete|stock|toggle)$/, /^\/stock\/\d+\/delete$/,
   /^\/boost(\/(c\/\d+|topup(\/\d+)?|orders(\/\d+(\/(login|status|note))?)?|topup-orders|categories\/(form|save|\d+(\/delete)?)|packages\/(form|save|\d+\/(pause|delete))))?$/,
   /^\/(boost-categories|boost-packages)\/\d+\/toggle$/,
+  /^\/hoyo\/jobs(\/\d+(\/cancel)?)?$/,
 ];
 const denied = (res) => res.status(403).render('errors/error', { code: 403, message: 'Bạn không có quyền vào trang này' });
 const ctvSvc = require('../services/ctv');
@@ -219,6 +220,7 @@ for (const kind of Object.keys(SORTABLE)) {
 // Cày thuê: danh mục, gói, đơn, cài đặt
 router.use('/boost', require('./admin-boost'));
 router.use('/api', require('./admin-api')); // Kết nối API: Telegram, AI
+router.use('/hoyo', require('./admin-hoyo')); // lấy dữ liệu acc HoYoLAB qua worker
 router.use('/', require('./admin-ctv').router); // Quản lý CTV + trang của CTV (/admin/me)
 router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google
 

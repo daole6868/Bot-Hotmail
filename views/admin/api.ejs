@@ -59,5 +59,36 @@
       <a href="/admin/chat/settings">Chat trực tiếp — AI tự trả lời: <%= chatCfg.ai_provider && PROVIDERS[chatCfg.ai_provider] ? PROVIDERS[chatCfg.ai_provider].name : 'giống AI viết bài' %> <span class="a-tag <%= chatCfg.ai_on ? 'green' : '' %>"><%= chatCfg.ai_on ? 'bật' : 'tắt' %></span></a>
     </div>
   </form>
+
+  <div class="a-card" id="hoyo">
+    <h3><%- I('g-sparkles') %> HoYoLAB worker <span class="a-tag <%= hoyo.workers.some(w => w.online) ? 'green' : '' %>"><%= hoyo.workers.some(w => w.online) ? 'đang bật' : 'chưa bật' %></span></h3>
+    <p class="a-muted a-small">Máy tính chạy công cụ <code>tools/hoyolab-worker</code> sẽ tự đăng nhập HoYoLAB để lấy nhân vật / vũ khí khi bấm “Lấy dữ liệu HoYoLAB” trong form sản phẩm.</p>
+    <% if (hoyo.newToken) { %>
+      <div class="a-hoyo-token"><span>Mã worker mới (chỉ hiện 1 lần):</span><code><%= hoyo.newToken %></code><button type="button" class="a-icon-btn" data-copy="<%= hoyo.newToken %>" title="Sao chép"><%- I('copy') %></button></div>
+    <% } %>
+    <form method="post" action="/admin/api/hoyo/token" class="a-api-row">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <span class="a-small">Mã worker: <b><%= hoyo.hasToken ? 'đã tạo' : 'chưa có' %></b></span>
+      <span class="a-btn-row a-mt0">
+        <button class="a-btn a-btn-sm" data-confirm="<%= hoyo.hasToken ? 'Tạo mã mới? Worker đang dùng mã cũ sẽ phải nhập lại mã mới.' : 'Tạo mã worker?' %>"><%- I('key') %> <%= hoyo.hasToken ? 'Tạo mã mới' : 'Tạo mã' %></button>
+        <% if (hoyo.hasToken) { %><button class="a-btn a-btn-sm a-danger-soft" name="clear" value="1" data-confirm="Thu hồi mã? Worker sẽ ngừng nhận việc."><%- I('x') %> Thu hồi</button><% } %>
+      </span>
+    </form>
+    <form method="post" action="/admin/api/hoyo" class="a-form" autocomplete="off">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="a-row a-row-3">
+        <div><label>Giải captcha tối đa (giây)</label><input type="number" name="captcha_sec" min="20" max="600" value="<%= hoyo.cfg.captcha_sec %>"></div>
+        <div><label>1 lượt tối đa (phút)</label><input type="number" name="job_min" min="2" max="30" value="<%= hoyo.cfg.job_min %>"></div>
+        <div><label>Chờ worker nhận (giây)</label><input type="number" name="wait_sec" min="20" max="900" value="<%= hoyo.cfg.wait_sec %>"></div>
+      </div>
+      <p class="a-field-hint">Quá thời gian giải captcha (tự giải + chờ giải tay), quá thời gian 1 lượt hoặc không có worker nhận việc → báo lỗi “thao tác lại sau” cho người bấm.</p>
+      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+    </form>
+    <div class="a-api-use">
+      <b>Máy worker</b>
+      <% if (!hoyo.workers.length) { %><small class="a-muted">Chưa có máy nào kết nối</small><% } %>
+      <% hoyo.workers.forEach(w => { %><span class="a-hoyo-w"><span><i class="a-dot <%= w.online ? 'on' : '' %>"></i> <%= w.name %> <small class="a-muted">v<%= w.version || '?' %> · <%= w.ip %></small></span><small class="a-muted"><%= w.online ? 'đang bật' : H.fmtDate(w.last_seen) %></small></span><% }) %>
+    </div>
+  </div>
 </div>
 <%- include('_footer') %>

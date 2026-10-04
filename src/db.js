@@ -687,6 +687,37 @@ if (!db.prepare("SELECT 1 FROM settings WHERE key = 'sales_backfill_v1'").get())
     db.prepare("INSERT OR REPLACE INTO settings(key, value) VALUES('sales_backfill_v1', '1')").run();
   })();
 }
+// ===== CHI TIẾT TÀI KHOẢN (thay thuộc tính) + LẤY DỮ LIỆU HOYOLAB =====
+// acc_detail: JSON đầy đủ (game, cấp, server, nhân vật / vũ khí 5★ 4★) cho trang sản phẩm
+// acc_brief: JSON ngắn cho thẻ sản phẩm (danh sách không phải đọc cả khối lớn)
+addColumn('products', 'acc_detail', 'TEXT');
+addColumn('products', 'acc_brief', 'TEXT');
+db.exec(`
+  CREATE TABLE IF NOT EXISTS hoyo_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    game TEXT NOT NULL,
+    server TEXT,
+    cred_enc TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    progress INTEGER NOT NULL DEFAULT 0,
+    message TEXT,
+    result TEXT,
+    error TEXT,
+    worker TEXT,
+    lease_until INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    started_at INTEGER,
+    finished_at INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_hoyo_status ON hoyo_jobs(status, id);
+  CREATE INDEX IF NOT EXISTS idx_hoyo_user ON hoyo_jobs(user_id, id DESC);
+  CREATE TABLE IF NOT EXISTS hoyo_workers (
+    name TEXT PRIMARY KEY,
+    ip TEXT,
+    version TEXT,
+    last_seen INTEGER NOT NULL
+  );`);
 addColumn('daily_stats', 'topup_revenue', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('daily_stats', 'topup_orders', 'INTEGER NOT NULL DEFAULT 0');
 // Thẻ mã giảm giá thấp hơn: kích cỡ mặc định cũ 600x350 -> 600x260 (1 lần)

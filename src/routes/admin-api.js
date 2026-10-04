@@ -9,6 +9,8 @@ const { getSettings, setSetting, logActivity } = require('../db');
 const { encrypt } = require('../utils/crypto');
 const H = require('../utils/helpers');
 const ai = require('../services/ai');
+const hoyo = require('../services/hoyo');
+const { sha256, randomToken } = require('../utils/crypto');
 
 const router = express.Router();
 const { str, clientIp } = H;
@@ -21,7 +23,30 @@ router.get('/', (req, res) => {
     title: 'Kết nối API', s, PROVIDERS: ai.PROVIDERS, st: ai.status(s),
     ready: Object.fromEntries(Object.keys(ai.PROVIDERS).map((p) => [p, ai.status(s, p).ready])),
     tg: { hasToken: !!s.tg_token_enc, chat: s.tg_chat_id || '', listen: s.chat_tg_status || '' },
+    hoyo: { cfg: hoyo.cfg(s), hasToken: hoyo.hasToken(), workers: hoyo.workers(), newToken: req.session.hoyoToken || '' },
   });
+  delete req.session.hoyoToken; // mã worker mới chỉ hiện 1 lần
+});
+
+// ---------- HoYoLAB worker ----------
+router.post('/hoyo', (req, res) => {
+  const b = req.body;
+  const n = (v, d, min, max) => { const x = parseInt(v, 10); return Number.isFinite(x) ? Math.min(max, Math.max(min, x)) : d; };
+  setSetting('hoyo_cfg', JSON.stringify({
+    captcha_sec: n(b.captcha_sec, hoyo.DEFAULTS.captcha_sec, 20, 600),
+    job_min: n(b.job_min, hoyo.DEFAULTS.job_min, 2, 30),
+    wait_sec: n(b.wait_sec, hoyo.DEFAULTS.wait_sec, 20, 900),
+  }));
+  audit(req, 'api_hoyo', 'cài đặt worker');
+  back(req, res, 'success', 'Đã lưu cài đặt HoYoLAB worker', '#hoyo');
+});
+router.post('/hoyo/token', (req, res) => {
+  if (req.body.clear) { setSetting('hoyo_token_hash', ''); audit(req, 'api_hoyo', 'thu hồi mã worker'); return back(req, res, 'success', 'Đã thu hồi mã worker. Worker cũ không kết nối được nữa.', '#hoyo'); }
+  const token = 'hyw_' + randomToken(24);
+  setSetting('hoyo_token_hash', sha256(token));
+  req.session.hoyoToken = token;
+  audit(req, 'api_hoyo', 'tạo mã worker mới');
+  back(req, res, 'success', 'Đã tạo mã worker mới. Sao chép ngay, mã chỉ hiện 1 lần.', '#hoyo');
 });
 
 // ---------- Telegram ----------

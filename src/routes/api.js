@@ -72,4 +72,6 @@ router.get('/restore-status/:id', (req, res) => {
 
 router.get('/health', (req, res) => res.json({ ok: true, time: Date.now() }));
 
+router.use('/hoyo', require('./api-hoyo')); // worker lấy dữ liệu HoYoLAB
+
 module.exports = router;
