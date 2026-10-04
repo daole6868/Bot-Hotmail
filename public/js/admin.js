@@ -900,6 +900,8 @@
         if (g && g.dataset.gid && !$('[name=game_id]', pf).value) $('[name=game_id]', pf).value = g.dataset.gid;
         $$('[data-count]', pf).forEach(countOne); seoCheck();
       };
+      const cnt = $('[data-ai-count]', pf);
+      if (cnt) ai('prompt').addEventListener('input', () => { cnt.textContent = ai('prompt').value.length.toLocaleString('vi-VN'); });
       aiBtn.addEventListener('click', async () => {
         if (ai('prompt').value.trim().length < 5) { toast('Hãy nhập yêu cầu cho AI', true); ai('prompt').focus(); return; }
         if (ed.textContent.trim().length > 50 && !confirm('AI sẽ thay toàn bộ nội dung đang có trong form. Tiếp tục?')) return;

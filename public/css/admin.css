@@ -789,3 +789,5 @@ details.a-footer-col [data-fc-add] { margin-bottom: 14px; }
   .a-fc-row input:nth-child(2) { grid-column: 1; grid-row: 2; }
   .a-fc-act { grid-row: 1 / span 2; grid-column: 2; flex-direction: column; }
 }
+.a-ai-count { text-align: right; margin-top: 4px; }
+.a-ai-box textarea[data-ai=prompt] { min-height: 140px; max-height: 70vh; }
