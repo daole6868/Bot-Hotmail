@@ -141,7 +141,7 @@ function honeypot(req, res, next) {
 }
 
 // ---------- Nạp user hiện tại ----------
-const userStmt = db.prepare('SELECT id, username, email, email_verified_at, twofa_enabled, role, balance, status, ban_reason, total_deposit, total_spent, created_at FROM users WHERE id = ?');
+const userStmt = db.prepare('SELECT id, username, email, email_verified_at, twofa_enabled, role, balance, status, ban_reason, total_deposit, total_spent, created_at, staff, staff_name FROM users WHERE id = ?');
 function loadUser(req, res, next) {
   res.locals.user = null;
   if (req.session.userId) {

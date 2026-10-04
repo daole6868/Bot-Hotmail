@@ -1050,4 +1050,34 @@
     ppf.addEventListener('submit', () => { out.value = ed.textContent.trim() ? ed.innerHTML : ''; });
     render();
   }
+
+  // ---------- Chat trực tiếp: số cuộc chat chưa đọc ở menu (trang khác trang Chat), có âm báo ----------
+  const chatNav = $('[data-chat-nav-badge]');
+  if (chatNav && !$('[data-chat]')) {
+    let last = +chatNav.textContent || 0;
+    const tick = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          const j = await (await fetch('/admin/chat/unread', { headers: { Accept: 'application/json' } })).json();
+          if (j.ok) {
+            chatNav.hidden = !j.n; chatNav.textContent = j.n;
+            if (j.n > last) {
+              try { const A = window.AudioContext || window.webkitAudioContext; const c = new A(); const o = c.createOscillator(); const g = c.createGain(); o.frequency.value = 760; g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(0.18, c.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.4); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.45); } catch (e) { /* bỏ qua */ }
+              toast(`Có ${j.n} cuộc chat chưa đọc`);
+            }
+            last = j.n;
+          }
+        } catch (e) { /* bỏ qua */ }
+      }
+      setTimeout(tick, 20000);
+    };
+    setTimeout(tick, 20000);
+  }
+
+  // ---------- Cài đặt chat: thêm / xóa câu trả lời mẫu ----------
+  const qrList = $('[data-qr-list]');
+  if (qrList) {
+    $('[data-qr-add]').addEventListener('click', () => { qrList.insertAdjacentHTML('beforeend', $('[data-qr-tpl]').innerHTML); qrList.lastElementChild.querySelector('input').focus(); });
+    qrList.addEventListener('click', (e) => { const d = e.target.closest('[data-qr-del]'); if (d) d.closest('.a-qr-row').remove(); });
+  }
 })();

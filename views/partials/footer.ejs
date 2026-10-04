@@ -85,7 +85,10 @@
 </div>
 <% } %>
 <%- include('ui-settings') %>
-<% if (locals.support && !locals.layoutAdmin) { %><%- include('support', { sp: locals.support }) %><% } %>
+<% const CH = !locals.layoutAdmin && locals.chat; const chInSp = CH && CH.in_support && locals.support && locals.support.device === 'all'; %>
+<% if (locals.support && !locals.layoutAdmin) { %><%- include('support', { sp: locals.support, chat: chInSp ? CH : null }) %><% } %>
+<% if (CH) { %><div id="gzChat" hidden data-title="<%= CH.title %>" data-greeting="<%= CH.greeting %>" data-agent="<%= CH.agent %>" data-pos="<%= locals.support && chInSp ? (locals.support.mode === 'side' ? locals.support.side === 'left' ? 'bl' : 'br' : locals.support.corner.endsWith('l') ? 'bl' : 'br') : CH.position %>" style="--ch-c:<%= CH.color %>"></div>
+<% if (!chInSp) { %><button type="button" class="ch-fab ch-<%= CH.position %>" data-chat-open aria-label="<%= CH.title %>" style="--ch-c:<%= CH.color %>"><%- I('chat') %><span class="ch-badge" data-chat-badge hidden></span></button><% } %><% } %>
 <script src="/js/slow.js?v=<%= locals.assetV || 1 %>" defer></script>
 <script src="/js/main.js?v=<%= locals.assetV || 1 %>" defer></script>
 <% const G = locals.s || {}; const gid = G.ga4_id || G.gads_id; if (gid && !locals.preview) { %>

@@ -100,6 +100,12 @@ const supportView = (s) => { if (supportCache.raw !== s.support_cfg) supportCach
 const popupSvc = require('./src/services/popup');
 let popupCache = { raw: null, v: null };
 const popupView = (s) => { if (popupCache.raw !== s.popup_cfg) popupCache = { raw: s.popup_cfg, v: popupSvc.forView(s) }; return popupCache.v; };
+const chatSvc = require('./src/services/chat');
+let chatCache = { raw: null, v: null };
+const chatView = (s) => {
+  if (chatCache.raw !== s.chat_cfg) { const c = chatSvc.cfg(s); chatCache = { raw: s.chat_cfg, v: c.enabled ? { title: c.title, greeting: c.greeting, color: c.color, agent: c.agent_name, in_support: c.in_support, position: c.position } : null }; }
+  return chatCache.v;
+};
 let navCache = { at: 0, games: [], sideLeft: [], sideRight: [] };
 app.use((req, res, next) => {
   if (Date.now() - navCache.at > 30000) {
@@ -112,7 +118,7 @@ app.use((req, res, next) => {
   }
   const s0 = getSettings();
   Object.assign(res.locals, {
-    support: supportView(s0), popup: popupView(s0),
+    support: supportView(s0), popup: popupView(s0), chat: chatView(s0),
     s: s0, H, I, baseUrl: config.baseUrl, currentUrl: req.originalUrl, turnstileSiteKey: config.turnstile.siteKey, nav: navCache, currentPath: req.path, query: {}, breadcrumb: null, layoutAdmin: false, user: null,
   });
   next();
@@ -161,6 +167,8 @@ app.use((req, res, next) => {
 
 app.use('/', require('./src/routes/auth'));
 app.use('/user', require('./src/routes/user'));
+app.use('/chat', require('./src/routes/chat')); // chat trực tiếp (khách)
+app.use('/admin/chat', require('./src/routes/admin-chat')); // chat trực tiếp (admin + nhân viên), trước router admin
 app.use('/admin', require('./src/routes/admin'));
 app.use('/', require('./src/routes/posts')); // tin tức / hướng dẫn
 app.use('/', require('./src/routes/boost')); // cày thuê (trước public: /game/:slug/cay-thue)
@@ -181,6 +189,7 @@ if (!process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0') {
   maintenance.startScheduler();
   require('./src/services/apicanhan').start(); // quét giao dịch APICANHAN (chỉ chạy khi bật trong Cài đặt bank và có đơn chờ)
   require('./src/services/traffic').start(); // tự phát hiện truy cập bất thường -> tự chặn khách mới / bật Cloudflare Under Attack
+  require('./src/services/chat-bot').startTelegram(); // chat: nhận tin trả lời khách từ Telegram
 }
 require('./src/services/backup').watchRestart(); // khôi phục dữ liệu xong -> mọi bản PM2 tự khởi động lại
 

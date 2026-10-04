@@ -61,6 +61,23 @@
     }
   }
 
+  // Chat trực tiếp: chỉ tải chat.js khi khách bấm mở chat, hoặc đã từng chat (để báo tin shop trả lời)
+  const chatRoot = $('#gzChat');
+  if (chatRoot) {
+    let loading = null;
+    const loadChat = () => loading || (loading = new Promise((ok, no) => {
+      const sc = document.createElement('script'); sc.src = '/js/chat.js?v=' + (document.querySelector('script[src*="main.js"]')?.src.split('v=')[1] || '1');
+      sc.onload = () => ok(window.GZChat); sc.onerror = no; document.head.appendChild(sc);
+    }));
+    document.addEventListener('click', (e) => {
+      const t = e.target.closest('[data-chat-open]'); if (!t) return;
+      e.preventDefault(); loadChat().then((c) => c && c.open());
+    });
+    if (location.hash === '#chat') loadChat().then((c) => c && c.open());
+    let had = false; try { had = !!localStorage.getItem('gz_chat'); } catch (e) { /* bỏ qua */ }
+    if (had) setTimeout(() => loadChat().then((c) => c && c.poll()), 2500);
+  }
+
   // Toggle menu / dropdown
   // Menu điện thoại: lớp phủ phía sau -> chạm ra ngoài chỉ đóng menu, không bấm nhầm banner / link bên dưới
   const mnav = $('#mobileNav');

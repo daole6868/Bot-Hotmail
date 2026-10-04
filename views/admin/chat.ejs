@@ -1,0 +1,61 @@
+<%- include('_header') %>
+<div class="a-chat" data-chat data-me="<%= me.id %>" data-role="<%= me.role %>">
+  <aside class="a-chat-list">
+    <div class="a-chat-lh">
+      <div class="a-chat-lt"><b>Tin nhắn</b><% if (me.role === 'admin') { %><a href="/admin/chat/settings" class="a-icon-btn" title="Cài đặt chat"><%- I('gear') %></a><% } %></div>
+      <div class="a-chat-search"><%- I('search') %><input type="search" placeholder="Tìm tên, SĐT, nội dung, mã #" data-cl-q></div>
+      <div class="a-chat-tabs" data-cl-tabs>
+        <% [['all', 'Tất cả'], ['unread', 'Chưa đọc'], ['open', 'Đang mở'], ['mine', 'Của tôi'], ['guest', 'Khách lạ'], ['closed', 'Đã đóng'], ['blocked', 'Đã chặn']].forEach(([k, l], i) => { %>
+          <button type="button" data-f="<%= k %>" class="<%= i === 0 ? 'on' : '' %>"><%= l %></button>
+        <% }) %>
+      </div>
+      <% if (!cfg.enabled) { %><div class="a-chat-off"><%- I('alert') %> Chat đang tắt ngoài web<% if (me.role === 'admin') { %> · <a href="/admin/chat/settings">Bật</a><% } %></div><% } %>
+    </div>
+    <div class="a-chat-rows" data-cl></div>
+  </aside>
+
+  <section class="a-chat-main" data-cm>
+    <div class="a-chat-empty" data-cm-empty><%- I('chat') %><p>Chọn một cuộc chat để bắt đầu</p></div>
+    <header class="a-chat-mh" hidden>
+      <button type="button" class="a-icon-btn a-chat-back" data-cm-back aria-label="Quay lại"><%- I('chevron-left') %></button>
+      <div class="a-chat-av" data-cm-av></div>
+      <div class="a-chat-mt"><b data-cm-name></b><small data-cm-sub></small></div>
+      <div class="a-chat-acts">
+        <button type="button" class="a-btn a-soft a-btn-sm" data-act-toggle="status"></button>
+        <button type="button" class="a-icon-btn" data-act-toggle="ai" title=""><%- I('g-sparkles') %></button>
+        <div class="a-chat-more">
+          <button type="button" class="a-icon-btn" data-more aria-label="Thêm"><%- I('list') %></button>
+          <div class="a-chat-menu" data-more-menu hidden>
+            <button type="button" data-act="status" class="a-chat-msonly">Đóng / mở lại cuộc chat</button>
+            <button type="button" data-act="assign">Nhận xử lý cuộc chat</button>
+            <button type="button" data-act="unassign">Bỏ nhận xử lý</button>
+            <button type="button" data-act="block">Chặn khách này</button>
+            <button type="button" data-act="unblock">Bỏ chặn</button>
+            <% if (me.role === 'admin') { %><button type="button" data-act="delete" class="a-text-danger">Xóa cuộc chat</button><% } %>
+          </div>
+        </div>
+        <button type="button" class="a-icon-btn a-chat-infobtn" data-info-toggle title="Thông tin khách"><%- I('user') %></button>
+      </div>
+    </header>
+    <div class="a-chat-msgs" data-msgs hidden></div>
+    <div class="a-chat-typing" data-cm-typing hidden></div>
+    <footer class="a-chat-foot" hidden>
+      <div class="a-chat-quick" data-quick hidden>
+        <% quick.forEach((q, i) => { %><button type="button" data-q="<%= i %>"><b>/<%= q.t %></b><span><%= q.b %></span></button><% }) %>
+        <% if (!quick.length) { %><div class="a-muted a-small a-pad">Chưa có câu trả lời mẫu<% if (me.role === 'admin') { %> — thêm ở <a href="/admin/chat/settings#quick">Cài đặt</a><% } %></div><% } %>
+      </div>
+      <div class="a-chat-compose">
+        <button type="button" class="a-icon-btn" data-quick-btn title="Câu trả lời mẫu (gõ /)"><%- I('bolt') %></button>
+        <label class="a-icon-btn" title="Gửi ảnh"><%- I('image') %><input type="file" accept="image/*" hidden data-file></label>
+        <textarea rows="1" placeholder="Nhập tin nhắn..." title="Enter: gửi · Shift+Enter: xuống dòng · /: câu trả lời mẫu" data-input maxlength="3000"></textarea>
+        <button type="button" class="a-btn a-primary" data-send><%- I('send') %></button>
+      </div>
+    </footer>
+  </section>
+
+  <aside class="a-chat-info" data-ci hidden></aside>
+</div>
+<div class="a-chat-lb" data-lb hidden><img alt=""></div>
+<script type="application/json" data-chat-boot><%- JSON.stringify({ convs, quick, staff, agentName: cfg.agent_name, aiName: cfg.ai_name }).replace(/</g, '\\u003c') %></script>
+<script src="/js/admin-chat.js?v=<%= locals.assetV || 1 %>" defer></script>
+<%- include('_footer') %>

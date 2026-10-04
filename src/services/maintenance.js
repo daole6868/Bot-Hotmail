@@ -50,6 +50,7 @@ function purgeOld() {
     + db.prepare('DELETE FROM password_resets WHERE expires_at < ?').run(t - DAY).changes;
   out.emailLogs = db.prepare('DELETE FROM email_logs WHERE created_at < ?').run(t - r.logDays * DAY).changes;
   out.devices = db.prepare('DELETE FROM trusted_devices WHERE last_seen_at < ?').run(t - 180 * DAY).changes;
+  try { out.chats = require('./chat').purge(); } catch (e) { console.error('[maintenance] chat', e.message); }
   return out;
 }
 

@@ -541,6 +541,70 @@ if (!db.prepare('SELECT 1 FROM post_categories LIMIT 1').get()) {
 }
 // Nguồn khách (UTM / gclid lúc đăng ký) -> biết khách đến từ quảng cáo nào
 addColumn('users', 'signup_source', 'TEXT');
+
+// Chat trực tiếp: cuộc chat (khách đã đăng nhập theo user_id, khách vãng lai theo mã visitor), tin nhắn, tín hiệu (đang nhập / đã xem)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS chat_convs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE,
+    visitor TEXT UNIQUE,
+    name TEXT,
+    contact TEXT,
+    ip TEXT,
+    page TEXT,
+    status TEXT NOT NULL DEFAULT 'open',
+    assignee INTEGER,
+    blocked INTEGER NOT NULL DEFAULT 0,
+    ai_off INTEGER NOT NULL DEFAULT 0,
+    ai_pause_until INTEGER NOT NULL DEFAULT 0,
+    note TEXT,
+    last_msg TEXT,
+    last_from TEXT,
+    last_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    last_user_at INTEGER NOT NULL DEFAULT 0,
+    unread_admin INTEGER NOT NULL DEFAULT 0,
+    unread_user INTEGER NOT NULL DEFAULT 0,
+    guest_msgs INTEGER NOT NULL DEFAULT 0,
+    offline_notice_day TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_chat_conv_last ON chat_convs(last_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_chat_conv_ip ON chat_convs(ip, created_at);
+  CREATE TABLE IF NOT EXISTS chat_msgs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conv_id INTEGER NOT NULL REFERENCES chat_convs(id) ON DELETE CASCADE,
+    sender TEXT NOT NULL,
+    staff_id INTEGER,
+    staff_name TEXT,
+    body TEXT,
+    image TEXT,
+    ref TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_chat_msg_conv ON chat_msgs(conv_id, id);
+  CREATE INDEX IF NOT EXISTS idx_chat_msg_sender ON chat_msgs(sender, created_at);
+  CREATE TABLE IF NOT EXISTS chat_signals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conv_id INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    data TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE TABLE IF NOT EXISTS chat_presence (
+    user_id INTEGER PRIMARY KEY,
+    conv_id INTEGER,
+    seen_at INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS chat_tg (
+    tg_chat TEXT NOT NULL,
+    tg_msg INTEGER NOT NULL,
+    conv_id INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    PRIMARY KEY (tg_chat, tg_msg)
+  );`);
+addColumn('users', 'staff', 'INTEGER NOT NULL DEFAULT 0'); // nhân viên chat (vẫn là tài khoản khách bình thường)
+addColumn('users', 'staff_name', 'TEXT');
+addColumn('users', 'staff_tg', 'TEXT');
 addColumn('daily_stats', 'topup_revenue', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('daily_stats', 'topup_orders', 'INTEGER NOT NULL DEFAULT 0');
 // Thẻ mã giảm giá thấp hơn: kích cỡ mặc định cũ 600x350 -> 600x260 (1 lần)

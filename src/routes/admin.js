@@ -29,6 +29,7 @@ router.use((req, res, next) => {
     ...Object.fromEntries(['boost', 'topup'].map((k) => [k, 0])),
     ...Object.fromEntries(db.prepare("SELECT kind, COUNT(*) c FROM boost_orders WHERE status = 'received' GROUP BY kind").all().map((r) => [r.kind, r.c])),
     bank: db.prepare("SELECT COUNT(*) c FROM bank_transactions WHERE status = 'unmatched'").get().c,
+    chat: db.prepare('SELECT COUNT(*) c FROM chat_convs WHERE unread_admin > 0 AND blocked = 0').get().c,
   };
   next();
 });
