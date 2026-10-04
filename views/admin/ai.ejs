@@ -8,8 +8,9 @@
       <label>Đang dùng</label>
       <select name="ai_provider"><% Object.entries(PROVIDERS).forEach(([k, v]) => { %><option value="<%= k %>" <%= st.provider === k ? 'selected' : '' %>><%= v.name %><%= st.hasKey[k] ? ' ✓' : '' %></option><% }) %></select>
       <p class="a-small">Trạng thái: <b class="<%= st.ready ? 'a-text-ok' : 'a-text-err' %>"><%= st.ready ? 'Sẵn sàng (' + st.model + ')' : 'Chưa nhập API key cho nhà cung cấp đang chọn' %></b></p>
-      <div class="a-actions"><button type="button" class="a-btn" data-ai-test <%= st.ready ? '' : 'disabled' %>><%- I('bolt') %> Thử kết nối</button><span data-ai-test-out class="a-small"></span></div>
-      <p class="a-field-hint">Lưu cài đặt trước rồi mới bấm Thử kết nối.</p>
+      <div class="a-actions"><button type="button" class="a-btn" data-ai-test><%- I('bolt') %> Thử kết nối</button></div>
+      <div data-ai-test-out class="a-small a-ai-test-out" hidden></div>
+      <p class="a-field-hint">Thử kết nối dùng nhà cung cấp đang chọn ở trên và API key đã lưu của nhà cung cấp đó. Nhập key mới thì bấm Lưu trước.</p>
       <h3><%- I('edit') %> Cách viết</h3>
       <label>Giọng văn mặc định</label>
       <input name="ai_tone" maxlength="200" value="<%= s.ai_tone || '' %>" placeholder="VD: thân thiện, dễ hiểu, chuyên nghiệp">

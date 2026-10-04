@@ -167,8 +167,10 @@ router.post('/ai', (req, res) => {
   back(req, res, 'success', 'Đã lưu cài đặt AI', '/admin/ai');
 });
 router.post('/ai/test', async (req, res) => {
-  try { res.json({ ok: true, message: `Kết nối thành công. AI trả lời: “${await ai.test()}”` }); } catch (e) {
-    res.json({ ok: false, message: e instanceof ai.AiError ? e.message : 'Lỗi: ' + e.message });
+  const p = ai.PROVIDERS[req.body?.provider] ? req.body.provider : null;
+  const name = ai.PROVIDERS[p || ai.status().provider].name;
+  try { res.json({ ok: true, message: `${name}: kết nối thành công. AI trả lời: “${await ai.test(p)}”` }); } catch (e) {
+    res.json({ ok: false, message: `${name}: ${e instanceof ai.AiError ? e.message : 'Lỗi: ' + e.message}` });
   }
 });
 router.post('/ai/write', (req, res) => {

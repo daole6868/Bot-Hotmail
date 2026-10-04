@@ -693,15 +693,28 @@ const ftsResume = () => { db.exec(FTS_TRIGGERS); db.exec("INSERT INTO products_f
 }
 
 // ---- Helpers ----
-const settingsCache = { data: null, at: 0 };
+// Cài đặt nhớ trong RAM. Chạy PM2 nhiều bản: mỗi lần bảng settings đổi (kể cả sửa thẳng database), trigger tăng số phiên bản
+// -> các bản khác thấy phiên bản khác (kiểm tra tối đa 1 lần / giây) và tải lại ngay, không phải đợi hết hạn.
+db.exec(`CREATE TABLE IF NOT EXISTS meta_version (k TEXT PRIMARY KEY, v INTEGER NOT NULL DEFAULT 0);
+  INSERT OR IGNORE INTO meta_version(k, v) VALUES('settings', 0);
+  CREATE TRIGGER IF NOT EXISTS trg_settings_ins AFTER INSERT ON settings BEGIN UPDATE meta_version SET v = v + 1 WHERE k = 'settings'; END;
+  CREATE TRIGGER IF NOT EXISTS trg_settings_upd AFTER UPDATE ON settings BEGIN UPDATE meta_version SET v = v + 1 WHERE k = 'settings'; END;
+  CREATE TRIGGER IF NOT EXISTS trg_settings_del AFTER DELETE ON settings BEGIN UPDATE meta_version SET v = v + 1 WHERE k = 'settings'; END;`);
+const settingsCache = { data: null, at: 0, checked: 0, ver: -1 };
+const settingsVerStmt = db.prepare("SELECT v FROM meta_version WHERE k = 'settings'");
 
 function getSettings() {
-  if (settingsCache.data && Date.now() - settingsCache.at < 30000) return settingsCache.data;
+  const now = Date.now();
+  if (settingsCache.data && now - settingsCache.at < 300000) {
+    if (now - settingsCache.checked < 1000) return settingsCache.data;
+    settingsCache.checked = now;
+    if ((settingsVerStmt.get()?.v ?? 0) === settingsCache.ver) return settingsCache.data;
+  }
+  const ver = settingsVerStmt.get()?.v ?? 0;
   const rows = db.prepare('SELECT key, value FROM settings').all();
   const data = {};
   for (const r of rows) data[r.key] = r.value;
-  settingsCache.data = data;
-  settingsCache.at = Date.now();
+  Object.assign(settingsCache, { data, at: now, checked: now, ver });
   return data;
 }
 

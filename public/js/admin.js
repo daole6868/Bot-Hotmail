@@ -925,10 +925,11 @@
   // ---------- Cài đặt AI: thử kết nối ----------
   const aiTest = $('[data-ai-test]');
   if (aiTest) aiTest.addEventListener('click', async () => {
-    aiTest.disabled = true; const out = $('[data-ai-test-out]'); out.textContent = 'Đang thử...'; out.className = 'a-small';
+    aiTest.disabled = true; const out = $('[data-ai-test-out]'); out.hidden = false; out.textContent = 'Đang thử...'; out.className = 'a-small a-ai-test-out';
     try {
-      const r = await (await fetch('/admin/ai/test', { method: 'POST', headers: { 'x-csrf-token': csrf, Accept: 'application/json' } })).json();
-      out.textContent = r.message; out.className = 'a-small ' + (r.ok ? 'a-text-ok' : 'a-text-err');
+      const provider = $('[name=ai_provider]')?.value || '';
+      const r = await (await fetch('/admin/ai/test', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf, Accept: 'application/json' }, body: JSON.stringify({ provider }) })).json();
+      out.textContent = r.message; out.className = 'a-small a-ai-test-out ' + (r.ok ? 'is-ok' : 'is-err');
     } catch (e) { out.textContent = 'Lỗi kết nối'; }
     aiTest.disabled = false;
   });

@@ -39,16 +39,28 @@ async function post(url, headers, body, ms) {
   const text = await r.text();
   let j = null; try { j = JSON.parse(text); } catch { /* không phải JSON */ }
   if (!r.ok) {
-    const msg = j?.error?.message || j?.message || text.slice(0, 200);
-    throw new AiError(`AI báo lỗi ${r.status}${r.status === 401 || r.status === 403 ? ' (API key sai hoặc không có quyền)' : r.status === 429 ? ' (hết lượt / hết tiền trong tài khoản AI)' : ''}: ${msg}`);
+    throw new AiError(friendlyError(r.status, String(j?.error?.message || j?.message || text || '')));
   }
   if (!j) throw new AiError('AI trả về dữ liệu không đọc được');
   return j;
 }
 
-/** Gửi 1 yêu cầu tới AI đang chọn -> văn bản trả lời */
-async function complete(system, user, { json = false, ms = 300000, s = getSettings() } = {}) {
-  const p = PROVIDERS[s.ai_provider] ? s.ai_provider : 'openai';
+/** Lỗi từ AI -> câu ngắn, dễ hiểu (bản gốc rất dài, VD lỗi hết lượt của Google) */
+function friendlyError(status, raw) {
+  const msg = raw.replace(/\s+/g, ' ').trim();
+  const short = (msg.split(/(?<=\.)\s/)[0] || msg).slice(0, 160);
+  if (status === 401 || status === 403 || /api key not valid|invalid.*api key|incorrect api key|authentication/i.test(msg)) return `API key sai hoặc không có quyền (lỗi ${status}). Kiểm tra lại API key.`;
+  if (status === 429 && /free_tier|limit: 0/i.test(msg)) return 'Model này không dùng được với gói miễn phí (giới hạn 0 lượt). Hãy bật thanh toán trong tài khoản AI, hoặc đổi sang model rẻ hơn (VD gemini-2.5-flash).';
+  if (status === 429 && /quota|billing|credit|balance|insufficient/i.test(msg)) return `Tài khoản AI đã hết lượt hoặc hết tiền (lỗi 429). Nạp thêm tiền / kiểm tra gói của bạn. Chi tiết: ${short}`;
+  if (status === 429) { const w = /retry in ([\dhms.]+)/i.exec(msg); return `Gửi quá nhiều yêu cầu, AI tạm chặn (lỗi 429)${w ? `, thử lại sau ${w[1].replace(/\.\d+s$/, 's')}` : ''}.`; }
+  if (status === 404 || /model.*(not found|does not exist|not supported)/i.test(msg)) return `Không tìm thấy model này (lỗi ${status}). Kiểm tra lại tên model.`;
+  if (status >= 500) return `Máy chủ AI đang lỗi (lỗi ${status}), vui lòng thử lại sau.`;
+  return `AI báo lỗi ${status}: ${short}`;
+}
+
+/** Gửi 1 yêu cầu tới AI đang chọn (hoặc provider truyền vào) -> văn bản trả lời */
+async function complete(system, user, { json = false, ms = 300000, s = getSettings(), provider = null } = {}) {
+  const p = PROVIDERS[provider] ? provider : PROVIDERS[s.ai_provider] ? s.ai_provider : 'openai';
   const key = keyOf(s, p); const model = modelOf(s, p);
   if (!key) throw new AiError(`Chưa nhập API key cho ${PROVIDERS[p].name}`);
   if (!model) throw new AiError('Chưa chọn model AI');
@@ -160,8 +172,8 @@ function job(id, userId) {
 }
 
 /** Thử kết nối (nút "Thử kết nối" trong admin) */
-async function test() {
-  const t = await complete('Bạn là trợ lý. Trả lời ngắn gọn.', 'Trả lời đúng 1 từ: OK', { ms: 60000 });
+async function test(provider) {
+  const t = await complete('Bạn là trợ lý. Trả lời ngắn gọn.', 'Trả lời đúng 1 từ: OK', { ms: 60000, provider });
   return String(t).trim().slice(0, 100);
 }
 

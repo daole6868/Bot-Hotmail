@@ -729,3 +729,6 @@ a.a-stat { color: inherit; text-decoration: none; }
 .a-kv-mini a, .a-kv-mini b { min-width: 0; overflow-wrap: anywhere; }
 .a-post-form select, .a-post-form input, .a-post-form textarea { min-width: 0; max-width: 100%; }
 .a-post-main .a-row > div, .a-ai-box .a-row > div { min-width: 0; }
+.a-ai-test-out { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: #f5f6fa; overflow-wrap: anywhere; word-break: break-word; line-height: 1.5; max-width: 100%; }
+.a-ai-test-out.is-ok { background: #effbf3; color: #166534; }
+.a-ai-test-out.is-err { background: #fdf1f1; color: #991b1b; }
