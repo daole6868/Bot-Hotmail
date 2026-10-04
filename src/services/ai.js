@@ -49,6 +49,8 @@ async function post(url, headers, body, ms) {
 function friendlyError(status, raw) {
   const msg = raw.replace(/\s+/g, ' ').trim();
   const short = (msg.split(/(?<=\.)\s/)[0] || msg).slice(0, 160);
+  if (/anthropic-workspace-id|not scoped to a workspace/i.test(msg)) return 'API key này chưa gắn với workspace nào. Nhập Workspace ID (mục Anthropic bên dưới, lấy trong Claude Console → Settings → Workspaces), hoặc tạo API key mới bên trong 1 workspace.';
+  if (/workspace/i.test(msg) && (status === 400 || status === 403 || status === 404)) return `Workspace ID không đúng hoặc API key không có quyền vào workspace này (lỗi ${status}). Chi tiết: ${short}`;
   if (status === 401 || status === 403 || /api key not valid|invalid.*api key|incorrect api key|authentication/i.test(msg)) return `API key sai hoặc không có quyền (lỗi ${status}). Kiểm tra lại API key.`;
   if (status === 429 && /free_tier|limit: 0/i.test(msg)) return 'Model này không dùng được với gói miễn phí (giới hạn 0 lượt). Hãy bật thanh toán trong tài khoản AI, hoặc đổi sang model rẻ hơn (VD gemini-2.5-flash).';
   if (status === 429 && /quota|billing|credit|balance|insufficient/i.test(msg)) return `Tài khoản AI đã hết lượt hoặc hết tiền (lỗi 429). Nạp thêm tiền / kiểm tra gói của bạn. Chi tiết: ${short}`;
@@ -67,6 +69,7 @@ async function complete(system, user, { json = false, ms = 300000, s = getSettin
 
   if (p === 'anthropic') {
     const headers = { 'x-api-key': key, 'anthropic-version': '2023-06-01' };
+    if (s.ai_anthropic_workspace) headers['anthropic-workspace-id'] = s.ai_anthropic_workspace; // key không gắn sẵn workspace
     const body = { model, max_tokens: 16000, system, messages: [{ role: 'user', content: user }] };
     if (CLAUDE_FALLBACK.includes(model)) { headers['anthropic-beta'] = 'server-side-fallback-2026-07-01'; body.fallbacks = 'default'; }
     const j = await post('https://api.anthropic.com/v1/messages', headers, body, ms);

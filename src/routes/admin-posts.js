@@ -161,6 +161,11 @@ router.post('/ai', (req, res) => {
     if (u && !/^https:\/\//i.test(u)) return back(req, res, 'error', 'Địa chỉ API tùy chỉnh phải bắt đầu bằng https://', '/admin/ai');
     setSetting('ai_custom_url', u);
   }
+  if (b.ai_anthropic_workspace !== undefined) {
+    const w = str(b.ai_anthropic_workspace, 100).trim();
+    if (w && !/^[\w-]+$/.test(w)) return back(req, res, 'error', 'Workspace ID chỉ gồm chữ, số, dấu - và _', '/admin/ai');
+    setSetting('ai_anthropic_workspace', w);
+  }
   if (b.ai_tone !== undefined) setSetting('ai_tone', str(b.ai_tone, 200));
   if (b.ai_extra !== undefined) setSetting('ai_extra', str(b.ai_extra, 2000));
   audit(req, 'ai_settings', b.ai_provider || '');

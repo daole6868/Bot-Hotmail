@@ -26,6 +26,11 @@
           <label>Địa chỉ API <small class="a-muted">(VD https://openrouter.ai/api/v1)</small></label>
           <input name="ai_custom_url" maxlength="200" value="<%= s.ai_custom_url || '' %>" placeholder="https://...">
         <% } %>
+        <% if (k === 'anthropic') { %>
+          <label>Workspace ID <small class="a-muted">(chỉ cần khi báo lỗi "not scoped to a workspace")</small></label>
+          <input name="ai_anthropic_workspace" maxlength="100" value="<%= s.ai_anthropic_workspace || '' %>" placeholder="VD: wrkspc_01AbCd...">
+          <p class="a-field-hint">Lấy trong Claude Console → Settings → Workspaces → bấm vào workspace để xem ID. Hoặc tạo API key mới ngay bên trong 1 workspace thì không cần ô này.</p>
+        <% } %>
         <label>Model</label>
         <input name="model_<%= k %>" maxlength="80" value="<%= s['ai_model_' + k] || v.models[0] || '' %>" list="models_<%= k %>" placeholder="tên model">
         <datalist id="models_<%= k %>"><% v.models.forEach(m => { %><option value="<%= m %>"><% }) %></datalist>
