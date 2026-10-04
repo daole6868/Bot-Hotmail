@@ -35,6 +35,9 @@ async function optimizeBuffer(buf, field) {
   const img = sharp(buf, { failOn: 'error', limitInputPixels: 50e6 }).rotate();
   const meta = await img.metadata();
   if (meta.format === 'gif' && (meta.pages || 1) > 1) return null; // GIF động
+  if (field === 'favicon') { // icon tab trình duyệt: vuông 192px, nền trong suốt, PNG
+    return { buf: await img.resize({ width: 192, height: 192, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ compressionLevel: 9 }).toBuffer(), mime: 'image/png' };
+  }
   if (field === 'og_image') {
     return { buf: await img.resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true }).flatten({ background: '#ffffff' }).jpeg({ quality: 85, mozjpeg: true }).toBuffer(), mime: 'image/jpeg' };
   }

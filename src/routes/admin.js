@@ -1212,7 +1212,7 @@ router.post('/settings', (req, res) => {
   setSetting('maintenance_mode', bool(req.body.maintenance_mode));
   setSetting('allow_register', bool(req.body.allow_register));
   const st = getSettings();
-  for (const [field, key, folder] of [['logo', 'logo', 'site'], ['og_image', 'og_image', 'site']]) {
+  for (const [field, key, folder] of [['logo', 'logo', 'site'], ['favicon', 'favicon', 'site'], ['og_image', 'og_image', 'site']]) {
     const f = fileOf(req, field);
     if (f) {
       const saved = saveImage(f, folder);

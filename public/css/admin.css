@@ -792,3 +792,5 @@ details.a-footer-col [data-fc-add] { margin-bottom: 14px; }
 .a-ai-count { text-align: right; margin-top: 4px; }
 .a-ai-box textarea[data-ai=prompt] { min-height: 140px; max-height: 70vh; }
 .a-ai-grid [data-ai="length-custom"] { margin-top: 8px; }
+.a-favicon-preview { width: 84px; height: 84px; flex: 0 0 84px; background: repeating-conic-gradient(#eef0f5 0 25%, #fff 0 50%) 0 0 / 14px 14px; }
+.a-favicon-preview img { width: 56px; height: 56px; object-fit: contain; }

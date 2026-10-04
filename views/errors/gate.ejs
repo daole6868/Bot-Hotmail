@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Vui lòng đăng nhập | <%= s.site_name || 'Shop' %></title>
-  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <% const FAV = (locals.s && locals.s.favicon) || ''; %><% if (FAV) { %><link rel="icon" href="<%= FAV %>" type="image/png"><link rel="apple-touch-icon" href="<%= FAV %>"><% } else { %><link rel="icon" href="/img/favicon.svg" type="image/svg+xml"><% } %>
   <script src="/js/theme-init.js?v=<%= assetV %>"></script>
   <link rel="stylesheet" href="/css/fonts.css?v=<%= assetV %>">
   <link rel="stylesheet" href="/css/style.css?v=<%= assetV %>">

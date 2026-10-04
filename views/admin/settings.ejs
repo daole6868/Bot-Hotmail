@@ -25,6 +25,16 @@
           </div>
         </div>
 
+        <label>Icon trang web <small class="a-muted">(hiện trên tab trình duyệt, dấu trang, màn hình điện thoại)</small></label>
+        <div class="a-upload-row">
+          <div class="a-upload-preview a-favicon-preview" data-preview-box><img src="<%= s.favicon || '/img/favicon.svg' %>" alt=""></div>
+          <div class="a-grow">
+            <input type="file" name="favicon" accept="image/*" data-preview-input>
+            <% if (s.favicon) { %><label class="a-check"><input type="checkbox" name="remove_favicon" value="1"> Xóa icon (quay lại icon mặc định)</label><% } %>
+            <p class="a-field-hint">Nên dùng ảnh <b>vuông</b>, nền trong suốt (PNG), tối thiểu 192 × 192 px. Web tự cắt về khung vuông. Chưa tải ảnh thì dùng icon mặc định như hình. Trình duyệt có thể nhớ icon cũ vài phút — tải lại trang (Ctrl + F5) để thấy icon mới.</p>
+          </div>
+        </div>
+
         <label>Thông báo chạy chữ</label>
         <textarea name="notice" rows="2"><%= s.notice %></textarea>
         <p class="a-field-hint">Hiện ở: dải chữ chạy ngang dưới menu, mọi trang. Để trống = ẩn.</p>
