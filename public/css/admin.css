@@ -1106,3 +1106,46 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-hoyo-bar { height: 100%; width: 3%; background: linear-gradient(90deg, var(--primary), var(--primary2)); border-radius: 99px; transition: width .4s; }
 .a-hoyo-msg { font-size: .86rem; color: var(--text); min-height: 2.6em; }
 @media (max-width: 600px) { .a-acc-detail .a-row-3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .a-acc-detail .a-row-3 > :first-child { grid-column: 1 / -1; } }
+
+/* ---------- Giao diện -> Quản lý ảnh ---------- */
+.a-img-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.a-img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.a-img-item { padding: 10px; margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.a-img-thumb { aspect-ratio: 16 / 10; border-radius: 10px; background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.a-img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.a-img-thumb .ico { width: 28px; height: 28px; opacity: .4; }
+.a-img-meta { display: flex; flex-direction: column; min-width: 0; }
+.a-img-meta b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .88rem; }
+.a-img-meta small { font-size: .74rem; }
+.a-img-acts { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.a-img-acts form { margin: 0; }
+.a-img-acts label.a-btn, .a-lib-pop label.a-btn { cursor: pointer; margin: 0; }
+.a-img-filter { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px; }
+.a-img-filter input { flex: 1 1 200px; }
+.a-img-filter select { width: auto; }
+.a-img-strip { display: flex; gap: 4px; }
+.a-img-strip img { width: 54px; height: 34px; object-fit: cover; border-radius: 6px; background: var(--bg); }
+.a-img-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.a-img-pills a { padding: 7px 14px; border-radius: 999px; background: #fff; border: 1px solid var(--border); color: var(--text); font-weight: 700; font-size: .86rem; display: inline-flex; gap: 6px; align-items: center; }
+.a-img-pills a.on { background: var(--primary); color: #fff; border-color: transparent; }
+.a-img-pills a i { font-style: normal; font-size: .72rem; padding: 0 7px; border-radius: 99px; background: rgba(0, 0, 0, .08); }
+.a-img-pills-sm a { padding: 5px 12px; font-size: .8rem; }
+.a-img-pills-sm a.on { background: var(--primary-l); color: var(--primary); }
+.a-img-tools { align-items: start; }
+.a-img-tools textarea { width: 100%; font-family: monospace; font-size: .78rem; }
+.a-img-out { margin-top: 8px; line-height: 1.5; word-break: break-word; }
+.a-img-search { display: flex; gap: 8px; align-items: center; margin: 14px 0 10px; flex-wrap: wrap; }
+.a-img-search input { width: 220px; max-width: 100%; }
+.a-lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.a-lib-item { position: relative; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0; }
+.a-lib-item img { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; background: linear-gradient(160deg, #8a8fa3, #b7bccb); }
+.a-lib-item.r5 img { background: linear-gradient(160deg, #a5662f, #e3a64f); }
+.a-lib-item.r4 img { background: linear-gradient(160deg, #5e4aa0, #9a78d6); }
+.a-lib-item b { font-size: .76rem; font-weight: 600; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-lib-edit summary { font-size: .72rem; color: var(--primary); cursor: pointer; list-style: none; }
+.a-lib-edit summary::-webkit-details-marker { display: none; }
+.a-lib-pop { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); top: calc(100% - 4px); width: 230px; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 30px rgba(20, 30, 70, .15); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.a-lib-pop form { margin: 0; }
+.a-lib-row { display: flex; gap: 6px; }
+.a-lib-row input { flex: 1; min-width: 0; }
+@media (max-width: 600px) { .a-img-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .a-lib-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

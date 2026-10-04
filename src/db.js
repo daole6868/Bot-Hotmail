@@ -712,6 +712,18 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_hoyo_status ON hoyo_jobs(status, id);
   CREATE INDEX IF NOT EXISTS idx_hoyo_user ON hoyo_jobs(user_id, id DESC);
+  CREATE TABLE IF NOT EXISTS hoyo_assets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    name TEXT NOT NULL,
+    nkey TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    src TEXT,
+    rarity INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    UNIQUE(game, kind, nkey)
+  );
   CREATE TABLE IF NOT EXISTS hoyo_workers (
     name TEXT PRIMARY KEY,
     ip TEXT,

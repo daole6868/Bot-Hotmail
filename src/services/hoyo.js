@@ -221,16 +221,46 @@ async function cacheIcon(url) {
   } catch { return ''; }
 }
 
+// ---------------- Thư viện ảnh nhân vật / vũ khí (Giao diện -> Quản lý ảnh) ----------------
+const nkey = (n) => String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
+const KIND_OF = { c5: 'char', c4: 'char', w5: 'weapon', w4: 'weapon' };
+const libStmt = db.prepare('SELECT icon FROM hoyo_assets WHERE game = ? AND kind = ? AND nkey = ?');
+const libGet = (game, kind, name) => (libStmt.get(game, kind, nkey(name)) || {}).icon || '';
+function libAdd(game, kind, name, icon, src, rarity) {
+  if (!GAMES[game] || !icon || !name) return false;
+  return db.prepare('INSERT OR IGNORE INTO hoyo_assets(game, kind, name, nkey, icon, src, rarity) VALUES(?,?,?,?,?,?,?)')
+    .run(game, kind, s_(name, 60), nkey(name), icon, src ? s_(src, 500) : null, int(rarity, 0, 0, 5)).changes > 0;
+}
+
+/** Điền ảnh còn trống bằng thư viện (nhân vật / vũ khí thêm tay theo tên) */
+function fillIcons(d) {
+  if (!d || !GAMES[d.game]) return d;
+  for (const key of Object.keys(KIND_OF)) {
+    for (const x of d[key] || []) if (!x.ic) x.ic = libGet(d.game, KIND_OF[key], x.n);
+  }
+  return d;
+}
+
 async function withIcons(d) {
-  const items = [...d.c5, ...d.c4, ...d.w5, ...d.w4];
-  const urls = [...new Set(items.map((x) => x.src).filter(Boolean))];
+  const todo = [];
+  for (const key of Object.keys(KIND_OF)) {
+    for (const x of d[key]) {
+      const have = GAMES[d.game] ? libGet(d.game, KIND_OF[key], x.n) : '';
+      if (have) { x.ic = have; delete x.src; } else todo.push([key, x]);
+    }
+  }
+  const urls = [...new Set(todo.map(([, x]) => x.src).filter(Boolean))];
   const map = new Map();
   for (let i = 0; i < urls.length; i += 6) {
     const part = urls.slice(i, i + 6);
     const got = await Promise.all(part.map(cacheIcon));
     part.forEach((u, k) => map.set(u, got[k]));
   }
-  items.forEach((x) => { x.ic = map.get(x.src) || ''; delete x.src; });
+  for (const [key, x] of todo) {
+    x.ic = map.get(x.src) || '';
+    if (x.ic) libAdd(d.game, KIND_OF[key], x.n, x.ic, x.src, key.endsWith('5') ? 5 : 4); // nhân vật mới -> tự thêm vào thư viện
+    delete x.src;
+  }
   return d;
 }
 
@@ -259,4 +289,5 @@ function done(id, worker, result) {
 module.exports = {
   GAMES, SERVERS, DEFAULTS, cfg, checkToken, hasToken, workers, onlineCount,
   createJob, jobFor, cancel, claim, progress, fail, done, sanitize, brief, fromWorker, ICON_RE,
+  nkey, libGet, libAdd, fillIcons, cacheIcon, ICON_DIR,
 };

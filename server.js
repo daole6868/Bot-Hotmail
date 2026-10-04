@@ -73,7 +73,8 @@ const shield = require('./src/services/shield');
 app.use(shield.early);
 
 app.use(express.urlencoded({ extended: false, limit: '200kb', parameterLimit: 500 }));
-app.use('/admin/ai/write', express.json({ limit: '300kb' })); // lệnh cho AI viết bài có thể dài (dán cả bài gốc)
+app.use('/admin/ai/write', express.json({ limit: '300kb' }));
+app.use('/admin/images/hoyo/import', express.json({ limit: '4mb' })); // HTML dán vào để tách ảnh nhân vật có thể dài // lệnh cho AI viết bài có thể dài (dán cả bài gốc)
 app.use(express.json({ limit: '50kb' }));
 
 app.use(session({

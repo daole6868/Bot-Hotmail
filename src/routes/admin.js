@@ -23,7 +23,7 @@ const router = express.Router();
 // ---------- Phân quyền: admin / CTV quản lý / CTV bán hàng / CSKH ----------
 // Quản lý: mọi trang trừ nhóm Giao diện & Hệ thống. Bán hàng: chỉ sản phẩm / cày thuê / nạp game được cấp + ví.
 // CSKH: chỉ ví (trang chat ở /admin/chat).
-const MANAGER_BLOCK = ['/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
+const MANAGER_BLOCK = ['/images', '/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
 const SELLER_ALLOW = [
   /^\/(vip|reroll)$/, /^\/products\/(rows|form|save|bulk|import-form|import)$/, /^\/products\/\d+\/(edit|duplicate|delete|stock|toggle)$/, /^\/stock\/\d+\/delete$/,
   /^\/boost(\/(c\/\d+|topup(\/\d+)?|orders(\/\d+(\/(login|status|note))?)?|topup-orders|categories\/(form|save|\d+(\/delete)?)|packages\/(form|save|\d+\/(pause|delete))))?$/,
@@ -221,6 +221,7 @@ for (const kind of Object.keys(SORTABLE)) {
 router.use('/boost', require('./admin-boost'));
 router.use('/api', require('./admin-api')); // Kết nối API: Telegram, AI
 router.use('/hoyo', require('./admin-hoyo')); // lấy dữ liệu acc HoYoLAB qua worker
+router.use('/images', require('./admin-images')); // Giao diện -> Quản lý ảnh
 router.use('/', require('./admin-ctv').router); // Quản lý CTV + trang của CTV (/admin/me)
 router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google
 
@@ -598,7 +599,7 @@ router.post('/products/save', (req, res) => {
   let accBrief = old ? old.acc_brief : null;
   if (req.body.acc_detail !== undefined) {
     const hoyo = require('../services/hoyo');
-    let d = null; try { d = hoyo.sanitize(JSON.parse(String(req.body.acc_detail || 'null'))); } catch { d = null; }
+    let d = null; try { d = hoyo.fillIcons(hoyo.sanitize(JSON.parse(String(req.body.acc_detail || 'null')))); } catch { d = null; }
     accDetail = d ? JSON.stringify(d) : null;
     accBrief = d ? JSON.stringify(hoyo.brief(d)) : null;
   }
