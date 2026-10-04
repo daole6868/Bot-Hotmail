@@ -142,6 +142,7 @@ function runLight() {
 async function runDaily() {
   const res = { light: runLight(), archived: archive() };
   try { require('./backup').cleanTmp(); } catch { /* bỏ qua */ }
+  try { res.images = await require('./image-cleanup').run(); } catch (e) { console.error('[maintenance] images', e.message); }
   optimize(false);
   res.backup = await backup();
   // Đối chiếu số dư khách với lịch sử giao dịch, lệch thì báo Telegram

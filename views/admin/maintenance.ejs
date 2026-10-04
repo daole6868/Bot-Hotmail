@@ -15,9 +15,10 @@
      ['archive', 'archive', 'Lưu trữ dữ liệu cũ', 'Chuyển đơn hàng và đơn nạp thành công cũ hơn ' + retention.archiveDays + ' ngày sang bảng lưu trữ để bảng chính nhẹ, web nhanh. Khách và admin vẫn xem được lịch sử.', 'An toàn'],
      ['backup', 'save', 'Backup ngay', 'Tạo 1 bản sao toàn bộ database vào thư mục backups (tải về ở bảng bên dưới). Giữ tối đa ' + retention.backupKeep + ' bản, bản cũ hơn ' + retention.backupDays + ' ngày tự xóa.', 'Nên chạy trước khi sửa lớn'],
      ['optimize', 'bolt', 'Tối ưu chỉ mục', 'Gộp file nhật ký ghi (WAL) vào DB và cập nhật thống kê chỉ mục để tìm kiếm/lọc nhanh hơn.', 'An toàn, rất nhanh'],
+     ['images', 'image', 'Dọn ảnh', 'Xóa ảnh acc đã bán, ảnh xác nhận đơn cày thuê / nạp game đã quá số ngày giữ, và ảnh rác không còn dùng ở đâu (theo cài đặt Tự dọn ảnh bên dưới).', 'An toàn'],
      ['stats', 'chart', 'Tính lại thống kê', 'Tính lại số liệu doanh thu, đơn hàng, nạp tiền, người dùng mới theo ngày (biểu đồ Tổng quan) từ dữ liệu gốc. Dùng khi số liệu bị lệch.', 'An toàn'],
      ['vacuum', 'compress', 'VACUUM (thu gọn DB)', 'Sắp xếp lại và thu nhỏ file database sau khi xóa nhiều dữ liệu. Khóa DB vài giây, khách có thể phải chờ.', 'Chạy lúc ít khách'],
-     ['daily', 'refresh', 'Chạy toàn bộ', 'Chạy lần lượt: Dọn dẹp nhanh → Lưu trữ dữ liệu cũ → Tối ưu chỉ mục → Backup. Giống tác vụ tự động hằng ngày.', 'Mất vài giây'],
+     ['daily', 'refresh', 'Chạy toàn bộ', 'Chạy lần lượt: Dọn dẹp nhanh → Lưu trữ dữ liệu cũ → Dọn ảnh → Tối ưu chỉ mục → Backup. Giống tác vụ tự động hằng ngày.', 'Mất vài giây'],
    ]; %>
 <div class="a-grid-3">
   <div class="a-card">
@@ -49,6 +50,7 @@
       <li>Xóa biến động số dư cũ hơn <b><%= retention.balanceLogDays %> ngày</b></li>
       <li>Hằng ngày: chuyển đơn hàng & nạp tiền cũ hơn <b><%= retention.archiveDays %> ngày</b> sang bảng lưu trữ (khách vẫn xem được)</li>
       <li>Hằng ngày: backup DB, giữ tối đa <b><%= retention.backupKeep %></b> bản, tự xóa bản cũ hơn <b><%= retention.backupDays %> ngày</b>; tối ưu chỉ mục</li>
+      <li>Hằng ngày: dọn ảnh acc đã bán <b><%= img.soldDays ? 'sau ' + img.soldDays + ' ngày' : '(đang tắt)' %></b>, ảnh xác nhận đơn cày thuê / nạp game <b><%= img.proofDays ? 'sau ' + img.proofDays + ' ngày' : '(đang tắt)' %></b>, ảnh rác <b><%= img.orphan ? '(đang bật)' : '(đang tắt)' %></b></li>
       <li>Hằng ngày: gửi gói sao lưu về Telegram <b><%= s.tg_enabled === '1' ? '(đang bật)' : '(đang tắt)' %></b></li>
       <li>Hằng ngày: đối chiếu số dư khách với lịch sử giao dịch, lệch thì báo Telegram</li>
     </ul>
@@ -70,6 +72,20 @@
     </div>
     <p class="a-muted a-small">Không nút nào xóa sản phẩm, tài khoản khách hay số dư. Sau khi chạy, kết quả hiện ở thông báo đầu trang.</p>
   </div>
+</div>
+<div class="a-card">
+  <h3><%- I('image') %> Tự dọn ảnh</h3>
+  <form method="post" action="/admin/maintenance/images" class="a-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="a-row">
+      <div><label>Xóa ảnh acc đã bán sau (ngày)</label><input type="number" name="img_sold_days" min="0" max="3650" value="<%= img.soldDays %>"></div>
+      <div><label>Xóa ảnh xác nhận đơn cày thuê / nạp game sau (ngày)</label><input type="number" name="img_proof_days" min="0" max="3650" value="<%= img.proofDays %>"></div>
+    </div>
+    <p class="a-field-hint">Ảnh acc tính từ lúc bán, ảnh xác nhận tính từ lúc đơn xong hoặc bị hủy. Nhập 0 = không xóa.</p>
+    <label class="a-check"><input type="checkbox" name="img_orphan" value="1" <%= img.orphan ? 'checked' : '' %>> Xóa ảnh rác (ảnh không còn dùng ở đâu, cũ hơn 3 ngày)</label>
+    <p class="a-field-hint">Ảnh game, danh mục, gói, banner, bài viết, acc đang bán... đang dùng thì không bao giờ bị xóa.</p>
+    <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt</button>
+  </form>
 </div>
 <div class="a-grid-2">
   <div class="a-card">

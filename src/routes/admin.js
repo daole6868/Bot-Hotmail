@@ -1425,7 +1425,7 @@ router.get('/maintenance', async (req, res) => {
   const s = getSettings();
   res.render('admin/maintenance', { title: 'Bảo trì dữ liệu', info: maintenance.dbInfo(), s, retention: config.retention,
     expireMinutes: maintenance.depositExpireMinutes(), uploads: await backupSvc.uploadsSize(),
-    tgHasToken: !!s.tg_token_enc, hasBackupPass: !!s.backup_pass_enc });
+    tgHasToken: !!s.tg_token_enc, hasBackupPass: !!s.backup_pass_enc, img: require('../services/image-cleanup').config() });
 });
 
 router.post('/maintenance/run', async (req, res) => {
@@ -1441,10 +1441,13 @@ router.post('/maintenance/run', async (req, res) => {
     else if (task === 'backup') msg = 'Đã tạo bản backup ' + (await maintenance.backup());
     else if (task === 'optimize') { const r = maintenance.optimize(false); msg = `Đã tối ưu chỉ mục (dung lượng ${mb(r.before)} → ${mb(r.after)})`; }
     else if (task === 'vacuum') { const r = maintenance.optimize(true); msg = `Đã VACUUM, thu gọn file DB ${mb(r.before)} → ${mb(r.after)}`; }
-    else if (task === 'stats') msg = `Đã tính lại thống kê cho ${maintenance.rebuildStats()} ngày`;
+    else if (task === 'images') {
+      const r = await require('../services/image-cleanup').run();
+      msg = r ? `Dọn ảnh xong: ${r.sold.n} ảnh acc đã bán, ${r.proof.n} ảnh xác nhận đơn, ${r.orphan.n} ảnh rác — giải phóng ${mb(r.bytes)}` : 'Đang dọn ảnh, thử lại sau ít phút';
+    } else if (task === 'stats') msg = `Đã tính lại thống kê cho ${maintenance.rebuildStats()} ngày`;
     else if (task === 'daily') {
       const r = await maintenance.runDaily();
-      msg = `Chạy toàn bộ xong: ${lightMsg(r.light)}; ${archMsg(r.archived)}; tối ưu chỉ mục; backup ${r.backup}`;
+      msg = `Chạy toàn bộ xong: ${lightMsg(r.light)}; ${archMsg(r.archived)};${r.images ? ` dọn ${r.images.sold.n + r.images.proof.n + r.images.orphan.n} ảnh (${mb(r.images.bytes)});` : ''} tối ưu chỉ mục; backup ${r.backup}`;
     } else return back(req, res, 'error', 'Tác vụ không hợp lệ', '/admin/maintenance');
   } catch (e) {
     console.error('[maintenance]', task, e);
@@ -1490,6 +1493,14 @@ router.post('/maintenance/telegram', (req, res) => {
   back(req, res, 'success', 'Đã lưu cài đặt sao lưu', '/admin/maintenance');
 });
 // Đối chiếu số dư khách với lịch sử giao dịch ngay (bình thường tự chạy mỗi đêm)
+router.post('/maintenance/images', (req, res) => {
+  setSetting('img_sold_days', String(toInt(req.body.img_sold_days, 30, 0, 3650)));
+  setSetting('img_proof_days', String(toInt(req.body.img_proof_days, 30, 0, 3650)));
+  setSetting('img_orphan', bool(req.body.img_orphan));
+  audit(req, 'image_cleanup_settings');
+  back(req, res, 'success', 'Đã lưu cài đặt tự dọn ảnh', '/admin/maintenance');
+});
+
 router.post('/maintenance/reconcile', (req, res) => {
   const r = require('../services/alerts').reconcileAndReport();
   const money = (n) => H.money(n);
