@@ -280,9 +280,9 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
 .popup-img { display: block; max-width: 100%; }
 .popup-img img { display: block; width: 100%; height: auto; object-fit: cover; }
 .popup-box:not(.popup-imgonly) .popup-img img { border-radius: 0; }
-.popup-box:not(.popup-imgonly) .popup-img-sm img { border-radius: 10px; }
-.popup-box:not(.popup-imgonly) .popup-img-sm:first-child { margin-top: 20px; }
-.popup-box:not(.popup-imgonly) .popup-img-sm:last-child { margin-bottom: 20px; }
+.popup-box:not(.popup-imgonly) .popup-img-in { padding: 14px 14px 0; }
+.popup-box:not(.popup-imgonly) .popup-img-in:last-child { padding: 0 14px 14px; }
+.popup-box:not(.popup-imgonly) .popup-img-in img { border-radius: 10px; }
 .popup-imgonly { background: transparent; box-shadow: none; }
 .popup-imgonly .popup-img img { border-radius: var(--prad, 14px); }
 .popup-body { width: 100%; padding: 20px 22px 22px; line-height: 1.6; overflow-wrap: anywhere; }

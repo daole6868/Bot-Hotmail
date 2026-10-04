@@ -48,7 +48,7 @@
 </footer>
 
 <% const PP = locals.popup; if (PP && !locals.layoutAdmin && (PP.pages === 'all' || locals.currentPath === '/')) { %>
-<% function ppImg() { if (!PP.image) return; %><<%= PP.img_link ? 'a' : 'div' %> class="popup-img<%= PP.img_w < 100 ? ' popup-img-sm' : '' %>" style="width:<%= PP.img_w %>%"<% if (PP.img_link) { %> href="<%= PP.img_link %>"<% } %>><img src="<%= PP.image %>" alt="<%= PP.title %>"<% if (PP.ratio) { %> style="aspect-ratio:<%= PP.ratio %>"<% } %>></<%= PP.img_link ? 'a' : 'div' %>><% } %>
+<% function ppImg() { if (!PP.image) return; %><<%= PP.img_link ? 'a' : 'div' %> class="popup-img<%= PP.img_style !== 'full' || PP.img_w < 100 ? ' popup-img-in' : '' %>" style="width:<%= PP.img_w %>%"<% if (PP.img_link) { %> href="<%= PP.img_link %>"<% } %>><img src="<%= PP.image %>" alt="<%= PP.title %>"<% if (PP.ratio) { %> style="aspect-ratio:<%= PP.ratio %>"<% } %>></<%= PP.img_link ? 'a' : 'div' %>><% } %>
 <div class="popup" id="sitePopup" data-popup-id="<%= PP.v %>" data-delay="<%= PP.delay %>" data-repeat="<%= PP.repeat %>" hidden>
   <div class="popup-box<%= PP.body ? '' : ' popup-imgonly' %>" role="dialog" aria-modal="true" style="--pw:<%= PP.width %>px;--pbg:<%= PP.bg %>;--ptx:<%= PP.text %>;--prad:<%= PP.radius %>px">
     <button class="popup-close" data-close-popup aria-label="Đóng"><%- I('x') %></button>

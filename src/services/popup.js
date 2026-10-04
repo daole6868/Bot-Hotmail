@@ -10,7 +10,7 @@ const SAFE_LINK = /^(https?:\/\/|\/(?!\/))/i;
 const DEFAULTS = {
   enabled: false, v: 0, pages: 'home', delay: 0, repeat: 12,
   width: 520, bg: '#ffffff', text: '#374151', radius: 14,
-  image: '', img_link: '', img_pos: 'top', img_w: 100, img_rw: 600, img_rh: 600,
+  image: '', img_link: '', img_pos: 'top', img_style: 'inset', img_w: 100, img_rw: 600, img_rh: 600,
   title: '', title_color: '#111827', title_size: 24, title_align: 'center',
   content: '',
   btn_text: '', btn_link: '', btn_bg: '#4f6bed', btn_color: '#ffffff',

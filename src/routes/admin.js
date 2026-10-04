@@ -1171,7 +1171,7 @@ router.post('/popup', (req, res) => {
     enabled: !!bool(b.enabled), v: Date.now(), pages: pick(b.pages, ['home', 'all'], 'home'),
     delay: toInt(b.delay, 0, 0, 60), repeat: toInt(b.repeat, 12, 0, 720),
     width: toInt(b.width, D.width, 260, 1200), bg: color(b.bg, D.bg), text: color(b.text, D.text), radius: toInt(b.radius, D.radius, 0, 40),
-    image, img_link: link(b.img_link), img_pos: pick(b.img_pos, ['top', 'bottom'], 'top'), img_w: toInt(b.img_w, 100, 20, 100),
+    image, img_link: link(b.img_link), img_pos: pick(b.img_pos, ['top', 'bottom'], 'top'), img_style: pick(b.img_style, ['inset', 'full'], 'inset'), img_w: toInt(b.img_w, 100, 20, 100),
     img_rw: toInt(b.img_rw, 0, 0, 4000), img_rh: toInt(b.img_rh, 0, 0, 4000),
     title: str(b.title, 150), title_color: color(b.title_color, D.title_color), title_size: toInt(b.title_size, D.title_size, 12, 60),
     title_align: pick(b.title_align, ['left', 'center', 'right'], 'center'),

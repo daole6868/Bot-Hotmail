@@ -1036,7 +1036,7 @@
       const html = ed.innerHTML.replace(/<p><br><\/p>/g, '');
       const hasBody = !!(v('title').trim() || ed.textContent.trim() || v('btn_text').trim());
       const rw = +v('img_rw'), rh = +v('img_rh'), w = Math.min(100, Math.max(20, +v('img_w') || 100));
-      const img = src ? `<div class="pp-img${w < 100 && hasBody ? ' pp-img-sm' : ''}" style="width:${w}%"><img src="${escP(src)}" alt=""${rw && rh ? ` style="aspect-ratio:${rw} / ${rh}"` : ''}></div>` : '';
+      const img = src ? `<div class="pp-img${hasBody && (v('img_style') !== 'full' || w < 100) ? ' pp-img-in' : ''}" style="width:${w}%"><img src="${escP(src)}" alt=""${rw && rh ? ` style="aspect-ratio:${rw} / ${rh}"` : ''}></div>` : '';
       const body = hasBody ? `<div class="pp-body">${v('title').trim() ? `<h3 style="color:${v('title_color')};font-size:${+v('title_size') || 24}px;text-align:${v('title_align')}">${escP(v('title'))}</h3>` : ''}`
         + `<div class="pp-content">${ed.textContent.trim() ? html : ''}</div>`
         + `${v('btn_text').trim() ? `<span class="pp-btn" style="background:${v('btn_bg')};color:${v('btn_color')}">${escP(v('btn_text'))}</span>` : ''}</div>` : '';
