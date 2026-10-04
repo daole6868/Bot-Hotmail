@@ -937,9 +937,9 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-chat-nm .a-chat-who { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; min-width: 0; }
 .a-chat-nm .a-chat-who:hover { color: var(--primary); }
 .a-chat-note { border: 1px dashed var(--border); background: transparent; color: var(--muted); font: inherit; font-size: .74rem; padding: 1px 8px; border-radius: 999px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; flex-shrink: 0; }
-.a-chat-note.has { border: 0; background: #fff6e0; color: #92600a; flex-shrink: 1; }
+.a-chat-note.has { border: 0; background: #fdecec; color: #d42a2a; font-weight: 700; flex-shrink: 1; }
 .a-chat-note:hover { border-color: var(--primary); color: var(--primary); }
-.a-cl-tags em.note { background: #fff6e0; color: #92600a; }
+.a-cl-tags em.note { background: #fdecec; color: #d42a2a; font-weight: 700; }
 .a-ci-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 20px 14px 14px; border-bottom: 1px solid var(--border2); text-align: center; position: relative; }
 .a-ci-head small { color: var(--muted); }
 .a-ci-x { position: absolute; top: 8px; right: 8px; }

@@ -61,7 +61,7 @@
         <span class="a-chat-av" style="background:${color(c.id)}">${initial(c.name)}</span>
         <span class="a-cl-tx"><span class="a-cl-top"><b>${esc(c.name)}</b><small>${when(c.at)}</small></span>
           <span class="a-cl-bot"><span class="a-cl-last">${c.last_from && c.last_from !== 'user' ? (c.last_from === 'ai' ? 'AI: ' : 'Bạn: ') : ''}${esc(c.last)}</span>${c.unread ? `<i class="a-cl-n">${c.unread > 99 ? '99+' : c.unread}</i>` : ''}</span>
-          <span class="a-cl-tags">${c.note ? `<em class="note" title="${esc(c.note)}">📝 ${esc(c.note.length > 28 ? c.note.slice(0, 28) + '…' : c.note)}</em>` : ''}${c.guest ? '<em>Khách lạ</em>' : ''}${c.status === 'closed' ? '<em>Đã đóng</em>' : ''}${c.blocked ? '<em class="red">Đã chặn</em>' : ''}${c.assignee ? `<em>${esc(staffName(c.assignee) || 'Đã nhận')}</em>` : ''}</span></span>
+          <span class="a-cl-tags">${c.note ? `<em class="note" title="${esc(c.note)}">${esc(c.note.length > 28 ? c.note.slice(0, 28) + '…' : c.note)}</em>` : ''}${c.guest ? '<em>Khách lạ</em>' : ''}${c.status === 'closed' ? '<em>Đã đóng</em>' : ''}${c.blocked ? '<em class="red">Đã chặn</em>' : ''}${c.assignee ? `<em>${esc(staffName(c.assignee) || 'Đã nhận')}</em>` : ''}</span></span>
       </button>`).join('') : '<div class="a-chat-none">Không có cuộc chat nào</div>';
   }
   function navBadge() {
@@ -126,7 +126,7 @@
     const c = convs.get(cur); if (!c) return;
     $('[data-cm-av]').style.background = color(c.id); $('[data-cm-av]').innerHTML = initial(c.name);
     $('[data-cm-name]').textContent = c.name;
-    const ne = $('[data-note-edit]'); ne.textContent = c.note ? '📝 ' + c.note : '+ Ghi chú'; ne.classList.toggle('has', !!c.note);
+    const ne = $('[data-note-edit]'); ne.textContent = c.note ? c.note : '+ Ghi chú'; ne.classList.toggle('has', !!c.note);
     $('[data-cm-sub]').textContent = `#${c.id} · ${c.guest ? 'Khách chưa đăng nhập' : 'Thành viên'}${c.assignee ? ' · ' + (staffName(c.assignee) || 'đã nhận') + ' xử lý' : ''}${c.blocked ? ' · ĐÃ CHẶN' : ''}`;
     const st = $('[data-act-toggle=status]'); st.textContent = c.status === 'closed' ? 'Mở lại' : 'Đóng chat'; st.dataset.v = c.status === 'closed' ? 'open' : 'close';
     const ai = $('[data-act-toggle=ai]'); ai.classList.toggle('on', !c.ai_off); ai.title = c.ai_off ? 'AI đang tắt cho cuộc chat này — bấm để bật' : 'AI được phép trả lời cuộc chat này — bấm để tắt'; ai.dataset.v = c.ai_off ? 'ai_on' : 'ai_off';
