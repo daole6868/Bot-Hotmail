@@ -92,7 +92,7 @@
     if (fc && $('#couponInput')) { $('#couponInput').value = fc.dataset.fillCoupon; $('#couponCheck')?.click(); }
     const am = e.target.closest('[data-amount]');
     if (am && $('#amountInput')) $('#amountInput').value = am.dataset.amount;
-    if (e.target.closest('[data-close-popup]')) closePopup();
+    if (e.target.closest('[data-close-popup]')) { if (e.target.closest('a[href="#"]')) e.preventDefault(); closePopup(); }
   });
 
   // Xác nhận trước khi submit + chống bấm 2 lần
@@ -454,18 +454,22 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !uiBox.hidden) closeUI(); });
   }
 
-  // Popup trang chủ (hiện 1 lần / 12h)
+  // Popup (Admin -> Giao diện -> Popup): hiện sau N giây, ẩn lại N giờ sau khi khách đóng (0 = lần nào vào cũng hiện)
   const popup = $('#sitePopup');
   function closePopup() {
-    if (!popup) return;
+    if (!popup || popup.hidden) return;
     popup.hidden = true;
     try { localStorage.setItem('popup_' + popup.dataset.popupId, Date.now()); } catch (e) { /* ignore */ }
   }
   if (popup) {
     let last = 0;
     try { last = +localStorage.getItem('popup_' + popup.dataset.popupId) || 0; } catch (e) { /* ignore */ }
-    if (Date.now() - last > 12 * 3600 * 1000 && !(depPopup && !depPopup.hidden)) popup.hidden = false;
+    const repeat = +popup.dataset.repeat || 0;
+    if (!repeat || Date.now() - last > repeat * 3600 * 1000) {
+      setTimeout(() => { if (!(depPopup && !depPopup.hidden)) popup.hidden = false; }, (+popup.dataset.delay || 0) * 1000);
+    }
     popup.addEventListener('click', (e) => { if (e.target === popup) closePopup(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePopup(); });
   }
 
   // Nút con mắt: xem / ẩn mật khẩu đang nhập

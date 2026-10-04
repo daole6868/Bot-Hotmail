@@ -29,7 +29,27 @@ function safeUrl(v, img) {
   return /^(https?:\/\/|\/(?!\/)|#|mailto:)/i.test(u) ? u : null;
 }
 
-function sanitize(html) {
+// Popup: thêm span + style (chỉ màu, cỡ chữ, căn lề, độ đậm — giá trị kiểm tra chặt)
+const RICH = {
+  p: ['style'], br: [], b: [], strong: [], i: [], em: [], u: [], s: [], span: ['style'], h3: ['style'], h4: ['style'],
+  ul: ['style'], ol: ['style'], li: ['style'], a: ['href', 'style'],
+};
+const STYLE_OK = {
+  color: /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\))$/i,
+  'font-size': /^\d{1,2}(\.\d)?(px|em|rem)$/i,
+  'text-align': /^(left|center|right|justify)$/i,
+  'font-weight': /^(bold|normal|[1-9]00)$/i,
+};
+STYLE_OK['background-color'] = STYLE_OK.color;
+function safeStyle(v) {
+  return decodeEnt(v).split(';').map((d) => {
+    const i = d.indexOf(':'); if (i < 0) return null;
+    const k = d.slice(0, i).trim().toLowerCase(); const val = d.slice(i + 1).trim();
+    return STYLE_OK[k] && STYLE_OK[k].test(val) ? `${k}: ${val}` : null;
+  }).filter(Boolean).join('; ');
+}
+
+function sanitize(html, allowed = ALLOWED) {
   const src = String(html || '').replace(/<!--[\s\S]*?-->/g, '').replace(DROP_BLOCK, '');
   const out = []; const stack = [];
   const parts = src.split(/(<[^>]*>)/g);
@@ -39,7 +59,8 @@ function sanitize(html) {
     const m = /^<\s*(\/?)\s*([a-zA-Z][a-zA-Z0-9]*)([\s\S]*?)\/?\s*>$/.exec(part);
     if (!m) continue;
     let tag = m[2].toLowerCase(); tag = RENAME[tag] || tag;
-    if (!ALLOWED[tag]) continue;
+    if (tag === 'font') tag = 'span';
+    if (!allowed[tag]) continue;
     if (m[1]) { // thẻ đóng
       if (VOID.has(tag)) continue;
       const at = stack.lastIndexOf(tag);
@@ -52,8 +73,10 @@ function sanitize(html) {
     let a;
     while ((a = re.exec(m[3]))) {
       const name = a[1].toLowerCase(); const val = a[3] ?? a[4] ?? a[5] ?? '';
-      if (!ALLOWED[tag].includes(name)) continue;
-      if (name === 'href' || name === 'src') {
+      if (!allowed[tag].includes(name)) continue;
+      if (name === 'style') {
+        const st = safeStyle(val); if (st) attrs.push(`style="${escAttr(st)}"`);
+      } else if (name === 'href' || name === 'src') {
         const u = safeUrl(val, name === 'src');
         if (!u) continue;
         attrs.push(`${name}="${escAttr(u)}"`);
@@ -72,6 +95,7 @@ function sanitize(html) {
   while (stack.length) out.push(`</${stack.pop()}>`);
   return out.join('').replace(/<p>\s*<\/p>/g, '').trim();
 }
+const sanitizeRich = (html) => sanitize(html, RICH);
 
 const plain = (html) => decodeEnt(String(html || '').replace(/<[^>]+>/g, ' ')).replace(/\[\[[^\]]+\]\]/g, ' ').replace(/\s+/g, ' ').trim();
 const wordCount = (html) => (plain(html).match(/\S+/g) || []).length;
@@ -148,4 +172,4 @@ function seedSamples() {
   db.prepare("INSERT OR REPLACE INTO settings(key, value) VALUES('seed_posts_v1', '1')").run();
 }
 
-module.exports = { sanitize, render, plain, wordCount, readMinutes, parseFaq, faqText, faqList, seedSamples };
+module.exports = { sanitize, sanitizeRich, render, plain, wordCount, readMinutes, parseFaq, faqText, faqList, seedSamples };

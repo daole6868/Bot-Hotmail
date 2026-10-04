@@ -16,6 +16,7 @@ const maintenance = require('./src/services/maintenance');
 
 runSeed();
 require('./src/services/posts').seedSamples(); // 4 bài mẫu (Nháp), chỉ chèn 1 lần
+require('./src/services/popup').migrate(); // popup cũ (banner) -> trang Popup riêng, chỉ chạy 1 lần
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -96,7 +97,10 @@ const { db } = require('./src/db');
 const supportSvc = require('./src/services/support');
 let supportCache = { raw: null, v: null };
 const supportView = (s) => { if (supportCache.raw !== s.support_cfg) supportCache = { raw: s.support_cfg, v: supportSvc.forView(s) }; return supportCache.v; };
-let navCache = { at: 0, games: [], sideLeft: [], sideRight: [], popup: null };
+const popupSvc = require('./src/services/popup');
+let popupCache = { raw: null, v: null };
+const popupView = (s) => { if (popupCache.raw !== s.popup_cfg) popupCache = { raw: s.popup_cfg, v: popupSvc.forView(s) }; return popupCache.v; };
+let navCache = { at: 0, games: [], sideLeft: [], sideRight: [] };
 app.use((req, res, next) => {
   if (Date.now() - navCache.at > 30000) {
     navCache = {
@@ -104,12 +108,11 @@ app.use((req, res, next) => {
       games: db.prepare('SELECT name, slug, image, color, is_hot FROM games WHERE is_active = 1 ORDER BY sort_order, id').all(),
       sideLeft: db.prepare("SELECT * FROM banners WHERE position = 'sidebar_left' AND is_active = 1 ORDER BY sort_order LIMIT 3").all(),
       sideRight: db.prepare("SELECT * FROM banners WHERE position = 'sidebar_right' AND is_active = 1 ORDER BY sort_order LIMIT 3").all(),
-      popup: db.prepare("SELECT * FROM banners WHERE position = 'popup' AND is_active = 1 ORDER BY sort_order LIMIT 1").get() || null,
     };
   }
   const s0 = getSettings();
   Object.assign(res.locals, {
-    support: supportView(s0),
+    support: supportView(s0), popup: popupView(s0),
     s: s0, H, I, baseUrl: config.baseUrl, currentUrl: req.originalUrl, turnstileSiteKey: config.turnstile.siteKey, nav: navCache, currentPath: req.path, query: {}, breadcrumb: null, layoutAdmin: false, user: null,
   });
   next();

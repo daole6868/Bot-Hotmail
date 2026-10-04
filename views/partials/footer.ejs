@@ -47,12 +47,20 @@
   <div class="container footer-bottom"><%= S2.footer_text %></div>
 </footer>
 
-<% if (NAV2.popup && locals.currentPath === '/') { %>
-<div class="popup" id="sitePopup" data-popup-id="<%= NAV2.popup.id %>" hidden>
-  <% const bzP = H.bannerSize(S2, 'popup'); %>
-  <div class="popup-box" style="--ar: <%= bzP.w %> / <%= bzP.h %>">
+<% const PP = locals.popup; if (PP && !locals.layoutAdmin && (PP.pages === 'all' || locals.currentPath === '/')) { %>
+<% function ppImg() { if (!PP.image) return; %><<%= PP.img_link ? 'a' : 'div' %> class="popup-img<%= PP.img_w < 100 ? ' popup-img-sm' : '' %>" style="width:<%= PP.img_w %>%"<% if (PP.img_link) { %> href="<%= PP.img_link %>"<% } %>><img src="<%= PP.image %>" alt="<%= PP.title %>"<% if (PP.ratio) { %> style="aspect-ratio:<%= PP.ratio %>"<% } %>></<%= PP.img_link ? 'a' : 'div' %>><% } %>
+<div class="popup" id="sitePopup" data-popup-id="<%= PP.v %>" data-delay="<%= PP.delay %>" data-repeat="<%= PP.repeat %>" hidden>
+  <div class="popup-box<%= PP.body ? '' : ' popup-imgonly' %>" role="dialog" aria-modal="true" style="--pw:<%= PP.width %>px;--pbg:<%= PP.bg %>;--ptx:<%= PP.text %>;--prad:<%= PP.radius %>px">
     <button class="popup-close" data-close-popup aria-label="Đóng"><%- I('x') %></button>
-    <a href="<%= NAV2.popup.link || '#' %>"><img src="<%= NAV2.popup.image %>" alt="<%= NAV2.popup.title || '' %>"></a>
+    <div class="popup-inner">
+      <% if (PP.img_pos !== 'bottom') ppImg(); %>
+      <% if (PP.body) { %><div class="popup-body">
+        <% if (PP.title) { %><h3 class="popup-title" style="color:<%= PP.title_color %>;font-size:<%= PP.title_size %>px;text-align:<%= PP.title_align %>"><%= PP.title %></h3><% } %>
+        <% if (PP.content) { %><div class="popup-content"><%- PP.content %></div><% } %>
+        <% if (PP.btn_text) { %><a class="popup-btn" href="<%= PP.btn_link || '#' %>" style="background:<%= PP.btn_bg %>;color:<%= PP.btn_color %>"<%- PP.btn_link ? '' : ' data-close-popup' %>><%= PP.btn_text %></a><% } %>
+      </div><% } %>
+      <% if (PP.img_pos === 'bottom') ppImg(); %>
+    </div>
   </div>
 </div>
 <% } %>

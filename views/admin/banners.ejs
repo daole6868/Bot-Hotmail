@@ -2,16 +2,15 @@
 <% const groups = [
   ['sidebar_left', 'Sidebar trái'],
   ['sidebar_right', 'Sidebar phải'],
-  ['popup', 'Popup trang chủ'],
 ]; %>
-<div class="a-alert a-alert-info"><%- I('list') %> <span>Banner slider, dải ảnh chạy và khối banner ở trang chủ nay quản lý tại <a href="/admin/home-layout"><b>Bố cục trang chủ</b></a> (mỗi khối tự giữ ảnh & kích cỡ riêng). Trang này còn Sidebar 2 bên và Popup.</span></div>
+<div class="a-alert a-alert-info"><%- I('list') %> <span>Banner slider, dải ảnh chạy và khối banner ở trang chủ nay quản lý tại <a href="/admin/home-layout"><b>Bố cục trang chủ</b></a> (mỗi khối tự giữ ảnh & kích cỡ riêng). Trang này còn Sidebar 2 bên, Popup chỉnh ở <a href="/admin/popup"><b>Popup</b></a>.</span></div>
 <p class="a-muted a-small a-page-note"><%- I('image') %> <span>Mỗi phần có kích cỡ hiển thị riêng (Rộng × Cao). Ảnh trên web được cắt theo tỉ lệ này, lấy phần giữa. Khi thêm ảnh sẽ thấy khung <b class="a-green">xanh</b> là phần hiển thị, vùng <b class="a-red">đỏ</b> là phần bị cắt.</span></p>
 <% groups.forEach(([pos, label]) => { const list = banners.filter(b => b.position === pos); const sz = sizes[pos]; %>
 <section class="a-card a-card-flush a-banner-sec">
   <div class="a-card-head a-pad">
     <div>
       <h3><%= label %> <span class="a-count"><%= list.length %></span></h3>
-      <p class="a-muted a-small">Tỉ lệ hiển thị <b data-ratio-text="<%= pos %>"><%= sz.w %> × <%= sz.h %></b><%= pos === 'popup' ? ' · chỉ hiện popup đầu tiên đang bật' : '' %></p>
+      <p class="a-muted a-small">Tỉ lệ hiển thị <b data-ratio-text="<%= pos %>"><%= sz.w %> × <%= sz.h %></b></p>
     </div>
     <div class="a-head-actions">
       <form class="a-size" data-size-form="<%= pos %>" title="Kích cỡ hiển thị (px), tự lưu khi thay đổi">

@@ -982,5 +982,72 @@
       if (e.target.closest('[data-fc-down]') && row.nextElementSibling) list.insertBefore(row.nextElementSibling, row);
     });
   });
-})();
 
+  // ---------- Popup: trình soạn thảo nội dung + xem trước trực tiếp ----------
+  const ppf = $('[data-pp-form]');
+  if (ppf) {
+    const ed = $('[data-pp-editor]', ppf), out = $('[data-pp-content]', ppf), pv = $('[data-pp-preview]', ppf);
+    const v = (n) => ppf.elements[n]?.value || '';
+    const escP = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    let imgSrc = $('[data-preview-box] img', ppf)?.getAttribute('src') || '';
+    try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) { /* bỏ qua */ }
+    let range = null;
+    const save = () => { const sel = getSelection(); if (sel.rangeCount && ed.contains(sel.anchorNode)) range = sel.getRangeAt(0).cloneRange(); };
+    const restore = () => { ed.focus(); if (range) { const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range); } };
+    const exec = (c, val, css = true) => { restore(); document.execCommand('styleWithCSS', false, css); document.execCommand(c, false, val); save(); render(); };
+    ['keyup', 'mouseup', 'input'].forEach((ev) => ed.addEventListener(ev, () => { save(); if (ev === 'input') render(); }));
+    ed.addEventListener('paste', (e) => {
+      const t = e.clipboardData?.getData('text/plain'); if (!t) return;
+      e.preventDefault(); exec('insertHTML', t.split(/\n{2,}/).map((x) => `<p>${escP(x).replace(/\n/g, '<br>')}</p>`).join(''));
+    });
+    const bar = $('[data-pp-bar]', ppf);
+    bar.addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+    bar.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-cmd]'); if (!b) return;
+      const c = b.dataset.cmd;
+      if (c === 'link') {
+        save();
+        const u = (prompt('Dán đường dẫn (VD /game/genshin-impact hoặc https://...):') || '').trim();
+        if (!u) return;
+        if (!/^(https?:\/\/|\/(?!\/))/i.test(u)) { toast('Link phải bắt đầu bằng / hoặc https://', true); return; }
+        restore();
+        if (getSelection().isCollapsed) exec('insertHTML', `<a href="${escP(u)}">${escP(u)}</a>`); else exec('createLink', u);
+        return;
+      }
+      exec(c);
+    });
+    $$('[data-pp-color]', ppf).forEach((inp) => {
+      inp.addEventListener('pointerdown', save);
+      inp.addEventListener('input', () => { inp.previousElementSibling.style[inp.dataset.ppColor === 'foreColor' ? 'color' : 'background'] = inp.value; exec(inp.dataset.ppColor, inp.value); });
+    });
+    const size = $('[data-pp-size]', ppf);
+    size.addEventListener('pointerdown', save);
+    size.addEventListener('change', () => {
+      const px = size.value; size.value = ''; if (!px) return;
+      exec('fontSize', '7', false); // tạm dùng cỡ 7 rồi đổi thành px
+      $$('font[size="7"]', ed).forEach((f) => { const sp = document.createElement('span'); sp.style.fontSize = px + 'px'; sp.innerHTML = f.innerHTML; f.replaceWith(sp); });
+      $$('[style*="xxx-large"]', ed).forEach((x) => { x.style.fontSize = px + 'px'; });
+      render();
+    });
+    $('[data-pp-file]', ppf)?.addEventListener('change', (e) => { const f = e.target.files[0]; if (f) { imgSrc = URL.createObjectURL(f); render(); } });
+    function render() {
+      const removed = ppf.elements.remove_image?.checked && !$('[data-pp-file]', ppf).files.length;
+      const src = removed ? '' : imgSrc;
+      const html = ed.innerHTML.replace(/<p><br><\/p>/g, '');
+      const hasBody = !!(v('title').trim() || ed.textContent.trim() || v('btn_text').trim());
+      const rw = +v('img_rw'), rh = +v('img_rh'), w = Math.min(100, Math.max(20, +v('img_w') || 100));
+      const img = src ? `<div class="pp-img${w < 100 && hasBody ? ' pp-img-sm' : ''}" style="width:${w}%"><img src="${escP(src)}" alt=""${rw && rh ? ` style="aspect-ratio:${rw} / ${rh}"` : ''}></div>` : '';
+      const body = hasBody ? `<div class="pp-body">${v('title').trim() ? `<h3 style="color:${v('title_color')};font-size:${+v('title_size') || 24}px;text-align:${v('title_align')}">${escP(v('title'))}</h3>` : ''}`
+        + `<div class="pp-content">${ed.textContent.trim() ? html : ''}</div>`
+        + `${v('btn_text').trim() ? `<span class="pp-btn" style="background:${v('btn_bg')};color:${v('btn_color')}">${escP(v('btn_text'))}</span>` : ''}</div>` : '';
+      pv.className = 'a-pp-box' + (hasBody ? '' : ' pp-imgonly');
+      pv.style.cssText = `--pw:${Math.min(1200, Math.max(260, +v('width') || 520))}px;--pbg:${v('bg')};--ptx:${v('text')};--prad:${+v('radius') || 0}px`;
+      pv.innerHTML = '<span class="pp-x">×</span>' + (v('img_pos') === 'bottom' ? body + img : img + body) || '<span class="a-muted">Chưa có nội dung</span>';
+      if (!img && !body) pv.innerHTML = '<p class="a-muted a-center">Chưa có ảnh hoặc nội dung</p>';
+    }
+    ppf.addEventListener('input', (e) => { if (!ed.contains(e.target)) render(); });
+    ppf.addEventListener('change', (e) => { if (!ed.contains(e.target)) render(); });
+    ppf.addEventListener('submit', () => { out.value = ed.textContent.trim() ? ed.innerHTML : ''; });
+    render();
+  }
+})();

@@ -1085,7 +1085,7 @@ router.post('/home-blocks/:id/delete', (req, res) => {
 
 // ======================= BANNER / SIDEBAR =======================
 // Banner chính & dải ảnh chạy nay nằm trong Bố cục trang chủ (mỗi khối tự giữ ảnh)
-const BANNER_POSITIONS = ['sidebar_left', 'sidebar_right', 'popup'];
+const BANNER_POSITIONS = ['sidebar_left', 'sidebar_right'];
 
 router.get('/banners', (req, res) => {
   const banners = db.prepare('SELECT * FROM banners ORDER BY sort_order, id').all();
@@ -1149,6 +1149,42 @@ const FOOTER_KEYS = ['footer_about_title', 'footer_about_text', 'footer_col1_tit
   'social_youtube', 'social_telegram', 'footer_text'];
 
 // ======================= HỖ TRỢ (nút / thanh liên hệ nhanh) =======================
+// ======================= POPUP =======================
+const popupSvc = require('../services/popup');
+const { sanitizeRich } = require('../services/posts');
+router.get('/popup', (req, res) => res.render('admin/popup', { title: 'Popup', cfg: popupSvc.config() }));
+router.post('/popup', (req, res) => {
+  const b = req.body; const old = popupSvc.config();
+  const color = (v, d) => (popupSvc.HEX.test(v || '') ? v : d);
+  const link = (v) => { const u = str(v, 300).trim(); return popupSvc.SAFE_LINK.test(u) ? u : ''; };
+  const pick = (v, list, d) => (list.includes(v) ? v : d);
+  const D = popupSvc.DEFAULTS;
+  let image = old.image;
+  const f = fileOf(req, 'popup_image');
+  if (f) {
+    const saved = saveImage(f, 'banners');
+    if (!saved) return back(req, res, 'error', 'File ảnh không hợp lệ', '/admin/popup');
+    if (old.image) removeImage(old.image);
+    image = saved;
+  } else if (b.remove_image && old.image) { removeImage(old.image); image = ''; }
+  const cfg = {
+    enabled: !!bool(b.enabled), v: Date.now(), pages: pick(b.pages, ['home', 'all'], 'home'),
+    delay: toInt(b.delay, 0, 0, 60), repeat: toInt(b.repeat, 12, 0, 720),
+    width: toInt(b.width, D.width, 260, 1200), bg: color(b.bg, D.bg), text: color(b.text, D.text), radius: toInt(b.radius, D.radius, 0, 40),
+    image, img_link: link(b.img_link), img_pos: pick(b.img_pos, ['top', 'bottom'], 'top'), img_w: toInt(b.img_w, 100, 20, 100),
+    img_rw: toInt(b.img_rw, 0, 0, 4000), img_rh: toInt(b.img_rh, 0, 0, 4000),
+    title: str(b.title, 150), title_color: color(b.title_color, D.title_color), title_size: toInt(b.title_size, D.title_size, 12, 60),
+    title_align: pick(b.title_align, ['left', 'center', 'right'], 'center'),
+    content: sanitizeRich(String(b.content || '').slice(0, 20000)),
+    btn_text: str(b.btn_text, 60), btn_link: link(b.btn_link), btn_bg: color(b.btn_bg, D.btn_bg), btn_color: color(b.btn_color, D.btn_color),
+  };
+  if (!cfg.img_rw || !cfg.img_rh) { cfg.img_rw = 0; cfg.img_rh = 0; }
+  if (cfg.content.replace(/<[^>]+>|&nbsp;|\s/g, '') === '') cfg.content = '';
+  setSetting('popup_cfg', JSON.stringify(cfg));
+  audit(req, 'popup_update', cfg.enabled ? 'bật' : 'tắt');
+  back(req, res, 'success', 'Đã lưu Popup', '/admin/popup');
+});
+
 const supportSvc = require('../services/support');
 router.get('/support', (req, res) => res.render('admin/support', { title: 'Hỗ trợ', cfg: supportSvc.config(), TYPES: supportSvc.TYPES }));
 router.post('/support', (req, res) => {
