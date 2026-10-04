@@ -39,7 +39,10 @@ async function post(url, headers, body, ms) {
   const text = await r.text();
   let j = null; try { j = JSON.parse(text); } catch { /* không phải JSON */ }
   if (!r.ok) {
-    throw new AiError(friendlyError(r.status, String(j?.error?.message || j?.message || text || '')));
+    const raw = String(j?.error?.message || j?.message || text || '');
+    console.error(`[ai] ${new URL(url).hostname} lỗi ${r.status}: ${raw.slice(0, 300)}`); // xem bằng: pm2 logs gachaz
+    const e = new AiError(friendlyError(r.status, raw)); e.status = r.status; e.raw = raw;
+    throw e;
   }
   if (!j) throw new AiError('AI trả về dữ liệu không đọc được');
   return j;
@@ -71,8 +74,17 @@ async function complete(system, user, { json = false, ms = 300000, s = getSettin
     const headers = { 'x-api-key': key, 'anthropic-version': '2023-06-01' };
     if (s.ai_anthropic_workspace) headers['anthropic-workspace-id'] = s.ai_anthropic_workspace; // key không gắn sẵn workspace
     const body = { model, max_tokens: 16000, system, messages: [{ role: 'user', content: user }] };
-    if (CLAUDE_FALLBACK.includes(model)) { headers['anthropic-beta'] = 'server-side-fallback-2026-07-01'; body.fallbacks = 'default'; }
-    const j = await post('https://api.anthropic.com/v1/messages', headers, body, ms);
+    // Model dự phòng khi bị từ chối: không dùng với key cấp tổ chức (có Workspace ID) — chế độ này không nhận header workspace
+    const fb = CLAUDE_FALLBACK.includes(model) && !s.ai_anthropic_workspace;
+    const fbHeaders = fb ? { ...headers, 'anthropic-beta': 'server-side-fallback-2026-07-01' } : headers;
+    let j;
+    try {
+      j = await post('https://api.anthropic.com/v1/messages', fbHeaders, fb ? { ...body, fallbacks: 'default' } : body, ms);
+    } catch (e) {
+      // bị từ chối vì workspace / chế độ dự phòng -> thử lại 1 lần không có chế độ dự phòng
+      if (!fb || e.status !== 400 || !/workspace|fallback/i.test(e.raw || '')) throw e;
+      j = await post('https://api.anthropic.com/v1/messages', headers, body, ms);
+    }
     if (j.stop_reason === 'refusal') throw new AiError('AI từ chối viết nội dung này, hãy đổi cách ra lệnh');
     return (j.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
   }
