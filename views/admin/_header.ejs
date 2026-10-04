@@ -12,6 +12,7 @@
 </head>
 <body class="admin">
 <% const B = locals.adminBadges || {}; const P = locals.path || ''; const act = (p) => (p === '/' ? P === '/' : P.startsWith(p)) ? 'active' : ''; %>
+<div class="a-side-mask" data-side-mask></div>
 <aside class="a-side" id="aSide">
   <% const PM = locals.perm || (locals.agentRole === 'staff' ? 'support' : 'admin'); const CT = locals.ctvTypes || []; const isCtv = PM === 'seller' || PM === 'support'; %>
   <a href="<%= PM === 'seller' ? '/admin/me' : PM === 'support' ? '/admin/chat' : '/admin' %>" class="a-logo <%= s.logo ? 'has-img' : '' %>">

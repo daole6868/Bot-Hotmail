@@ -316,6 +316,7 @@
   document.addEventListener('click', async (e) => {
     const t = e.target;
     if (t.closest('[data-toggle-side]')) $('#aSide').classList.toggle('open');
+    if (t.closest('[data-side-mask]')) { $('#aSide').classList.remove('open'); return; }
 
     const si = t.closest('[data-set-input]');
     if (si) { const inp = $(`[name="${si.dataset.setInput}"]`, si.form || document); if (inp) { inp.value = si.dataset.value; inp.dispatchEvent(new Event('input', { bubbles: true })); } return; }
