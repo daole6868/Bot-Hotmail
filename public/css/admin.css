@@ -1020,7 +1020,10 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-ctv-rate input { width: 80px; flex-shrink: 0; }
 .a-ctv-rate span { font-size: .82rem; color: var(--muted); white-space: nowrap; }
 .a-stats-3 { grid-template-columns: repeat(3, 1fr); }
-.a-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.a-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; background: none; border-radius: 0; }
+.a-form > .a-btn, .a-fieldset > .a-btn, .a-cp-fields > .a-btn { margin-top: 16px; }
+.a-ctv-add > .a-btn, .a-grant-add > .a-btn { margin-top: 0; }
+.a-fieldset > .a-check { margin-top: 12px; }
 .a-grant-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .a-grant { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: var(--bg); border-radius: 10px; }
 .a-grant-add { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; }

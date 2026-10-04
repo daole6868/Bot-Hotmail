@@ -176,7 +176,7 @@ router.post('/me/withdraw', (req, res) => {
   if (!r.ok) return back(req, res, 'error', r.message, '/admin/me/wallet');
   audit(req, 'ctv_withdraw', `${r.code} ${req.body.amount}`);
   require('../services/backup').notifyAdmin(`💸 CTV ${req.user.username} tạo lệnh rút ${r.code}: ${H.money(toInt(req.body.amount, 0))}`).catch(() => {});
-  back(req, res, 'success', `Đã gửi lệnh rút ${r.code}. Admin sẽ chuyển khoản và cập nhật trạng thái.`, '/admin/me/wallet');
+  back(req, res, 'success', `Đã gửi lệnh rút ${r.code}.`, '/admin/me/wallet');
 });
 
 module.exports = { router, statsOf, KIND_NAME, nowS };

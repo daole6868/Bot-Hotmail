@@ -28,7 +28,7 @@
 <div class="a-grid-side">
   <div class="a-card">
     <h3><%= edit ? 'Sửa mã' : 'Tạo mã giảm giá' %></h3>
-    <form method="post" action="/admin/coupons/save">
+    <form method="post" action="/admin/coupons/save" class="a-form">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="id" value="<%= edit ? edit.id : '' %>">
       <label>Mã <span class="req">*</span></label><input name="code" required maxlength="32" value="<%= edit ? edit.code : '' %>" placeholder="VD: SALE50" style="text-transform:uppercase">
