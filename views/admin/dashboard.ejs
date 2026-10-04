@@ -17,14 +17,27 @@
 
 <div class="a-card">
   <div class="a-card-head"><h3>Doanh thu & Nạp tiền 30 ngày</h3><div class="a-legend"><span class="l1"></span>Doanh thu <span class="l2"></span>Nạp</div></div>
-  <% const maxV = Math.max(1, ...series.map(d => Math.max(d.revenue, d.deposits))); %>
+  <%
+    // Trục tiền: lấy đỉnh 30 ngày, làm tròn lên số "đẹp" rồi chia đều khoảng 5 mốc
+    const peak = Math.max(0, ...series.map(d => Math.max(d.revenue, d.deposits)));
+    const rough = (peak || 100000) / 5;
+    const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(v => v >= rough);
+    const maxV = step * Math.ceil((peak || 100000) / step);
+    const ticks = []; for (let v = 0; v <= maxV + step / 2; v += step) ticks.push(v);
+    const short = (v) => v >= 1e9 ? (v / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tỷ' : v >= 1e6 ? (v / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + 'tr' : v >= 1e3 ? (v / 1e3).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + 'k' : String(v);
+  %>
+  <div class="a-chart-wrap">
+  <div class="a-chart-y"><% ticks.forEach(v => { %><span style="bottom:<%= (v / maxV * 100).toFixed(2) %>%"><%= short(v) %></span><% }) %></div>
   <div class="a-chart">
+    <div class="a-chart-grid"><% ticks.forEach(v => { %><i style="bottom:<%= (v / maxV * 100).toFixed(2) %>%"></i><% }) %></div>
     <% series.forEach(d => { %>
       <div class="a-bar-col" title="<%= d.day %>&#10;Doanh thu: <%= H.money(d.revenue) %>&#10;Nạp: <%= H.money(d.deposits) %>&#10;Đơn: <%= d.orders %>">
         <div class="a-bars"><i class="b1" style="height:<%= (d.revenue / maxV * 100).toFixed(1) %>%"></i><i class="b2" style="height:<%= (d.deposits / maxV * 100).toFixed(1) %>%"></i></div>
         <small><%= d.day.slice(8) %></small>
       </div>
     <% }) %>
+  </div>
   </div>
 </div>
 
