@@ -45,8 +45,9 @@ const config = {
   },
   paths: {
     root: path.join(__dirname, '..'),
-    data: path.join(__dirname, '..', 'data'),
-    backups: path.join(__dirname, '..', 'data', 'backups'),
+    // GZ_DATA_DIR chỉ dùng cho scripts/bench-purchase.js (chạy trên bản sao database trong thư mục tạm)
+    data: env.GZ_DATA_DIR || path.join(__dirname, '..', 'data'),
+    backups: path.join(env.GZ_DATA_DIR || path.join(__dirname, '..', 'data'), 'backups'),
     uploads: path.join(__dirname, '..', 'public', 'uploads'),
   },
 };
