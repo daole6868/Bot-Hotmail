@@ -6,7 +6,8 @@
  */
 const express = require('express');
 const { db, setSetting, getSettings, logActivity } = require('../db');
-const { requireAdmin, verifyCsrf } = require('../middleware/security');
+const { requireAdmin, requireStaff, verifyCsrf } = require('../middleware/security');
+const ctvSvc = require('../services/ctv');
 const { upload, saveImage, optimizeBuffer } = require('../utils/upload');
 const chat = require('../services/chat');
 const bot = require('../services/chat-bot');
@@ -19,7 +20,10 @@ const fail = (res, message, code = 400) => res.status(code).json({ ok: false, me
 // ---------- Quyền: admin (đã qua bước đăng nhập quản trị) hoặc nhân viên chat ----------
 router.use((req, res, next) => {
   if (req.user?.role === 'admin') return requireAdmin(req, res, () => { req.agent = { role: 'admin', id: req.user.id, name: chat.cfg().agent_name }; next(); });
-  if (req.user?.staff) { req.agent = { role: 'staff', id: req.user.id, name: req.user.staff_name || req.user.username }; return next(); }
+  const r = ctvSvc.roleOf(req.user);
+  // CTV quản lý: như admin ở trang chat. CSKH (staff): chỉ chat + thông tin đơn hàng
+  if (r === 'manager') return requireStaff(req, res, () => { req.agent = { role: 'admin', id: req.user.id, name: req.user.staff_name || chat.cfg().agent_name }; next(); });
+  if (req.user?.staff && !req.user.ctv_paused) return requireStaff(req, res, () => { req.agent = { role: 'staff', id: req.user.id, name: req.user.staff_name || req.user.username }; next(); });
   if (!req.user && req.method === 'GET' && !req.path.startsWith('/stream') && !req.xhr && req.accepts(['html', 'json']) === 'html') {
     req.session.returnTo = req.originalUrl; req.flash('error', 'Vui lòng đăng nhập để tiếp tục'); return res.redirect('/login');
   }
@@ -30,10 +34,13 @@ router.use((req, res, next) => {
   res.locals.layoutAdmin = true;
   res.locals.path = '/chat' + (req.path === '/' ? '' : req.path);
   res.locals.agentRole = req.agent.role;
+  res.locals.perm = req.perm;
+  if (req.perm === 'seller') res.locals.ctvTypes = ctvSvc.allowedTypes(req.user.id);
   res.locals.adminBadges = req.agent.role === 'admin' ? {
     deposits: db.prepare("SELECT COUNT(*) c FROM deposits WHERE status = 'pending'").get().c,
     ...Object.fromEntries(db.prepare("SELECT kind, COUNT(*) c FROM boost_orders WHERE status = 'received' GROUP BY kind").all().map((r) => [r.kind, r.c])),
     bank: db.prepare("SELECT COUNT(*) c FROM bank_transactions WHERE status = 'unmatched'").get().c,
+    ctv: db.prepare("SELECT COUNT(*) c FROM ctv_withdrawals WHERE status = 'pending'").get().c,
     chat: db.prepare('SELECT COUNT(*) c FROM chat_convs WHERE unread_admin > 0 AND blocked = 0').get().c,
   } : { chat: unreadCount() };
   next();

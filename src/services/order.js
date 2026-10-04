@@ -66,6 +66,7 @@ const purchaseTx = db.transaction((userId, productId, couponCode, ip) => {
     VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(code, userId, p.id, p.title, p.game_name, p.price, discount, total, coupon?.code || null, deliveredEnc, ip).lastInsertRowid;
 
   if (stockId) db.prepare('UPDATE product_stock SET order_id = ? WHERE id = ?').run(orderId, stockId);
+  require('./ctv').onAccSale(orderId, code, p, total); // doanh thu + cộng tiền CTV (nếu là hàng CTV đăng)
   if (coupon) {
     db.prepare('UPDATE coupons SET used_count = used_count + 1 WHERE id = ?').run(coupon.id);
     db.prepare('INSERT INTO coupon_usages(coupon_id, user_id, order_id) VALUES(?,?,?)').run(coupon.id, userId, orderId);
@@ -97,6 +98,7 @@ const refundTx = db.transaction((orderId, adminId, reason, restock) => {
   if (!o) throw new OrderError('Không tìm thấy đơn (đơn đã lưu trữ không thể hoàn)');
   if (o.status === 'refunded') throw new OrderError('Đơn đã được hoàn tiền trước đó');
   db.prepare("UPDATE orders SET status = 'refunded', note = ? WHERE id = ?").run(reason || 'Hoàn tiền', o.id);
+  require('./ctv').onAccRefund(o); // trừ lại tiền đã cộng cho CTV
   db.prepare('UPDATE users SET balance = balance + ?, total_spent = MAX(0, total_spent - ?) WHERE id = ?').run(o.total, o.total, o.user_id);
   const bal = db.prepare('SELECT balance FROM users WHERE id = ?').get(o.user_id).balance;
   db.prepare('INSERT INTO balance_logs(user_id, amount, balance_after, type, ref, note) VALUES(?,?,?,?,?,?)')

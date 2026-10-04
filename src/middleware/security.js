@@ -141,7 +141,7 @@ function honeypot(req, res, next) {
 }
 
 // ---------- Nạp user hiện tại ----------
-const userStmt = db.prepare('SELECT id, username, email, email_verified_at, twofa_enabled, role, balance, status, ban_reason, total_deposit, total_spent, created_at, staff, staff_name FROM users WHERE id = ?');
+const userStmt = db.prepare('SELECT id, username, email, email_verified_at, twofa_enabled, role, balance, status, ban_reason, total_deposit, total_spent, created_at, staff, staff_name, ctv_role, ctv_paused, ctv_rate, ctv_balance FROM users WHERE id = ?');
 function loadUser(req, res, next) {
   res.locals.user = null;
   if (req.session.userId) {
@@ -190,6 +190,25 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Trang quản trị cho cộng tác viên (quản lý / bán hàng / CSKH): cùng chặn IP, hết hạn sau 60 phút không thao tác như admin.
+// Admin thật vẫn đi qua requireAdmin (bắt đăng nhập quản trị + xác minh 2 lớp).
+function requireStaff(req, res, next) {
+  const role = require('../services/ctv').roleOf(req.user);
+  if (role === 'admin' || !role) return requireAdmin(req, res, () => { req.perm = 'admin'; next(); });
+  const ip = clientIp(req);
+  if (config.admin.ipWhitelist.length && role === 'manager' && !config.admin.ipWhitelist.includes(ip)) {
+    logActivity(req.user.id, 'admin_ip_denied', req.originalUrl, ip);
+    return res.status(404).render('errors/error', { code: 404, message: 'Không tìm thấy trang' });
+  }
+  const last = req.session.adminLastSeen || 0;
+  if (last && Date.now() - last > ADMIN_IDLE_MS) {
+    return req.session.regenerate(() => { req.flash('error', 'Phiên quản trị đã hết hạn, vui lòng đăng nhập lại'); res.redirect('/login'); });
+  }
+  req.session.adminLastSeen = Date.now();
+  req.perm = role;
+  next();
+}
+
 // ---------- Flash message đơn giản ----------
 function flash(req, res, next) {
   req.flash = (type, msg) => {
@@ -202,5 +221,5 @@ function flash(req, res, next) {
 }
 
 module.exports = {
-  csrf, verifyCsrf, ipBlock, blockIp, unblockIp, limiters, honeypot, loadUser, requireLogin, requireAdmin, flash,
+  csrf, verifyCsrf, ipBlock, blockIp, unblockIp, limiters, honeypot, loadUser, requireLogin, requireAdmin, requireStaff, flash,
 };

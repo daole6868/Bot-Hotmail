@@ -67,6 +67,7 @@
           <button class="btn btn-sm btn-ghost top-user" data-toggle="#userMenu"><%- I('user') %> <span class="top-uname"><%= U.username %></span> <%- I('caret-down') %></button>
           <div class="dropdown-menu" id="userMenu">
             <% if (U.role === 'admin') { %><a href="/admin"><%- I('gear') %> Trang quản trị</a><% } %>
+            <% if ((user.ctv_role || user.staff) && !user.ctv_paused && user.role !== 'admin') { %><a href="/admin"><b>Trang cộng tác viên</b></a><% } %>
             <a href="/user">Tài khoản</a>
             <a href="/user/orders">Lịch sử mua</a>
             <a href="/user/boost">Đơn cày thuê</a>

@@ -1,0 +1,44 @@
+<%- include('_header') %>
+<div class="a-ctv-top">
+  <div class="a-chat-tabs a-ctv-tabs">
+    <a href="/admin/ctv" class="<%= !tab ? 'on' : '' %>">Tất cả</a>
+    <a href="/admin/ctv?tab=manager" class="<%= tab === 'manager' ? 'on' : '' %>">Quản lý <i><%= counts.manager || 0 %></i></a>
+    <a href="/admin/ctv?tab=seller" class="<%= tab === 'seller' ? 'on' : '' %>">Bán hàng <i><%= counts.seller || 0 %></i></a>
+    <a href="/admin/ctv?tab=support" class="<%= tab === 'support' ? 'on' : '' %>">CSKH <i><%= counts.support || 0 %></i></a>
+  </div>
+  <a href="/admin/ctv/withdrawals" class="a-btn <%= pendingWd ? 'a-primary' : 'a-soft' %>"><%- I('money') %> Lệnh rút tiền<% if (pendingWd) { %> <span class="a-badge"><%= pendingWd %></span><% } %></a>
+</div>
+
+<div class="a-card">
+  <h3><%- I('plus') %> Thêm CTV</h3>
+  <form method="post" action="/admin/ctv/add" class="a-form a-ctv-add">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="user" required maxlength="120" placeholder="Tên đăng nhập hoặc email của tài khoản">
+    <select name="role">
+      <option value="seller">Bán hàng</option>
+      <option value="support">CSKH (chat)</option>
+      <% if (perm === 'admin') { %><option value="manager">Quản lý</option><% } %>
+    </select>
+    <div class="a-ctv-rate"><input type="number" name="rate" min="0" max="100" value="20"><span>% hoa hồng shop</span></div>
+    <button class="a-btn a-primary"><%- I('plus') %> Thêm</button>
+  </form>
+</div>
+
+<div class="a-card a-card-flush">
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>CTV</th><th>Vai trò</th><th>Quyền bán</th><th>Hoa hồng shop</th><th>Đã nhận</th><th>Số dư</th><th></th></tr></thead>
+    <% if (!list.length) { %><tr><td colspan="7" class="a-empty">Chưa có CTV.</td></tr><% } %>
+    <% list.forEach(u => { %>
+      <tr class="<%= u.ctv_paused ? 'a-row-off' : '' %>">
+        <td><b><%= u.username %></b><div class="a-muted a-small"><%= u.email || '' %></div></td>
+        <td><span class="a-tag <%= u.ctv_role === 'manager' ? 'red' : u.ctv_role === 'seller' ? 'blue' : 'green' %>"><%= u.role %></span><% if (u.ctv_role && u.staff) { %> <span class="a-tag green">CSKH</span><% } %><% if (u.ctv_paused) { %> <span class="a-tag">Tạm dừng</span><% } %></td>
+        <td class="a-small"><%= u.ctv_role === 'seller' ? (u.grants.join(', ') || 'Chưa cấp') : '—' %></td>
+        <td><%= u.ctv_role === 'seller' ? u.ctv_rate + '%' : '—' %></td>
+        <td><%= H.money(u.earned) %></td>
+        <td><b><%= H.money(u.ctv_balance) %></b><% if (u.pending) { %><div class="a-small a-text-warn"><%= u.pending %> lệnh rút chờ</div><% } %></td>
+        <td><a class="a-btn a-xs" href="/admin/ctv/<%= u.id %>">Chi tiết</a></td>
+      </tr>
+    <% }) %>
+  </table></div>
+</div>
+<%- include('_footer') %>

@@ -1,0 +1,43 @@
+<%- include('_header') %>
+<div class="a-stats a-stats-3">
+  <a href="/admin/me/wallet" class="a-card a-stat"><span>Số dư có thể rút</span><b><%= H.money(u.ctv_balance) %></b><small><%= pending ? 'Đang chờ rút ' + H.money(pending) : 'Bấm để rút tiền' %></small></a>
+  <% if (kinds.length) { %>
+    <% const sum = (k, f) => kinds.reduce((a, t) => a + stats[t][k][f], 0); %>
+    <div class="a-card a-stat"><span>Bạn nhận hôm nay</span><b><%= H.money(sum('today', 'earn')) %></b><small><%= sum('today', 'n') %> đơn · 30 ngày <%= H.money(sum('d30', 'earn')) %></small></div>
+    <div class="a-card a-stat"><span>Hoa hồng shop</span><b><%= u.ctv_rate %>%</b><small>Bạn nhận <%= 100 - u.ctv_rate %>% giá bán</small></div>
+  <% } else { %>
+    <div class="a-card a-stat"><span>Vai trò</span><b><%= role %></b><small><%= u.username %></small></div>
+  <% } %>
+</div>
+
+<% const oBase = kinds.includes('boost') ? '/admin/boost/orders' : '/admin/boost/topup-orders'; %>
+<% if (open) { %>
+<div class="a-ctv-todo">
+  <a href="<%= oBase %>?status=received" class="a-card a-stat <%= open.waiting ? 'warn' : '' %>"><span>Đơn chờ nhận</span><b><%= open.waiting || 0 %></b><small>Đổi trạng thái để nhận đơn</small></a>
+  <a href="<%= oBase %>?status=open" class="a-card a-stat"><span>Đơn bạn đang làm</span><b><%= open.mine || 0 %></b><small>Chuyển "Đã xong" để được cộng tiền</small></a>
+  <% if (products) { %><a href="/admin/vip" class="a-card a-stat"><span>Acc đang bán</span><b><%= products.on_sale || 0 %></b><small>Đã bán <%= products.sold || 0 %></small></a><% } %>
+</div>
+<% } else if (products) { %>
+<div class="a-ctv-todo"><a href="/admin/vip" class="a-card a-stat"><span>Acc đang bán</span><b><%= products.on_sale || 0 %></b><small>Đã bán <%= products.sold || 0 %></small></a></div>
+<% } %>
+
+<% if (kinds.length) { %>
+<div class="a-card a-card-flush">
+  <h3 class="a-pad"><%- I('chart') %> Doanh thu của bạn</h3>
+  <div class="a-table-wrap"><table class="a-table a-rev">
+    <thead><tr><th>Bạn nhận</th><th>Hôm nay</th><th>7 ngày</th><th>30 ngày</th><th>Tất cả</th></tr></thead>
+    <% kinds.forEach(k => { %>
+      <tr><th><%= KIND_NAME[k] %></th><% ['today', 'd7', 'd30', 'all'].forEach(r => { const x = stats[k][r]; %><td><b><%= H.money(x.earn) %></b><small><%= x.n %> đơn · giá bán <%= H.money(x.sold) %></small></td><% }) %></tr>
+    <% }) %>
+  </table></div>
+</div>
+<% } %>
+
+<div class="a-card a-card-flush">
+  <h3 class="a-pad"><%- I('list') %> Biến động gần đây <a href="/admin/me/wallet" class="a-small">Xem tất cả</a></h3>
+  <div class="a-table-wrap"><table class="a-table">
+    <% if (!ledger.length) { %><tr><td class="a-empty">Chưa có</td></tr><% } %>
+    <% ledger.forEach(l => { %><tr><td class="a-small a-muted"><%= H.fmtDate(l.created_at) %></td><td><%= LEDGER_NAME[l.type] || l.type %><div class="a-small a-muted"><%= l.ref || '' %> <%= l.note || '' %></div></td><td class="<%= l.amount > 0 ? 'a-text-ok' : 'a-text-err' %>"><b><%= l.amount > 0 ? '+' : '' %><%= H.money(l.amount) %></b></td><td><%= H.money(l.balance_after) %></td></tr><% }) %>
+  </table></div>
+</div>
+<%- include('_footer') %>

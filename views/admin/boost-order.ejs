@@ -4,7 +4,13 @@
   <div class="a-card">
     <h3>Đơn <%= o.code %> <span class="a-tag <%= st.tone %>"><%= st.label %></span></h3>
     <table class="a-table a-kv">
-      <tr><th>Khách hàng</th><td><a href="/admin/users/<%= o.user_id %>"><%= o.username %></a> <%= o.email ? '(' + o.email + ')' : '' %></td></tr>
+      <tr><th>Khách hàng</th><td><% if (perm === 'seller') { %><%= o.username %><% } else { %><a href="/admin/users/<%= o.user_id %>"><%= o.username %></a> <%= o.email ? '(' + o.email + ')' : '' %><% } %></td></tr>
+      <tr><th>CTV thực hiện</th><td><%= o.ctv_name ? o.ctv_name : (o.status === 'received' ? 'Chưa có người nhận' : 'Shop tự xử lý') %>
+        <% if (perm !== 'seller' && sellers.length) { %>
+          <form method="post" action="/admin/boost/orders/<%= o.id %>/assign" class="a-inline-form"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <select name="ctv_id"><option value="">— Chưa ai nhận —</option><% sellers.forEach(c => { %><option value="<%= c.id %>" <%= o.ctv_id === c.id ? 'selected' : '' %>><%= c.username %></option><% }) %></select>
+            <button class="a-btn a-xs">Giao</button></form>
+        <% } %></td></tr>
       <tr><th>Liên hệ</th><td><b><%= o.contact || '—' %></b></td></tr>
       <tr><th>Game</th><td><%= o.game_name %></td></tr>
       <tr><th>Tạm tính</th><td><%= H.money(o.subtotal) %></td></tr>
@@ -12,7 +18,7 @@
       <tr><th>Thanh toán</th><td><b><%= H.money(o.total) %></b><%= o.refunded ? ' · đã hoàn tiền' : '' %></td></tr>
       <tr><th>Server</th><td><%= o.server || '—' %></td></tr>
       <tr><th>Ghi chú của khách</th><td class="a-prewrap"><%= o.note || '—' %></td></tr>
-      <tr><th>IP đặt</th><td><%= o.ip %></td></tr>
+      <% if (perm !== 'seller') { %><tr><th>IP đặt</th><td><%= o.ip %></td></tr><% } %>
       <tr><th>Đặt lúc</th><td><%= H.fmtDate(o.created_at) %></td></tr>
     </table>
 

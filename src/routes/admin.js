@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { db, getSettings, setSetting, logActivity, vnDay } = require('../db');
-const { requireAdmin, verifyCsrf, blockIp, unblockIp } = require('../middleware/security');
+const { requireStaff, verifyCsrf, blockIp, unblockIp } = require('../middleware/security');
 const { upload, saveImage, removeImage, optimizeUploads } = require('../utils/upload');
 const { encrypt, decrypt, sha256, randomCode } = require('../utils/crypto');
 const H = require('../utils/helpers');
@@ -20,16 +20,40 @@ const config = require('../config');
 const { paginate, toInt, str, bool, clientIp } = H;
 const router = express.Router();
 
-router.use(requireAdmin);
+// ---------- Phân quyền: admin / CTV quản lý / CTV bán hàng / CSKH ----------
+// Quản lý: mọi trang trừ nhóm Giao diện & Hệ thống. Bán hàng: chỉ sản phẩm / cày thuê / nạp game được cấp + ví.
+// CSKH: chỉ ví (trang chat ở /admin/chat).
+const MANAGER_BLOCK = ['/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
+const SELLER_ALLOW = [
+  /^\/(vip|reroll)$/, /^\/products\/(rows|form|save|bulk|import-form|import)$/, /^\/products\/\d+\/(edit|duplicate|delete|stock|toggle)$/, /^\/stock\/\d+\/delete$/,
+  /^\/boost(\/(c\/\d+|topup(\/\d+)?|orders(\/\d+(\/(login|status|note))?)?|topup-orders|categories\/(form|save|\d+(\/delete)?)|packages\/(form|save|\d+\/(pause|delete))))?$/,
+  /^\/(boost-categories|boost-packages)\/\d+\/toggle$/,
+];
+const denied = (res) => res.status(403).render('errors/error', { code: 403, message: 'Bạn không có quyền vào trang này' });
+const ctvSvc = require('../services/ctv');
+router.use(requireStaff);
+router.use((req, res, next) => {
+  const p = req.path;
+  if (req.perm === 'admin') return next();
+  if (p === '/me' || p.startsWith('/me/')) return next(); // ví & tổng quan của chính CTV
+  if (req.perm === 'manager') return MANAGER_BLOCK.some((x) => p === x || p.startsWith(x + '/')) ? denied(res) : next();
+  if (p === '/') return res.redirect(req.perm === 'support' ? '/admin/chat' : '/admin/me');
+  if (req.perm === 'seller' && SELLER_ALLOW.some((re) => re.test(p))) return next();
+  return denied(res);
+});
 router.use((req, res, next) => {
   res.locals.layoutAdmin = true;
   res.locals.path = req.path;
+  res.locals.perm = req.perm;
+  if (req.perm === 'seller') res.locals.ctvTypes = ctvSvc.allowedTypes(req.user.id);
+  if (req.perm === 'seller' || req.perm === 'support') { res.locals.adminBadges = {}; return next(); }
   res.locals.adminBadges = {
     deposits: db.prepare("SELECT COUNT(*) c FROM deposits WHERE status = 'pending'").get().c,
     ...Object.fromEntries(['boost', 'topup'].map((k) => [k, 0])),
     ...Object.fromEntries(db.prepare("SELECT kind, COUNT(*) c FROM boost_orders WHERE status = 'received' GROUP BY kind").all().map((r) => [r.kind, r.c])),
     bank: db.prepare("SELECT COUNT(*) c FROM bank_transactions WHERE status = 'unmatched'").get().c,
     chat: db.prepare('SELECT COUNT(*) c FROM chat_convs WHERE unread_admin > 0 AND blocked = 0').get().c,
+    ctv: db.prepare("SELECT COUNT(*) c FROM ctv_withdrawals WHERE status = 'pending'").get().c,
   };
   next();
 });
@@ -67,37 +91,40 @@ const back = (req, res, type, msg, url) => { if (msg) req.flash(type, msg); res.
 router.get('/', (req, res) => {
   const days = [];
   for (let i = 29; i >= 0; i--) days.push(vnDay(Date.now() - i * 86400000));
+  const dayStart = (ago) => Math.floor((Date.now() + 7 * 3600e3) / 86400e3 - ago) * 86400 - 7 * 3600;
+  const ranges = { today: dayStart(0), d7: dayStart(6), d30: dayStart(29), all: 0 };
+  // Doanh thu = tiền khách trả (đã trừ mã giảm giá, không tính đơn hoàn / hủy). Trả CTV = phần CTV nhận. Lãi shop = doanh thu − trả CTV
+  const KINDS = [['vip', 'Acc VIP'], ['reroll', 'Reroll'], ['boost', 'Cày thuê'], ['topup', 'Nạp game']];
+  const rev = {};
+  for (const [r, from] of Object.entries(ranges)) {
+    const rows = db.prepare("SELECT kind, COUNT(*) n, COALESCE(SUM(amount), 0) amount, COALESCE(SUM(ctv_amount), 0) ctv FROM sales WHERE status = 'ok' AND created_at >= ? GROUP BY kind").all(from);
+    const by = Object.fromEntries(rows.map((x) => [x.kind, x]));
+    rev[r] = Object.fromEntries(KINDS.map(([k]) => [k, by[k] || { n: 0, amount: 0, ctv: 0 }]));
+    rev[r].total = KINDS.reduce((acc, [k]) => ({ n: acc.n + rev[r][k].n, amount: acc.amount + rev[r][k].amount, ctv: acc.ctv + rev[r][k].ctv }), { n: 0, amount: 0, ctv: 0 });
+  }
   const statRows = db.prepare('SELECT * FROM daily_stats WHERE day >= ?').all(days[0]);
   const map = Object.fromEntries(statRows.map((r) => [r.day, r]));
-  const series = days.map((d) => ({ day: d, ...(map[d] || { revenue: 0, orders: 0, deposits: 0, new_users: 0, refunds: 0 }) }));
-  const sum = (arr, k) => arr.reduce((a, b) => a + (b[k] || 0), 0);
-  const today = series[series.length - 1];
-  const last7 = series.slice(-7);
-  const totals = db.prepare('SELECT COALESCE(SUM(revenue),0) revenue, COALESCE(SUM(deposits),0) deposits, COALESCE(SUM(orders),0) orders, COALESCE(SUM(boost_revenue),0) boost, COALESCE(SUM(topup_revenue),0) topup FROM daily_stats').get();
-  const boostStats = {
-    today: today.boost_revenue || 0, todayOrders: today.boost_orders || 0, month: sum(series, 'boost_revenue'), monthOrders: sum(series, 'boost_orders'), total: totals.boost,
-    open: db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE kind = 'boost' AND status IN ('received','processing','need_info')").get().c,
-  };
-  const topupStats = {
-    today: today.topup_revenue || 0, todayOrders: today.topup_orders || 0, month: sum(series, 'topup_revenue'), monthOrders: sum(series, 'topup_orders'), total: totals.topup,
-    open: db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE kind = 'topup' AND status IN ('received','processing','need_info')").get().c,
-  };
-
+  const revDay = Object.fromEntries(db.prepare("SELECT date(created_at, 'unixepoch', '+7 hours') d, SUM(amount) a FROM sales WHERE status = 'ok' AND created_at >= ? GROUP BY d").all(ranges.d30).map((r) => [r.d, r.a]));
+  const series = days.map((d) => ({ day: d, revenue: revDay[d] || 0, deposits: map[d]?.deposits || 0, new_users: map[d]?.new_users || 0 }));
+  const sum = (k) => series.reduce((a, x) => a + (x[k] || 0), 0);
+  const today = map[days[29]] || {};
+  const open = (kind) => db.prepare("SELECT COUNT(*) c FROM boost_orders WHERE kind = ? AND status IN ('received','processing','need_info')").get(kind).c;
+  const lowStock = db.prepare(`SELECT p.id, p.title, (SELECT COUNT(*) FROM product_stock s WHERE s.product_id = p.id AND s.is_sold = 0) AS left_count
+      FROM products p WHERE p.type = 'stock' AND p.status = 'available' AND left_count < 3 ORDER BY left_count LIMIT 10`).all();
   res.render('admin/dashboard', {
-    title: 'Tổng quan',
-    today, series,
-    week: { revenue: sum(last7, 'revenue'), orders: sum(last7, 'orders'), deposits: sum(last7, 'deposits') },
-    month: { revenue: sum(series, 'revenue'), orders: sum(series, 'orders'), deposits: sum(series, 'deposits'), users: sum(series, 'new_users') },
-    totals, boostStats, topupStats,
-    counts: {
-      users: db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'user'").get().c,
-      balance: db.prepare('SELECT COALESCE(SUM(balance),0) c FROM users').get().c,
-      available: db.prepare("SELECT COUNT(*) c FROM products WHERE status = 'available'").get().c,
-      sold: db.prepare("SELECT COUNT(*) c FROM products WHERE status = 'sold'").get().c,
-      games: db.prepare('SELECT COUNT(*) c FROM games').get().c,
+    title: 'Tổng quan', series, rev, KINDS,
+    money: {
+      depToday: today.deposits || 0, depTodayN: today.deposit_count || 0, dep30: sum('deposits'),
+      depAll: db.prepare('SELECT COALESCE(SUM(deposits), 0) s FROM daily_stats').get().s,
+      balance: db.prepare('SELECT COALESCE(SUM(balance), 0) c FROM users').get().c,
+      ctvBalance: db.prepare('SELECT COALESCE(SUM(ctv_balance), 0) c FROM users').get().c,
+      users: db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'user'").get().c, newUsers: sum('new_users'),
     },
-    lowStock: db.prepare(`SELECT p.id, p.title, (SELECT COUNT(*) FROM product_stock s WHERE s.product_id = p.id AND s.is_sold = 0) AS left_count
-      FROM products p WHERE p.type = 'stock' AND p.status = 'available' AND left_count < 3 ORDER BY left_count LIMIT 10`).all(),
+    todo: {
+      boost: open('boost'), topup: open('topup'), lowStock: lowStock.length,
+      products: db.prepare("SELECT COUNT(*) c FROM products WHERE status = 'available'").get().c,
+    },
+    lowStock,
     recentOrders: db.prepare('SELECT o.*, u.username FROM orders o JOIN users u ON u.id = o.user_id ORDER BY o.id DESC LIMIT 8').all(),
     pendingDeposits: db.prepare("SELECT d.*, u.username FROM deposits d JOIN users u ON u.id = d.user_id WHERE d.status = 'pending' ORDER BY d.id DESC LIMIT 8").all(),
   });
@@ -176,6 +203,12 @@ for (const kind of Object.keys(SORTABLE)) {
     back(req, res, ok ? 'success' : 'error', ok ? null : 'Không thể di chuyển');
   });
   router.post(`/${kind}/:id/toggle`, (req, res) => {
+    if (req.perm === 'seller') {
+      const id = toInt(req.params.id);
+      const ok = kind === 'products' ? ownsProduct(req, db.prepare('SELECT owner_id, category_id FROM products WHERE id = ?').get(id))
+        : ctvSvc.canCat(req.user.id, db.prepare(kind === 'boost-categories' ? 'SELECT parent_id p FROM boost_categories WHERE id = ?' : 'SELECT bc.parent_id p FROM boost_packages x JOIN boost_categories bc ON bc.id = x.category_id WHERE x.id = ?').get(id)?.p, ['boost', 'topup']);
+      if (!ok) return res.status(403).json({ ok: false, message: 'Không có quyền' });
+    }
     const r = toggleItem(kind, toInt(req.params.id));
     if (r.ok) audit(req, `${kind}_toggle`, `${req.params.id} -> ${r.active ? 'hiện' : 'ẩn'}`);
     if (req.get('x-csrf-token')) return res.json(r);
@@ -186,6 +219,7 @@ for (const kind of Object.keys(SORTABLE)) {
 // Cày thuê: danh mục, gói, đơn, cài đặt
 router.use('/boost', require('./admin-boost'));
 router.use('/api', require('./admin-api')); // Kết nối API: Telegram, AI
+router.use('/', require('./admin-ctv').router); // Quản lý CTV + trang của CTV (/admin/me)
 router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google
 
 // Nội dung form trong modal (trả về HTML không có layout)
@@ -354,8 +388,13 @@ router.post('/categories/:id/delete', (req, res) => {
 });
 
 // ======================= SẢN PHẨM (CẤP 3) =======================
-function categoryOptions() {
-  return db.prepare("SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type IN ('vip','reroll') ORDER BY g.sort_order, c.sort_order, c.id").all();
+// CTV bán hàng: chỉ danh mục được cấp và chỉ sản phẩm do chính mình đăng
+const sellerCats = (req, types = ['vip', 'reroll']) => (req.perm === 'seller' ? ctvSvc.allowedCats(req.user.id, types) : null);
+const ownsProduct = (req, p) => !!p && (req.perm !== 'seller' || (p.owner_id === req.user.id && ctvSvc.canCat(req.user.id, p.category_id, ['vip', 'reroll'])));
+const inList = (ids) => (ids.length ? ids.join(',') : '0'); // id là số nguyên lấy từ DB
+function categoryOptions(req) {
+  const cats = req ? sellerCats(req) : null;
+  return db.prepare(`SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type IN ('vip','reroll')${cats ? ` AND c.id IN (${inList(cats)})` : ''} ORDER BY g.sort_order, c.sort_order, c.id`).all();
 }
 
 const PRODUCT_ROW_SELECT = `p.id, p.code, p.title, p.type, p.price, p.old_price, p.images, p.status, p.views, p.sold_count, p.is_featured,
@@ -385,6 +424,8 @@ router.get(['/vip', '/reroll'], (req, res) => {
   const page = PRODUCT_PAGES[type];
   const f = productFilter(req);
   const query = { q: f.q, status: f.status };
+  const mine = sellerCats(req);
+  if (mine) { f.where.push(`p.owner_id = ? AND p.category_id IN (${inList(mine)})`); f.params.push(req.user.id); }
   if (f.q) {
     const result = paginate(db, {
       select: PRODUCT_ROW_SELECT,
@@ -394,17 +435,19 @@ router.get(['/vip', '/reroll'], (req, res) => {
     });
     return res.render('admin/products', { title: page.title, query, result, games: null, saleType: type, base: page.base });
   }
-  const statusSql = f.status ? ' AND p.status = ?' : " AND p.status != 'sold'";
+  const own = mine ? ' AND p.owner_id = ' + Number(req.user.id) : '';
+  const statusSql = (f.status ? ' AND p.status = ?' : " AND p.status != 'sold'") + own;
   const sp = f.status ? [f.status] : [];
-  const games = db.prepare('SELECT id, name, image, color FROM games ORDER BY sort_order, id').all();
+  let games = db.prepare('SELECT id, name, image, color FROM games ORDER BY sort_order, id').all();
   const cats = db.prepare(`SELECT c.id, c.game_id, c.name, c.image, c.sale_type,
       (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id${statusSql}) AS product_count,
-      (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available') AS min_price
-    FROM categories c WHERE c.sale_type = ? ORDER BY c.sort_order, c.id`).all(...sp, type);
+      (SELECT MIN(price) FROM products p WHERE p.category_id = c.id AND p.status = 'available'${own}) AS min_price
+    FROM categories c WHERE c.sale_type = ?${mine ? ` AND c.id IN (${inList(mine)})` : ''} ORDER BY c.sort_order, c.id`).all(...sp, type);
   games.forEach((g) => {
     g.cats = cats.filter((c) => c.game_id === g.id);
     g.product_count = g.cats.reduce((a, c) => a + c.product_count, 0);
   });
+  if (mine) games = games.filter((g) => g.cats.length);
   res.render('admin/products', { title: page.title, query, result: null, games, saleType: type, base: page.base });
 });
 
@@ -412,13 +455,18 @@ router.get(['/vip', '/reroll'], (req, res) => {
 router.get('/products/rows', (req, res) => {
   const f = productFilter(req);
   const categoryId = toInt(req.query.category_id);
+  const mine = sellerCats(req);
+  if (mine) {
+    if (!mine.includes(categoryId)) return res.status(403).send('<p class="a-empty">Bạn không được bán ở danh mục này</p>');
+    f.where.push('p.owner_id = ?'); f.params.push(req.user.id);
+  }
   const result = paginate(db, {
     select: PRODUCT_ROW_SELECT,
     from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
     where: 'WHERE ' + ['p.category_id = ?', ...f.where].join(' AND '), params: [categoryId, ...f.params],
     order: 'ORDER BY p.sort_order, p.id DESC', page: toInt(req.query.page, 1, 1), perPage: 50,
   });
-  res.render('admin/partials/product-rows', { rows: result.rows, result, categoryId, showCategory: false, sortable: !f.status });
+  res.render('admin/partials/product-rows', { rows: result.rows, result, categoryId, showCategory: false, sortable: !f.status && req.perm !== 'seller' });
 });
 
 function loadProductForForm(id) {
@@ -456,6 +504,7 @@ router.get('/products/form', (req, res) => {
   const p = req.query.id ? loadProductForForm(toInt(req.query.id))
     : { status: 'available', attrList: [], imageList: [], category_id: toInt(req.query.category_id) };
   if (!p) return res.status(404).send('<p class="a-empty">Không tìm thấy sản phẩm</p>');
+  if (req.perm === 'seller' && (p.id ? !ownsProduct(req, p) : !sellerCats(req).includes(p.category_id))) return res.status(403).send('<p class="a-empty">Bạn không có quyền với sản phẩm / danh mục này</p>');
   const cat = categoryInfo(p.category_id);
   if (!cat) return res.status(404).send('<p class="a-empty">Không tìm thấy danh mục</p>');
   if (!p.id) p.type = cat.sale_type === 'reroll' ? 'stock' : 'account';
@@ -469,6 +518,7 @@ router.get('/products/new', (req, res) => res.redirect('/admin/products'));
 router.get('/products/:id/edit', (req, res, next) => {
   const p = loadProductForForm(toInt(req.params.id));
   if (!p) return next();
+  if (!ownsProduct(req, p)) return denied(res);
   let stock = null;
   if (p.type === 'stock') {
     stock = paginate(db, {
@@ -478,7 +528,7 @@ router.get('/products/:id/edit', (req, res, next) => {
     stock.rows.forEach((s) => { s.data = decrypt(s.data_enc); });
     stock.left = p.stockLeft;
   }
-  res.render('admin/product-form', { title: 'Sửa sản phẩm', p, categories: categoryOptions(), stock, query: {} });
+  res.render('admin/product-form', { title: 'Sửa sản phẩm', p, categories: categoryOptions(req), stock, query: {} });
 });
 
 function parseAttrs(body) {
@@ -504,6 +554,7 @@ router.post('/products/save', (req, res) => {
   if (!title || price < 0 || !db.prepare("SELECT 1 FROM categories WHERE id = ? AND sale_type IN ('vip','reroll')").get(categoryId)) {
     return back(req, res, 'error', 'Vui lòng nhập tên, giá và chọn danh mục');
   }
+  if (req.perm === 'seller' && ((old && !ownsProduct(req, old)) || !sellerCats(req).includes(categoryId))) return back(req, res, 'error', 'Bạn không có quyền với sản phẩm / danh mục này');
   const cat = categoryInfo(categoryId);
   // Loại sản phẩm do loại danh mục quyết định: VIP -> acc bán 1 lần, Reroll -> kho nhiều acc
   const type = old ? old.type : (cat.sale_type === 'reroll' ? 'stock' : 'account');
@@ -549,8 +600,8 @@ router.post('/products/save', (req, res) => {
     db.prepare(`UPDATE products SET category_id=?, code=?, title=?, price=?, old_price=?, images=?, attributes=?, description=?,
       credentials_enc=?, status=?, is_featured=?, updated_at=unixepoch() WHERE id=?`).run(...data, id);
   } else {
-    pid = db.prepare(`INSERT INTO products(category_id, code, title, price, old_price, images, attributes, description, credentials_enc, status, is_featured, type)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(...data, type).lastInsertRowid;
+    pid = db.prepare(`INSERT INTO products(category_id, code, title, price, old_price, images, attributes, description, credentials_enc, status, is_featured, type, owner_id)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(...data, type, req.perm === 'seller' ? req.user.id : null).lastInsertRowid;
   }
   let msg = old ? 'Đã cập nhật sản phẩm' : 'Đã thêm sản phẩm';
   if (type === 'stock' && req.body.stock_lines) {
@@ -563,18 +614,18 @@ router.post('/products/save', (req, res) => {
 
 router.post('/products/:id/duplicate', (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(toInt(req.params.id));
-  if (!p) return back(req, res, 'error', 'Không tìm thấy');
+  if (!ownsProduct(req, p)) return back(req, res, 'error', 'Không tìm thấy');
   // Bản sao ở trạng thái ẩn, không sao chép thông tin đăng nhập / kho mã (tránh bán trùng 1 acc)
-  db.prepare(`INSERT INTO products(category_id, code, title, type, price, old_price, images, attributes, description, status, sort_order)
-    VALUES(?,?,?,?,?,?,?,?,?,'hidden',?)`).run(p.category_id, randomCode(8), p.title + ' (bản sao)', p.type, p.price, p.old_price,
-    '[]', p.attributes, p.description, p.sort_order);
+  db.prepare(`INSERT INTO products(category_id, code, title, type, price, old_price, images, attributes, description, status, sort_order, owner_id)
+    VALUES(?,?,?,?,?,?,?,?,?,'hidden',?,?)`).run(p.category_id, randomCode(8), p.title + ' (bản sao)', p.type, p.price, p.old_price,
+    '[]', p.attributes, p.description, p.sort_order, p.owner_id);
   audit(req, 'product_duplicate', p.code);
   back(req, res, 'success', 'Đã nhân bản (đang ẩn). Hãy sửa, thêm ảnh và thông tin đăng nhập rồi bật hiển thị.');
 });
 
 router.post('/products/:id/delete', (req, res) => {
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(toInt(req.params.id));
-  if (!p) return back(req, res, 'error', 'Không tìm thấy');
+  if (!ownsProduct(req, p)) return back(req, res, 'error', 'Không tìm thấy');
   if (p.status === 'sold' || p.sold_count > 0) return back(req, res, 'error', 'Sản phẩm đã có đơn bán, hãy tắt hiển thị thay vì xóa');
   H.parseJSON(p.images, []).forEach(removeImage);
   db.prepare('DELETE FROM products WHERE id = ?').run(p.id);
@@ -583,21 +634,26 @@ router.post('/products/:id/delete', (req, res) => {
 });
 
 router.post('/products/:id/stock', (req, res) => {
-  const p = db.prepare("SELECT id, code FROM products WHERE id = ? AND type = 'stock'").get(toInt(req.params.id));
-  if (!p) return back(req, res, 'error', 'Không tìm thấy sản phẩm kho');
+  const p = db.prepare("SELECT id, code, owner_id, category_id FROM products WHERE id = ? AND type = 'stock'").get(toInt(req.params.id));
+  if (!ownsProduct(req, p)) return back(req, res, 'error', 'Không tìm thấy sản phẩm kho');
   const r = addStockLines(p.id, req.body.stock_lines);
   audit(req, 'stock_import', `${p.code} +${r.added}`);
   back(req, res, 'success', `Đã thêm ${r.added} mã${r.dup ? `, bỏ qua ${r.dup} mã trùng` : ''}`);
 });
 
 router.post('/stock/:sid/delete', (req, res) => {
+  if (req.perm === 'seller' && !ownsProduct(req, db.prepare('SELECT p.owner_id, p.category_id FROM product_stock s JOIN products p ON p.id = s.product_id WHERE s.id = ?').get(toInt(req.params.sid)))) return back(req, res, 'error', 'Không tìm thấy');
   const r = db.prepare('DELETE FROM product_stock WHERE id = ? AND is_sold = 0').run(toInt(req.params.sid));
   back(req, res, r.changes ? 'success' : 'error', r.changes ? 'Đã xóa mã' : 'Không thể xóa mã đã bán');
 });
 
 router.post('/products/bulk', (req, res) => {
-  const ids = [].concat(req.body.ids || []).map((x) => toInt(x)).filter(Boolean).slice(0, 500);
+  let ids = [].concat(req.body.ids || []).map((x) => toInt(x)).filter(Boolean).slice(0, 500);
   const action = req.body.action;
+  if (req.perm === 'seller' && ids.length) {
+    ids = db.prepare(`SELECT id, owner_id, category_id FROM products WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids).filter((p) => ownsProduct(req, p)).map((p) => p.id);
+    if (action === 'feature' || action === 'unfeature') return back(req, res, 'error', 'Bạn không có quyền đặt sản phẩm nổi bật');
+  }
   if (!ids.length) return back(req, res, 'error', 'Chưa chọn sản phẩm');
   const ph = ids.map(() => '?').join(',');
   let n = 0;
@@ -617,17 +673,17 @@ router.post('/products/bulk', (req, res) => {
 // Nhập nhiều acc cùng lúc vào 1 danh mục: mỗi dòng "tên|giá|thông tin đăng nhập"
 router.get('/products/import-form', (req, res) => {
   const cat = categoryInfo(toInt(req.query.category_id));
-  if (!cat) return res.status(404).send('<p class="a-empty">Không tìm thấy danh mục</p>');
+  if (!cat || (req.perm === 'seller' && !sellerCats(req).includes(cat.id))) return res.status(404).send('<p class="a-empty">Không tìm thấy danh mục</p>');
   modal(res, 'import-form', { cat });
 });
 
 router.post('/products/import', (req, res) => {
   const categoryId = toInt(req.body.category_id);
   const icat = categoryInfo(categoryId);
-  if (!icat) return back(req, res, 'error', 'Không tìm thấy danh mục');
+  if (!icat || (req.perm === 'seller' && !sellerCats(req).includes(categoryId))) return back(req, res, 'error', 'Không tìm thấy danh mục');
   if (icat.sale_type !== 'vip') return back(req, res, 'error', 'Nhập nhiều acc chỉ dùng cho danh mục VIP. Với Reroll, hãy thêm acc vào kho của sản phẩm.');
   const lines = String(req.body.lines || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 2000);
-  const ins = db.prepare(`INSERT INTO products(category_id, code, title, price, credentials_enc, type) VALUES(?,?,?,?,?,'account')`);
+  const ins = db.prepare(`INSERT INTO products(category_id, code, title, price, credentials_enc, type, owner_id) VALUES(?,?,?,?,?,'account',${req.perm === 'seller' ? Number(req.user.id) : 'NULL'})`);
   let ok = 0, bad = 0;
   db.transaction(() => {
     for (const l of lines) {
@@ -788,6 +844,14 @@ router.get('/users/:id', (req, res, next) => {
     sameIp: u.register_ip ? db.prepare('SELECT id, username FROM users WHERE (register_ip = ? OR last_login_ip = ?) AND id != ? LIMIT 20').all(u.register_ip, u.register_ip, u.id) : [],
   });
 });
+
+// CTV quản lý không được thao tác lên tài khoản admin, quản lý khác hoặc chính mình (VD tự cộng tiền)
+const managerCantTouch = (req, id) => {
+  if (req.perm !== 'manager') return false;
+  const t = db.prepare('SELECT role, ctv_role FROM users WHERE id = ?').get(id);
+  return !t || t.role === 'admin' || t.ctv_role === 'manager' || id === req.user.id;
+};
+router.post(['/users/:id/balance', '/users/:id/ban', '/users/:id/reset-password', '/users/:id/unlock'], (req, res, next) => (managerCantTouch(req, toInt(req.params.id)) ? back(req, res, 'error', 'Bạn không có quyền thao tác trên tài khoản này') : next()));
 
 router.post('/users/:id/balance', (req, res) => {
   const id = toInt(req.params.id);

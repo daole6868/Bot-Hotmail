@@ -11,6 +11,7 @@ const { randomCode } = require('../utils/crypto');
 const { BOOST_ICONS } = require('../utils/icons');
 const H = require('../utils/helpers');
 const boost = require('../services/boost');
+const ctvSvc = require('../services/ctv');
 
 const { paginate, toInt, str, bool, clientIp } = H;
 const router = express.Router();
@@ -36,13 +37,20 @@ function imageFrom(req, old, folder) {
   return old?.image || null;
 }
 
+// CTV bán hàng: chỉ danh mục Cày thuê / Nạp game được cấp (các CTV cùng mục dùng chung danh mục con, gói)
+const scopeParents = (req) => (req.perm === 'seller' ? ctvSvc.allowedCats(req.user.id, ['boost', 'topup']) : null);
+const canParent = (req, pid) => req.perm !== 'seller' || scopeParents(req).includes(Number(pid));
+const noPerm = (req, res) => back(req, res, 'error', 'Bạn không có quyền ở danh mục này', '/admin/boost');
+const pkgParent = (pkgId) => db.prepare('SELECT bc.parent_id p FROM boost_packages x JOIN boost_categories bc ON bc.id = x.category_id WHERE x.id = ?').get(pkgId)?.p;
+const catParent = (catId) => db.prepare('SELECT parent_id p FROM boost_categories WHERE id = ?').get(catId)?.p;
+
 // ======================= DANH MỤC CON & GÓI =======================
 // Cày thuê = danh mục loại 'boost' trong Danh mục -> danh mục con (boost_categories.parent_id) -> gói
 const parentById = (id) => db.prepare("SELECT c.*, g.name AS game_name, g.slug AS game_slug FROM categories c JOIN games g ON g.id = c.game_id WHERE c.id = ? AND c.sale_type = 'boost'").get(id);
-function boostTree(parentId) {
+function boostTree(parentId, allowed = null) {
   const parents = db.prepare(`SELECT c.*, g.name AS game_name, g.image AS game_image, g.color AS game_color, g.id AS gid
     FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type = 'boost'${parentId ? ' AND c.id = ?' : ''}
-    ORDER BY g.sort_order, g.id, c.sort_order, c.id`).all(...(parentId ? [parentId] : []));
+    ORDER BY g.sort_order, g.id, c.sort_order, c.id`).all(...(parentId ? [parentId] : [])).filter((c) => !allowed || allowed.includes(c.id));
   const subs = db.prepare(`SELECT b.*,
       (SELECT COUNT(*) FROM boost_packages p WHERE p.category_id = b.id) AS pkg_count,
       (SELECT MIN(price) FROM boost_packages p WHERE p.category_id = b.id AND p.is_active = 1) AS min_price,
@@ -53,17 +61,20 @@ function boostTree(parentId) {
 }
 
 router.get('/', (req, res) => {
-  res.render('admin/boost', { title: 'Cày thuê', parents: boostTree(0), single: null, games: db.prepare('SELECT COUNT(*) n FROM games').get().n });
+  res.render('admin/boost', { title: 'Cày thuê', parents: boostTree(0, scopeParents(req)), single: null, games: db.prepare('SELECT COUNT(*) n FROM games').get().n });
 });
 router.get('/c/:id', (req, res, next) => {
   const parent = parentById(toInt(req.params.id));
   if (!parent) return next();
+  if (!canParent(req, parent.id)) return noPerm(req, res);
   res.render('admin/boost', { title: `${parent.game_name} › ${parent.name}`, parents: boostTree(parent.id), single: parent, games: 1 });
 });
 
 router.get('/categories/form', (req, res) => {
   const c = req.query.id ? db.prepare('SELECT * FROM boost_categories WHERE id = ?').get(toInt(req.query.id)) : null;
-  const parents = db.prepare("SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type = 'boost' ORDER BY g.sort_order, c.sort_order, c.id").all();
+  if (c && !canParent(req, c.parent_id)) return res.status(403).send('<p class="a-empty">Không có quyền</p>');
+  const sp = scopeParents(req);
+  const parents = db.prepare("SELECT c.id, c.name, g.name AS game_name FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type = 'boost' ORDER BY g.sort_order, c.sort_order, c.id").all().filter((x) => !sp || sp.includes(x.id));
   modal(res, 'boost-category-form', { c, parents, parentId: c ? c.parent_id : toInt(req.query.parent_id), icons: BOOST_ICONS });
 });
 
@@ -72,6 +83,7 @@ router.post('/categories/save', (req, res) => {
   const parent = parentById(toInt(req.body.parent_id));
   const name = str(req.body.name, 100);
   if (!name || !parent) return back(req, res, 'error', 'Thiếu tên hoặc danh mục Cày thuê');
+  if (!canParent(req, parent.id) || (id && !canParent(req, catParent(id)))) return noPerm(req, res);
   const gameId = parent.game_id;
   let slug = H.slugify(req.body.slug || name);
   if (db.prepare('SELECT id FROM boost_categories WHERE game_id = ? AND slug = ? AND id != ?').get(gameId, slug, id)) slug += '-' + randomCode(3).toLowerCase();
@@ -92,6 +104,7 @@ router.post('/categories/save', (req, res) => {
 router.post('/categories/:id/delete', (req, res) => {
   const c = db.prepare('SELECT * FROM boost_categories WHERE id = ?').get(toInt(req.params.id));
   if (!c) return back(req, res, 'error', 'Không tìm thấy');
+  if (!canParent(req, c.parent_id)) return noPerm(req, res);
   const used = db.prepare('SELECT COUNT(*) n FROM boost_order_items i JOIN boost_packages p ON p.id = i.package_id WHERE p.category_id = ?').get(c.id).n;
   if (used) return back(req, res, 'error', `Danh mục đã có ${used} lượt thuê. Hãy tắt hiển thị thay vì xóa.`, '/admin/boost/c/' + c.parent_id);
   const imgs = db.prepare('SELECT image FROM boost_packages WHERE category_id = ?').all(c.id);
@@ -107,6 +120,7 @@ router.get('/categories/:id', (req, res, next) => {
   const c = db.prepare(`SELECT c.*, g.name AS game_name, g.slug AS game_slug, pc.name AS parent_name, pc.slug AS parent_slug
     FROM boost_categories c JOIN games g ON g.id = c.game_id JOIN categories pc ON pc.id = c.parent_id WHERE c.id = ?`).get(toInt(req.params.id));
   if (!c) return next();
+  if (!canParent(req, c.parent_id)) return noPerm(req, res);
   if (topupParentById(c.parent_id)) return res.redirect('/admin/boost/topup/' + c.parent_id);
   const packages = db.prepare('SELECT * FROM boost_packages WHERE category_id = ? ORDER BY sort_order, id').all(c.id);
   res.render('admin/boost-packages', { title: `Gói – ${c.name}`, c, packages });
@@ -115,10 +129,10 @@ router.get('/categories/:id', (req, res, next) => {
 // ======================= NẠP GAME =======================
 // Danh mục loại 'topup' trong Danh mục -> gói (gói nằm trong 1 danh mục con ẩn, tự tạo khi cần)
 const topupParentById = (id) => db.prepare("SELECT c.*, g.name AS game_name, g.slug AS game_slug FROM categories c JOIN games g ON g.id = c.game_id WHERE c.id = ? AND c.sale_type = 'topup'").get(id);
-function topupTree(parentId) {
+function topupTree(parentId, allowed = null) {
   const parents = db.prepare(`SELECT c.*, g.name AS game_name, g.slug AS game_slug, g.image AS game_image, g.color AS game_color
     FROM categories c JOIN games g ON g.id = c.game_id WHERE c.sale_type = 'topup'${parentId ? ' AND c.id = ?' : ''}
-    ORDER BY g.sort_order, g.id, c.sort_order, c.id`).all(...(parentId ? [parentId] : []));
+    ORDER BY g.sort_order, g.id, c.sort_order, c.id`).all(...(parentId ? [parentId] : [])).filter((c) => !allowed || allowed.includes(c.id));
   const pkgs = db.prepare('SELECT * FROM boost_packages WHERE category_id = ? ORDER BY sort_order, id');
   parents.forEach((pc) => {
     pc.sub = boost.topupSub(pc);
@@ -128,18 +142,21 @@ function topupTree(parentId) {
   return parents;
 }
 router.get('/topup', (req, res) => {
-  res.render('admin/topup', { title: 'Nạp game', parents: topupTree(0), single: null });
+  res.render('admin/topup', { title: 'Nạp game', parents: topupTree(0, scopeParents(req)), single: null });
 });
 router.get('/topup/:id', (req, res, next) => {
   const parent = topupParentById(toInt(req.params.id));
   if (!parent) return next();
+  if (!canParent(req, parent.id)) return noPerm(req, res);
   res.render('admin/topup', { title: `${parent.game_name} › ${parent.name}`, parents: topupTree(parent.id), single: parent });
 });
 
 router.get('/packages/form', (req, res) => {
   const p = req.query.id ? db.prepare('SELECT * FROM boost_packages WHERE id = ?').get(toInt(req.query.id)) : null;
-  const categories = db.prepare(`SELECT c.id, c.name, g.name AS game_name, pc.name AS parent_name, pc.sale_type FROM boost_categories c JOIN games g ON g.id = c.game_id JOIN categories pc ON pc.id = c.parent_id
-    ORDER BY pc.sale_type, g.sort_order, pc.sort_order, c.sort_order, c.id`).all();
+  if (p && !canParent(req, pkgParent(p.id))) return res.status(403).send('<p class="a-empty">Không có quyền</p>');
+  const sp = scopeParents(req);
+  const categories = db.prepare(`SELECT c.id, c.name, c.parent_id, g.name AS game_name, pc.name AS parent_name, pc.sale_type FROM boost_categories c JOIN games g ON g.id = c.game_id JOIN categories pc ON pc.id = c.parent_id
+    ORDER BY pc.sale_type, g.sort_order, pc.sort_order, c.sort_order, c.id`).all().filter((x) => !sp || sp.includes(x.parent_id));
   modal(res, 'boost-package-form', { p, categories, catId: p ? p.category_id : toInt(req.query.category_id), icons: BOOST_ICONS });
 });
 
@@ -149,6 +166,7 @@ router.post('/packages/save', (req, res) => {
   const name = str(req.body.name, 150);
   const price = toInt(req.body.price, 0, 0);
   if (!name || !db.prepare('SELECT 1 FROM boost_categories WHERE id = ?').get(catId)) return back(req, res, 'error', 'Thiếu tên hoặc danh mục');
+  if (!canParent(req, catParent(catId)) || (id && !canParent(req, pkgParent(id)))) return noPerm(req, res);
   if (price < 1000) return back(req, res, 'error', 'Giá tối thiểu 1.000đ');
   const minQ = toInt(req.body.min_qty, 1, 1, 1000), maxQ = toInt(req.body.max_qty, 10, 1, 1000);
   if (maxQ < minQ) return back(req, res, 'error', 'Số lượng tối đa phải ≥ tối thiểu');
@@ -170,6 +188,7 @@ router.post('/packages/save', (req, res) => {
 
 router.post('/packages/:id/pause', (req, res) => {
   const id = toInt(req.params.id);
+  if (!canParent(req, pkgParent(id))) return req.get('x-csrf-token') ? res.status(403).json({ ok: false }) : noPerm(req, res);
   const r = db.prepare('UPDATE boost_packages SET is_paused = 1 - is_paused WHERE id = ?').run(id);
   const on = r.changes ? !!db.prepare('SELECT is_paused FROM boost_packages WHERE id = ?').get(id).is_paused : false;
   if (r.changes) audit(req, 'boost_pkg_pause', `${id} -> ${on ? 'tạm ngưng' : 'mở lại'}`);
@@ -180,6 +199,7 @@ router.post('/packages/:id/pause', (req, res) => {
 router.post('/packages/:id/delete', (req, res) => {
   const p = db.prepare('SELECT * FROM boost_packages WHERE id = ?').get(toInt(req.params.id));
   if (!p) return back(req, res, 'error', 'Không tìm thấy');
+  if (!canParent(req, pkgParent(p.id))) return noPerm(req, res);
   if (p.sold_count || db.prepare('SELECT 1 FROM boost_order_items WHERE package_id = ? LIMIT 1').get(p.id)) return back(req, res, 'error', 'Gói đã có người thuê. Hãy tắt hiển thị thay vì xóa.', '/admin/boost/categories/' + p.category_id);
   db.prepare('DELETE FROM boost_packages WHERE id = ?').run(p.id);
   removeImage(p.image);
@@ -188,9 +208,21 @@ router.post('/packages/:id/delete', (req, res) => {
 });
 
 // ======================= ĐƠN CÀY THUÊ / NẠP GAME =======================
+// CTV bán hàng thấy: đơn chưa ai nhận (Nhận đơn) trong danh mục được cấp + đơn mình đang / đã thực hiện
+function sellerOrderSql(req) {
+  if (req.perm !== 'seller') return null;
+  const ids = scopeParents(req);
+  return { sql: `o.parent_id IN (${ids.length ? ids.join(',') : '0'}) AND (o.ctv_id = ? OR (o.ctv_id IS NULL AND o.status = 'received'))`, params: [req.user.id] };
+}
+const canSeeOrder = (req, o) => {
+  if (req.perm !== 'seller') return true;
+  return !!o && scopeParents(req).includes(o.parent_id) && (o.ctv_id === req.user.id || (!o.ctv_id && o.status === 'received'));
+};
 function orderFilters(req, kind) {
   const q = { status: boost.STATUS[req.query.status] ? req.query.status : (req.query.status === 'open' ? 'open' : ''), q: str(req.query.q, 60), game: toInt(req.query.game, 0) };
   const where = ['o.kind = ?']; const params = [kind];
+  const so = sellerOrderSql(req);
+  if (so) { where.push(so.sql); params.push(...so.params); }
   if (q.status === 'open') where.push("o.status IN ('received','processing','need_info')");
   else if (q.status) { where.push('o.status = ?'); params.push(q.status); }
   if (q.game) { where.push('o.game_id = ?'); params.push(q.game); }
@@ -200,11 +232,12 @@ function orderFilters(req, kind) {
 const orderList = (kind) => (req, res) => {
   const f = orderFilters(req, kind);
   const result = paginate(db, {
-    select: 'o.id, o.code, o.game_name, o.total, o.status, o.created_at, o.updated_at, u.username, (SELECT GROUP_CONCAT(name || \' ×\' || qty, \', \') FROM boost_order_items i WHERE i.order_id = o.id) AS items',
-    from: 'boost_orders o LEFT JOIN users u ON u.id = o.user_id', where: f.where, params: f.params,
+    select: 'o.id, o.code, o.game_name, o.total, o.status, o.created_at, o.updated_at, o.ctv_id, u.username, cu.username AS ctv_name, (SELECT GROUP_CONCAT(name || \' ×\' || qty, \', \') FROM boost_order_items i WHERE i.order_id = o.id) AS items',
+    from: 'boost_orders o LEFT JOIN users u ON u.id = o.user_id LEFT JOIN users cu ON cu.id = o.ctv_id', where: f.where, params: f.params,
     order: 'ORDER BY o.id DESC', page: toInt(req.query.page, 1, 1), perPage: 30,
   });
-  const counts = Object.fromEntries(db.prepare('SELECT status, COUNT(*) n FROM boost_orders WHERE kind = ? GROUP BY status').all(kind).map((r) => [r.status, r.n]));
+  const so = sellerOrderSql(req);
+  const counts = Object.fromEntries(db.prepare(`SELECT status, COUNT(*) n FROM boost_orders o WHERE kind = ?${so ? ' AND ' + so.sql : ''} GROUP BY status`).all(kind, ...(so ? so.params : [])).map((r) => [r.status, r.n]));
   res.render('admin/boost-orders', {
     title: 'Đơn ' + boost.kindOf(kind).name.toLowerCase(), result, query: f.q, counts, STATUS: boost.statusMap(kind), kind,
     base: kind === 'topup' ? '/admin/boost/topup-orders' : '/admin/boost/orders',
@@ -214,22 +247,26 @@ const orderList = (kind) => (req, res) => {
 router.get('/orders', orderList('boost'));
 router.get('/topup-orders', orderList('topup'));
 
-const orderById = (id) => db.prepare('SELECT o.*, u.username, u.email, u.balance FROM boost_orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.id = ?').get(id);
+const orderById = (id) => db.prepare('SELECT o.*, u.username, u.email, u.balance, cu.username AS ctv_name FROM boost_orders o LEFT JOIN users u ON u.id = o.user_id LEFT JOIN users cu ON cu.id = o.ctv_id WHERE o.id = ?').get(id);
 router.get('/orders/:id', (req, res, next) => {
   const o = orderById(toInt(req.params.id));
   if (!o) return next();
+  if (!canSeeOrder(req, o)) return back(req, res, 'error', 'Đơn này đã có CTV khác nhận hoặc không thuộc danh mục của bạn', '/admin/boost/' + (o.kind === 'topup' ? 'topup-orders' : 'orders'));
+  if (req.perm === 'seller') { o.email = null; o.balance = null; } // CTV không xem email / số dư khách
   res.set('Cache-Control', 'no-store');
   res.render('admin/boost-order', {
     title: `Đơn ${boost.kindOf(o.kind).name.toLowerCase()} ${o.code}`, o, STATUS: boost.statusMap(o.kind),
     items: db.prepare('SELECT * FROM boost_order_items WHERE order_id = ? ORDER BY id').all(o.id),
     events: db.prepare('SELECT * FROM boost_order_events WHERE order_id = ? ORDER BY id DESC').all(o.id),
+    sellers: req.perm === 'seller' ? [] : db.prepare(`SELECT DISTINCT u.id, u.username FROM users u JOIN ctv_grants gr ON gr.user_id = u.id JOIN categories c ON c.game_id = gr.game_id AND (gr.category_id IS NULL OR gr.category_id = c.id)
+      WHERE u.ctv_role = 'seller' AND c.id = ? ORDER BY u.username`).all(o.parent_id || 0),
   });
 });
 
 // Xem tài khoản / mật khẩu game của khách (ghi nhật ký mỗi lần xem)
 router.post('/orders/:id/login', (req, res) => {
   const o = orderById(toInt(req.params.id));
-  if (!o) return res.json({ ok: false, message: 'Không tìm thấy đơn' });
+  if (!o || !canSeeOrder(req, o)) return res.json({ ok: false, message: 'Không tìm thấy đơn' });
   const l = boost.readLogin(o);
   if (!l) return res.json({ ok: false, message: o.login_wiped_at ? 'Thông tin đăng nhập đã được tự xóa' : 'Không có thông tin đăng nhập' });
   audit(req, 'boost_login_view', o.code);
@@ -241,6 +278,16 @@ router.post('/orders/:id/status', (req, res) => {
   const status = String(req.body.status || '');
   const msg = str(req.body.message, 1000);
   if (status === 'need_info' && !msg) return back(req, res, 'error', 'Hãy ghi rõ khách cần bổ sung thông tin gì', '/admin/boost/orders/' + id);
+  if (req.perm === 'seller') {
+    const cur = orderById(id);
+    if (!canSeeOrder(req, cur)) return back(req, res, 'error', 'Đơn này đã có CTV khác nhận', '/admin/boost/orders');
+    // CTV đổi trạng thái đầu tiên = người thực hiện đơn (CTV khác không thấy nữa)
+    if (!cur.ctv_id) {
+      const r0 = db.prepare('UPDATE boost_orders SET ctv_id = ? WHERE id = ? AND ctv_id IS NULL').run(req.user.id, id);
+      if (!r0.changes) return back(req, res, 'error', 'Đơn vừa được CTV khác nhận', '/admin/boost/orders');
+      audit(req, 'boost_claim', cur.code);
+    }
+  }
   // Ảnh xác nhận (ảnh chụp đã nạp / đã cày xong) -> khách xem trong đơn
   let proof = null;
   const f = fileOf(req, 'proof');
@@ -254,8 +301,22 @@ router.post('/orders/:id/status', (req, res) => {
   back(req, res, r.ok ? 'success' : 'error', r.ok ? (status === 'cancelled' ? 'Đã hủy đơn và hoàn tiền cho khách' : 'Đã cập nhật trạng thái, khách sẽ thấy ngay') : r.message, '/admin/boost/orders/' + id);
 });
 
+// Admin / quản lý: trả đơn về chưa ai nhận (để CTV khác nhận) hoặc giao cho 1 CTV
+router.post('/orders/:id/assign', (req, res) => {
+  const id = toInt(req.params.id);
+  if (req.perm === 'seller') return back(req, res, 'error', 'Không có quyền', '/admin/boost/orders');
+  const o = orderById(id); if (!o) return back(req, res, 'error', 'Không tìm thấy');
+  const to = toInt(req.body.ctv_id, 0) || null;
+  if (o.status === 'done' && o.ctv_id !== to) return back(req, res, 'error', 'Đơn đã xong (đã cộng tiền cho CTV), không đổi người thực hiện được', '/admin/boost/orders/' + id);
+  if (to && !db.prepare("SELECT 1 FROM users WHERE id = ? AND ctv_role = 'seller'").get(to)) return back(req, res, 'error', 'CTV không hợp lệ', '/admin/boost/orders/' + id);
+  db.prepare('UPDATE boost_orders SET ctv_id = ? WHERE id = ?').run(to, id);
+  audit(req, 'boost_assign', `${o.code} -> ${to || 'trống'}`);
+  back(req, res, 'success', to ? 'Đã giao đơn cho CTV' : 'Đã trả đơn về chưa có người nhận', '/admin/boost/orders/' + id);
+});
+
 router.post('/orders/:id/note', (req, res) => {
   const id = toInt(req.params.id);
+  if (req.perm === 'seller' && !canSeeOrder(req, orderById(id))) return back(req, res, 'error', 'Không tìm thấy', '/admin/boost/orders');
   db.prepare('UPDATE boost_orders SET admin_note = ? WHERE id = ?').run(str(req.body.admin_note, 2000) || null, id);
   back(req, res, 'success', 'Đã lưu ghi chú nội bộ', '/admin/boost/orders/' + id);
 });

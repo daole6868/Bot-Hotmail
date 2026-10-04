@@ -1092,4 +1092,11 @@
     } catch (e) { out.textContent = 'Lỗi kết nối'; out.className = 'a-small a-ai-test-out is-err'; }
     btn.disabled = false;
   }));
+
+  // ---------- Quản lý CTV: chọn game -> chỉ hiện danh mục của game đó ----------
+  $$('[data-grant-form]').forEach((f) => {
+    const g = $('[data-grant-game]', f); const c = $('[data-grant-cat]', f);
+    const sync = () => { [...c.options].forEach((o) => { if (o.dataset.game) o.hidden = o.dataset.game !== g.value; }); if (c.selectedOptions[0]?.hidden) c.value = ''; };
+    g.addEventListener('change', sync); sync();
+  });
 })();

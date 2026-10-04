@@ -12,15 +12,16 @@
     <button class="a-btn">Lọc</button>
   </form>
   <div class="a-table-wrap"><table class="a-table">
-    <thead><tr><th>Mã đơn</th><th>Khách</th><th><%= kind === 'topup' ? 'Gói nạp' : 'Dịch vụ' %></th><th>Tổng</th><th>Trạng thái</th><th>Đặt lúc</th><th></th></tr></thead>
-    <% if (!result.rows.length) { %><tr><td colspan="7" class="a-muted">Không có đơn</td></tr><% } %>
+    <thead><tr><th>Mã đơn</th><th>Khách</th><th><%= kind === 'topup' ? 'Gói nạp' : 'Dịch vụ' %></th><th>Tổng</th><th>Trạng thái</th><% if (perm !== 'seller') { %><th>CTV</th><% } %><th>Đặt lúc</th><th></th></tr></thead>
+    <% if (!result.rows.length) { %><tr><td colspan="8" class="a-muted">Không có đơn</td></tr><% } %>
     <% result.rows.forEach(o => { const st = STATUS[o.status]; %>
       <tr>
         <td><b><%= o.code %></b></td>
         <td><%= o.username %></td>
         <td class="a-trunc"><%= o.items %><div class="a-muted a-small"><%= o.game_name %></div></td>
         <td><b><%= H.money(o.total) %></b></td>
-        <td><span class="a-tag <%= st.tone %>"><%= st.label %></span></td>
+        <td><span class="a-tag <%= st.tone %>"><%= st.label %></span><% if (perm === 'seller' && o.ctv_id) { %> <span class="a-tag blue">Của bạn</span><% } %></td>
+        <% if (perm !== 'seller') { %><td class="a-small"><%= o.ctv_name || '—' %></td><% } %>
         <td class="a-small a-muted"><%= H.fmtDate(o.created_at) %></td>
         <td><a href="/admin/boost/orders/<%= o.id %>" class="a-btn a-xs">Xử lý</a></td>
       </tr>

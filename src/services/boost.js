@@ -149,6 +149,9 @@ const checkoutTx = db.transaction((userId, gameId, f, ip, kind, parentId) => {
   }
   const bal = db.prepare('SELECT balance FROM users WHERE id = ?').get(userId).balance;
   db.prepare('INSERT INTO balance_logs(user_id, amount, balance_after, type, ref, note) VALUES(?,?,?,?,?,?)').run(userId, -total, bal, kind, code, `${K.name} ${game?.name || ''}`);
+  db.prepare(`UPDATE boost_orders SET parent_id = (SELECT bc.parent_id FROM boost_order_items i JOIN boost_packages p ON p.id = i.package_id
+    JOIN boost_categories bc ON bc.id = p.category_id WHERE i.order_id = ? LIMIT 1) WHERE id = ?`).run(id, id);
+  require('./ctv').onBoostCheckout({ id, kind, code, total, subtotal });
   bumpStat(kind + '_revenue', total);
   bumpStat(kind + '_orders', 1);
   return { id, code, total, items, game: game?.name, contact: f.contact, kind, method: f.method, uid: f.uid, server: f.server, char_name: f.char_name };
@@ -210,6 +213,7 @@ const setStatusTx = db.transaction((id, status, msg, byAdmin, proof) => {
     .run(status, msg || null, id);
   db.prepare('INSERT INTO boost_order_events(order_id, status, message, by_admin) VALUES(?,?,?,?)').run(id, status, msg || null, byAdmin ? 1 : 0);
   if (status === 'cancelled') refundTx(o, msg || 'đơn bị hủy');
+  require('./ctv').onBoostStatus(orderStmt.get(id), status); // Đã xong -> cộng tiền CTV thực hiện; hủy / mở lại -> trừ lại
   return orderStmt.get(id);
 });
 
@@ -281,6 +285,12 @@ function notifyStatus(o) {
 }
 function notifyNewOrder(r, userId) {
   const s = getSettings();
+  // Báo CTV bán hàng được cấp danh mục của đơn
+  try {
+    const pid = db.prepare('SELECT parent_id FROM boost_orders WHERE code = ?').get(r.code)?.parent_id;
+    const ctv = require('./ctv');
+    if (pid) ctv.notify(ctv.sellersOfCat(pid), `${kindOf(r.kind).icon} Đơn ${kindOf(r.kind).name.toLowerCase()} mới ${r.code} — ${r.game}\n${r.items.map((i) => `• ${i.name} x${i.qty}`).join('\n')}\nVào trang quản lý để nhận đơn.`);
+  } catch (e) { console.error('[ctv] notify', e.message); }
   const K = kindOf(r.kind);
   const u = db.prepare('SELECT username, email FROM users WHERE id = ?').get(userId);
   if (u?.email) require('./mailer').sendLater(u.email, 'boost', { username: u.username, code: r.code, status: 'received', label: STATUS.received.label, kindName: K.name, total: r.total, items: r.items });

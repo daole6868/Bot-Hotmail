@@ -605,6 +605,85 @@ db.exec(`
 addColumn('users', 'staff', 'INTEGER NOT NULL DEFAULT 0'); // nhân viên chat (vẫn là tài khoản khách bình thường)
 addColumn('users', 'staff_name', 'TEXT');
 addColumn('users', 'staff_tg', 'TEXT');
+
+// ---------- Cộng tác viên ----------
+// ctv_role: 'manager' (quản lý, thay admin trừ Giao diện & Hệ thống) | 'seller' (bán hàng); CSKH = cột staff ở trên
+addColumn('users', 'ctv_role', 'TEXT');
+addColumn('users', 'ctv_rate', 'INTEGER NOT NULL DEFAULT 20'); // % hoa hồng shop giữ lại trên giá bán
+addColumn('users', 'ctv_balance', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('users', 'ctv_paused', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('users', 'ctv_bank', 'TEXT'); // JSON { code, acc, owner } — lần rút gần nhất
+addColumn('products', 'owner_id', 'INTEGER'); // NULL = hàng của shop
+addColumn('boost_orders', 'parent_id', 'INTEGER'); // danh mục Cày thuê / Nạp game của đơn
+addColumn('boost_orders', 'ctv_id', 'INTEGER'); // CTV nhận & thực hiện đơn
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ctv_grants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    game_id INTEGER NOT NULL,
+    category_id INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_ctv_grant ON ctv_grants(user_id, game_id, IFNULL(category_id, 0));
+  CREATE TABLE IF NOT EXISTS ctv_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL,
+    balance_after INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    ref TEXT,
+    note TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_ctv_ledger_user ON ctv_ledger(user_id, id DESC);
+  CREATE TABLE IF NOT EXISTS ctv_withdrawals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL,
+    bank_code TEXT NOT NULL,
+    bank_acc TEXT NOT NULL,
+    bank_owner TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    note TEXT,
+    handled_by INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    handled_at INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_ctv_wd_status ON ctv_withdrawals(status, id DESC);
+  CREATE INDEX IF NOT EXISTS idx_ctv_wd_user ON ctv_withdrawals(user_id, id DESC);
+  -- Mỗi lần bán 1 dòng (acc VIP / reroll / cày thuê / nạp game): doanh thu, tiền trả CTV — không bị lưu trữ đi như bảng orders
+  CREATE TABLE IF NOT EXISTS sales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,
+    ref_id INTEGER NOT NULL,
+    ref_code TEXT,
+    amount INTEGER NOT NULL,
+    price INTEGER NOT NULL DEFAULT 0,
+    ctv_id INTEGER,
+    ctv_amount INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'ok',
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_ref ON sales(kind, ref_id);
+  CREATE INDEX IF NOT EXISTS idx_sales_time ON sales(created_at);
+  CREATE INDEX IF NOT EXISTS idx_sales_ctv ON sales(ctv_id, created_at);
+  CREATE INDEX IF NOT EXISTS idx_products_owner ON products(owner_id);
+  CREATE INDEX IF NOT EXISTS idx_bo_parent ON boost_orders(parent_id, status);
+  CREATE INDEX IF NOT EXISTS idx_bo_ctv ON boost_orders(ctv_id, status);`);
+// Lần đầu: điền danh mục cho đơn cày thuê / nạp game cũ + dựng bảng sales từ đơn đã có
+if (!db.prepare("SELECT 1 FROM settings WHERE key = 'sales_backfill_v1'").get()) {
+  db.transaction(() => {
+    db.exec(`UPDATE boost_orders SET parent_id = (SELECT bc.parent_id FROM boost_order_items i JOIN boost_packages p ON p.id = i.package_id
+      JOIN boost_categories bc ON bc.id = p.category_id WHERE i.order_id = boost_orders.id LIMIT 1) WHERE parent_id IS NULL`);
+    db.exec(`INSERT OR IGNORE INTO sales(kind, ref_id, ref_code, amount, price, status, created_at)
+      SELECT COALESCE(c.sale_type, 'vip'), o.id, o.order_code, o.total, o.price, CASE WHEN o.status = 'refunded' THEN 'refunded' ELSE 'ok' END, o.created_at
+      FROM v_orders o LEFT JOIN products p ON p.id = o.product_id LEFT JOIN categories c ON c.id = p.category_id`);
+    db.exec(`INSERT OR IGNORE INTO sales(kind, ref_id, ref_code, amount, price, status, created_at)
+      SELECT kind, id, code, total, subtotal, CASE WHEN status = 'cancelled' THEN 'refunded' ELSE 'ok' END, created_at FROM boost_orders`);
+    db.prepare("INSERT OR REPLACE INTO settings(key, value) VALUES('sales_backfill_v1', '1')").run();
+  })();
+}
 addColumn('daily_stats', 'topup_revenue', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('daily_stats', 'topup_orders', 'INTEGER NOT NULL DEFAULT 0');
 // Thẻ mã giảm giá thấp hơn: kích cỡ mặc định cũ 600x350 -> 600x260 (1 lần)
