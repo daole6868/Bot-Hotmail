@@ -239,8 +239,8 @@ function done(id, worker, result) {
   const j = db.prepare("SELECT id, game FROM hoyo_jobs WHERE id = ? AND status = 'running' AND worker = ?").get(id, worker);
   if (!j) return false;
   const raw = fromWorker(result, j.game);
-  if (!raw.c5.length && !raw.c4.length && !raw.lv) {
-    fail(id, worker, 'Không đọc được dữ liệu nhân vật của acc (acc chưa bật Hồ sơ chiến tích / Battle Chronicle?). Vui lòng thao tác lại sau.');
+  if (!raw.c5.length && !raw.c4.length) {
+    fail(id, worker, 'Worker không gửi danh sách nhân vật (0 nhân vật). Kiểm tra bước lấy dữ liệu của worker rồi thao tác lại.');
     return true;
   }
   db.prepare("UPDATE hoyo_jobs SET progress = 95, message = 'Đang lưu ảnh nhân vật...', lease_until = ? WHERE id = ?").run(nowS() + 120, id);
