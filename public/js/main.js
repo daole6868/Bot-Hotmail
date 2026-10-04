@@ -40,6 +40,13 @@
   }
 
   // Toggle menu / dropdown
+  // Menu điện thoại: lớp phủ phía sau -> chạm ra ngoài chỉ đóng menu, không bấm nhầm banner / link bên dưới
+  const mnav = $('#mobileNav');
+  if (mnav) {
+    const bd = document.createElement('div'); bd.className = 'nav-backdrop'; bd.hidden = true; document.body.appendChild(bd);
+    new MutationObserver(() => { bd.hidden = !mnav.classList.contains('open'); }).observe(mnav, { attributes: true, attributeFilter: ['class'] });
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $$('.catbar.open, .dropdown-menu.open').forEach((m) => m.classList.remove('open')); });
   document.addEventListener('click', (e) => {
     const tg = e.target.closest('[data-toggle]');
     if (tg) {
@@ -48,6 +55,8 @@
       return;
     }
     if (!e.target.closest('.dropdown')) $$('.dropdown-menu.open').forEach((m) => m.classList.remove('open'));
+    // Menu điện thoại: bấm ra ngoài menu thì thu lại
+    if (!e.target.closest('.catbar')) $$('.catbar.open').forEach((m) => m.classList.remove('open'));
 
     const c = e.target.closest('[data-copy]');
     if (c) copy(c.dataset.copy);
