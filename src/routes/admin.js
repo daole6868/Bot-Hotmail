@@ -1179,6 +1179,18 @@ router.post('/support', (req, res) => {
 router.get('/footer', (req, res) => res.render('admin/footer', { title: 'Footer', s: getSettings() }));
 
 router.post('/footer', (req, res) => {
+  // Form mới: mỗi mục 1 dòng (tên + link) -> ghép lại thành "Tên | link" như cũ
+  const badLinks = [];
+  if (req.body.fc_rows) {
+    for (const n of [1, 2, 3]) {
+      const names = [].concat(req.body[`fc${n}_name`] ?? []); const urls = [].concat(req.body[`fc${n}_url`] ?? []);
+      req.body[`footer_col${n}_links`] = names.slice(0, 30).map((nm, i) => {
+        const text = str(nm, 120).replace(/\|/g, '/').trim(); let url = str(urls[i], 300).trim();
+        if (url && !/^(\/(?!\/)|https?:\/\/|mailto:|tel:)/i.test(url)) { badLinks.push(text || url); url = ''; }
+        return text ? (url ? `${text} | ${url}` : text) : '';
+      }).filter(Boolean).join('\n');
+    }
+  }
   for (const k of FOOTER_KEYS) {
     let v = str(req.body[k], 3000);
     // Link mạng xã hội chỉ nhận http(s)
@@ -1186,7 +1198,7 @@ router.post('/footer', (req, res) => {
     setSetting(k, v);
   }
   audit(req, 'footer_update');
-  back(req, res, 'success', 'Đã lưu footer', '/admin/footer');
+  back(req, res, badLinks.length ? 'error' : 'success', badLinks.length ? `Đã lưu. Link không hợp lệ đã bỏ (chỉ nhận /trang, https://, mailto:, tel:): ${badLinks.join(', ')}` : 'Đã lưu footer', '/admin/footer');
 });
 
 // ======================= CÀI ĐẶT =======================

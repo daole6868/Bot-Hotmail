@@ -26,14 +26,28 @@
 
     <div class="a-card">
       <h3><%- I('list') %> Các cột liên kết</h3>
-      <p class="a-muted a-small">Mỗi dòng một mục, dạng <code>Tên hiển thị | link</code>. Không có link thì chỉ ghi chữ. Để trống tiêu đề = ẩn cột.</p>
-      <% [1, 2, 3].forEach(n => { %>
-        <div class="a-footer-col">
-          <label>Cột <%= n + 1 %> – Tiêu đề</label>
-          <input name="footer_col<%= n %>_title" maxlength="100" value="<%= s['footer_col' + n + '_title'] %>">
+      <p class="a-muted a-small">Bấm vào từng cột để mở. Mỗi mục gồm tên hiển thị và link (link để trống = chỉ hiện chữ). Để trống tiêu đề = ẩn cột.</p>
+      <input type="hidden" name="fc_rows" value="1">
+      <% [1, 2, 3].forEach(n => {
+           const items = String(s['footer_col' + n + '_links'] || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => { const i = l.lastIndexOf('|'); return { text: (i > 0 ? l.slice(0, i) : l).trim(), url: i > 0 ? l.slice(i + 1).trim() : '' }; });
+           const title = s['footer_col' + n + '_title']; %>
+        <details class="a-footer-col" data-fc="<%= n %>">
+          <summary><span class="a-fc-sum"><b>Cột <%= n + 1 %></b><span data-fc-title><%= title || '(đang ẩn)' %></span><small data-fc-count><%= items.length %> mục</small></span><%- I('chevron-right') %></summary>
+          <label>Tiêu đề cột</label>
+          <input name="footer_col<%= n %>_title" maxlength="100" value="<%= title %>" placeholder="VD: Hỗ trợ (để trống = ẩn cột)" data-fc-title-in>
           <label>Các mục</label>
-          <textarea name="footer_col<%= n %>_links" rows="4" maxlength="2000" placeholder="Hướng dẫn mua acc | /huong-dan&#10;Zalo: 09xxxxxxxx"><%= s['footer_col' + n + '_links'] %></textarea>
-        </div>
+          <div class="a-fc-list" data-fc-list>
+            <% items.forEach(it => { %>
+            <div class="a-fc-row" data-fc-row>
+              <input name="fc<%= n %>_name" maxlength="120" value="<%= it.text %>" placeholder="Tên mục">
+              <input name="fc<%= n %>_url" maxlength="300" value="<%= it.url %>" placeholder="Link: /trang hoặc https://...">
+              <div class="a-fc-act"><button type="button" class="a-icon-btn" data-fc-up title="Lên">↑</button><button type="button" class="a-icon-btn" data-fc-down title="Xuống">↓</button><button type="button" class="a-icon-btn a-icon-danger" data-fc-del title="Xóa"><%- I('trash') %></button></div>
+            </div>
+            <% }) %>
+          </div>
+          <button type="button" class="a-btn a-soft a-xs" data-fc-add><%- I('plus') %> Thêm mục</button>
+          <template data-fc-tpl><div class="a-fc-row" data-fc-row><input name="fc<%= n %>_name" maxlength="120" placeholder="Tên mục"><input name="fc<%= n %>_url" maxlength="300" placeholder="Link: /trang hoặc https://..."><div class="a-fc-act"><button type="button" class="a-icon-btn" data-fc-up title="Lên">↑</button><button type="button" class="a-icon-btn" data-fc-down title="Xuống">↓</button><button type="button" class="a-icon-btn a-icon-danger" data-fc-del title="Xóa"><%- I('trash') %></button></div></div></template>
+        </details>
       <% }) %>
     </div>
   </div>

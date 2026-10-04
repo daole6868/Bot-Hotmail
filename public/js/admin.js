@@ -962,5 +962,22 @@
     });
     spf.addEventListener('submit', () => $$('[data-sp-row]', spf).forEach(sync));
   }
+
+  // ---------- Footer: các cột liên kết (mục = tên + link) ----------
+  $$('[data-fc]').forEach((col) => {
+    const list = $('[data-fc-list]', col);
+    const refresh = () => {
+      $('[data-fc-count]', col).textContent = $$('[data-fc-row]', list).length + ' mục';
+      $('[data-fc-title]', col).textContent = $('[data-fc-title-in]', col).value.trim() || '(đang ẩn)';
+    };
+    col.addEventListener('input', (e) => { if (e.target.matches('[data-fc-title-in]')) refresh(); });
+    col.addEventListener('click', (e) => {
+      if (e.target.closest('[data-fc-add]')) { list.insertAdjacentHTML('beforeend', $('[data-fc-tpl]', col).innerHTML); $('input', list.lastElementChild).focus(); refresh(); return; }
+      const row = e.target.closest('[data-fc-row]'); if (!row) return;
+      if (e.target.closest('[data-fc-del]')) { row.remove(); refresh(); }
+      if (e.target.closest('[data-fc-up]') && row.previousElementSibling) list.insertBefore(row, row.previousElementSibling);
+      if (e.target.closest('[data-fc-down]') && row.nextElementSibling) list.insertBefore(row.nextElementSibling, row);
+    });
+  });
 })();
 
