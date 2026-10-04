@@ -19,10 +19,12 @@ router.use((req, res, next) => {
 });
 
 function meOf(req, c, conv) {
+  const r = chat.rules(!!req.user, c);
   return {
-    logged: !!req.user, name: req.user ? req.user.username : conv?.name || '',
+    logged: !!req.user, name: req.user ? req.user.username : conv?.name || '', allowed: r.allowed,
     guestLeft: !req.user && c.guest ? Math.max(0, c.guest_limit - (conv?.guest_msgs || 0)) : null,
-    canImage: !!req.user || c.guest_images,
+    dayLeft: req.user && r.dayLimit && conv ? Math.max(0, r.dayLimit - chat.sentToday(conv.id)) : null,
+    canImage: r.images, canOrder: r.orders, maxLen: r.maxLen,
   };
 }
 
@@ -54,6 +56,7 @@ router.get('/unread', (req, res) => {
 
 router.get('/orders', (req, res) => {
   if (!req.user) return fail(res, 'Đăng nhập để gửi đơn hàng', 401);
+  if (!chat.rules(true).orders) return fail(res, 'Shop chưa bật gửi đơn hàng trong chat', 403);
   res.json({ ok: true, orders: chat.userOrders(req.user.id, 15).map((o) => ({ ...o, totalText: H.money(o.total), time: H.fmtDate(o.at) })) });
 });
 
@@ -83,23 +86,27 @@ router.post('/start', (req, res) => {
 const one = upload.single('image');
 router.post('/send', (req, res, next) => (req.is('multipart/form-data') ? one(req, res, (e) => (e ? fail(res, e.code === 'LIMIT_FILE_SIZE' ? 'Ảnh vượt quá 8MB' : e.message) : next())) : next()), async (req, res) => {
   const c = chat.cfg();
+  const R = chat.rules(!!req.user, c);
   if (!req.user && !c.guest) return fail(res, 'Vui lòng đăng nhập để chat với shop', 401, { login: true });
+  if (req.user && !R.allowed) return fail(res, 'Chat đang tạm tắt, vui lòng liên hệ shop qua kênh khác', 403);
   let conv = chat.convOf(req);
   if (!conv && req.user) conv = chat.createConv({ userId: req.user.id, name: req.user.username, ip: clientIp(req), page: req.body.page });
   if (!conv) return fail(res, 'Vui lòng nhập tên để bắt đầu chat', 400, { start: true });
   if (conv.blocked) return fail(res, 'Bạn không thể gửi tin nhắn lúc này');
   if (!req.user && conv.guest_msgs >= c.guest_limit) return fail(res, `Bạn đã gửi tối đa ${c.guest_limit} tin khi chưa đăng nhập. Vui lòng đăng nhập để tiếp tục chat.`, 403, { login: true });
-  if (chat.sentLastMinute(conv.id) >= c.rate) return fail(res, 'Bạn gửi nhanh quá, vui lòng chờ một chút', 429);
-  const body = clean(req.body.body, c.max_len);
+  if (chat.sentLastMinute(conv.id) >= R.rate) return fail(res, 'Bạn gửi nhanh quá, vui lòng chờ một chút', 429);
+  if (req.user && R.dayLimit && chat.sentToday(conv.id) >= R.dayLimit) return fail(res, `Bạn đã gửi tối đa ${R.dayLimit} tin hôm nay. Vui lòng quay lại vào ngày mai.`, 429);
+  const body = clean(req.body.body, R.maxLen);
   let image = null; let ref = null;
   if (req.file) {
-    if (!req.user && !c.guest_images) return fail(res, 'Vui lòng đăng nhập để gửi ảnh', 403, { login: true });
+    if (!R.images) return fail(res, req.user ? 'Shop chưa cho phép gửi ảnh trong chat' : 'Vui lòng đăng nhập để gửi ảnh', 403, req.user ? {} : { login: true });
     try { const o = await optimizeBuffer(req.file.buffer, 'chat'); if (o && o.buf.length < req.file.buffer.length) req.file.buffer = o.buf; } catch { /* giữ ảnh gốc */ }
     image = saveImage(req.file, 'chat');
     if (!image) return fail(res, 'File ảnh không hợp lệ (JPG, PNG, WEBP)');
   }
   if (req.body.ref_t && req.body.ref_code) {
     if (!req.user) return fail(res, 'Đăng nhập để gửi đơn hàng', 401);
+    if (!R.orders) return fail(res, 'Shop chưa bật gửi đơn hàng trong chat', 403);
     ref = chat.orderRef(req.user.id, String(req.body.ref_t), String(req.body.ref_code).slice(0, 30));
     if (!ref) return fail(res, 'Không tìm thấy đơn hàng');
   }

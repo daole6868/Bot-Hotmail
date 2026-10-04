@@ -18,11 +18,12 @@ const DEFAULTS = {
   enabled: false, title: 'Chat với shop', agent_name: 'Shop', greeting: 'Xin chào 👋 Shop có thể giúp gì cho bạn?', color: '#4f6bed',
   in_support: true, position: 'br', layout: 'center',
   hours_on: false, open: '08:00', close: '23:00', offline_msg: 'Shop đang ngoài giờ làm việc. Bạn cứ để lại tin nhắn, shop sẽ trả lời sớm nhất có thể!',
-  guest: true, guest_limit: 10, guest_contact: true, guest_images: false, guest_ip_day: 5,
-  rate: 8, max_len: 1000,
+  // Khách lạ (chưa đăng nhập)
+  guest: true, guest_limit: 10, guest_contact: true, guest_images: false, guest_ip_day: 5, guest_rate: 5, guest_max_len: 500, guest_keep_hours: 720,
+  // Thành viên (đã đăng nhập)
+  member: true, member_images: true, member_orders: true, member_rate: 10, member_max_len: 1500, member_day_limit: 0, member_keep_hours: 2160,
   tg_notify: true, tg_reply: true,
   ai_on: false, ai_provider: '', ai_mode: 'offline', ai_name: 'Trợ lý ảo', ai_info: '', ai_max: 20, ai_day: 300,
-  keep_hours: 2160, // tự xóa cuộc chat không hoạt động sau N giờ (tối thiểu 1 giờ, mặc định 90 ngày)
   quick: [
     { t: 'Chào khách', b: 'Chào bạn 👋 Shop có thể giúp gì cho bạn ạ?' },
     { t: 'Hướng dẫn nạp tiền', b: 'Bạn vào mục Nạp tiền, quét mã QR hoặc chuyển khoản đúng nội dung, tiền sẽ tự cộng sau 1–3 phút ạ.' },
@@ -33,9 +34,20 @@ const DEFAULTS = {
 function cfg(s = getSettings()) {
   let c = {};
   try { c = JSON.parse(s.chat_cfg || '{}') || {}; } catch { c = {}; }
-  const out = { ...DEFAULTS, ...c };
+  // cài đặt cũ dùng chung (rate, max_len, keep_hours) -> áp cho cả 2 nhóm nếu chưa tách
+  const old = {};
+  for (const [k, g, m] of [['rate', 'guest_rate', 'member_rate'], ['max_len', 'guest_max_len', 'member_max_len']]) if (c[k] != null) { old[g] = c[k]; old[m] = c[k]; }
+  const keep = c.keep_hours ?? (c.keep_days ? c.keep_days * 24 : null);
+  if (keep != null) { old.guest_keep_hours = keep; old.member_keep_hours = keep; }
+  const out = { ...DEFAULTS, ...old, ...c };
   if (!Array.isArray(out.quick)) out.quick = [];
   return out;
+}
+/** Giới hạn theo nhóm khách: thành viên (đã đăng nhập) hoặc khách lạ */
+function rules(isMember, c = cfg()) {
+  return isMember
+    ? { allowed: c.member !== false, rate: c.member_rate, maxLen: c.member_max_len, images: !!c.member_images, orders: !!c.member_orders, dayLimit: c.member_day_limit || 0 }
+    : { allowed: !!c.guest, rate: c.guest_rate, maxLen: c.guest_max_len, images: !!c.guest_images, orders: false, dayLimit: 0 };
 }
 
 // ---------- Giờ làm việc (giờ VN) ----------
@@ -126,6 +138,8 @@ function markSeen(convId, by) {
 }
 
 /** Chống spam: số tin khách gửi trong 60 giây */
+/** Số tin khách gửi hôm nay (giờ VN) — giới hạn tin / ngày của thành viên */
+const sentToday = (convId) => db.prepare("SELECT COUNT(*) c FROM chat_msgs WHERE conv_id = ? AND sender = 'user' AND created_at >= ?").get(convId, Math.floor((Date.now() + 7 * 3600e3) / 86400e3) * 86400 - 7 * 3600).c;
 const sentLastMinute = (convId) => db.prepare("SELECT COUNT(*) c FROM chat_msgs WHERE conv_id = ? AND sender = 'user' AND created_at > ?").get(convId, nowS() - 60).c;
 /** Khách lạ bị chặn thì IP đó cũng không mở được cuộc chat khách lạ mới */
 const ipBlocked = (ip) => !!db.prepare('SELECT 1 FROM chat_convs WHERE ip = ? AND blocked = 1 AND user_id IS NULL LIMIT 1').get(ip);
@@ -222,7 +236,7 @@ function openStream(req, res, client) {
 }
 
 // ---------- Dọn dữ liệu cũ (gọi từ bảo trì hằng ngày) ----------
-const keepHours = (c = cfg()) => int(c.keep_hours ?? (c.keep_days ? c.keep_days * 24 : undefined), 2160, 1, 87600);
+const keepHours = (c = cfg(), member = true) => int(member ? c.member_keep_hours : c.guest_keep_hours, member ? 2160 : 720, 1, 87600);
 
 /** Xóa hẳn 1 cuộc chat: toàn bộ tin nhắn + ảnh đã gửi trong chat (file trên ổ đĩa) */
 const deleteConvTx = db.transaction((id) => {
@@ -242,10 +256,11 @@ function deleteConv(id) {
 }
 
 function purge() {
-  const cut = nowS() - keepHours() * 3600;
-  const ids = db.prepare('SELECT id FROM chat_convs WHERE last_at < ? LIMIT 2000').all(cut).map((r) => r.id);
+  const c = cfg();
+  const cutM = nowS() - keepHours(c, true) * 3600; const cutG = nowS() - keepHours(c, false) * 3600;
+  const ids = db.prepare('SELECT id FROM chat_convs WHERE (user_id IS NOT NULL AND last_at < ?) OR (user_id IS NULL AND last_at < ?) LIMIT 2000').all(cutM, cutG).map((r) => r.id);
   for (const id of ids) deleteConv(id);
-  db.prepare('DELETE FROM chat_tg WHERE created_at < ?').run(cut);
+  db.prepare('DELETE FROM chat_tg WHERE created_at < ?').run(Math.min(cutM, cutG));
   db.prepare('DELETE FROM chat_presence WHERE seen_at < ?').run(nowS() - 86400);
   db.prepare('DELETE FROM chat_signals WHERE created_at < ?').run(nowS() - 300);
   return ids.length;
@@ -253,6 +268,6 @@ function purge() {
 
 module.exports = {
   DEFAULTS, cfg, inHours, vnToday, agentsOnline, viewingConv, touchPresence,
-  newVisitor, visitorOf, convById, convOf, createConv, msgView, addMsg, recent, signal, markSeen, sentLastMinute, newConvsFromIp, ipBlocked,
+  newVisitor, visitorOf, convById, convOf, createConv, msgView, addMsg, recent, signal, markSeen, sentLastMinute, sentToday, newConvsFromIp, ipBlocked, rules,
   userOrders, orderRef, bus, openStream, convRow, purge, deleteConv, keepHours, int, nowS,
 };

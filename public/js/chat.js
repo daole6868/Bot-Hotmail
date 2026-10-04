@@ -152,17 +152,20 @@
       });
       return;
     }
+    if (me.logged && me.allowed === false) { foot.innerHTML = '<div class="ch-note">Chat đang tạm tắt, vui lòng liên hệ shop qua kênh khác.</div>'; return; }
+    if (me.logged && me.dayLeft === 0) { foot.innerHTML = '<div class="ch-note">Bạn đã gửi hết số tin hôm nay. Vui lòng quay lại vào ngày mai.</div>'; return; }
     if (!me.logged && me.guestLeft === 0) {
       foot.innerHTML = '<div class="ch-login"><p>Bạn đã gửi hết số tin cho khách chưa đăng nhập. Đăng nhập để tiếp tục chat.</p><div><a class="btn btn-primary btn-sm" href="/login">Đăng nhập</a><a class="btn btn-ghost btn-sm" href="/register">Đăng ký</a></div></div>';
       return;
     }
     foot.innerHTML = `
       ${!me.logged && me.guestLeft != null ? `<div class="ch-left">Còn ${me.guestLeft} tin khi chưa đăng nhập · <a href="/login">Đăng nhập</a></div>` : ''}
+      ${me.logged && me.dayLeft != null && me.dayLeft <= 5 ? `<div class="ch-left">Còn ${me.dayLeft} tin hôm nay</div>` : ''}
       <div class="ch-orders" data-ch-orders hidden></div>
       <div class="ch-compose">
         ${me.canImage ? `<label class="ch-tool" title="Gửi ảnh">${ICON.img}<input type="file" accept="image/*" data-ch-file hidden></label>` : ''}
-        ${me.logged ? `<button type="button" class="ch-tool" data-ch-order title="Gửi đơn hàng">${ICON.bag}</button>` : ''}
-        <textarea data-ch-input rows="1" maxlength="1000" placeholder="Nhập tin nhắn..."></textarea>
+        ${me.logged && me.canOrder ? `<button type="button" class="ch-tool" data-ch-order title="Gửi đơn hàng">${ICON.bag}</button>` : ''}
+        <textarea data-ch-input rows="1" maxlength="${me.maxLen || 1000}" placeholder="Nhập tin nhắn..."></textarea>
         <button type="button" class="ch-send" data-ch-send aria-label="Gửi">${ICON.send}</button>
       </div>`;
     const ta = $('[data-ch-input]', foot);
@@ -216,11 +219,11 @@
     store.set('gz_chat', '1');
     panel.querySelectorAll('.ch-toast').forEach((t) => t.remove());
     if (!S.conv) S.conv = { id: j.msg.conv, blocked: false };
-    const left = S.me.guestLeft;
+    const left = S.me.guestLeft; const dleft = S.me.dayLeft;
     S.me = j.me;
     addMsg(j.msg, true);
     if (!es) connect();
-    if (left !== S.me.guestLeft) renderFoot();
+    if (left !== S.me.guestLeft || (dleft !== S.me.dayLeft && (S.me.dayLeft <= 5 || dleft <= 5))) renderFoot();
   }
 
   async function loadOlder() {
