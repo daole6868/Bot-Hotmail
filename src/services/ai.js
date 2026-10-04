@@ -24,8 +24,8 @@ const keyOf = (s, p) => { try { return s[`ai_key_${p}_enc`] ? decrypt(s[`ai_key_
 const modelOf = (s, p) => s[`ai_model_${p}`] || PROVIDERS[p]?.models[0] || '';
 
 /** Trạng thái để hiện trong admin: nhà cung cấp nào đã có key */
-function status(s = getSettings()) {
-  const provider = PROVIDERS[s.ai_provider] ? s.ai_provider : 'openai';
+function status(s = getSettings(), want = null) {
+  const provider = PROVIDERS[want] ? want : PROVIDERS[s.ai_provider] ? s.ai_provider : 'openai';
   return { provider, model: modelOf(s, provider), ready: !!keyOf(s, provider) && (provider !== 'custom' || !!s.ai_custom_url), hasKey: Object.fromEntries(Object.keys(PROVIDERS).map((p) => [p, !!s[`ai_key_${p}_enc`]])) };
 }
 

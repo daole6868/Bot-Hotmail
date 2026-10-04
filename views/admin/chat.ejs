@@ -4,8 +4,13 @@
     <div class="a-chat-lh">
       <div class="a-chat-lt"><b>Tin nhắn</b><% if (me.role === 'admin') { %><a href="/admin/chat/settings" class="a-icon-btn" title="Cài đặt chat"><%- I('gear') %></a><% } %></div>
       <div class="a-chat-search"><%- I('search') %><input type="search" placeholder="Tìm tên, SĐT, nội dung, mã #" data-cl-q></div>
+      <div class="a-chat-seg" data-cl-seg>
+        <% [['all', 'Tất cả'], ['member', 'Thành viên'], ['guest', 'Khách lạ']].forEach(([k, l], i) => { %>
+          <button type="button" data-s="<%= k %>" class="<%= i === 0 ? 'on' : '' %>"><%= l %> <i data-seg-n="<%= k %>"<%= counts[k] ? '' : ' hidden' %>><%= counts[k] %></i></button>
+        <% }) %>
+      </div>
       <div class="a-chat-tabs" data-cl-tabs>
-        <% [['all', 'Tất cả'], ['unread', 'Chưa đọc'], ['open', 'Đang mở'], ['mine', 'Của tôi'], ['guest', 'Khách lạ'], ['closed', 'Đã đóng'], ['blocked', 'Đã chặn']].forEach(([k, l], i) => { %>
+        <% [['all', 'Tất cả'], ['unread', 'Chưa đọc'], ['open', 'Đang mở'], ['mine', 'Của tôi'], ['closed', 'Đã đóng'], ['blocked', 'Đã chặn']].forEach(([k, l], i) => { %>
           <button type="button" data-f="<%= k %>" class="<%= i === 0 ? 'on' : '' %>"><%= l %></button>
         <% }) %>
       </div>

@@ -41,16 +41,17 @@
 
   // ---------- Danh sách cuộc chat ----------
   const convs = new Map(); boot.convs.forEach((c) => convs.set(c.id, c));
-  let filter = 'all'; let q = ''; let cur = null; let curInfo = null; const msgs = new Map(); let seenUser = 0;
+  let filter = 'all'; let seg = 'all'; let q = ''; let cur = null; let curInfo = null; const msgs = new Map(); let seenUser = 0;
   const initial = (n) => esc((n || '?').trim().slice(0, 1).toUpperCase());
   const color = (id) => `hsl(${(id * 67) % 360} 62% 52%)`;
   const staffName = (id) => (boot.staff.find((s) => s.id === id) || {}).name || '';
   function matches(c) {
+    if (seg === 'member' && c.guest) return false;
+    if (seg === 'guest' && !c.guest) return false;
     if (filter === 'unread' && !c.unread) return false;
     if (filter === 'open' && (c.status !== 'open' || c.blocked)) return false;
     if (filter === 'closed' && c.status !== 'closed') return false;
     if (filter === 'mine' && c.assignee !== meId) return false;
-    if (filter === 'guest' && !c.guest) return false;
     if (filter === 'blocked' && !c.blocked) return false;
     return true;
   }
@@ -71,9 +72,10 @@
   }
   let listT = 0;
   async function reloadList() {
-    const j = await api(`/admin/chat/list?f=${filter}&q=${encodeURIComponent(q)}`);
+    const j = await api(`/admin/chat/list?f=${filter}&s=${seg}&q=${encodeURIComponent(q)}`);
     if (!j.ok) return;
-    if (!q && filter === 'all') convs.clear();
+    if (!q && filter === 'all' && seg === 'all') convs.clear();
+    setCounts(j.counts);
     j.convs.forEach((c) => convs.set(c.id, c));
     renderList(); navBadge();
   }
@@ -83,6 +85,17 @@
     $$('[data-cl-tabs] button').forEach((x) => x.classList.toggle('on', x === b));
     filter = b.dataset.f; renderList(); reloadList();
   });
+  $('[data-cl-seg]').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-s]'); if (!b) return;
+    $$('[data-cl-seg] button').forEach((x) => x.classList.toggle('on', x === b));
+    seg = b.dataset.s; renderList(); reloadList();
+  });
+  function setCounts(c) {
+    if (!c) return;
+    $$('[data-seg-n]').forEach((el) => { const n = c[el.dataset.segN] || 0; el.hidden = !n; el.textContent = n > 99 ? '99+' : n; });
+  }
+  let cntT = 0;
+  const refreshCounts = () => { clearTimeout(cntT); cntT = setTimeout(async () => { const j = await api('/admin/chat/counts'); if (j.ok) setCounts(j.counts); }, 800); };
   $('[data-cl]').addEventListener('click', (e) => { const r = e.target.closest('.a-cl'); if (r) openConv(+r.dataset.id); });
 
   // ---------- Đoạn chat ----------
@@ -164,7 +177,7 @@
       <div class="a-ci-head"><span class="a-chat-av big" style="background:${color(cur)}">${initial(i.name)}</span><b>${esc(i.username || i.name)}</b><small>${i.guest ? 'Khách chưa đăng nhập' : 'Thành viên'}</small>
         <button type="button" class="a-icon-btn a-ci-x" data-info-toggle aria-label="Đóng">✕</button></div>
       <div class="a-ci-sec">
-        ${row('Liên hệ', i.contact)}${row('Email', i.email)}${row('Số dư', i.balance)}${row('Tổng nạp', i.deposit)}${row('Tổng chi', i.spent)}
+        ${row('Liên hệ', i.contact)}${row('Tin đã gửi (chưa đăng nhập)', i.guestMsgs)}${i.ipConvs > 1 ? row('Cuộc chat cùng IP', String(i.ipConvs)) : ''}${row('Email', i.email)}${row('Số dư', i.balance)}${row('Tổng nạp', i.deposit)}${row('Tổng chi', i.spent)}
         ${row('Trạng thái', i.status === 'banned' ? 'Đã khóa' : i.status ? 'Hoạt động' : '')}${row('Ngày đăng ký', i.registered)}${row('Đăng nhập gần nhất', i.lastLogin)}
         ${row('IP', i.ip)}${row('IP đăng nhập', i.lastIp)}${row('Nguồn', i.source)}${row('Đang xem trang', i.page)}${row('Bắt đầu chat', i.since)}
         ${i.userId ? `<a class="a-btn a-soft a-btn-sm a-ci-link" href="/admin/users/${i.userId}" target="_blank">Mở hồ sơ khách</a>` : ''}
@@ -299,15 +312,15 @@
       }
       if (m.conv === cur) { if (addMsg(m) && m.sender === 'user' && document.visibilityState === 'visible') api(`/admin/chat/c/${cur}/seen`, { json: {} }); }
       if (m.sender === 'user' && (m.conv !== cur || document.visibilityState !== 'visible')) beep();
-      renderList(); navBadge();
+      renderList(); navBadge(); refreshCounts();
     });
     es.addEventListener('conv', (e) => {
       const d = JSON.parse(e.data);
       if (d.deleted) { convs.delete(d.id); if (cur === d.id) $('[data-cm-back]').click(); }
       else if (d.conv) { const old = convs.get(d.conv.id); convs.set(d.conv.id, d.conv.id === cur ? { ...d.conv, unread: 0 } : d.conv); if (d.conv.id === cur) header(); if (d.handoff && (!old || old.ai_off !== d.conv.ai_off)) beep(); }
-      renderList(); navBadge();
+      renderList(); navBadge(); refreshCounts();
     });
-    es.addEventListener('seen', (e) => { const d = JSON.parse(e.data); if (d.conv === cur && d.by === 'user') { seenUser = Math.max(seenUser, d.id); renderMsgs(true); } if (d.by === 'agent' && convs.get(d.conv)) { convs.get(d.conv).unread = 0; renderList(); navBadge(); } });
+    es.addEventListener('seen', (e) => { const d = JSON.parse(e.data); if (d.conv === cur && d.by === 'user') { seenUser = Math.max(seenUser, d.id); renderMsgs(true); } if (d.by === 'agent') { if (convs.get(d.conv)) { convs.get(d.conv).unread = 0; renderList(); navBadge(); } refreshCounts(); } });
     es.addEventListener('typing', (e) => {
       const d = JSON.parse(e.data); if (d.conv !== cur) return;
       const t = $('[data-cm-typing]');

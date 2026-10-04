@@ -59,6 +59,8 @@ async function notifyTelegram(conv, msg, force = false) {
 
 // ---------- Nhận trả lời từ Telegram (chỉ 1 bản PM2 chạy, hỏi Telegram liên tục kiểu long-polling) ----------
 let tgState = { running: false, status: '', at: 0 };
+// Trạng thái nhận tin lưu vào cài đặt (chỉ khi đổi) để trang admin ở bản PM2 nào cũng xem được
+const setTgStatus = (status) => { if (tgState.status !== status || getSettings().chat_tg_status !== status) require('../db').setSetting('chat_tg_status', status); tgState = { running: true, status, at: Date.now() }; };
 const tgStatus = () => tgState;
 async function downloadPhoto(photos) {
   const big = photos[photos.length - 1];
@@ -99,21 +101,22 @@ function startTelegram() {
   if (process.env.NODE_APP_INSTANCE && process.env.NODE_APP_INSTANCE !== '0') return; // PM2 cluster: chỉ bản số 0 nhận tin
   if (tgState.running) return;
   tgState.running = true;
+  if (getSettings().chat_tg_status) setTgStatus(''); // xóa trạng thái cũ của lần chạy trước
   let offset = parseInt(getSettings().chat_tg_offset, 10) || 0;
   const loop = async () => {
     for (;;) {
       const c = chat.cfg();
-      if (!c.enabled || !c.tg_reply || !tgToken()) { tgState.status = ''; await sleep(30000); continue; }
+      if (!c.enabled || !c.tg_reply || !tgToken()) { if (tgState.status) setTgStatus(''); await sleep(30000); continue; }
       try {
         const ups = await tg('getUpdates', { offset, timeout: 25, allowed_updates: ['message'] }, 40000);
-        tgState = { running: true, status: 'ok', at: Date.now() };
+        if (tgState.status !== 'ok') setTgStatus('ok');
         for (const u of ups) {
           offset = u.update_id + 1;
           try { await handleUpdate(u); } catch (e) { console.error('[chat] tg update', e.message); }
         }
         if (ups.length) require('../db').setSetting('chat_tg_offset', String(offset));
       } catch (e) {
-        tgState = { running: true, status: e.code === 409 ? 'Bot đang dùng webhook ở nơi khác nên không nhận được tin trả lời' : 'Lỗi kết nối Telegram: ' + e.message, at: Date.now() };
+        setTgStatus(e.code === 409 ? 'Bot đang dùng webhook ở nơi khác nên không nhận được tin trả lời' : 'Lỗi kết nối Telegram: ' + e.message);
         await sleep(e.code === 409 ? 60000 : 10000);
       }
     }
@@ -126,7 +129,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms).unref?.());
 const pauseAi = (convId, minutes = 30) => db.prepare('UPDATE chat_convs SET ai_pause_until = ? WHERE id = ?').run(chat.nowS() + minutes * 60, convId);
 function aiShould(conv, c = chat.cfg()) {
   if (!c.ai_on || conv.ai_off || conv.blocked || conv.ai_pause_until > chat.nowS()) return false;
-  if (!require('./ai').status().ready) return false;
+  if (!require('./ai').status(undefined, c.ai_provider || null).ready) return false;
   if (c.ai_mode !== 'always' && chat.inHours(c) && chat.agentsOnline() > 0) return false; // đang có nhân viên trực
   const dayStart = Math.floor((Date.now() + 7 * 3600e3) / 86400e3) * 86400 - 7 * 3600;
   const perConv = db.prepare("SELECT COUNT(*) c FROM chat_msgs WHERE conv_id = ? AND sender = 'ai' AND created_at >= ?").get(conv.id, dayStart).c;
@@ -175,7 +178,7 @@ THÔNG TIN SHOP:
 ${shopInfo()}${orders ? `\n\nĐơn gần đây của khách này:\n${orders}` : ''}`;
   let text;
   try {
-    text = await require('./ai').complete(system, `Đoạn chat (mới nhất ở cuối):\n${hist}\n\nHãy viết câu trả lời tiếp theo của Shop.`, { ms: 60000, maxTokens: 1000 });
+    text = await require('./ai').complete(system, `Đoạn chat (mới nhất ở cuối):\n${hist}\n\nHãy viết câu trả lời tiếp theo của Shop.`, { ms: 60000, maxTokens: 1000, provider: c.ai_provider || null });
   } catch (e) { console.error('[chat] ai', e.message); return; }
   const now = db.prepare('SELECT id FROM chat_msgs WHERE conv_id = ? ORDER BY id DESC LIMIT 1').get(convId);
   if (!now || now.id !== afterMsgId) return; // trong lúc AI nghĩ khách / nhân viên đã nhắn thêm

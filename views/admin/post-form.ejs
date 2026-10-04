@@ -10,7 +10,7 @@
       <details class="a-card a-ai-box" <%= p.id ? '' : 'open' %> data-ai-box>
         <summary><%- I('g-sparkles') %> <b>Viết bằng AI</b> <small class="a-muted"><%= aiStatus.ready ? aiName + ' · ' + aiStatus.model : 'chưa cài đặt' %></small></summary>
         <% if (!aiStatus.ready) { %>
-          <p class="a-muted">Chưa nhập API key AI. Vào <a href="/admin/ai">AI viết bài</a> để chọn nhà cung cấp (ChatGPT, Claude, Gemini...) và nhập API key.</p>
+          <p class="a-muted">Chưa có API key AI. Nhập API key ở <a href="/admin/api#ai">Kết nối API</a> rồi chọn nhà cung cấp ở <a href="/admin/ai">AI viết bài</a>.</p>
         <% } else { %>
           <label>Ra lệnh cho AI <span class="req">*</span></label>
           <textarea data-ai="prompt" rows="6" maxlength="20000" placeholder="VD: Viết bài hướng dẫn người mới mua acc Honkai: Star Rail, so sánh acc khởi đầu và acc VIP, có mẹo nạp game an toàn. Có thể dán cả nội dung tin tức / thông báo cập nhật để AI viết lại."></textarea>

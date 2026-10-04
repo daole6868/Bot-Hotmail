@@ -1080,4 +1080,15 @@
     $('[data-qr-add]').addEventListener('click', () => { qrList.insertAdjacentHTML('beforeend', $('[data-qr-tpl]').innerHTML); qrList.lastElementChild.querySelector('input').focus(); });
     qrList.addEventListener('click', (e) => { const d = e.target.closest('[data-qr-del]'); if (d) d.closest('.a-qr-row').remove(); });
   }
+
+  // ---------- Kết nối API: nút thử kết nối (Telegram / từng AI) ----------
+  $$('[data-api-test]').forEach((btn) => btn.addEventListener('click', async () => {
+    const out = btn.closest('details, form').querySelector('[data-api-out]');
+    btn.disabled = true; out.hidden = false; out.textContent = 'Đang thử...'; out.className = 'a-small a-ai-test-out';
+    try {
+      const r = await (await fetch(btn.dataset.apiTest, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf, Accept: 'application/json' }, body: JSON.stringify({ provider: btn.dataset.provider || '' }) })).json();
+      out.textContent = r.message; out.className = 'a-small a-ai-test-out ' + (r.ok ? 'is-ok' : 'is-err');
+    } catch (e) { out.textContent = 'Lỗi kết nối'; out.className = 'a-small a-ai-test-out is-err'; }
+    btn.disabled = false;
+  }));
 })();

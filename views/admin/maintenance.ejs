@@ -93,18 +93,14 @@
     <form method="post" action="/admin/maintenance/telegram" class="a-form" autocomplete="off">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <label class="a-check"><input type="checkbox" name="tg_enabled" value="1" <%= s.tg_enabled === '1' ? 'checked' : '' %>> <span><b>Mỗi ngày tự gửi gói sao lưu về Telegram</b></span></label>
-      <div class="a-row">
-        <div><label>Bot token <%- tgHasToken ? '<small class="a-green">(đã lưu)</small>' : '' %></label><input type="password" name="tg_token" placeholder="<%= tgHasToken ? 'Để trống = giữ token cũ' : '123456789:AAF...' %>"></div>
-        <div><label>Chat ID admin</label><input name="tg_chat_id" value="<%= s.tg_chat_id || '' %>" placeholder="VD: 123456789"></div>
-      </div>
-      <% if (tgHasToken) { %><label class="a-check"><input type="checkbox" name="tg_clear" value="1"> <span>Xóa bot token đã lưu</span></label><% } %>
+      <div class="acn-status <%= tgHasToken && s.tg_chat_id ? 'ok' : 'err' %>"><span>Bot Telegram: <b><%= tgHasToken && s.tg_chat_id ? 'đã kết nối' : 'chưa kết nối' %></b></span><a href="/admin/api#telegram">Cài ở Kết nối API</a></div>
       <label>Mật khẩu gói sao lưu <%- hasBackupPass ? '<small class="a-green">(đã đặt)</small>' : '<span class="req">*</span>' %></label>
       <div class="a-row">
         <div><input type="password" name="backup_pass" minlength="8" placeholder="<%= hasBackupPass ? 'Để trống = giữ mật khẩu cũ' : 'Ít nhất 8 ký tự' %>" autocomplete="new-password"></div>
         <div><input type="password" name="backup_pass2" placeholder="Nhập lại mật khẩu" autocomplete="new-password"></div>
       </div>
       <p class="a-field-hint">Gói sao lưu gồm <b>toàn bộ dữ liệu + ảnh</b>, được <b>mã hóa bằng mật khẩu này</b>: ai có file mà không có mật khẩu cũng không mở được. <b>Hãy ghi nhớ mật khẩu</b> — mất mật khẩu thì không khôi phục được gói. Gói nặng hơn 50MB (giới hạn của Telegram) sẽ gửi bản chỉ có dữ liệu, không kèm ảnh.</p>
-      <p class="a-field-hint">Lấy <b>Bot token</b>: nhắn <b>@BotFather</b> trên Telegram → <code>/newbot</code>. Lấy <b>Chat ID</b>: nhắn <b>@userinfobot</b>. Sau đó nhắn <code>/start</code> cho bot của bạn 1 lần để bot được phép gửi tin.</p>
+      
       <label class="a-check"><input type="checkbox" name="alert_admin" value="1" <%= s.alert_admin !== '0' ? 'checked' : '' %>> <span>Báo ngay khi có thao tác nhạy cảm: admin đăng nhập, cộng / trừ tiền, duyệt nạp tay, hoàn tiền, đổi cài đặt ngân hàng / email / Telegram / Cloudflare, khôi phục / tải dữ liệu, số dư khách không khớp lịch sử giao dịch</span></label>
       <div class="acn-status <%= s.tg_last_ok === '1' ? 'ok' : s.tg_last_at ? 'err' : '' %>">
         <span>Lần gửi gần nhất: <b><%= s.tg_last_at ? H.fmtDate(+s.tg_last_at) : 'chưa có' %></b></span>

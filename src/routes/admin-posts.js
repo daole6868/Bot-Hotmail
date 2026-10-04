@@ -6,7 +6,6 @@
 const express = require('express');
 const { db, getSettings, setSetting, logActivity } = require('../db');
 const { saveImage, removeImage } = require('../utils/upload');
-const { encrypt } = require('../utils/crypto');
 const { randomCode } = require('../utils/crypto');
 const H = require('../utils/helpers');
 const P = require('../services/posts');
@@ -145,31 +144,16 @@ router.post('/post-categories/:id/delete', (req, res) => {
 // ======================= AI VIẾT BÀI =======================
 router.get('/ai', (req, res) => {
   const s = getSettings();
-  res.render('admin/ai', { title: 'AI viết bài', PROVIDERS: ai.PROVIDERS, st: ai.status(s), s });
+  res.render('admin/ai', { title: 'AI viết bài', PROVIDERS: ai.PROVIDERS, st: ai.status(s), s, ready: Object.fromEntries(Object.keys(ai.PROVIDERS).map((p) => [p, ai.status(s, p).ready])) });
 });
+// API key / model nhập ở Kết nối API — trang này chỉ chọn nhà cung cấp + cách viết
 router.post('/ai', (req, res) => {
   const b = req.body;
   if (ai.PROVIDERS[b.ai_provider]) setSetting('ai_provider', b.ai_provider);
-  for (const p of Object.keys(ai.PROVIDERS)) {
-    if (b[`model_${p}`] !== undefined) setSetting(`ai_model_${p}`, str(b[`model_${p}`], 80));
-    const k = String(b[`key_${p}`] || '').trim();
-    if (k) setSetting(`ai_key_${p}_enc`, encrypt(k.slice(0, 300)));
-    if (b[`clear_${p}`]) setSetting(`ai_key_${p}_enc`, '');
-  }
-  if (b.ai_custom_url !== undefined) {
-    const u = str(b.ai_custom_url, 200).trim();
-    if (u && !/^https:\/\//i.test(u)) return back(req, res, 'error', 'Địa chỉ API tùy chỉnh phải bắt đầu bằng https://', '/admin/ai');
-    setSetting('ai_custom_url', u);
-  }
-  if (b.ai_anthropic_workspace !== undefined) {
-    const w = str(b.ai_anthropic_workspace, 100).trim();
-    if (w && !/^[\w-]+$/.test(w)) return back(req, res, 'error', 'Workspace ID chỉ gồm chữ, số, dấu - và _', '/admin/ai');
-    setSetting('ai_anthropic_workspace', w);
-  }
   if (b.ai_tone !== undefined) setSetting('ai_tone', str(b.ai_tone, 200));
   if (b.ai_extra !== undefined) setSetting('ai_extra', str(b.ai_extra, 2000));
   audit(req, 'ai_settings', b.ai_provider || '');
-  back(req, res, 'success', 'Đã lưu cài đặt AI', '/admin/ai');
+  back(req, res, 'success', 'Đã lưu cài đặt AI viết bài', '/admin/ai');
 });
 router.post('/ai/test', async (req, res) => {
   const p = ai.PROVIDERS[req.body?.provider] ? req.body.provider : null;

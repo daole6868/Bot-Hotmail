@@ -53,11 +53,18 @@ const unreadCount = () => db.prepare('SELECT COUNT(*) c FROM chat_convs WHERE un
 
 // ---------- Hộp thư ----------
 const LIST_SQL = {
-  all: '1 = 1', unread: 'unread_admin > 0', open: "status = 'open' AND blocked = 0", closed: "status = 'closed'", mine: 'assignee = ?', guest: 'user_id IS NULL', blocked: 'blocked = 1',
+  all: '1 = 1', unread: 'unread_admin > 0', open: "status = 'open' AND blocked = 0", closed: "status = 'closed'", mine: 'assignee = ?', blocked: 'blocked = 1',
+};
+const SEG_SQL = { member: 'c.user_id IS NOT NULL', guest: 'c.user_id IS NULL' };
+/** Số cuộc chat chưa đọc theo nhóm: thành viên / khách lạ */
+const segCounts = () => {
+  const r = db.prepare('SELECT SUM(user_id IS NOT NULL) member, SUM(user_id IS NULL) guest FROM chat_convs WHERE unread_admin > 0 AND blocked = 0').get();
+  return { member: r.member || 0, guest: r.guest || 0, all: (r.member || 0) + (r.guest || 0) };
 };
 function listConvs(req) {
   const f = LIST_SQL[req.query.f] ? req.query.f : 'all';
   const where = [LIST_SQL[f]]; const args = f === 'mine' ? [req.agent.id] : [];
+  if (SEG_SQL[req.query.s]) where.push(SEG_SQL[req.query.s]);
   const q = str(req.query.q, 60).trim();
   if (q) {
     where.push('(c.name LIKE ? OR c.contact LIKE ? OR c.last_msg LIKE ? OR c.id = ? OR c.user_id IN (SELECT id FROM users WHERE username LIKE ?' + (req.agent.role === 'admin' ? ' OR email LIKE ?' : '') + '))');
@@ -72,16 +79,22 @@ router.get('/', (req, res) => {
   chat.touchPresence(req.agent.id);
   const c = chat.cfg();
   res.render('admin/chat', {
-    title: 'Chat trực tiếp', convs: listConvs(req), cfg: c, me: req.agent,
+    title: 'Chat trực tiếp', convs: listConvs(req), cfg: c, me: req.agent, counts: segCounts(),
     quick: c.quick, staff: db.prepare('SELECT id, username, staff_name FROM users WHERE staff = 1 OR role = \'admin\'').all().map((u) => ({ id: u.id, name: u.staff_name || u.username })),
   });
 });
-router.get('/list', (req, res) => res.json({ ok: true, convs: listConvs(req), unread: unreadCount() }));
+router.get('/list', (req, res) => res.json({ ok: true, convs: listConvs(req), unread: unreadCount(), counts: segCounts() }));
+router.get('/counts', (req, res) => res.json({ ok: true, counts: segCounts() }));
 router.get('/unread', (req, res) => res.json({ ok: true, n: unreadCount() }));
 
 /** Thông tin khách hiện ở cột phải — nhân viên chỉ thấy đơn hàng */
 function info(conv, role) {
   const out = { name: conv.name, guest: !conv.user_id, contact: conv.contact, page: conv.page, since: H.fmtDate(conv.created_at), note: conv.note || '' };
+  if (!conv.user_id) {
+    const c = chat.cfg();
+    out.guestMsgs = `${conv.guest_msgs} / ${c.guest_limit}`;
+    if (role === 'admin' && conv.ip) out.ipConvs = db.prepare('SELECT COUNT(*) n FROM chat_convs WHERE ip = ? AND user_id IS NULL').get(conv.ip).n;
+  }
   if (conv.user_id) {
     const u = db.prepare('SELECT id, username, email, balance, total_deposit, total_spent, status, created_at, last_login_at, last_login_ip, signup_source FROM users WHERE id = ?').get(conv.user_id);
     if (u) {
@@ -204,7 +217,12 @@ router.post('/viewing', (req, res) => {
 // ---------- Cài đặt (chỉ admin) ----------
 router.get('/settings', adminOnly, (req, res) => {
   const staff = db.prepare('SELECT id, username, email, staff_name, staff_tg FROM users WHERE staff = 1 ORDER BY id').all();
-  res.render('admin/chat-settings', { title: 'Cài đặt chat', cfg: chat.cfg(), keepHours: chat.keepHours(), staff, tg: bot.tgStatus(), tgReady: !!getSettings().tg_token_enc, tgChat: getSettings().tg_chat_id || '', ai: require('../services/ai').status() });
+  const s = getSettings(); const ai = require('../services/ai'); const c = chat.cfg();
+  res.render('admin/chat-settings', {
+    title: 'Cài đặt chat', cfg: c, keepHours: chat.keepHours(), staff, tg: s.chat_tg_status || '', tgReady: !!s.tg_token_enc, tgChat: s.tg_chat_id || '',
+    ai: ai.status(s, c.ai_provider || null), aiWrite: ai.status(s).provider, PROVIDERS: ai.PROVIDERS,
+    aiReady: Object.fromEntries(Object.keys(ai.PROVIDERS).map((p) => [p, ai.status(s, p).ready])),
+  });
 });
 router.post('/settings', adminOnly, (req, res) => {
   const b = req.body; const D = chat.DEFAULTS; const I = (k, min, max) => toInt(b[k], D[k], min, max); const B = (k) => !!H.bool(b[k]);
@@ -217,7 +235,7 @@ router.post('/settings', adminOnly, (req, res) => {
     guest: B('guest'), guest_limit: I('guest_limit', 1, 200), guest_contact: B('guest_contact'), guest_images: B('guest_images'), guest_ip_day: I('guest_ip_day', 1, 100),
     rate: I('rate', 2, 60), max_len: I('max_len', 100, 3000),
     tg_notify: B('tg_notify'), tg_reply: B('tg_reply'),
-    ai_on: B('ai_on'), ai_mode: b.ai_mode === 'always' ? 'always' : 'offline', ai_name: str(b.ai_name, 40) || D.ai_name, ai_info: str(b.ai_info, 8000), ai_max: I('ai_max', 1, 500), ai_day: I('ai_day', 1, 100000),
+    ai_on: B('ai_on'), ai_provider: require('../services/ai').PROVIDERS[b.ai_provider] ? b.ai_provider : '', ai_mode: b.ai_mode === 'always' ? 'always' : 'offline', ai_name: str(b.ai_name, 40) || D.ai_name, ai_info: str(b.ai_info, 8000), ai_max: I('ai_max', 1, 500), ai_day: I('ai_day', 1, 100000),
     keep_hours: Math.min(87600, Math.max(1, toInt(b.keep_n, 90, 1, 87600) * (b.keep_unit === 'h' ? 1 : 24))),
     quick: titles.map((t, i) => ({ t: str(t, 40).trim(), b: str(bodies[i], 1000).trim() })).filter((q) => q.t && q.b).slice(0, 50),
   };

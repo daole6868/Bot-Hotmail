@@ -70,6 +70,7 @@ router.post('/start', (req, res) => {
   let conv = chat.convOf(req);
   if (!conv) {
     const ip = clientIp(req);
+    if (chat.ipBlocked(ip)) return fail(res, 'Bạn không thể chat lúc này. Vui lòng đăng nhập để được hỗ trợ.', 403, { login: true });
     if (chat.newConvsFromIp(ip) >= c.guest_ip_day) return fail(res, 'Bạn đã mở quá nhiều cuộc chat hôm nay. Vui lòng đăng nhập để tiếp tục.', 429, { login: true });
     const token = chat.newVisitor();
     conv = chat.createConv({ visitor: token.split('.')[0], name, contact, ip, page: req.body.page });

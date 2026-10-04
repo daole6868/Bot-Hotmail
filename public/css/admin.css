@@ -987,3 +987,17 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 }
 
 .a-keep { display: grid; grid-template-columns: minmax(0, 1fr) 110px; gap: 8px; }
+
+/* ---------- Kết nối API ---------- */
+.a-api { align-items: start; }
+.a-api-use { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border2); display: flex; flex-direction: column; gap: 6px; font-size: .86rem; }
+.a-api-use a { color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 10px; background: var(--bg); }
+.a-api-use a:hover { color: var(--primary); }
+.a-api-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.acn-status a { font-weight: 600; }
+
+.a-chat-seg { display: grid; grid-template-columns: 1fr 1.25fr 1.15fr; gap: 3px; background: var(--bg); border-radius: 12px; padding: 3px; margin-top: 10px; }
+.a-chat-seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: .8rem; white-space: nowrap; padding: 7px 2px; border-radius: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.a-chat-seg button.on { background: #fff; color: var(--text); box-shadow: 0 1px 4px rgba(20, 30, 70, .12); }
+.a-chat-seg i { font-style: normal; background: var(--red); color: #fff; font-size: .68rem; min-width: 18px; height: 18px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; }
+.a-chat-seg i[hidden] { display: none; }

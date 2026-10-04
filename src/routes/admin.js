@@ -185,6 +185,7 @@ for (const kind of Object.keys(SORTABLE)) {
 
 // Cày thuê: danh mục, gói, đơn, cài đặt
 router.use('/boost', require('./admin-boost'));
+router.use('/api', require('./admin-api')); // Kết nối API: Telegram, AI
 router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google
 
 // Nội dung form trong modal (trả về HTML không có layout)
@@ -1508,16 +1509,8 @@ router.post('/maintenance/backup/:name/delete', (req, res) => {
 });
 
 // --- Sao lưu về Telegram + mật khẩu gói sao lưu ---
+// Bot token / Chat ID nhập ở Kết nối API — đây chỉ bật / tắt sao lưu và đặt mật khẩu gói
 router.post('/maintenance/telegram', (req, res) => {
-  const token = String(req.body.tg_token || '').trim();
-  if (token) {
-    if (!/^\d{5,15}:[\w-]{20,60}$/.test(token)) return back(req, res, 'error', 'Bot token không đúng dạng (VD: 123456789:AAF...)', '/admin/maintenance');
-    setSetting('tg_token_enc', encrypt(token));
-  }
-  if (req.body.tg_clear) setSetting('tg_token_enc', '');
-  const chat = String(req.body.tg_chat_id || '').trim();
-  if (chat && !/^-?\d{3,20}$/.test(chat)) return back(req, res, 'error', 'Chat ID phải là số (VD: 123456789 hoặc -100123...)', '/admin/maintenance');
-  setSetting('tg_chat_id', chat);
   const pass = String(req.body.backup_pass || '');
   if (pass) {
     if (pass.length < 8) return back(req, res, 'error', 'Mật khẩu gói sao lưu phải từ 8 ký tự', '/admin/maintenance');
@@ -1526,7 +1519,7 @@ router.post('/maintenance/telegram', (req, res) => {
   }
   setSetting('tg_enabled', req.body.tg_enabled ? '1' : '0');
   setSetting('alert_admin', req.body.alert_admin ? '1' : '0');
-  audit(req, 'backup_settings', (token ? 'token ' : '') + (pass ? 'password' : ''));
+  audit(req, 'backup_settings', pass ? 'password' : '');
   back(req, res, 'success', 'Đã lưu cài đặt sao lưu', '/admin/maintenance');
 });
 // Đối chiếu số dư khách với lịch sử giao dịch ngay (bình thường tự chạy mỗi đêm)

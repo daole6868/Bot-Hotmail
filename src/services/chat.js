@@ -21,7 +21,7 @@ const DEFAULTS = {
   guest: true, guest_limit: 10, guest_contact: true, guest_images: false, guest_ip_day: 5,
   rate: 8, max_len: 1000,
   tg_notify: true, tg_reply: true,
-  ai_on: false, ai_mode: 'offline', ai_name: 'Trợ lý ảo', ai_info: '', ai_max: 20, ai_day: 300,
+  ai_on: false, ai_provider: '', ai_mode: 'offline', ai_name: 'Trợ lý ảo', ai_info: '', ai_max: 20, ai_day: 300,
   keep_hours: 2160, // tự xóa cuộc chat không hoạt động sau N giờ (tối thiểu 1 giờ, mặc định 90 ngày)
   quick: [
     { t: 'Chào khách', b: 'Chào bạn 👋 Shop có thể giúp gì cho bạn ạ?' },
@@ -127,6 +127,8 @@ function markSeen(convId, by) {
 
 /** Chống spam: số tin khách gửi trong 60 giây */
 const sentLastMinute = (convId) => db.prepare("SELECT COUNT(*) c FROM chat_msgs WHERE conv_id = ? AND sender = 'user' AND created_at > ?").get(convId, nowS() - 60).c;
+/** Khách lạ bị chặn thì IP đó cũng không mở được cuộc chat khách lạ mới */
+const ipBlocked = (ip) => !!db.prepare('SELECT 1 FROM chat_convs WHERE ip = ? AND blocked = 1 AND user_id IS NULL LIMIT 1').get(ip);
 const newConvsFromIp = (ip) => db.prepare('SELECT COUNT(*) c FROM chat_convs WHERE ip = ? AND user_id IS NULL AND created_at > ?').get(ip, nowS() - 86400).c;
 
 // ---------- Đơn hàng gửi kèm tin nhắn ----------
@@ -251,6 +253,6 @@ function purge() {
 
 module.exports = {
   DEFAULTS, cfg, inHours, vnToday, agentsOnline, viewingConv, touchPresence,
-  newVisitor, visitorOf, convById, convOf, createConv, msgView, addMsg, recent, signal, markSeen, sentLastMinute, newConvsFromIp,
+  newVisitor, visitorOf, convById, convOf, createConv, msgView, addMsg, recent, signal, markSeen, sentLastMinute, newConvsFromIp, ipBlocked,
   userOrders, orderRef, bus, openStream, convRow, purge, deleteConv, keepHours, int, nowS,
 };
