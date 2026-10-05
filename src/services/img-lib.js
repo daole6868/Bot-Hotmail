@@ -24,8 +24,9 @@ function cleanSrc(src) {
  * Mỗi khối HoYoLAB: ảnh nhân vật (img, bỏ qua icon nguyên tố gt-icon__img), sau đó <p>Lv.x</p> và <p>Tên</p>.
  */
 function parseHtml(html) {
-  // Độ hiếm: Genshin / Star Rail dùng class star-bg-5 / star-bg-4; ZZZ dùng thuộc tính rarity="S" / "A"
-  const re = /<img\b[^>]*>|<p\b([^>]*)>([\s\S]*?)<\/p>|star-bg-(\d)|\srarity="([SAB])"/gi;
+  // Độ hiếm: Genshin dùng class star-bg-5; Star Rail dùng image-card--rarity-5 / rarity-bar--5; ZZZ dùng thuộc tính rarity="S" / "A" / "B"
+  // Tên: <p>Tên</p> (Genshin, ZZZ) hoặc <div class="name">Tên</div> (Star Rail)
+  const re = /<img\b[^>]*>|<p\b([^>]*)>([\s\S]*?)<\/p>|(?:star-bg-|--rarity-|rarity-bar--)(\d)\b|\srarity="([SAB])"|<div\b[^>]*\sclass="name"[^>]*>([^<]*)<\/div>/gi;
   const out = [];
   const seen = new Set();
   let pending = null;
@@ -33,9 +34,11 @@ function parseHtml(html) {
   const dup = [];
   let m;
   const text = String(html || '').slice(0, 3 * 1024 * 1024);
+  // Độ hiếm đứng trước ảnh -> dùng cho ảnh kế tiếp; đứng sau ảnh (thanh rarity-bar) -> gắn vào ảnh đang chờ tên
+  const setRarity = (r) => { if (pending && !pending.rarity) pending.rarity = r; else if (!pending) rarity = r; };
   while ((m = re.exec(text))) {
-    if (m[3]) { rarity = parseInt(m[3], 10) || 0; continue; }
-    if (m[4]) { rarity = { S: 5, A: 4, B: 3 }[m[4].toUpperCase()] || 0; continue; }
+    if (m[3]) { setRarity(parseInt(m[3], 10) || 0); continue; }
+    if (m[4]) { setRarity({ S: 5, A: 4, B: 3 }[m[4].toUpperCase()] || 0); continue; }
     if (m[0][1].toLowerCase() === 'i') {
       const cls = attr(m[0], 'class');
       const src = attr(m[0], 'origin-src') || attr(m[0], 'src');
@@ -45,8 +48,8 @@ function parseHtml(html) {
       continue;
     }
     // Dòng cấp (gt-card__info: "Lv.60", hoặc "-" khi chưa sở hữu) không phải tên
-    if (/\bgt-card__info\b(?!-)/.test(attr('<p ' + m[1] + '>', 'class'))) continue;
-    const name = decode(String(m[2] || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+    if (m[5] === undefined && /\bgt-card__info\b(?!-)/.test(attr('<p ' + m[1] + '>', 'class'))) continue;
+    const name = decode(String(m[5] !== undefined ? m[5] : m[2] || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
     if (!pending || !name || !/[\p{L}\p{N}]/u.test(name) || /^lv\.?\s*\d+$/i.test(name) || name.length > 60) continue;
     const k = hoyo.nkey(name);
     if (seen.has(k)) { if (!dup.includes(name)) dup.push(name); }
