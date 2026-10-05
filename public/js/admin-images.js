@@ -52,12 +52,16 @@
     btn.disabled = false;
     if (!j.ok) { show(j.message || 'Có lỗi', true); return; }
     if (preview) {
-      show('Tìm thấy ' + j.total + ' mục' + (j.dup ? ' (bỏ ' + j.dup + ' trùng tên)' : '') + ' · chưa có ảnh: ' + j.fresh + (j.names.length ? ' — ' + j.names.join(', ') : ''));
+      show('Tìm thấy ' + j.total + ' mục · chưa có trong thư viện: ' + j.fresh + (j.names.length ? ' — ' + j.names.join(', ') : '') +
+        (j.had.length ? '\nĐã có trong thư viện (' + j.had.length + '): ' + j.had.join(', ') : '') +
+        (j.dup.length ? '\nTên lặp 2 lần trong HTML đã dán: ' + j.dup.join(', ') : ''));
       return;
     }
-    let t = 'Đã thêm ' + j.added.length + ' · đã có sẵn ' + j.existed + (j.dup ? ' · trùng tên ' + j.dup : '');
-    if (j.failed.length) t += ' · không tải được: ' + j.failed.join(', ');
-    if (j.filled) t += ' · cập nhật ảnh cho ' + j.filled + ' acc';
+    let t = 'Đã thêm ' + j.added.length + (j.added.length ? ': ' + j.added.join(', ') : '') +
+      (j.existed.length ? '\nĐã có trong thư viện (' + j.existed.length + '): ' + j.existed.join(', ') : '') +
+      (j.dup.length ? '\nTên lặp 2 lần trong HTML đã dán: ' + j.dup.join(', ') : '');
+    if (j.failed.length) t += '\nKhông tải được ảnh: ' + j.failed.join(', ');
+    if (j.filled) t += '\nCập nhật ảnh cho ' + j.filled + ' acc';
     show(t, !!j.failed.length && !j.added.length);
     if (j.added.length) setTimeout(() => location.reload(), 1500);
   }

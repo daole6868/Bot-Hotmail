@@ -30,7 +30,7 @@ function parseHtml(html) {
   const seen = new Set();
   let pending = null;
   let rarity = 0;
-  let dup = 0;
+  const dup = [];
   let m;
   const text = String(html || '').slice(0, 3 * 1024 * 1024);
   while ((m = re.exec(text))) {
@@ -47,7 +47,7 @@ function parseHtml(html) {
     const name = decode(String(m[1] || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
     if (!pending || !name || /^lv\.?\s*\d+$/i.test(name) || name.length > 60) continue;
     const k = hoyo.nkey(name);
-    if (seen.has(k)) dup++;
+    if (seen.has(k)) { if (!dup.includes(name)) dup.push(name); }
     else { seen.add(k); out.push({ name, src: pending.src, rarity: pending.rarity }); }
     pending = null;
   }
@@ -71,11 +71,11 @@ function backfill(game) {
 /** Nạp danh sách đã tách: bỏ qua tên đã có, tải ảnh còn thiếu (6 ảnh cùng lúc) */
 async function importItems(game, kind, items) {
   const fresh = [];
-  let existed = 0;
+  const existed = [];
   // Tên đã có mà chưa có độ hiếm (nạp trước khi nhận được hạng S/A của ZZZ) -> chỉ cập nhật độ hiếm, không tải lại ảnh
   const fixRarity = db.prepare('UPDATE hoyo_assets SET rarity = ? WHERE game = ? AND kind = ? AND nkey = ? AND rarity = 0');
   for (const it of items.slice(0, 400)) {
-    if (hoyo.libGet(game, kind, it.name)) { existed++; if (it.rarity) fixRarity.run(it.rarity, game, kind, hoyo.nkey(it.name)); }
+    if (hoyo.libGet(game, kind, it.name)) { existed.push(it.name); if (it.rarity) fixRarity.run(it.rarity, game, kind, hoyo.nkey(it.name)); }
     else fresh.push(it);
   }
   const added = [];

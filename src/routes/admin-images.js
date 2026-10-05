@@ -125,11 +125,12 @@ router.post('/hoyo/import', async (req, res) => {
   if (!items.length) return res.json({ ok: false, message: 'Không tìm thấy ảnh + tên nào trong HTML đã dán' });
   if (req.body.preview) {
     const fresh = items.filter((it) => !hoyo.libGet(game, kind, it.name));
-    return res.json({ ok: true, total: items.length, dup, fresh: fresh.length, names: fresh.map((x) => x.name).slice(0, 200) });
+    const had = items.filter((it) => !fresh.includes(it)).map((x) => x.name);
+    return res.json({ ok: true, total: items.length, dup: dup.slice(0, 50), had: had.slice(0, 200), fresh: fresh.length, names: fresh.map((x) => x.name).slice(0, 200) });
   }
   const r = await lib.importItems(game, kind, items);
-  audit(req, 'image_lib_import', `${game}/${kind}: +${r.added.length}, có sẵn ${r.existed}, lỗi ${r.failed.length}`);
-  res.json({ ok: true, total: items.length, dup, ...r });
+  audit(req, 'image_lib_import', `${game}/${kind}: +${r.added.length}, có sẵn ${r.existed.length}, lỗi ${r.failed.length}`);
+  res.json({ ok: true, total: items.length, ...r, dup: dup.slice(0, 50), existed: r.existed.slice(0, 200) });
 });
 
 router.post('/hoyo/add', async (req, res) => {

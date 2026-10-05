@@ -1133,7 +1133,7 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-img-pills-sm a.on { background: var(--primary-l); color: var(--primary); }
 .a-img-tools { align-items: start; }
 .a-img-tools textarea { width: 100%; font-family: monospace; font-size: .78rem; }
-.a-img-out { margin-top: 8px; line-height: 1.5; word-break: break-word; }
+.a-img-out { margin-top: 8px; line-height: 1.5; word-break: break-word; white-space: pre-line; }
 .a-img-search { display: flex; gap: 8px; align-items: center; margin: 14px 0 10px; flex-wrap: wrap; }
 .a-img-search input { width: 220px; max-width: 100%; }
 .a-lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
