@@ -1,6 +1,6 @@
 <a href="/product/<%= p.code %>" class="card product-card">
   <div class="thumb">
-    <img src="<%= p.imageList[0] || '/img/no-image.svg' %>" alt="<%= p.title %>" loading="lazy">
+    <img src="<%= p.thumb || p.imageList[0] || '/img/no-image.svg' %>" alt="<%= p.title %>" loading="lazy">
     <span class="code-tag">#<%= p.code %></span>
     <% if (p.discountPercent) { %><span class="ribbon ribbon-right">-<%= p.discountPercent %>%</span><% } %>
     <% if (p.type === 'stock') { %><span class="type-tag"><%= p.stock_left > 0 ? 'Còn ' + p.stock_left.toLocaleString('vi-VN') + ' acc' : 'Hết hàng' %></span><% } %>

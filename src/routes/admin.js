@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const { db, getSettings, setSetting, logActivity, vnDay } = require('../db');
 const { requireStaff, verifyCsrf, blockIp, unblockIp } = require('../middleware/security');
 const { upload, saveImage, removeImage, optimizeUploads } = require('../utils/upload');
+const thumbs = require('../utils/thumbs');
 const { encrypt, decrypt, sha256, randomCode } = require('../utils/crypto');
 const H = require('../utils/helpers');
 const { refund } = require('../services/order');
@@ -572,7 +573,7 @@ router.post('/products/save', (req, res) => {
   }
   for (const f of filesOf(req, 'images')) {
     const saved = saveImage(f, 'products');
-    if (saved) images.push(saved);
+    if (saved) { images.push(saved); thumbs.make(saved); } // ảnh nhỏ cho thẻ sản phẩm (chạy nền)
   }
   images = images.slice(0, 10);
 

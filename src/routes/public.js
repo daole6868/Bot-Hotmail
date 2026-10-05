@@ -26,6 +26,7 @@ function maskName(n) {
 }
 
 const { GAMES: HOYO_GAMES } = require('../services/hoyo');
+const thumbs = require('../utils/thumbs');
 // Dòng tóm tắt "Chi tiết tài khoản" cho thẻ sản phẩm (acc chưa có chi tiết -> dùng thuộc tính cũ)
 function accRows(b) {
   if (!b) return null;
@@ -34,6 +35,7 @@ function accRows(b) {
 }
 function decorate(p) {
   p.imageList = parseJSON(p.images, []);
+  p.thumb = p.imageList[0] ? thumbs.thumbOf(p.imageList[0]) : '';
   p.attrList = parseJSON(p.attributes, []);
   const rows = accRows(parseJSON(p.acc_brief, null));
   if (rows && rows.length) p.attrList = rows;

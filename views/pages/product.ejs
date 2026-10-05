@@ -93,7 +93,7 @@
       <button type="button" class="bc-x" data-bc-close aria-label="Đóng"><%- I('x') %></button>
     </div>
     <div class="bc-product">
-      <img src="<%= p.imageList[0] || '/img/no-image.svg' %>" alt="">
+      <img src="<%= p.thumb || p.imageList[0] || '/img/no-image.svg' %>" alt="">
       <div>
         <b><%= p.title %></b>
         <span><%= p.game_name %> · <%= p.category_name %></span>

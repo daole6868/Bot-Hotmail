@@ -75,6 +75,7 @@ function removeImage(publicPath) {
   const full = path.normalize(path.join(config.paths.uploads, publicPath.slice('/uploads/'.length)));
   if (!full.startsWith(config.paths.uploads)) return;
   fs.promises.unlink(full).catch(() => {});
+  if (/\/uploads\/products\/.+\.(webp|jpe?g|png|gif)$/i.test(publicPath) && !/\.t\.webp$/i.test(publicPath)) fs.promises.unlink(full.replace(/\.[a-z]+$/i, '.t.webp')).catch(() => {});
 }
 
 module.exports = { upload, saveImage, removeImage, optimizeUploads, optimizeBuffer, SIGNATURES };

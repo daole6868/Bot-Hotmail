@@ -11,6 +11,7 @@ const fsp = fs.promises;
 const path = require('path');
 const { db, getSettings } = require('../db');
 const config = require('../config');
+const thumbs = require('../utils/thumbs');
 
 const DAY = 86400;
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -30,7 +31,11 @@ async function unlinkUpload(pub) {
   if (!pub || !pub.startsWith('/uploads/')) return 0;
   const full = path.normalize(path.join(config.paths.uploads, pub.slice('/uploads/'.length)));
   if (!full.startsWith(config.paths.uploads + path.sep)) return 0;
-  try { const st = await fsp.stat(full); await fsp.unlink(full); return st.size; } catch { return 0; }
+  let size = 0;
+  try { const st = await fsp.stat(full); await fsp.unlink(full); size = st.size; } catch { return 0; }
+  const t = thumbs.thumbPath(pub); // ảnh nhỏ của thẻ sản phẩm đi kèm
+  if (t) { try { const tf = full.replace(/\.[a-z]+$/i, '.t.webp'); const st = await fsp.stat(tf); await fsp.unlink(tf); size += st.size; } catch { /* chưa có */ } }
+  return size;
 }
 
 const parse = (j) => { try { const a = JSON.parse(j || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
@@ -97,6 +102,8 @@ async function orphanImages() {
   for (const full of await walk(config.paths.uploads)) {
     const pub = '/uploads/' + path.relative(config.paths.uploads, full).split(path.sep).join('/');
     if (used.has(pub)) continue;
+    // Ảnh nhỏ abc.t.webp: giữ khi ảnh gốc abc.* còn được dùng
+    if (/\.t\.webp$/i.test(pub) && ['.webp', '.jpg', '.jpeg', '.png', '.gif'].some((e) => used.has(pub.slice(0, -7) + e))) continue;
     try {
       const st = await fsp.stat(full);
       if (st.mtimeMs > minAge) continue;
