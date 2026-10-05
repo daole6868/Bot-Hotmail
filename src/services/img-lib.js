@@ -143,4 +143,7 @@ function rename(id, name) {
 // Xóa khỏi thư viện (file ảnh giữ lại nếu acc còn dùng; mục dọn ảnh rác tự xóa khi không còn ai dùng)
 const remove = (id) => db.prepare('DELETE FROM hoyo_assets WHERE id = ?').run(id).changes > 0;
 
+// Khởi động: gắn độ hiếm cho ảnh cũ đã lưu (chỉ chạy khi còn ảnh chưa có độ hiếm)
+setTimeout(() => { try { hoyo.libRarityAll(); } catch (e) { console.error('[img-lib] rarity:', e.message); } }, 5000).unref();
+
 module.exports = { parseHtml, importItems, backfill, addOne, replace, rename, remove };

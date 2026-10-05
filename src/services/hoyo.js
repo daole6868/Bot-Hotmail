@@ -233,6 +233,27 @@ function libAdd(game, kind, name, icon, src, rarity) {
     .run(game, kind, s_(name, 60), nkey(name), icon, src ? s_(src, 500) : null, int(rarity, 0, 0, 5)).changes > 0;
 }
 
+/** Ảnh thư viện chưa có độ hiếm -> lấy theo nhóm 5★ / 4★ (hạng S / A) của dữ liệu acc */
+let rarStmt;
+function libRarity(d) {
+  if (!d || !GAMES[d.game]) return 0;
+  rarStmt = rarStmt || db.prepare('UPDATE hoyo_assets SET rarity = ? WHERE game = ? AND kind = ? AND nkey = ? AND rarity = 0');
+  let n = 0;
+  for (const key of Object.keys(KIND_OF)) {
+    for (const x of d[key] || []) if (x && x.n) n += rarStmt.run(key.endsWith('5') ? 5 : 4, d.game, KIND_OF[key], nkey(x.n)).changes;
+  }
+  return n;
+}
+
+/** Quét toàn bộ acc đã lưu (sản phẩm + kết quả lấy dữ liệu) để gắn độ hiếm cho ảnh cũ */
+function libRarityAll() {
+  if (!db.prepare('SELECT 1 FROM hoyo_assets WHERE rarity = 0 LIMIT 1').get()) return 0;
+  let n = 0;
+  const rows = db.prepare("SELECT acc_detail AS j FROM products WHERE acc_detail IS NOT NULL AND acc_detail <> '' UNION ALL SELECT result FROM hoyo_jobs WHERE status = 'done' AND result IS NOT NULL").all();
+  db.transaction(() => { for (const r of rows) { try { n += libRarity(JSON.parse(r.j)); } catch { /* bỏ qua dữ liệu hỏng */ } } })();
+  return n;
+}
+
 /** Điền ảnh còn trống bằng thư viện (nhân vật / vũ khí thêm tay theo tên) */
 function fillIcons(d) {
   if (!d || !GAMES[d.game]) return d;
@@ -274,6 +295,7 @@ function done(id, worker, result) {
     fail(id, worker, 'Worker không gửi danh sách nhân vật (0 nhân vật). Kiểm tra bước lấy dữ liệu của worker rồi thao tác lại.');
     return true;
   }
+  libRarity(raw);
   db.prepare("UPDATE hoyo_jobs SET progress = 95, message = 'Đang lưu ảnh nhân vật...', lease_until = ? WHERE id = ?").run(nowS() + 120, id);
   withIcons(raw).then((d) => {
     const clean = sanitize(d);
@@ -293,5 +315,5 @@ const gameOf = (name) => (/zenless|zzz/i.test(name) ? 'zzz' : /star ?rail|hsr|ho
 module.exports = {
   GAMES, SERVERS, DEFAULTS, cfg, checkToken, hasToken, workers, onlineCount,
   createJob, jobFor, cancel, claim, progress, fail, done, sanitize, brief, fromWorker, ICON_RE,
-  nkey, libGet, libAdd, fillIcons, cacheIcon, ICON_DIR, gameOf,
+  nkey, libGet, libAdd, libRarity, libRarityAll, fillIcons, cacheIcon, ICON_DIR, gameOf,
 };
