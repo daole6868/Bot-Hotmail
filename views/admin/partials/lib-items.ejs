@@ -1,8 +1,10 @@
 <% const G = typeof libG !== 'undefined' ? libG : null; %>
+<%# Chữ hạng chỉ hiện ở nhân vật; vũ khí chỉ đổi màu nền (vàng / tím / xanh dương) %>
+<% const showR = typeof libKind === 'undefined' || libKind === 'char'; %>
 <% assets.forEach(a => { %>
   <div class="a-lib-item r<%= a.rarity %>">
     <img src="<%= a.icon %>" alt="" loading="lazy" width="72" height="72">
-    <% if (a.rarity === 5 || a.rarity === 4) { %><i class="a-lib-r"><%= (G && G['r' + a.rarity]) || a.rarity + '★' %></i><% } %>
+    <% if (showR && (a.rarity === 5 || a.rarity === 4)) { %><i class="a-lib-r"><%= (G && G['r' + a.rarity]) || a.rarity + '★' %></i><% } %>
     <b title="<%= a.name %>"><%= a.name %></b>
     <details class="a-lib-edit">
       <summary>Sửa</summary>

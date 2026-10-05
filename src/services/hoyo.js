@@ -22,7 +22,7 @@ const GAMES = {
   // r5 / r4: nhãn độ hiếm (ZZZ dùng hạng S / A thay cho 5★ / 4★)
   genshin: { name: 'Genshin Impact', lv: 'AR', c: 'C', w: 'Vũ khí', r: 'R', r5: '5★', r4: '4★' },
   hsr: { name: 'Honkai: Star Rail', lv: 'Cấp khai phá', c: 'E', w: 'Nón Ánh Sáng', r: 'S', r5: '5★', r4: '4★' },
-  zzz: { name: 'Zenless Zone Zero', lv: 'Cấp Inter-Knot', c: 'M', w: 'W-Engine', r: 'R', r5: 'S', r4: 'A' },
+  zzz: { name: 'Zenless Zone Zero', lv: 'Cấp Inter-Knot', c: 'M', w: 'W-Engine', r: 'R', r5: 'S', r4: 'A', r3: 'B' },
 };
 const SERVERS = ['Asia', 'America', 'Europe', 'TW/HK/MO'];
 
