@@ -1141,6 +1141,9 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-lib-item img { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; background: linear-gradient(160deg, #8a8fa3, #b7bccb); }
 .a-lib-item.r5 img { background: linear-gradient(160deg, #a5662f, #e3a64f); }
 .a-lib-item.r4 img { background: linear-gradient(160deg, #5e4aa0, #9a78d6); }
+.a-lib-r { position: absolute; top: 6px; left: 6px; font-style: normal; font-size: .68rem; font-weight: 800; line-height: 1; padding: 3px 5px; border-radius: 6px; color: #fff; }
+.a-lib-item.r5 .a-lib-r { background: #e3a21a; }
+.a-lib-item.r4 .a-lib-r { background: #8a5cd6; }
 .a-lib-item b { font-size: .76rem; font-weight: 600; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .a-lib-edit summary { font-size: .72rem; color: var(--primary); cursor: pointer; list-style: none; }
 .a-lib-edit summary::-webkit-details-marker { display: none; }

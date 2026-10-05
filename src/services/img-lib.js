@@ -24,7 +24,8 @@ function cleanSrc(src) {
  * Mỗi khối HoYoLAB: ảnh nhân vật (img, bỏ qua icon nguyên tố gt-icon__img), sau đó <p>Lv.x</p> và <p>Tên</p>.
  */
 function parseHtml(html) {
-  const re = /<img\b[^>]*>|<p\b[^>]*>([\s\S]*?)<\/p>|star-bg-(\d)/gi;
+  // Độ hiếm: Genshin / Star Rail dùng class star-bg-5 / star-bg-4; ZZZ dùng thuộc tính rarity="S" / "A"
+  const re = /<img\b[^>]*>|<p\b[^>]*>([\s\S]*?)<\/p>|star-bg-(\d)|\srarity="([SAB])"/gi;
   const out = [];
   const seen = new Set();
   let pending = null;
@@ -34,6 +35,7 @@ function parseHtml(html) {
   const text = String(html || '').slice(0, 3 * 1024 * 1024);
   while ((m = re.exec(text))) {
     if (m[2]) { rarity = parseInt(m[2], 10) || 0; continue; }
+    if (m[3]) { rarity = { S: 5, A: 4, B: 3 }[m[3].toUpperCase()] || 0; continue; }
     if (m[0][1].toLowerCase() === 'i') {
       const cls = attr(m[0], 'class');
       const src = attr(m[0], 'origin-src') || attr(m[0], 'src');

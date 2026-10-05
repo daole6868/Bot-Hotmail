@@ -11,7 +11,8 @@
       : { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, Accept: 'application/json' }, body: JSON.stringify(body) };
     try { const r = await fetch(url, opt); return await r.json(); } catch (e) { return { ok: false, message: 'Lỗi kết nối, thử lại' }; }
   };
-  const SECS = [['c5', 'Nhân vật 5★', 'c'], ['c4', 'Nhân vật 4★', 'c'], ['w5', '5★', 'w'], ['w4', '4★', 'w']];
+  const SECS = [['c5', 'Nhân vật', 'c', 5], ['c4', 'Nhân vật', 'c', 4], ['w5', '', 'w', 5], ['w4', '', 'w', 4]];
+  const rk = (g, n) => { const v = g['r' + n] || n + '★'; return v.includes('★') ? v : 'hạng ' + v; };
 
   function init(box) {
     box.dataset.init = '1';
@@ -50,8 +51,8 @@
         '<div><label>Game</label><select data-acc-k="game">' + gOpt + '</select></div>' +
         '<div><label>' + esc(g.lv) + '</label><input type="number" min="0" max="999" data-acc-k="lv" value="' + (st.lv || '') + '"></div>' +
         '<div><label>Máy chủ</label><select data-acc-k="server">' + sOpt + '</select></div></div>';
-      SECS.forEach(([key, title, kind]) => {
-        const label = kind === 'c' ? title : (g.w + ' ' + title);
+      SECS.forEach(([key, title, kind, n]) => {
+        const label = (kind === 'c' ? title : g.w) + ' ' + rk(g, n);
         const list = st[key];
         h += '<div class="a-acc-sec"><div class="a-acc-sh"><b>' + esc(label) + '</b><small>' + list.length + '</small></div>' +
           '<div class="a-acc-chips">' + list.map((it, i) => chip(it, key + ':' + i, kind)).join('') + '</div>' +

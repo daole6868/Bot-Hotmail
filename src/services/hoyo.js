@@ -19,9 +19,10 @@ const int = (v, d, min, max) => { const n = parseInt(v, 10); return Number.isFin
 const s_ = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
 
 const GAMES = {
-  genshin: { name: 'Genshin Impact', lv: 'AR', c: 'C', w: 'Vũ khí', r: 'R' },
-  hsr: { name: 'Honkai: Star Rail', lv: 'Cấp khai phá', c: 'E', w: 'Nón Ánh Sáng', r: 'S' },
-  zzz: { name: 'Zenless Zone Zero', lv: 'Cấp Inter-Knot', c: 'M', w: 'W-Engine', r: 'R' },
+  // r5 / r4: nhãn độ hiếm (ZZZ dùng hạng S / A thay cho 5★ / 4★)
+  genshin: { name: 'Genshin Impact', lv: 'AR', c: 'C', w: 'Vũ khí', r: 'R', r5: '5★', r4: '4★' },
+  hsr: { name: 'Honkai: Star Rail', lv: 'Cấp khai phá', c: 'E', w: 'Nón Ánh Sáng', r: 'S', r5: '5★', r4: '4★' },
+  zzz: { name: 'Zenless Zone Zero', lv: 'Cấp Inter-Knot', c: 'M', w: 'W-Engine', r: 'R', r5: 'S', r4: 'A' },
 };
 const SERVERS = ['Asia', 'America', 'Europe', 'TW/HK/MO'];
 

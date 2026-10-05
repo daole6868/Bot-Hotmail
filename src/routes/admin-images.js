@@ -66,7 +66,7 @@ router.get('/', (req, res) => {
     data.total = db.prepare(`SELECT COUNT(*) n FROM hoyo_assets WHERE game = ? AND kind = ?${extra}`).get(...params).n;
     data.assets = db.prepare(`SELECT id, name, icon, rarity FROM hoyo_assets WHERE game = ? AND kind = ?${extra} ORDER BY rarity DESC, name LIMIT ? OFFSET ?`).all(...params, PER, (data.page - 1) * PER);
     data.hasMore = data.page * PER < data.total;
-    if (req.query.frag) return res.render('admin/partials/lib-items', { assets: data.assets, csrfToken: res.locals.csrfToken }, (err, html) => res.json(err ? { ok: false } : { ok: true, html, more: data.hasMore }));
+    if (req.query.frag) return res.render('admin/partials/lib-items', { assets: data.assets, libG: hoyo.GAMES[data.game], csrfToken: res.locals.csrfToken }, (err, html) => res.json(err ? { ok: false } : { ok: true, html, more: data.hasMore }));
     data.counts = Object.fromEntries(db.prepare('SELECT game || kind AS k, COUNT(*) n FROM hoyo_assets GROUP BY game, kind').all().map((r) => [r.k, r.n]));
   }
   res.render('admin/images', data);

@@ -1,5 +1,6 @@
 <%# Chi tiết tài khoản ngoài trang sản phẩm: nhân vật / vũ khí 5★ 4★ (a = p.acc, g = nhãn theo game) %>
-<% const secs = [['c5', 'Nhân vật 5★', 'c', 5], ['c4', 'Nhân vật 4★', 'c', 4], ['w5', g.w + ' 5★', 'w', 5], ['w4', g.w + ' 4★', 'w', 4]].filter(x => (a[x[0]] || []).length); %>
+<% const rk = (n) => { const v = (n === 5 ? g.r5 : g.r4) || n + '★'; return v.includes('★') ? v : 'hạng ' + v; }; %>
+<% const secs = [['c5', 'Nhân vật ' + rk(5), 'c', 5], ['c4', 'Nhân vật ' + rk(4), 'c', 4], ['w5', g.w + ' ' + rk(5), 'w', 5], ['w4', g.w + ' ' + rk(4), 'w', 4]].filter(x => (a[x[0]] || []).length); %>
 <% if (secs.length) { %>
 <section class="section card pad acd">
   <h2 class="section-title"><%- I('star') %> Chi tiết tài khoản</h2>

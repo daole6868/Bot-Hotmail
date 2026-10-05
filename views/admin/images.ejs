@@ -75,7 +75,7 @@
       <h3><%- I('plus') %> Thêm 1 <%= kind === 'char' ? 'nhân vật' : GAMES[game].w.toLowerCase() %></h3>
       <div class="a-row">
         <div><label>Tên</label><input name="name" required maxlength="60"></div>
-        <div><label>Độ hiếm</label><select name="rarity"><option value="5">5★</option><option value="4">4★</option><option value="0">Khác</option></select></div>
+        <div><label>Độ hiếm</label><select name="rarity"><option value="5"><%= GAMES[game].r5 %></option><option value="4"><%= GAMES[game].r4 %></option><option value="0">Khác</option></select></div>
       </div>
       <label>Ảnh <small class="a-muted">(chọn file hoặc dán link ảnh HoYoverse)</small></label>
       <div class="a-row">
@@ -93,7 +93,7 @@
   </form>
   <% if (!assets.length) { %><div class="a-card a-empty">Chưa có ảnh nào. Dán HTML ở trên để nạp.</div><% } %>
   <div class="a-lib-grid" data-lib-grid>
-    <%- include('partials/lib-items', { assets }) %>
+    <%- include('partials/lib-items', { assets, libG: GAMES[game] }) %>
   </div>
   <% if (hasMore) { %><div class="a-lib-more"><button type="button" class="a-btn" data-lib-more data-next="<%= page + 1 %>">Tải thêm (<%= total - page * 120 %> mục)</button></div><% } %>
 <% } %>
