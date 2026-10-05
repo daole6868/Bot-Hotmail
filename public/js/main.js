@@ -746,3 +746,12 @@
   let t = 0;
   window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => grids.forEach(fold), 150); });
 })();
+
+/* Mã chống trừ tiền 2 lần: trang được mở lại từ bộ nhớ trình duyệt (nút Back) -> tạo mã mới cho lượt mua mới */
+window.addEventListener('pageshow', (e) => {
+  if (!e.persisted) return;
+  document.querySelectorAll('[data-idem]').forEach((i) => {
+    const b = new Uint8Array(16); crypto.getRandomValues(b);
+    i.value = btoa(String.fromCharCode.apply(null, b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  });
+});

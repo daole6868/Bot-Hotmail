@@ -281,10 +281,14 @@ router.post('/product/:code/buy', requireLogin, limiters.buy, (req, res) => {
     req.flash('error', 'Sản phẩm không tồn tại');
     return res.redirect('/');
   }
-  const r = purchase(req.user.id, p.id, str(req.body.coupon, 32), clientIp(req));
+  const r = purchase(req.user.id, p.id, str(req.body.coupon, 32), clientIp(req), req.body.idem);
   if (!r.ok) {
     req.flash('error', r.message);
     return res.redirect(`/product/${p.code}`);
+  }
+  if (r.dup) { // yêu cầu gửi lại: đơn đã tạo từ lần trước, không trừ tiền thêm
+    req.flash('success', 'Đơn này đã được xử lý trước đó, không trừ tiền thêm. Thông tin tài khoản ở bên dưới.');
+    return res.redirect(`/user/orders/${r.code}`);
   }
   router.clearCache();
   const o = db.prepare('SELECT order_code, product_title, discount, total, created_at FROM orders WHERE id = ?').get(r.orderId);

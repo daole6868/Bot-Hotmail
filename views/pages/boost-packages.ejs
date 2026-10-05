@@ -34,6 +34,7 @@
       <form method="post" action="/boost/checkout" class="bp-form" id="bForm" <%= cart.items.length ? '' : 'hidden' %> autocomplete="off" data-balance="<%= user.balance %>">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <input type="hidden" name="game" value="<%= game.id %>">
+        <input type="hidden" name="idem" value="<%= newIdem() %>" data-idem>
         <input type="hidden" name="back" value="<%= here %>">
         <% if (topup) { %><input type="hidden" name="cat" value="<%= parent.id %>"><% } %>
         <% if (method === 'uid') { %>

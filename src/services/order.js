@@ -3,6 +3,7 @@ const { db, bumpStat, logActivity } = require('../db');
 const { validateCoupon } = require('./coupon');
 const { randomCode } = require('../utils/crypto');
 const { money } = require('../utils/helpers');
+const idem = require('./idem');
 
 class OrderError extends Error {}
 
@@ -16,7 +17,9 @@ function genOrderCode() {
  * Mua sản phẩm — toàn bộ chạy trong 1 transaction IMMEDIATE:
  * khóa ghi DB => không thể mua trùng 1 acc hay trừ tiền âm dù có nhiều request cùng lúc.
  */
-const purchaseTx = db.transaction((userId, productId, couponCode, ip) => {
+const purchaseTx = db.transaction((userId, productId, couponCode, ip, idemKey) => {
+  const prev = idem.seen(userId, idemKey); // yêu cầu gửi lại -> trả đơn cũ, không trừ tiền
+  if (prev) return { dup: true, code: prev.ref };
   const p = db.prepare(`SELECT p.*, c.name AS category_name, c.is_active AS cat_active,
       g.id AS game_id, g.name AS game_name, g.is_active AS game_active
     FROM products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id
@@ -76,12 +79,14 @@ const purchaseTx = db.transaction((userId, productId, couponCode, ip) => {
     .run(userId, -total, bal, 'purchase', code, `Mua ${p.title}`);
   bumpStat('revenue', total);
   bumpStat('orders', 1);
+  idem.save(userId, idemKey, 'order', code);
   return { orderId, code, total };
 });
 
-function purchase(userId, productId, couponCode, ip) {
+function purchase(userId, productId, couponCode, ip, idemKey) {
   try {
-    const r = purchaseTx.immediate(userId, productId, couponCode, ip);
+    const r = purchaseTx.immediate(userId, productId, couponCode, ip, idem.clean(idemKey));
+    if (r.dup) return { ok: true, ...r };
     logActivity(userId, 'purchase', `${r.code} - ${money(r.total)}`, ip);
     require('./tracking').track(userId, 'purchase', r.total, r.code);
     return { ok: true, ...r };

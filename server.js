@@ -128,6 +128,9 @@ app.locals.clearNav = () => { navCache.at = 0; };
 
 // Phiên khách chưa đăng nhập: cookie cũng chỉ 1 giờ (khớp với hạn trong database)
 app.use((req, res, next) => { if (req.session && !req.session.userId) req.session.cookie.maxAge = 60 * 60 * 1000; next(); });
+// Mã chống trừ tiền 2 lần cho form mua (xem services/idem.js)
+const { newKey: newIdem } = require('./src/services/idem');
+app.use((req, res, next) => { res.locals.newIdem = newIdem; next(); });
 app.use(security.flash);
 app.use(security.csrf);
 app.use(security.loadUser);

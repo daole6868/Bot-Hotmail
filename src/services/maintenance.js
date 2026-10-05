@@ -44,6 +44,7 @@ function purgeOld() {
   out.bankTxns = db.prepare("DELETE FROM bank_transactions WHERE status IN ('matched','ignored') AND created_at < ?").run(t - r.bankTxnDays * DAY).changes;
   out.sessions = SQLiteStore.cleanup();
   try { const b = require('./boost'); out.boostCarts = b.purgeCarts(); out.boostLogins = b.wipeLogins(); } catch (e) { console.error('[maintenance] boost', e.message); }
+  try { out.idemKeys = require('./idem').purge(); } catch (e) { console.error('[maintenance] idem', e.message); }
   out.ipBlocks = db.prepare('DELETE FROM ip_blocks WHERE expires_at IS NOT NULL AND expires_at < ?').run(t).changes;
   // Mã xác minh / link đặt lại mật khẩu đã dùng hoặc hết hạn, nhật ký email cũ, thiết bị không dùng 180 ngày
   out.otps = db.prepare('DELETE FROM email_otps WHERE expires_at < ?').run(t - DAY).changes

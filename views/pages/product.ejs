@@ -53,6 +53,7 @@
       <% if (p.type === 'stock') { %><div class="pd-stock"><%- I('box') %> <span>Kho còn <b><%= p.stock_left.toLocaleString('vi-VN') %></b> acc</span></div><% } %>
       <form method="post" action="/product/<%= p.code %>/buy" class="pd-buy" data-buy-form>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="idem" value="<%= newIdem() %>" data-idem>
         <label class="label" for="couponInput">Mã giảm giá <span class="muted small">(nếu có)</span></label>
         <div class="input-group">
           <input type="text" name="coupon" id="couponInput" maxlength="32" placeholder="Nhập mã KM" autocomplete="off" data-product="<%= p.code %>">

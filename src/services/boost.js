@@ -13,6 +13,7 @@
  */
 const { db, getSettings, bumpStat, logActivity } = require('../db');
 const { validateCoupon } = require('./coupon');
+const idem = require('./idem');
 const { encrypt, decrypt, randomCode } = require('../utils/crypto');
 const { money } = require('../utils/helpers');
 
@@ -107,6 +108,8 @@ function genCode(prefix) {
 }
 
 const checkoutTx = db.transaction((userId, gameId, f, ip, kind, parentId) => {
+  const prev = idem.seen(userId, f.idem); // yêu cầu gửi lại -> trả đơn cũ, không trừ tiền
+  if (prev) return { dup: true, code: prev.ref };
   const K = kindOf(kind);
   const s = getSettings();
   const user = db.prepare('SELECT id, balance, status FROM users WHERE id = ?').get(userId);
@@ -154,6 +157,7 @@ const checkoutTx = db.transaction((userId, gameId, f, ip, kind, parentId) => {
   require('./ctv').onBoostCheckout({ id, kind, code, total, subtotal });
   bumpStat(kind + '_revenue', total);
   bumpStat(kind + '_orders', 1);
+  idem.save(userId, f.idem, kind, code);
   return { id, code, total, items, game: game?.name, contact: f.contact, kind, method: f.method, uid: f.uid, server: f.server, char_name: f.char_name };
 });
 
@@ -168,6 +172,7 @@ function checkout(userId, gameId, raw, ip, kind = 'boost', parent = null) {
     account: t(raw.account, 120), password: String(raw.password || '').slice(0, 120),
     uid: t(raw.uid, 60), uid2: t(raw.uid2, 60), char_name: t(raw.char_name, 60),
     server: t(raw.server, 60), note: t(raw.note, 1000), coupon: t(raw.coupon, 32), contact: t(raw.contact, 120),
+    idem: idem.clean(raw.idem),
   };
   if (f.method === 'uid') {
     if (!f.uid) return { ok: false, message: 'Vui lòng nhập UID / ID nhân vật' };
@@ -179,6 +184,7 @@ function checkout(userId, gameId, raw, ip, kind = 'boost', parent = null) {
   if (!f.contact) return { ok: false, message: 'Vui lòng nhập thông tin liên hệ (Zalo / SĐT / Facebook)' };
   try {
     const r = checkoutTx.immediate(userId, gameId, f, ip, kind, kind === 'topup' ? (parent?.id || 0) : 0);
+    if (r.dup) return { ok: true, ...r };
     logActivity(userId, kind === 'topup' ? 'topup_order' : 'boost_order', `${r.code} ${r.total}`, ip);
     require('./tracking').track(userId, 'purchase', r.total, r.code);
     notifyNewOrder(r, userId);

@@ -134,6 +134,7 @@ router.post('/boost/checkout', requireLogin, limiters.buy, (req, res) => {
   const kind = parent ? 'topup' : 'boost';
   const r = boost.checkout(req.user.id, gameId, req.body, clientIp(req), kind, parent);
   if (!r.ok) { req.flash('error', r.message); return res.redirect(safeBack); }
+  if (r.dup) { req.flash('success', `Đơn ${r.code} đã được đặt trước đó, không trừ tiền thêm.`); return res.redirect(`/user/boost/${r.code}`); }
   req.flash('success', `Đặt đơn ${boost.kindOf(kind).name.toLowerCase()} ${r.code} thành công! Shop sẽ xử lý sớm nhất.`);
   res.redirect(`/user/boost/${r.code}`);
 });
