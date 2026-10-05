@@ -719,3 +719,30 @@
     setTimeout(poll, 15000);
   }
 })();
+
+/* Chi tiết tài khoản: mỗi mục chỉ hiện 2 hàng đầu, còn lại sau nút "Xem tất cả" */
+(() => {
+  const grids = Array.from(document.querySelectorAll('[data-acd-grid]'));
+  if (!grids.length) return;
+  function fold(g) {
+    const btn = g.parentElement.querySelector('[data-acd-more]');
+    if (!btn || g.dataset.open) return;
+    const items = Array.from(g.children);
+    items.forEach((x) => x.classList.remove('acd-hide'));
+    const tops = [];
+    let hid = 0;
+    items.forEach((x) => {
+      const t = x.offsetTop;
+      if (!tops.includes(t)) tops.push(t);
+      if (tops.length > 2) { x.classList.add('acd-hide'); hid++; }
+    });
+    btn.hidden = !hid;
+  }
+  grids.forEach((g) => {
+    fold(g);
+    const btn = g.parentElement.querySelector('[data-acd-more]');
+    if (btn) btn.addEventListener('click', () => { g.dataset.open = '1'; g.querySelectorAll('.acd-hide').forEach((x) => x.classList.remove('acd-hide')); btn.hidden = true; });
+  });
+  let t = 0;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => grids.forEach(fold), 150); });
+})();

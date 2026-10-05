@@ -1273,7 +1273,13 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 }
 
 /* ---------- Chi tiết tài khoản (trang sản phẩm) ---------- */
-.acd-sec + .acd-sec { margin-top: 18px; }
+.acd-sec { background: var(--card2); border: 1px solid var(--border); border-radius: calc(14px * var(--rk)); padding: 12px; }
+.acd-sec + .acd-sec { margin-top: 12px; }
+.acd-sec .acd-item { background: var(--card); }
+.acd-item.acd-hide { display: none; }
+.acd-more { display: block; width: 100%; margin-top: 10px; padding: 8px 12px; border-radius: calc(10px * var(--rk)); border: 1px dashed var(--border); background: transparent; color: var(--primary); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.acd-more:hover { background: var(--bg2); }
+.acd-more[hidden] { display: none; }
 .acd-sec h3 { display: flex; align-items: center; gap: 8px; font-size: .98rem; margin: 0 0 10px; }
 .acd-sec h3 small { font-size: .74rem; color: var(--muted); background: var(--bg2); padding: 1px 9px; border-radius: 99px; }
 .acd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; }
@@ -1284,7 +1290,7 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 .acd-item.r5 .acd-ic { background: linear-gradient(160deg, #a5662f, #e3a64f); }
 .acd-item.r4 .acd-ic { background: linear-gradient(160deg, #5e4aa0, #9a78d6); }
 .acd-badge { position: absolute; top: 4px; right: 4px; font-size: .68rem; font-weight: 800; padding: 1px 6px; border-radius: 99px; background: rgba(0, 0, 0, .62); color: #fff; }
-@media (max-width: 560px) { .acd-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; } .acd-ic { width: 52px; height: 52px; } .acd-item { padding: 6px 3px 7px; } .acd-item b { font-size: .7rem; } }
+@media (max-width: 560px) { .acd-sec { padding: 10px 8px; } .acd-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; } .acd-ic { width: 52px; height: 52px; } .acd-item { padding: 6px 3px 7px; } .acd-item b { font-size: .7rem; } }
 
 /* ---------- Bộ lọc tìm kiếm trang danh mục ---------- */
 .sf { padding: 16px; margin-bottom: 18px; position: relative; z-index: 6; overflow: visible; }
