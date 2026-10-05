@@ -25,7 +25,7 @@ function cleanSrc(src) {
  */
 function parseHtml(html) {
   // Độ hiếm: Genshin / Star Rail dùng class star-bg-5 / star-bg-4; ZZZ dùng thuộc tính rarity="S" / "A"
-  const re = /<img\b[^>]*>|<p\b[^>]*>([\s\S]*?)<\/p>|star-bg-(\d)|\srarity="([SAB])"/gi;
+  const re = /<img\b[^>]*>|<p\b([^>]*)>([\s\S]*?)<\/p>|star-bg-(\d)|\srarity="([SAB])"/gi;
   const out = [];
   const seen = new Set();
   let pending = null;
@@ -34,8 +34,8 @@ function parseHtml(html) {
   let m;
   const text = String(html || '').slice(0, 3 * 1024 * 1024);
   while ((m = re.exec(text))) {
-    if (m[2]) { rarity = parseInt(m[2], 10) || 0; continue; }
-    if (m[3]) { rarity = { S: 5, A: 4, B: 3 }[m[3].toUpperCase()] || 0; continue; }
+    if (m[3]) { rarity = parseInt(m[3], 10) || 0; continue; }
+    if (m[4]) { rarity = { S: 5, A: 4, B: 3 }[m[4].toUpperCase()] || 0; continue; }
     if (m[0][1].toLowerCase() === 'i') {
       const cls = attr(m[0], 'class');
       const src = attr(m[0], 'origin-src') || attr(m[0], 'src');
@@ -44,8 +44,10 @@ function parseHtml(html) {
       rarity = 0;
       continue;
     }
-    const name = decode(String(m[1] || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
-    if (!pending || !name || /^lv\.?\s*\d+$/i.test(name) || name.length > 60) continue;
+    // Dòng cấp (gt-card__info: "Lv.60", hoặc "-" khi chưa sở hữu) không phải tên
+    if (/\bgt-card__info\b(?!-)/.test(attr('<p ' + m[1] + '>', 'class'))) continue;
+    const name = decode(String(m[2] || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+    if (!pending || !name || !/[\p{L}\p{N}]/u.test(name) || /^lv\.?\s*\d+$/i.test(name) || name.length > 60) continue;
     const k = hoyo.nkey(name);
     if (seen.has(k)) { if (!dup.includes(name)) dup.push(name); }
     else { seen.add(k); out.push({ name, src: pending.src, rarity: pending.rarity }); }
