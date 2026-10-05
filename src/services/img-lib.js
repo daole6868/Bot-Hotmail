@@ -72,8 +72,10 @@ function backfill(game) {
 async function importItems(game, kind, items) {
   const fresh = [];
   let existed = 0;
+  // Tên đã có mà chưa có độ hiếm (nạp trước khi nhận được hạng S/A của ZZZ) -> chỉ cập nhật độ hiếm, không tải lại ảnh
+  const fixRarity = db.prepare('UPDATE hoyo_assets SET rarity = ? WHERE game = ? AND kind = ? AND nkey = ? AND rarity = 0');
   for (const it of items.slice(0, 400)) {
-    if (hoyo.libGet(game, kind, it.name)) existed++;
+    if (hoyo.libGet(game, kind, it.name)) { existed++; if (it.rarity) fixRarity.run(it.rarity, game, kind, hoyo.nkey(it.name)); }
     else fresh.push(it);
   }
   const added = [];
