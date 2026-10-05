@@ -76,7 +76,8 @@ function paginate(db, { select, from, where = '', params = [], order = '', page 
 function pageUrl(baseQuery, page) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(baseQuery || {})) {
-    if (v !== undefined && v !== '' && k !== 'page') q.set(k, v);
+    if (Array.isArray(v)) v.forEach((x) => q.append(k, x));
+    else if (v !== undefined && v !== '' && k !== 'page') q.set(k, v);
   }
   q.set('page', page);
   return '?' + q.toString();

@@ -286,8 +286,11 @@ function done(id, worker, result) {
   return true;
 }
 
+/** Tên game trên web -> genshin / hsr / zzz ('' nếu không phải game HoYoverse) */
+const gameOf = (name) => (/zenless|zzz/i.test(name) ? 'zzz' : /star ?rail|hsr|honkai/i.test(name) ? 'hsr' : /genshin/i.test(name) ? 'genshin' : '');
+
 module.exports = {
   GAMES, SERVERS, DEFAULTS, cfg, checkToken, hasToken, workers, onlineCount,
   createJob, jobFor, cancel, claim, progress, fail, done, sanitize, brief, fromWorker, ICON_RE,
-  nkey, libGet, libAdd, fillIcons, cacheIcon, ICON_DIR,
+  nkey, libGet, libAdd, fillIcons, cacheIcon, ICON_DIR, gameOf,
 };

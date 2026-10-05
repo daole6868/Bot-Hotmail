@@ -18,7 +18,7 @@ const RULES = [
   { re: /^\/search$/, params: ['q', 'page'] },
   { re: /^\/product\/[\w-]+$/, params: [] },
   { re: /^\/game\/[\w-]+$/, params: [] },
-  { re: /^\/game\/[\w-]+\/[\w-]+$/, params: ['q', 'min', 'max', 'sort', 'page'] },
+  { re: /^\/game\/[\w-]+\/[\w-]+$/, params: ['q', 'min', 'max', 'sort', 'page', 'price', 'lv', 'server', 'c', 'w', 'frag'], multi: ['c', 'w'] }, // c / w: nhiều nhân vật, vũ khí
   { re: /^\/game\/[\w-]+\/[\w-]+\/[\w-]+$/, params: [] },
   { re: /^\/tin-tuc$/, params: ['page'] },
   { re: /^\/tin-tuc\/chuyen-muc\/[\w-]+$/, params: ['page'] },
@@ -45,10 +45,14 @@ function middleware(req, res, next) {
       const src = new URLSearchParams(req.originalUrl.slice(qs + 1));
       const keys = [...src.keys()];
       const allowed = (k) => rule.params.includes(k) || (TRACK.includes(k) && src.get(k).length <= 300);
-      const bad = !keys.length || keys.some((k, i) => !allowed(k) || !src.get(k) || keys.indexOf(k) !== i);
+      const multi = rule.multi || [];
+      const bad = !keys.length || keys.length > 30 || keys.some((k, i) => !allowed(k) || !src.get(k) || (keys.indexOf(k) !== i && !multi.includes(k)));
       if (bad) {
         const keep = new URLSearchParams();
-        for (const k of [...rule.params, ...TRACK]) { const v = src.get(k); if (v && allowed(k)) keep.set(k, v); }
+        for (const k of [...rule.params, ...TRACK]) {
+          if (multi.includes(k)) { src.getAll(k).filter(Boolean).slice(0, 10).forEach((v) => keep.append(k, v)); continue; }
+          const v = src.get(k); if (v && allowed(k)) keep.set(k, v);
+        }
         const clean = keep.toString();
         res.setHeader('Cache-Control', `public, max-age=300, s-maxage=3600`);
         return res.redirect(301, req.path + (clean ? '?' + clean : ''));

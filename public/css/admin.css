@@ -1150,3 +1150,6 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-lib-row input { flex: 1; min-width: 0; }
 @media (max-width: 600px) { .a-img-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .a-lib-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .a-lib-more { display: flex; justify-content: center; margin-top: 14px; }
+.a-sf-table td { vertical-align: middle; }
+.a-sf-table input { min-width: 140px; }
+.a-sf-sorts { display: flex; flex-direction: column; gap: 8px; }

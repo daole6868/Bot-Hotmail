@@ -8,27 +8,16 @@
 
 <div class="section-head"><h1><%= category.name %> <span class="muted small">(<%= result.total %> sản phẩm)</span></h1></div>
 
-<form class="filter card" method="get">
-  <input type="text" name="q" value="<%= query.q %>" placeholder="Tìm theo tên / mã" maxlength="60">
-  <input type="number" name="min" value="<%= query.min || '' %>" placeholder="Giá từ" min="0">
-  <input type="number" name="max" value="<%= query.max || '' %>" placeholder="Giá đến" min="0">
-  <select name="sort">
-    <option value="default" <%= query.sort === 'default' ? 'selected' : '' %>>Mặc định</option>
-    <option value="new" <%= query.sort === 'new' ? 'selected' : '' %>>Mới nhất</option>
-    <option value="price_asc" <%= query.sort === 'price_asc' ? 'selected' : '' %>>Giá tăng dần</option>
-    <option value="price_desc" <%= query.sort === 'price_desc' ? 'selected' : '' %>>Giá giảm dần</option>
-    <option value="popular" <%= query.sort === 'popular' ? 'selected' : '' %>>Phổ biến</option>
-  </select>
-  <button class="btn btn-primary">Lọc</button>
-  <a class="btn btn-ghost" href="?">Xóa lọc</a>
-</form>
+<%- include('../partials/search-filter', { filter, query }) %>
 
 <% if (!result.rows.length) { %>
   <div class="empty">Không có sản phẩm phù hợp.</div>
 <% } %>
-<div class="product-grid">
+<div class="product-grid" data-sf-grid data-page="<%= result.page %>" data-more="<%= result.page < result.pages ? 1 : 0 %>">
   <% result.rows.forEach(p => { %><%- include('../partials/product-card', { p }) %><% }) %>
 </div>
-<%- include('../partials/pagination', { result, query }) %>
+<div class="sf-more" data-sf-more hidden><span class="sf-spin"></span> Đang tải thêm...</div>
+<div data-sf-pager><%- include('../partials/pagination', { result, query: pageQuery }) %></div>
 
+<script src="/js/filter.js?v=<%= locals.assetV || 1 %>" defer></script>
 <%- include('../partials/footer') %>

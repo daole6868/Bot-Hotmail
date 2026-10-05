@@ -149,29 +149,61 @@ router.get('/game/:slug/:cat', (req, res, next) => {
   const category = db.prepare('SELECT * FROM categories WHERE game_id = ? AND slug = ? AND is_active = 1').get(game.id, req.params.cat);
   if (!category) return next();
 
+  const F = require('../services/search-filter').cfg();
+  const hoyo = require('../services/hoyo');
+  const hg = category.sale_type === 'vip' ? hoyo.gameOf(game.name) : ''; // game HoYoverse -> có lọc AR / máy chủ / nhân vật / vũ khí
+  const list = (v) => [].concat(v || []).map((x) => str(x, 60).trim()).filter(Boolean).slice(0, 10);
+  const pr = F.prices[toInt(req.query.price, -1, -1, 99)];
   const q = {
     q: str(req.query.q, 60),
-    min: toInt(req.query.min, 0, 0),
-    max: toInt(req.query.max, 0, 0),
-    sort: ['default', 'new', 'price_asc', 'price_desc', 'popular'].includes(req.query.sort) ? req.query.sort : 'default',
+    min: pr ? pr.min : toInt(req.query.min, 0, 0),
+    max: pr ? pr.max : toInt(req.query.max, 0, 0),
+    price: pr ? String(F.prices.indexOf(pr)) : '',
+    sort: F.sorts.includes(req.query.sort) && (req.query.sort !== 'lv_desc' || hg) ? req.query.sort : 'default',
+    lv: hg ? toInt(req.query.lv, 0, 0, 999) : 0,
+    server: hg && F.servers.some((x) => x.v === req.query.server) ? req.query.server : '',
+    c: hg ? list(req.query.c) : [],
+    w: hg ? list(req.query.w) : [],
   };
   const where = ["p.category_id = ?", "p.status = 'available'"];
   const params = [category.id];
   if (q.q) { where.push('(p.title LIKE ? OR p.code LIKE ?)'); params.push(`%${q.q}%`, `%${q.q}%`); }
   if (q.min) { where.push('p.price >= ?'); params.push(q.min); }
   if (q.max) { where.push('p.price <= ?'); params.push(q.max); }
-  const order = { default: 'p.sort_order, p.id DESC', new: 'p.id DESC', price_asc: 'p.price ASC', price_desc: 'p.price DESC', popular: 'p.sold_count DESC, p.views DESC' }[q.sort];
+  if (q.lv) { where.push("json_extract(p.acc_detail, '$.lv') >= ?"); params.push(q.lv); }
+  if (q.server) { where.push("json_extract(p.acc_detail, '$.server') = ?"); params.push(q.server); }
+  // Acc phải có đủ mọi nhân vật / vũ khí đã chọn (so tên không dấu, không phân biệt hoa thường)
+  const has = (a, b) => `EXISTS (SELECT 1 FROM json_each(p.acc_detail, '$.${a}') j WHERE vn_fold(json_extract(j.value, '$.n')) = ?
+    UNION ALL SELECT 1 FROM json_each(p.acc_detail, '$.${b}') j WHERE vn_fold(json_extract(j.value, '$.n')) = ?)`;
+  for (const n of q.c) { where.push(has('c5', 'c4')); params.push(hoyo.nkey(n), hoyo.nkey(n)); }
+  for (const n of q.w) { where.push(has('w5', 'w4')); params.push(hoyo.nkey(n), hoyo.nkey(n)); }
+  const order = { default: 'p.sort_order, p.id DESC', new: 'p.id DESC', price_asc: 'p.price ASC', price_desc: 'p.price DESC', popular: 'p.sold_count DESC, p.views DESC', lv_desc: "json_extract(p.acc_detail, '$.lv') DESC, p.id DESC" }[q.sort];
 
   const result = paginate(db, {
     select: PRODUCT_SELECT,
     from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
     where: 'WHERE ' + where.join(' AND '), params, order: 'ORDER BY ' + order,
-    page: toInt(req.query.page, 1, 1), perPage: 12,
+    page: toInt(req.query.page, 1, 1), perPage: F.perPage,
   });
   result.rows.forEach(decorate);
+  // Cuộn liên tục: trả về thêm thẻ sản phẩm của trang sau
+  if (req.query.frag) {
+    return res.render('partials/product-cards', { rows: result.rows }, (err, html) => res.json(err ? { ok: false } : { ok: true, html, more: result.page < result.pages }));
+  }
+  const libList = (kind) => (hg ? db.prepare('SELECT name n, icon i FROM hoyo_assets WHERE game = ? AND kind = ? ORDER BY rarity DESC, name').all(hg, kind) : []);
+  const filter = { F, hg, game: hg ? hoyo.GAMES[hg] : null, chars: libList('char'), weapons: libList('weapon'), sortNames: Object.fromEntries(require('../services/search-filter').SORTS) };
+  // Tham số giữ lại khi sang trang (bỏ giá trị mặc định cho link gọn)
+  const pageQuery = {};
+  if (q.q) pageQuery.q = q.q;
+  if (q.price) pageQuery.price = q.price; else { if (q.min) pageQuery.min = q.min; if (q.max) pageQuery.max = q.max; }
+  if (q.sort !== 'default') pageQuery.sort = q.sort;
+  if (q.lv) pageQuery.lv = q.lv;
+  if (q.server) pageQuery.server = q.server;
+  if (q.c.length) pageQuery.c = q.c;
+  if (q.w.length) pageQuery.w = q.w;
   const siblings = db.prepare('SELECT name, slug FROM categories WHERE game_id = ? AND is_active = 1 ORDER BY sort_order, id').all(game.id);
   res.render('pages/category', {
-    title: `${category.name} - ${game.name}`, game, category, siblings, result, query: q,
+    title: `${category.name} - ${game.name}`, game, category, siblings, result, query: q, filter, pageQuery,
     seoTitle: category.seo_title, metaDesc: category.seo_desc || category.description || `${category.name} ${game.name}: ${result.total} tài khoản đang bán, giá chỉ từ ${result.rows.length ? Math.min(...result.rows.map((r) => r.price)).toLocaleString('vi-VN') + 'đ' : 'rẻ'}. Giao acc tự động 24/7.`,
     metaImage: category.image || game.image,
     breadcrumb: [{ name: game.name, url: `/game/${game.slug}` }, { name: category.name }],
