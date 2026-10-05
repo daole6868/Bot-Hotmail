@@ -1340,7 +1340,7 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 .pc-roll { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); }
 .product-card .card-body > .pc-roll + .pc-roll { margin-top: -4px !important; }
 .pc-track { display: flex; width: max-content; }
-.pc-ic { flex: 0 0 auto; width: 34px; height: 34px; margin-right: 5px; border-radius: calc(8px * var(--rk)); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 800; color: #fff; background: linear-gradient(160deg, #8a8fa3, #b7bccb); }
+.pc-ic { flex: 0 0 auto; width: 27px; height: 27px; margin-right: 4px; border-radius: calc(6px * var(--rk)); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 800; color: #fff; background: linear-gradient(160deg, #8a8fa3, #b7bccb); }
 .pc-ic.r5 { background: linear-gradient(160deg, #a5662f, #e3a64f); }
 .pc-ic.r4 { background: linear-gradient(160deg, #5e4aa0, #9a78d6); }
 .pc-ic img { width: 100%; height: 100%; object-fit: cover; }
@@ -1353,4 +1353,4 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 .product-card .attrs.attrs-acc li::before { content: '•'; color: var(--muted); }
 .product-card .attrs.attrs-acc span::after { content: ':'; }
 .product-card .attrs.attrs-acc b { text-align: left; }
-@media (max-width: 560px) { .pc-ic { width: 28px; height: 28px; margin-right: 4px; } .product-card .attrs.attrs-acc { grid-template-columns: auto auto; justify-content: space-between; gap: 2px 6px; font-size: .62rem; } .product-card .attrs.attrs-acc li { gap: 3px; } .product-card.has-acc .product-title { font-size: .82rem; } }
+@media (max-width: 560px) { .pc-ic { width: 21px; height: 21px; margin-right: 3px; border-radius: calc(5px * var(--rk)); font-size: .6rem; } .product-card .card-body > .pc-roll + .pc-roll { margin-top: -6px !important; } .product-card .attrs.attrs-acc { grid-template-columns: auto auto; justify-content: space-between; gap: 1px 6px; font-size: .58rem; } .product-card .attrs.attrs-acc li { gap: 3px; } .product-card.has-acc .product-title { font-size: .74rem; min-height: 2.4em; } .product-card.has-acc .price-box .price { font-size: .78rem; } .product-card.has-acc .btn-view { padding: 5px 9px; font-size: .7rem; } }
