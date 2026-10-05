@@ -89,25 +89,13 @@
   <form method="get" class="a-img-search">
     <input type="hidden" name="tab" value="hoyo"><input type="hidden" name="game" value="<%= game %>"><input type="hidden" name="kind" value="<%= kind %>">
     <input name="q" value="<%= q %>" placeholder="Tìm tên..."><button class="a-btn">Tìm</button>
-    <span class="a-muted a-small"><%= assets.length %> mục</span>
+    <span class="a-muted a-small"><%= total %> mục</span>
   </form>
   <% if (!assets.length) { %><div class="a-card a-empty">Chưa có ảnh nào. Dán HTML ở trên để nạp.</div><% } %>
-  <div class="a-lib-grid">
-    <% assets.forEach(a => { %>
-      <div class="a-lib-item r<%= a.rarity %>">
-        <img src="<%= a.icon %>" alt="" loading="lazy" width="72" height="72">
-        <b title="<%= a.name %>"><%= a.name %></b>
-        <details class="a-lib-edit">
-          <summary>Sửa</summary>
-          <div class="a-lib-pop">
-            <form method="post" action="/admin/images/hoyo/<%= a.id %>/rename" class="a-lib-row"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input name="name" value="<%= a.name %>" maxlength="60" required><button class="a-btn a-btn-sm">Đổi tên</button></form>
-            <form method="post" action="/admin/images/hoyo/<%= a.id %>/replace" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="a-btn a-btn-sm"><%- I('image') %> Thay ảnh<input type="file" name="image" accept="image/*" hidden data-img-auto></label></form>
-            <form method="post" action="/admin/images/hoyo/<%= a.id %>/delete" data-confirm="Xóa <%= a.name %> khỏi thư viện?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-btn-sm a-danger-soft"><%- I('trash') %> Xóa</button></form>
-          </div>
-        </details>
-      </div>
-    <% }) %>
+  <div class="a-lib-grid" data-lib-grid>
+    <%- include('partials/lib-items', { assets }) %>
   </div>
+  <% if (hasMore) { %><div class="a-lib-more"><button type="button" class="a-btn" data-lib-more data-next="<%= page + 1 %>">Tải thêm (<%= total - page * 120 %> mục)</button></div><% } %>
 <% } %>
 <script src="/js/admin-images.js?v=<%= locals.assetV || 1 %>" defer></script>
 <%- include('_footer') %>

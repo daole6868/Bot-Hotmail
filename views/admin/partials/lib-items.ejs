@@ -1,0 +1,14 @@
+<% assets.forEach(a => { %>
+  <div class="a-lib-item r<%= a.rarity %>">
+    <img src="<%= a.icon %>" alt="" loading="lazy" width="72" height="72">
+    <b title="<%= a.name %>"><%= a.name %></b>
+    <details class="a-lib-edit">
+      <summary>Sửa</summary>
+      <div class="a-lib-pop">
+        <form method="post" action="/admin/images/hoyo/<%= a.id %>/rename" class="a-lib-row"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input name="name" value="<%= a.name %>" maxlength="60" required><button class="a-btn a-btn-sm">Đổi tên</button></form>
+        <form method="post" action="/admin/images/hoyo/<%= a.id %>/replace" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="a-btn a-btn-sm"><%- I('image') %> Thay ảnh<input type="file" name="image" accept="image/*" hidden data-img-auto></label></form>
+        <form method="post" action="/admin/images/hoyo/<%= a.id %>/delete" data-confirm="Xóa <%= a.name %> khỏi thư viện?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-btn-sm a-danger-soft"><%- I('trash') %> Xóa</button></form>
+      </div>
+    </details>
+  </div>
+<% }) %>

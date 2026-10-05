@@ -5,6 +5,33 @@
   const csrf = $('meta[name="csrf-token"]')?.content || '';
   document.addEventListener('change', (e) => { if (e.target.matches('[data-img-auto]') && e.target.files.length) e.target.form.submit(); });
 
+  // Thư viện: mỗi lần 120 mục, kéo tới cuối thì tự tải tiếp
+  const more = $('[data-lib-more]');
+  const grid = $('[data-lib-grid]');
+  if (more && grid) {
+    let busy = false;
+    const load = async () => {
+      if (busy) return;
+      busy = true; more.disabled = true;
+      const u = new URL(location.href);
+      u.searchParams.set('page', more.dataset.next);
+      u.searchParams.set('frag', '1');
+      try {
+        const j = await (await fetch(u, { headers: { Accept: 'application/json' } })).json();
+        if (j.ok) {
+          grid.insertAdjacentHTML('beforeend', j.html);
+          more.dataset.next = +more.dataset.next + 1;
+          more.textContent = 'Tải thêm';
+          if (!j.more) { more.parentNode.remove(); io && io.disconnect(); }
+        }
+      } catch (e) { /* bấm lại để thử */ }
+      busy = false; more.disabled = false;
+    };
+    more.addEventListener('click', load);
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => { if (es[0].isIntersecting) load(); }, { rootMargin: '300px' }) : null;
+    if (io) io.observe(more);
+  }
+
   const box = $('[data-img-import]');
   if (!box) return;
   const out = $('[data-img-out]', box);
