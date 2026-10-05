@@ -63,12 +63,13 @@ function parseHtml(html) {
 function backfill(game) {
   const rows = db.prepare(`SELECT id, acc_detail FROM products WHERE acc_detail LIKE ? AND acc_detail LIKE '%"ic":""%' LIMIT 5000`).all('%"game":"' + game + '"%');
   const upd = db.prepare('UPDATE products SET acc_detail = ? WHERE id = ?');
+  const updB = db.prepare('UPDATE products SET acc_brief = ? WHERE id = ?'); // tóm tắt thẻ sản phẩm có ảnh mới
   let n = 0;
   for (const r of rows) {
     let d; try { d = JSON.parse(r.acc_detail); } catch { continue; }
     const before = JSON.stringify(d);
     const after = JSON.stringify(hoyo.fillIcons(d));
-    if (after !== before) { upd.run(after, r.id); n++; }
+    if (after !== before) { upd.run(after, r.id); updB.run(JSON.stringify(hoyo.brief(JSON.parse(after))), r.id); n++; }
   }
   return n;
 }
@@ -147,6 +148,6 @@ function rename(id, name) {
 const remove = (id) => db.prepare('DELETE FROM hoyo_assets WHERE id = ?').run(id).changes > 0;
 
 // Khởi động: gắn độ hiếm cho ảnh cũ đã lưu (chỉ chạy khi còn ảnh chưa có độ hiếm)
-setTimeout(() => { try { hoyo.libRarityAll(); } catch (e) { console.error('[img-lib] rarity:', e.message); } }, 5000).unref();
+setTimeout(() => { try { hoyo.rebrief(); } catch (e) { console.error('[img-lib] brief:', e.message); } try { hoyo.libRarityAll(); } catch (e) { console.error('[img-lib] rarity:', e.message); } }, 5000).unref();
 
 module.exports = { parseHtml, importItems, backfill, addOne, replace, rename, remove };

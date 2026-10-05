@@ -33,11 +33,23 @@ function accRows(b) {
   const g = HOYO_GAMES[b.g] || { lv: 'Cấp', w: 'Vũ khí' };
   return [[g.lv, b.lv || ''], ['Máy chủ', b.sv || ''], ['Nhân vật 5★', b.n5 || ''], [g.w + ' 5★', b.w5 || '']].filter((r) => r[1] !== '').map(([k, v]) => ({ k, v }));
 }
+// Thẻ Acc VIP có dữ liệu HoYoLAB: 2 dòng icon nhân vật / vũ khí (ảnh 72px siêu nhẹ) + 4 thông tin
+function accRoll(b) {
+  if (!b || b.v !== 2) return null;
+  const g = HOYO_GAMES[b.g] || { lv: 'Cấp', w: 'Vũ khí' };
+  const icons = (list) => (list || []).map(([ic, n, r]) => ({ i: ic ? thumbs.thumbOf(ic) : '', n: String(n || ''), r }));
+  return {
+    c: icons(b.ci), w: icons(b.wi),
+    info: [[g.lv, b.lv || ''], ['Máy chủ', b.sv || ''], ['Nhân vật', b.nc || 0], [g.w, b.nw || 0]].filter((r) => r[1] !== '').map(([k, v]) => ({ k, v })),
+  };
+}
 function decorate(p) {
   p.imageList = parseJSON(p.images, []);
   p.thumb = p.imageList[0] ? thumbs.thumbOf(p.imageList[0]) : '';
   p.attrList = parseJSON(p.attributes, []);
-  const rows = accRows(parseJSON(p.acc_brief, null));
+  const b = parseJSON(p.acc_brief, null);
+  p.roll = accRoll(b);
+  const rows = p.roll ? p.roll.info : accRows(b);
   if (rows && rows.length) p.attrList = rows;
   if (p.acc_detail) {
     p.acc = parseJSON(p.acc_detail, null);

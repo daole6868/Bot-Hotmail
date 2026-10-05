@@ -1334,3 +1334,23 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 .sf-spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: sfspin .8s linear infinite; }
 @keyframes sfspin { to { transform: rotate(360deg); } }
 @media (max-width: 560px) { .sf-foot { flex-direction: column; align-items: stretch; } .sf-mode { justify-content: center; } .sf-btns .btn { flex: 1; justify-content: center; } }
+
+/* Thẻ Acc VIP có dữ liệu HoYoLAB: dòng icon nhân vật / vũ khí tự chạy ngang + 4 thông tin dạng chấm */
+.product-card.has-acc .product-title { font-size: .9rem; min-height: 2.5em; }
+.pc-roll { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); }
+.product-card .card-body > .pc-roll + .pc-roll { margin-top: -4px !important; }
+.pc-track { display: flex; width: max-content; }
+.pc-ic { flex: 0 0 auto; width: 34px; height: 34px; margin-right: 5px; border-radius: calc(8px * var(--rk)); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 800; color: #fff; background: linear-gradient(160deg, #8a8fa3, #b7bccb); }
+.pc-ic.r5 { background: linear-gradient(160deg, #a5662f, #e3a64f); }
+.pc-ic.r4 { background: linear-gradient(160deg, #5e4aa0, #9a78d6); }
+.pc-ic img { width: 100%; height: 100%; object-fit: cover; }
+.pc-roll.run .pc-track { animation: pcroll var(--dur, 30s) linear infinite; will-change: transform; }
+.pc-roll.off .pc-track, a.product-card:hover .pc-roll .pc-track { animation-play-state: paused; }
+@keyframes pcroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .pc-roll.run .pc-track { animation: none; } }
+.product-card .attrs.attrs-acc { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; padding: 0; background: none; border: 0; font-size: .72rem; }
+.product-card .attrs.attrs-acc li { justify-content: flex-start; gap: 4px; }
+.product-card .attrs.attrs-acc li::before { content: '•'; color: var(--muted); }
+.product-card .attrs.attrs-acc span::after { content: ':'; }
+.product-card .attrs.attrs-acc b { text-align: left; }
+@media (max-width: 560px) { .pc-ic { width: 28px; height: 28px; margin-right: 4px; } .product-card .attrs.attrs-acc { grid-template-columns: auto auto; justify-content: space-between; gap: 2px 6px; font-size: .62rem; } .product-card .attrs.attrs-acc li { gap: 3px; } .product-card.has-acc .product-title { font-size: .82rem; } }

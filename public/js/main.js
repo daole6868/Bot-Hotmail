@@ -755,3 +755,22 @@ window.addEventListener('pageshow', (e) => {
     i.value = btoa(String.fromCharCode.apply(null, b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   });
 });
+
+/* Thẻ Acc VIP: dòng icon nhân vật / vũ khí dài hơn khung -> nhân đôi và chạy ngang nối đuôi; ra khỏi màn hình thì dừng cho nhẹ */
+(() => {
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('off', !e.isIntersecting))) : null;
+  function init(el) {
+    el.dataset.ri = '1';
+    const tr = el.firstElementChild;
+    if (!tr || tr.scrollWidth <= el.clientWidth + 1) return;
+    const n = tr.children.length;
+    Array.from(tr.children).forEach((c) => { const k = c.cloneNode(true); k.setAttribute('aria-hidden', 'true'); tr.appendChild(k); });
+    el.style.setProperty('--dur', Math.max(8, n * 1.6) + 's');
+    el.classList.add('run');
+    if (io) io.observe(el);
+  }
+  const scan = () => document.querySelectorAll('[data-roll]:not([data-ri])').forEach(init);
+  scan();
+  let q = 0;
+  new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; scan(); }); }).observe(document.body, { childList: true, subtree: true });
+})();

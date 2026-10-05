@@ -173,9 +173,25 @@ function sanitize(d) {
 }
 
 /** Bản ngắn cho thẻ sản phẩm */
+// Tóm tắt cho thẻ sản phẩm ngoài danh sách (nhẹ, không phải đọc cả chi tiết):
+// ci / wi = [ảnh, tên, độ hiếm] tối đa 20 nhân vật / 20 vũ khí (5★ trước), nc / nw = tổng số
+const BRIEF_MAX = 20;
 function brief(d) {
   if (!d) return null;
-  return { g: d.game, lv: d.lv, sv: d.server, n5: d.c5.length, n4: d.c4.length, w5: d.w5.length, top: d.c5.slice(0, 6).map((c) => [c.n, c.k]) };
+  const pick = (a5, a4) => [...(a5 || []).map((x) => [x.ic || '', x.n, 5]), ...(a4 || []).map((x) => [x.ic || '', x.n, 4])].slice(0, BRIEF_MAX);
+  return {
+    v: 2, g: d.game, lv: d.lv, sv: d.server, n5: d.c5.length, n4: d.c4.length, w5: d.w5.length,
+    nc: d.c5.length + d.c4.length, nw: d.w5.length + (d.w4 || []).length, ci: pick(d.c5, d.c4), wi: pick(d.w5, d.w4),
+  };
+}
+
+/** Cập nhật lại tóm tắt các acc đã lưu (tóm tắt kiểu cũ, hoặc ảnh vừa được điền thêm) */
+function rebrief(where = "acc_brief IS NULL OR acc_brief NOT LIKE '{\"v\":2,%'") {
+  const rows = db.prepare(`SELECT id, acc_detail FROM products WHERE acc_detail IS NOT NULL AND acc_detail <> '' AND (${where})`).all();
+  const upd = db.prepare('UPDATE products SET acc_brief = ? WHERE id = ?');
+  let n = 0;
+  db.transaction(() => { for (const r of rows) { try { const d = JSON.parse(r.acc_detail); if (d && d.c5) { upd.run(JSON.stringify(brief(d)), r.id); n++; } } catch { /* bỏ qua */ } } })();
+  return n;
 }
 
 /** Kết quả worker (dạng build_result_* của tool cũ) -> chi tiết tài khoản, ảnh vẫn là link gốc (chưa tải) */
@@ -315,5 +331,5 @@ const gameOf = (name) => (/zenless|zzz/i.test(name) ? 'zzz' : /star ?rail|hsr|ho
 module.exports = {
   GAMES, SERVERS, DEFAULTS, cfg, checkToken, hasToken, workers, onlineCount,
   createJob, jobFor, cancel, claim, progress, fail, done, sanitize, brief, fromWorker, ICON_RE,
-  nkey, libGet, libAdd, libRarity, libRarityAll, fillIcons, cacheIcon, ICON_DIR, gameOf,
+  nkey, libGet, libAdd, libRarity, libRarityAll, fillIcons, rebrief, cacheIcon, ICON_DIR, gameOf,
 };

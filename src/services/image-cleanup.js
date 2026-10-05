@@ -34,7 +34,7 @@ async function unlinkUpload(pub) {
   let size = 0;
   try { const st = await fsp.stat(full); await fsp.unlink(full); size = st.size; } catch { return 0; }
   const t = thumbs.thumbPath(pub); // ảnh nhỏ của thẻ sản phẩm đi kèm
-  if (t) { try { const tf = full.replace(/\.[a-z]+$/i, '.t.webp'); const st = await fsp.stat(tf); await fsp.unlink(tf); size += st.size; } catch { /* chưa có */ } }
+  if (t) { try { const tf = path.join(config.paths.uploads, t.slice('/uploads/'.length)); const st = await fsp.stat(tf); await fsp.unlink(tf); size += st.size; } catch { /* chưa có */ } }
   return size;
 }
 
@@ -102,8 +102,8 @@ async function orphanImages() {
   for (const full of await walk(config.paths.uploads)) {
     const pub = '/uploads/' + path.relative(config.paths.uploads, full).split(path.sep).join('/');
     if (used.has(pub)) continue;
-    // Ảnh nhỏ abc.t.webp: giữ khi ảnh gốc abc.* còn được dùng
-    if (/\.t\.webp$/i.test(pub) && ['.webp', '.jpg', '.jpeg', '.png', '.gif'].some((e) => used.has(pub.slice(0, -7) + e))) continue;
+    // Ảnh nhỏ abc.t.webp / abc.m.webp: giữ khi ảnh gốc còn được dùng
+    if (thumbs.originsOf(pub).some((o) => used.has(o))) continue;
     try {
       const st = await fsp.stat(full);
       if (st.mtimeMs > minAge) continue;

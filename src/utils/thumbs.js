@@ -7,13 +7,24 @@ const config = require('../config');
 
 const WIDTH = 600;
 const HEIGHT = 360; // khung thẻ tỉ lệ 5:3 -> cả 2 chiều đều đủ cho màn hình nét, ảnh quá ngang / quá dọc không bị mờ khi cắt vừa khung
-const QUALITY = 80;
-const SRC_RE = /^\/uploads\/products\/[\w\-/]+\.(webp|jpe?g|png|gif)$/i;
+// 2 loại ảnh nhỏ:
+//  .t.webp  ảnh sản phẩm trên thẻ (tối thiểu 600x360)
+//  .m.webp  icon nhân vật / vũ khí trên thẻ (72x72, hiện ~34px -> nét trên màn hình Retina, ~2 KB)
+const KINDS = [
+  { re: /^\/uploads\/products\/[\w\-/]+\.(webp|jpe?g|png|gif)$/i, ext: '.t.webp', resize: { width: WIDTH, height: HEIGHT, fit: 'outside', withoutEnlargement: true }, q: 80 },
+  { re: /^\/uploads\/hoyo\/[a-f0-9]{40}\.webp$/, ext: '.m.webp', resize: { width: 72, height: 72, fit: 'cover' }, q: 72 },
+];
+const kindOf = (pub) => KINDS.find((k) => k.re.test(pub || ''));
+/** Ảnh nhỏ abc.t.webp / abc.m.webp -> các đường dẫn ảnh gốc có thể có (để dọn ảnh mồ côi không xóa nhầm) */
+const originsOf = (pub) => {
+  const m = /^(.*)\.(t|m)\.webp$/i.exec(pub || '');
+  return m ? (m[2] === 'm' ? [m[1] + '.webp'] : ['.webp', '.jpg', '.jpeg', '.png', '.gif'].map((e) => m[1] + e)) : [];
+};
 
 let sharp = null;
 try { sharp = require('sharp'); } catch { /* chưa cài sharp: dùng ảnh gốc */ }
 
-const thumbPath = (pub) => (SRC_RE.test(pub || '') ? pub.replace(/\.[a-z]+$/i, '.t.webp') : '');
+const thumbPath = (pub) => { const k = kindOf(pub); return k ? pub.replace(/\.[a-z]+$/i, k.ext) : ''; };
 const diskPath = (pub) => {
   const full = path.normalize(path.join(config.paths.uploads, pub.slice('/uploads/'.length)));
   return full.startsWith(config.paths.uploads + path.sep) ? full : '';
@@ -28,8 +39,9 @@ async function make(pub) {
   if (!src || !dst) return '';
   if (fs.existsSync(dst)) return t;
   try {
+    const k = kindOf(pub);
     const buf = await sharp(src, { limitInputPixels: 50e6 }).rotate()
-      .resize({ width: WIDTH, height: HEIGHT, fit: 'outside', withoutEnlargement: true }).webp({ quality: QUALITY, effort: 4 }).toBuffer();
+      .resize(k.resize).webp({ quality: k.q, effort: 4 }).toBuffer();
     const tmp = dst + '.' + process.pid + '.tmp';
     fs.writeFileSync(tmp, buf);
     fs.renameSync(tmp, dst);
@@ -72,7 +84,8 @@ setTimeout(() => {
     for (const r of db.prepare("SELECT images FROM products WHERE status <> 'sold' AND images LIKE '[\"/uploads/products/%'").all()) {
       try { const first = JSON.parse(r.images)[0]; if (first) thumbOf(first); } catch { /* bỏ qua */ }
     }
+    for (const r of db.prepare('SELECT icon FROM hoyo_assets').all()) thumbOf(r.icon); // icon nhân vật / vũ khí cho thẻ sản phẩm
   } catch (e) { console.error('[thumbs]', e.message); }
 }, 15000).unref();
 
-module.exports = { WIDTH, thumbPath, thumbOf, make };
+module.exports = { WIDTH, thumbPath, thumbOf, make, originsOf };
