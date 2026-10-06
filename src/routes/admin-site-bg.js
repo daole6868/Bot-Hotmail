@@ -27,7 +27,8 @@ router.post('/', (req, res) => {
   c.scope = b.scope === 'home' ? 'home' : 'all';
   c.dark = H.toInt(b.dark, 35, 0, 90);
   c.blur = H.toInt(b.blur, 0, 0, 20);
-  c.mobileVideo = !!b.mobileVideo;
+  c.mobileImg = !!b.mobileImg;
+  delete c.mobileVideo;
   setSetting('site_bg', JSON.stringify(c));
   // file cũ đã bị thay / gỡ -> xóa khỏi ổ cứng
   if (old.img && old.img !== c.img) removeImage(old.img);

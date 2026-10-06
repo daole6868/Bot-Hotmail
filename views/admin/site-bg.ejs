@@ -15,7 +15,7 @@
         <div><label>Làm tối (%) <b data-sbg-v="dark"><%= c.dark %></b></label><input type="range" name="dark" min="0" max="90" value="<%= c.dark %>" data-sbg-r="dark"></div>
         <div><label>Làm mờ (px) <b data-sbg-v="blur"><%= c.blur %></b></label><input type="range" name="blur" min="0" max="20" value="<%= c.blur %>" data-sbg-r="blur"></div>
       </div>
-      <label class="a-check"><input type="checkbox" name="mobileVideo" value="1" <%= c.mobileVideo ? 'checked' : '' %>> <span>Phát video cả trên điện thoại <small class="a-muted">(tắt: điện thoại dùng ảnh nền cho nhẹ)</small></span></label>
+      <label class="a-check"><input type="checkbox" name="mobileImg" value="1" <%= c.mobileImg ? 'checked' : '' %>> <span>Điện thoại dùng ảnh nền thay video <small class="a-muted">(cần có ảnh nền)</small></span></label>
     </div>
     <div class="a-card">
       <h3><%- I('eye') %> Xem trước</h3>

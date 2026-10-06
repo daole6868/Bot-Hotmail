@@ -1,7 +1,7 @@
 <% const SB = locals.siteBg; if (SB) { const vid = SB.type === 'video' && SB.video; %>
 <div class="site-bg<%= SB.blur ? ' blur' : '' %>" aria-hidden="true" style="--o: <%= SB.dark / 100 %>; --b: <%= SB.blur %>px">
   <% if (SB.img) { %><div class="site-bg-img" style="background-image:url('<%= SB.img %>')"></div><% } %>
-  <% if (vid) { %><video class="site-bg-v" muted loop playsinline preload="none" data-src="<%= SB.video %>" data-mob="<%= SB.mobileVideo ? 1 : 0 %>" <%- SB.img ? `poster="${SB.img}"` : '' %>></video><% } %>
+  <% if (vid) { %><video class="site-bg-v" muted loop playsinline preload="none" data-src="<%= SB.video %>" data-mob-img="<%= SB.mobileImg && SB.img ? 1 : 0 %>" <%- SB.img ? `poster="${SB.img}"` : '' %>></video><% } %>
   <span class="site-bg-o"></span>
 </div>
 <% } %>

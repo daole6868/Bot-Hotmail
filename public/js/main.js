@@ -775,15 +775,23 @@ window.addEventListener('pageshow', (e) => {
   new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; scan(); }); }).observe(document.body, { childList: true, subtree: true });
 })();
 
-// Nền trang dạng video: chỉ tải video khi được phép (điện thoại dùng ảnh trừ khi bật, tôn trọng giảm chuyển động)
+// Nền trang dạng video: tải sau khi trang hiện; có ảnh nền thì dùng ảnh khi điện thoại được đặt dùng ảnh / tiết kiệm dữ liệu
 (() => {
   const v = document.querySelector('.site-bg-v[data-src]');
   if (!v) return;
-  const mob = matchMedia('(max-width: 720px)').matches || matchMedia('(pointer: coarse)').matches;
-  if ((mob && v.dataset.mob !== '1') || matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) { v.remove(); return; }
+  const hasImg = !!document.querySelector('.site-bg-img');
+  const mob = matchMedia('(max-width: 720px), (pointer: coarse)').matches;
+  if (hasImg && ((mob && v.dataset.mobImg === '1') || navigator.connection?.saveData)) { v.remove(); return; }
+  v.muted = true; v.defaultMuted = true; v.playsInline = true; v.autoplay = true;
   v.src = v.dataset.src; v.preload = 'auto';
-  v.addEventListener('canplay', () => v.classList.add('on'), { once: true });
-  const p = v.play(); if (p) p.catch(() => {});
+  const show = () => v.classList.add('on');
+  v.addEventListener('playing', show, { once: true });
+  v.addEventListener('loadeddata', show, { once: true });
+  const play = () => { const p = v.play(); if (p) p.catch(() => {}); };
+  play();
+  // một số điện thoại chặn tự phát -> phát ở lần chạm đầu tiên
+  const kick = () => { if (v.paused) play(); };
+  ['touchstart', 'click', 'scroll'].forEach((ev) => addEventListener(ev, kick, { once: true, passive: true }));
   // tab ẩn -> dừng video cho đỡ tốn CPU / pin
-  document.addEventListener('visibilitychange', () => { if (document.hidden) v.pause(); else v.play().catch(() => {}); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) v.pause(); else play(); });
 })();

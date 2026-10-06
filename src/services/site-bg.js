@@ -2,7 +2,7 @@
 // Giao diện -> Nền trang: ảnh hoặc video ngắn làm nền phía sau toàn bộ trang khách (settings.site_bg)
 const { getSettings } = require('../db');
 
-const DEFAULTS = { type: 'none', img: '', video: '', scope: 'all', dark: 35, blur: 0, mobileVideo: false };
+const DEFAULTS = { type: 'none', img: '', video: '', scope: 'all', dark: 35, blur: 0, mobileImg: false };
 let memo = { raw: null, cfg: DEFAULTS };
 function cfg() {
   const raw = getSettings().site_bg || '';
@@ -15,7 +15,7 @@ function cfg() {
     img: /^\/uploads\/[\w\-/.]+$/.test(c.img || '') ? c.img : '',
     video: /^\/uploads\/[\w\-/.]+\.(mp4|webm)$/.test(c.video || '') ? c.video : '',
     scope: c.scope === 'home' ? 'home' : 'all',
-    dark: n(c.dark, DEFAULTS.dark, 0, 90), blur: n(c.blur, 0, 0, 20), mobileVideo: !!c.mobileVideo,
+    dark: n(c.dark, DEFAULTS.dark, 0, 90), blur: n(c.blur, 0, 0, 20), mobileImg: !!c.mobileImg,
   };
   memo = { raw, cfg: out };
   return out;
