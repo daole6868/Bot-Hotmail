@@ -1304,3 +1304,11 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .ai-sm { display: none; }
 @media (max-width: 900px) { .ai-sm { display: inline; } .ai-bar .ai-bar-l .a-btn { padding: 6px 8px; } }
 @media (max-width: 900px) { .ai-out { max-width: 92px; padding: 5px 4px; font-size: .74rem; } }
+/* PC: tab bảng điều khiển xếp nhiều hàng, hiện đủ (điện thoại vẫn vuốt ngang) */
+@media (min-width: 901px) {
+  .ai-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; overflow: visible; }
+  .ai-tabs button { padding: 7px 4px; text-align: center; white-space: nowrap; border: 1px solid transparent; }
+  .ai-tabs button:hover { background: var(--bg); }
+  .ai-tabs button.on { border-color: var(--primary); }
+  .ai-body { max-height: calc(74vh - 90px); }
+}
