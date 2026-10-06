@@ -211,4 +211,33 @@
   scan();
   let q = 0;
   new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; scan(); }); }).observe(document.body, { childList: true, subtree: true });
+
+  // ---------- Tạo ảnh acc / Sửa ảnh (mở trang /admin/acc-image ở tab mới, ảnh làm xong gửi về form này) ----------
+  function handoff(form) {
+    const field = $('[data-acc-field]', form);
+    let detail = null; try { detail = JSON.parse((field && field.value) || 'null'); } catch (e) { detail = null; }
+    const box = $('[data-acc-box]', form);
+    window.__accImg = { detail, code: form.elements.code ? form.elements.code.value.trim() : '', title: form.elements.title ? form.elements.title.value : '', productId: form.elements.id ? +form.elements.id.value || 0 : 0, game: box ? box.dataset.guess : '' };
+    return window.__accImg.productId;
+  }
+  document.addEventListener('click', (e) => {
+    const mk = e.target.closest('[data-accimg-make]');
+    if (mk) { const id = handoff(mk.closest('form')); window.open('/admin/acc-image?from=form' + (id ? '&product=' + id : ''), '_blank'); return; }
+    const ed = e.target.closest('[data-img-edit]');
+    if (ed) { e.preventDefault(); const id = handoff(ed.closest('form')); window.open('/admin/acc-image?mode=edit&from=form&img=' + encodeURIComponent(ed.dataset.imgEdit) + (id ? '&product=' + id : ''), '_blank'); }
+  });
+  const keepLabel = (u) => '<label class="a-img-keep a-img-fresh"><img src="' + esc(u) + '" alt=""><span><input type="checkbox" name="keep_images" value="' + esc(u) + '" checked> Giữ<button type="button" class="a-img-edit" data-img-edit="' + esc(u) + '">Sửa</button></span></label>';
+  window.addEventListener('message', (e) => {
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'accimg') return;
+    const form = document.querySelector('form[action="/admin/products/save"]');
+    const box = form && $('[data-preview-multi]', form);
+    if (!box) return;
+    const urls = (e.data.urls || []).filter((u) => /^\/uploads\/products\//.test(u));
+    const old = e.data.replace && $$('input[name="keep_images"]', box).find((i) => i.value === e.data.replace);
+    if (old && urls[0]) { // thay đúng ảnh đã sửa, giữ nguyên vị trí
+      const lb = old.closest('.a-img-keep'); old.value = urls[0]; old.checked = true; $('img', lb).src = urls[0]; $('[data-img-edit]', lb).dataset.imgEdit = urls[0]; lb.classList.add('a-img-fresh');
+      return;
+    }
+    urls.slice().reverse().forEach((u) => box.insertAdjacentHTML('afterbegin', keepLabel(u))); // ảnh mới đứng đầu (ảnh đại diện)
+  });
 })();

@@ -27,7 +27,8 @@
       <a href="/admin/me" class="<%= P === '/me' ? 'active' : '' %>"><%- I('chart') %> Tổng quan CTV</a>
       <a href="/admin/me/wallet" class="<%= P === '/me/wallet' ? 'active' : '' %>"><%- I('money') %> Ví & rút tiền</a>
       <div class="a-group">Bán hàng</div>
-      <% if (CT.includes('vip')) { %><a href="/admin/vip" class="<%= act('/vip') || (P.startsWith('/products') ? 'active' : '') %>"><%- I('star') %> Acc VIP</a><% } %>
+      <% if (CT.includes('vip')) { %><a href="/admin/vip" class="<%= act('/vip') || (P.startsWith('/products') ? 'active' : '') %>"><%- I('star') %> Acc VIP</a>
+        <a href="/admin/acc-image" class="<%= act('/acc-image') %>"><%- I('image') %> Tạo ảnh acc</a><% } %>
       <% if (CT.includes('reroll')) { %><a href="/admin/reroll" class="<%= act('/reroll') %>"><%- I('refresh') %> Reroll</a><% } %>
       <% if (CT.includes('boost')) { %><a href="/admin/boost" class="<%= P === '/boost' || P.startsWith('/boost/c') || P.startsWith('/boost/categories') ? 'active' : '' %>"><%- I('g-swords') %> Cày thuê</a>
         <a href="/admin/boost/orders" class="<%= act('/boost/orders') %>"><%- I('g-swords') %> Đơn cày thuê</a><% } %>
@@ -40,6 +41,7 @@
     <a href="/admin" class="<%= act('/') %>"><%- I('chart') %> Dashboard</a>
     <%- chatLink %>
     <% if (P.startsWith('/chat')) { %><a href="/admin/chat/settings" class="a-sub <%= P.startsWith('/chat/settings') ? 'active' : '' %>"><%- I('gear') %> Cài đặt chat</a><% } %>
+    <a href="/admin/acc-image" class="<%= act('/acc-image') %>"><%- I('image') %> Tạo ảnh acc</a>
     <a href="/admin/ctv" class="<%= act('/ctv') %>"><%- I('users') %> Quản lý CTV <span class="a-badge"<%= B.ctv ? '' : ' hidden' %>><%= B.ctv || 0 %></span></a>
     <div class="a-group">Sản phẩm</div>
     <a href="/admin/games" class="<%= act('/games') %>"><%- I('gamepad') %> Game</a>

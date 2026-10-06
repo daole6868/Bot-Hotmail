@@ -41,6 +41,9 @@ async function optimizeBuffer(buf, field) {
   if (field === 'og_image') {
     return { buf: await img.resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true }).flatten({ background: '#ffffff' }).jpeg({ quality: 85, mozjpeg: true }).toBuffer(), mime: 'image/jpeg' };
   }
+  if (field === 'accimg') { // ảnh acc dựng sẵn (Tạo ảnh acc / Sửa ảnh): giữ cỡ người dùng chọn tới 2560px, nét chữ hơn
+    return { buf: await img.resize({ width: 2560, height: 2560, fit: 'inside', withoutEnlargement: true }).webp({ quality: 88, effort: 4 }).toBuffer(), mime: 'image/webp' };
+  }
   return { buf: await img.resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true }).webp({ quality: 82, effort: 4 }).toBuffer(), mime: 'image/webp' };
 }
 

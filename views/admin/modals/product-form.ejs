@@ -46,9 +46,12 @@
   <label>Ảnh sản phẩm <small class="a-muted">(tối đa 10 ảnh<%= p.imageList.length ? ', bỏ tick “Giữ” để xóa ảnh cũ' : '' %>)</small></label>
   <div class="a-hint"><%- I('image') %> <span>Kích thước gợi ý <b>1500 × 900 px</b> (tỉ lệ <b>5:3</b>), JPG/PNG/WEBP ≤ 8MB. Ảnh đầu tiên là ảnh đại diện trên thẻ sản phẩm; ảnh khác tỉ lệ sẽ bị cắt bớt phần thừa cho vừa khung.</span></div>
   <div class="a-images" data-preview-multi>
-    <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>" alt=""><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ</span></label><% }) %>
+    <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>" alt=""><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ<button type="button" class="a-img-edit" data-img-edit="<%= img %>">Sửa</button></span></label><% }) %>
   </div>
-  <input type="file" name="images" accept="image/*" multiple data-preview-multi-input>
+  <div class="a-img-tools">
+    <input type="file" name="images" accept="image/*" multiple data-preview-multi-input>
+    <% if (isVip && hg) { %><button type="button" class="a-btn a-btn-sm" data-accimg-make><%- I('image') %> Tạo ảnh acc</button><% } %>
+  </div>
   </div>
 
   <% if (isVip && hg) { %>

@@ -31,6 +31,7 @@ const SELLER_ALLOW = [
   /^\/(boost-categories|boost-packages)\/\d+\/toggle$/,
   /^\/hoyo\/jobs(\/\d+(\/cancel)?)?$/,
   /^\/hoyo\/lib\/\w+$/,
+  /^\/acc-image(\/(products|product\/\d+|save|tpl(\/\w+\/delete)?|bg(\/delete)?))?$/,
 ];
 const denied = (res) => res.status(403).render('errors/error', { code: 403, message: 'Bạn không có quyền vào trang này' });
 const ctvSvc = require('../services/ctv');
@@ -226,6 +227,7 @@ router.use('/hoyo', require('./admin-hoyo')); // lấy dữ liệu acc HoYoLAB q
 router.use('/images', require('./admin-images')); // Giao diện -> Quản lý ảnh
 router.use('/search-filter', require('./admin-filter')); // Giao diện -> Bộ lọc tìm kiếm
 router.use('/card-ui', require('./admin-card-ui')); // Giao diện -> Thẻ sản phẩm
+router.use('/acc-image', require('./admin-acc-image')); // Tổng quan -> Tạo ảnh acc
 router.use('/', require('./admin-ctv').router); // Quản lý CTV + trang của CTV (/admin/me)
 router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google
 
@@ -567,12 +569,13 @@ router.post('/products/save', (req, res) => {
   if (db.prepare('SELECT id FROM products WHERE code = ? AND id != ?').get(code, id)) return back(req, res, 'error', 'Mã sản phẩm đã tồn tại');
 
   // Ảnh: giữ ảnh cũ được tick, thêm ảnh mới
-  let images = old ? H.parseJSON(old.images, []) : [];
-  const keep = [].concat(req.body.keep_images || []);
-  if (old) {
-    images.filter((i) => !keep.includes(i)).forEach(removeImage);
-    images = images.filter((i) => keep.includes(i));
-  }
+  // Thứ tự ảnh theo form; ảnh mới từ "Tạo ảnh acc" / "Sửa ảnh" (đã tải lên trước) cũng nằm trong keep_images
+  const oldImgs = old ? H.parseJSON(old.images, []) : [];
+  const keep = [].concat(req.body.keep_images || []).map(String);
+  const NEW_IMG = /^\/uploads\/products\/\d{6}\/[a-f0-9]{24}\.(webp|jpg|png|gif)$/;
+  const isNew = (i) => NEW_IMG.test(i) && fs.existsSync(path.join(config.paths.uploads, i.slice('/uploads/'.length)));
+  oldImgs.filter((i) => !keep.includes(i)).forEach(removeImage);
+  let images = [...new Set(keep)].filter((i) => oldImgs.includes(i) || isNew(i));
   for (const f of filesOf(req, 'images')) {
     const saved = saveImage(f, 'products');
     if (saved) { images.push(saved); thumbs.make(saved); } // ảnh nhỏ cho thẻ sản phẩm (chạy nền)
