@@ -25,12 +25,12 @@
 
   <% if (isVip) { %>
     <div class="a-fieldset">
-      <div class="a-fieldset-title"><%- I('key') %> Thông tin acc giao cho khách <small class="a-muted">(mã hóa, chỉ người mua xem được)</small></div>
+      <div class="a-fieldset-title"><%- I('key') %> Thông tin acc giao cho khách</div>
       <div class="a-row">
         <div><label>Tài khoản <%- R %></label><input name="acc_user" required maxlength="200" value="<%= p.user || '' %>" autocomplete="off" placeholder="Tên đăng nhập / email / SĐT"></div>
         <div><label>Mật khẩu <%- R %></label><input name="acc_pass" required maxlength="200" value="<%= p.pass || '' %>" autocomplete="off" placeholder="Mật khẩu acc"></div>
       </div>
-      <label>Thông tin thêm <small class="a-muted">(không bắt buộc: email gốc, mã bảo mật...)</small></label>
+      <label>Thông tin thêm</label>
       <textarea name="acc_extra" rows="2" maxlength="3000"><%= p.extra || '' %></textarea>
     </div>
   <% } else { %>
@@ -44,7 +44,7 @@
   <% } %>
 
   <label>Ảnh sản phẩm <small class="a-muted">(tối đa 10 ảnh<%= p.imageList.length ? ', bỏ tick “Giữ” để xóa ảnh cũ' : '' %>)</small></label>
-  <div class="a-hint"><%- I('image') %> <span>Kích thước gợi ý <b>1500 × 900 px</b> (tỉ lệ <b>5:3</b>), JPG/PNG/WEBP ≤ 8MB (web tự nén sang WebP cho nhẹ). Ảnh đầu tiên là ảnh đại diện trên thẻ sản phẩm; ảnh khác tỉ lệ sẽ bị cắt bớt phần thừa cho vừa khung.</span></div>
+  <div class="a-hint"><%- I('image') %> <span>Kích thước gợi ý <b>1500 × 900 px</b> (tỉ lệ <b>5:3</b>), JPG/PNG/WEBP ≤ 8MB. Ảnh đầu tiên là ảnh đại diện trên thẻ sản phẩm; ảnh khác tỉ lệ sẽ bị cắt bớt phần thừa cho vừa khung.</span></div>
   <div class="a-images" data-preview-multi>
     <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>" alt=""><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ</span></label><% }) %>
   </div>
