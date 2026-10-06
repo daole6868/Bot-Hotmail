@@ -30,6 +30,7 @@ const SELLER_ALLOW = [
   /^\/boost(\/(c\/\d+|topup(\/\d+)?|orders(\/\d+(\/(login|status|note))?)?|topup-orders|categories\/(form|save|\d+(\/delete)?)|packages\/(form|save|\d+\/(pause|delete))))?$/,
   /^\/(boost-categories|boost-packages)\/\d+\/toggle$/,
   /^\/hoyo\/jobs(\/\d+(\/cancel)?)?$/,
+  /^\/hoyo\/lib\/\w+$/,
 ];
 const denied = (res) => res.status(403).render('errors/error', { code: 403, message: 'Bạn không có quyền vào trang này' });
 const ctvSvc = require('../services/ctv');

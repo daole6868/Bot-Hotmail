@@ -1157,3 +1157,29 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-sf-table td { vertical-align: middle; }
 .a-sf-table input { min-width: 140px; }
 .a-sf-sorts { display: flex; flex-direction: column; gap: 8px; }
+
+/* Form sản phẩm: 3 khung (Thông tin Acc / Chi tiết tài khoản / Trạng thái & mô tả) */
+.a-pf-box { margin-top: 14px; padding: 4px 14px 14px; border: 1px solid #dfe6f6; border-radius: 14px; background: #fbfcff; }
+.a-pf-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; margin: 12px 0 2px; font-size: .95rem; }
+.a-pf-title > .ico { color: var(--primary); }
+.a-pf-title .a-acc-fetch { margin-left: auto; }
+.a-pf-box .a-fieldset { margin-top: 14px; }
+.a-pf-box .a-fieldset-title { margin-top: 0; font-size: .88rem; }
+/* Chọn nhân vật / vũ khí từ ảnh đã nạp */
+.a-acc-sh .a-pick-open { margin-left: auto; padding: 3px 10px; font-size: .76rem; }
+.a-pick { margin-top: 8px; border: 1px solid var(--border); border-radius: 12px; background: #fff; overflow: hidden; }
+.a-pick input[type=search] { border: 0; border-bottom: 1px solid var(--border2); border-radius: 0; box-shadow: none; }
+.a-pick-list { max-height: 260px; overflow-y: auto; padding: 4px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px; }
+.a-pick-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 0; border-radius: 9px; background: none; text-align: left; cursor: pointer; font: inherit; font-size: .82rem; color: var(--text); min-width: 0; }
+.a-pick-row:hover { background: var(--bg); }
+.a-pick-row > span:last-of-type { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-pick-row img, .a-pick-noimg { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--bg); }
+.a-pick-ck { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 5px; flex-shrink: 0; position: relative; }
+.a-pick-row.on { background: var(--primary-l); }
+.a-pick-row.on .a-pick-ck { background: var(--primary); border-color: var(--primary); }
+.a-pick-row.on .a-pick-ck::after { content: ''; position: absolute; left: 4px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.a-pick-row.done { opacity: .45; cursor: default; }
+.a-pick-row small { margin-left: auto; font-size: .68rem; color: var(--muted); flex-shrink: 0; }
+.a-pick-empty { grid-column: 1 / -1; padding: 14px; text-align: center; color: var(--muted); font-size: .82rem; }
+.a-pick-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--border2); background: #fbfcff; font-size: .82rem; }
+@media (max-width: 600px) { .a-pf-box { padding: 2px 10px 12px; } .a-pick-list { grid-template-columns: 1fr 1fr; max-height: 300px; } .a-pick-row small { display: none; } .a-pick-row { padding: 5px 6px; gap: 6px; } }

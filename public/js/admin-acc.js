@@ -1,4 +1,4 @@
-/* Form sản phẩm: khung "Chi tiết tài khoản" (game, cấp, máy chủ, nhân vật / vũ khí 5★ 4★) + popup "Lấy dữ liệu HoYoLAB" */
+/* Form sản phẩm: khung "Chi tiết tài khoản" (cấp, máy chủ, nhân vật / vũ khí 5★ 4★ chọn từ ảnh đã nạp) + popup "Lấy dữ liệu HoYoLAB". Game gán theo danh mục. */
 (() => {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -13,6 +13,8 @@
   };
   const SECS = [['c5', 'Nhân vật', 'c', 5], ['c4', 'Nhân vật', 'c', 4], ['w5', '', 'w', 5], ['w4', '', 'w', 4]];
   const rk = (g, n) => { const v = g['r' + n] || n + '★'; return v.includes('★') ? v : 'hạng ' + v; };
+  const fold = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
+  const libCache = {};
 
   function init(box) {
     box.dataset.init = '1';
@@ -21,9 +23,13 @@
     const view = $('[data-acc-view]', box);
     const games = JSON.parse(box.dataset.games || '{}');
     const servers = JSON.parse(box.dataset.servers || '[]');
+    const GAME = box.dataset.guess || '';
     let st = null;
     try { st = JSON.parse(field.value || 'null'); } catch (e) { st = null; }
-    st = Object.assign({ game: box.dataset.guess || '', lv: 0, server: '', uid: '', c5: [], c4: [], w5: [], w4: [] }, st || {});
+    st = Object.assign({ lv: 0, server: '', uid: '', c5: [], c4: [], w5: [], w4: [] }, st || {}, { game: GAME }); // game gán theo danh mục
+    let lib = null; // {c: [...], w: [...]} ảnh đã nạp ở Quản lý ảnh
+    const picked = {}; // mục đang tích trong danh sách chọn: key -> Set(tên)
+    let openKey = '';
 
     const G = () => games[st.game] || { lv: 'Cấp', c: 'C', w: 'Vũ khí', r: 'R' };
     const save = () => {
@@ -32,64 +38,107 @@
     };
     function chip(item, key, kind) {
       const g = G();
-      const badge = kind === 'c' ? g.c + (item.k || 0) : g.r + (item.r || 1);
+      const lvl = kind === 'c' ? (item.k > 0 ? g.c + item.k : '') : (item.r > 1 ? g.r + item.r : ''); // chỉ hiện khi có (dữ liệu HoYoLAB)
       const ic = item.ic ? '<img src="' + esc(item.ic) + '" alt="" loading="lazy">' : '';
-      return '<span class="a-acc-chip">' + ic + '<b>' + esc(item.n) + '</b><i>' + badge + '</i>' +
+      return '<span class="a-acc-chip">' + ic + '<b>' + esc(item.n) + '</b>' + (lvl ? '<i>' + lvl + '</i>' : '') +
         '<button type="button" data-acc-del="' + key + '" aria-label="Bỏ">' + X + '</button></span>';
     }
-    function opts(n, from, prefix, cur) {
-      let h = '';
-      for (let i = from; i <= n; i++) h += '<option value="' + i + '"' + (i === cur ? ' selected' : '') + '>' + prefix + i + '</option>';
-      return h;
+    // Ảnh thư viện theo mục: 5★ -> độ hiếm 5, 4★ -> 4 (ZZZ hạng B vào 4), chưa rõ độ hiếm -> hiện ở cả hai
+    const libFor = (key) => {
+      const list = lib ? lib[key[0]] : [];
+      const want = +key[1];
+      return list.filter((x) => !x.r || x.r === want || (want === 4 && x.r < 4));
+    };
+    function pickList(key) {
+      const q = fold(($('[data-pick-q="' + key + '"]', view) || {}).value);
+      const have = new Set(['c5', 'c4', 'w5', 'w4'].filter((k) => k[0] === key[0]).flatMap((k) => st[k].map((x) => fold(x.n))));
+      const sel = picked[key] || new Set();
+      const rows = libFor(key).filter((x) => !q || fold(x.n).includes(q));
+      if (!lib) return '<div class="a-pick-empty">Đang tải danh sách...</div>';
+      if (!rows.length) return '<div class="a-pick-empty">' + (libFor(key).length ? 'Không tìm thấy' : 'Chưa có ảnh trong thư viện. Nạp ở Giao diện → Quản lý ảnh.') + '</div>';
+      return rows.map((x) => {
+        const done = have.has(fold(x.n));
+        const on = sel.has(x.n);
+        return '<button type="button" class="a-pick-row' + (on ? ' on' : '') + (done ? ' done' : '') + '" data-pick-row="' + key + '" data-n="' + esc(x.n) + '"' + (done ? ' disabled' : '') + '>' +
+          '<span class="a-pick-ck"></span>' + (x.t ? '<img src="' + esc(x.t) + '" alt="" loading="lazy" width="30" height="30">' : '<i class="a-pick-noimg"></i>') +
+          '<span>' + esc(x.n) + '</span>' + (done ? '<small>đã thêm</small>' : '') + '</button>';
+      }).join('');
     }
     function render() {
       const g = G();
-      const gOpt = '<option value="">-- Game --</option>' + Object.keys(games).map((k) => '<option value="' + k + '"' + (k === st.game ? ' selected' : '') + '>' + esc(games[k].name) + '</option>').join('');
       const svList = servers.includes(st.server) || !st.server ? servers : servers.concat([st.server]);
       const sOpt = '<option value="">-- Máy chủ --</option>' + svList.map((s) => '<option' + (s === st.server ? ' selected' : '') + '>' + esc(s) + '</option>').join('');
-      let h = '<div class="a-row a-row-3">' +
-        '<div><label>Game</label><select data-acc-k="game">' + gOpt + '</select></div>' +
+      let h = '<div class="a-row">' +
         '<div><label>' + esc(g.lv) + '</label><input type="number" min="0" max="999" data-acc-k="lv" value="' + (st.lv || '') + '"></div>' +
         '<div><label>Máy chủ</label><select data-acc-k="server">' + sOpt + '</select></div></div>';
       SECS.forEach(([key, title, kind, n]) => {
         const label = (kind === 'c' ? title : g.w) + ' ' + rk(g, n);
         const list = st[key];
-        h += '<div class="a-acc-sec"><div class="a-acc-sh"><b>' + esc(label) + '</b><small>' + list.length + '</small></div>' +
+        const open = openKey === key;
+        const cnt = (picked[key] || new Set()).size;
+        h += '<div class="a-acc-sec"><div class="a-acc-sh"><b>' + esc(label) + '</b><small>' + list.length + '</small>' +
+          '<button type="button" class="a-btn a-btn-sm a-pick-open" data-pick-open="' + key + '">' + (open ? 'Đóng' : '+ Chọn') + '</button></div>' +
           '<div class="a-acc-chips">' + list.map((it, i) => chip(it, key + ':' + i, kind)).join('') + '</div>' +
-          '<div class="a-acc-add"><input placeholder="Tên ' + (kind === 'c' ? 'nhân vật' : esc(g.w.toLowerCase())) + '" data-acc-name="' + key + '" maxlength="60">' +
-          '<select data-acc-lvl="' + key + '">' + (kind === 'c' ? opts(6, 0, g.c, 0) : opts(5, 1, g.r, 1)) + '</select>' +
-          '<button type="button" class="a-btn a-btn-sm" data-acc-add="' + key + '">Thêm</button></div></div>';
+          (open ? '<div class="a-pick"><input type="search" placeholder="Tìm ' + (kind === 'c' ? 'nhân vật' : esc(g.w.toLowerCase())) + '..." data-pick-q="' + key + '" autocomplete="off">' +
+            '<div class="a-pick-list" data-pick-list="' + key + '">' + pickList(key) + '</div>' +
+            '<div class="a-pick-foot"><span>Đã chọn <b data-pick-n="' + key + '">' + cnt + '</b></span>' +
+            '<button type="button" class="a-btn a-btn-sm a-primary" data-pick-add="' + key + '">Thêm</button></div></div>' : '') +
+          '</div>';
       });
       view.innerHTML = h;
       save();
     }
-    function addItem(key) {
-      const inp = $('[data-acc-name="' + key + '"]', view);
-      const name = inp.value.trim();
-      if (!name) { inp.focus(); return; }
-      const lvl = parseInt($('[data-acc-lvl="' + key + '"]', view).value, 10) || 0;
-      st[key].push(key[0] === 'c' ? { n: name, k: lvl, l: 0, el: '', ic: '' } : { n: name, r: lvl || 1, l: 0, ic: '' });
+    async function loadLib() {
+      if (!GAME) return;
+      if (!libCache[GAME]) libCache[GAME] = api('/admin/hoyo/lib/' + GAME);
+      const r = await libCache[GAME];
+      lib = r && r.ok ? r : { c: [], w: [] };
+      if (openKey) { const l = $('[data-pick-list="' + openKey + '"]', view); if (l) l.innerHTML = pickList(openKey); }
+    }
+    function addPicked(key) {
+      const sel = picked[key];
+      if (!sel || !sel.size) return;
+      const src = libFor(key);
+      for (const name of sel) {
+        const x = src.find((y) => y.n === name);
+        if (!x) continue;
+        st[key].push(key[0] === 'c' ? { n: x.n, k: 0, l: 0, el: '', ic: x.i } : { n: x.n, r: 1, l: 0, ic: x.i });
+      }
+      picked[key] = new Set();
+      openKey = '';
       render();
-      const again = $('[data-acc-name="' + key + '"]', view);
-      if (again) again.focus();
     }
     view.addEventListener('change', (e) => {
       const k = e.target.dataset.accK;
       if (!k) return;
       st[k] = k === 'lv' ? (parseInt(e.target.value, 10) || 0) : e.target.value;
-      if (k === 'game') render(); else save();
+      save();
     });
-    view.addEventListener('input', (e) => { if (e.target.dataset.accK === 'lv') { st.lv = parseInt(e.target.value, 10) || 0; save(); } });
-    view.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && e.target.dataset.accName) { e.preventDefault(); addItem(e.target.dataset.accName); }
+    view.addEventListener('input', (e) => {
+      if (e.target.dataset.accK === 'lv') { st.lv = parseInt(e.target.value, 10) || 0; save(); }
+      const pq = e.target.dataset.pickQ;
+      if (pq) $('[data-pick-list="' + pq + '"]', view).innerHTML = pickList(pq);
     });
+    view.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.dataset.pickQ) e.preventDefault(); });
     view.addEventListener('click', (e) => {
-      const add = e.target.closest('[data-acc-add]');
-      if (add) { addItem(add.dataset.accAdd); return; }
+      const op = e.target.closest('[data-pick-open]');
+      if (op) { openKey = openKey === op.dataset.pickOpen ? '' : op.dataset.pickOpen; render(); if (openKey) { const q = $('[data-pick-q="' + openKey + '"]', view); if (q) q.focus({ preventScroll: true }); } return; }
+      const row = e.target.closest('[data-pick-row]');
+      if (row) {
+        const key = row.dataset.pickRow;
+        const sel = picked[key] || (picked[key] = new Set());
+        if (sel.has(row.dataset.n)) sel.delete(row.dataset.n); else sel.add(row.dataset.n);
+        row.classList.toggle('on');
+        $('[data-pick-n="' + key + '"]', view).textContent = sel.size;
+        return;
+      }
+      const add = e.target.closest('[data-pick-add]');
+      if (add) { addPicked(add.dataset.pickAdd); return; }
       const del = e.target.closest('[data-acc-del]');
       if (del) { const [key, i] = del.dataset.accDel.split(':'); st[key].splice(+i, 1); render(); }
     });
     render();
+    loadLib();
 
     // ---------- Popup lấy dữ liệu HoYoLAB ----------
     const pk = $('[data-hoyo-picker]', form);
@@ -108,7 +157,7 @@
     const setProg = (p, t) => { bar.style.width = Math.max(3, Math.min(100, p || 0)) + '%'; msg.textContent = t || ''; };
     function apply(r) {
       if (!r) return;
-      st = Object.assign({ game: '', lv: 0, server: '', uid: '', c5: [], c4: [], w5: [], w4: [] }, r);
+      st = Object.assign({ lv: 0, server: '', uid: '', c5: [], c4: [], w5: [], w4: [] }, r, { game: GAME });
       render();
     }
     async function poll() {
@@ -128,7 +177,6 @@
         const u = form.elements.acc_user; const p = form.elements.acc_pass;
         if (u && !$('[data-hoyo-user]', pk).value) $('[data-hoyo-user]', pk).value = u.value;
         if (p && !$('[data-hoyo-pass]', pk).value) $('[data-hoyo-pass]', pk).value = p.value;
-        if (st.game && games[st.game]) $('[data-hoyo-game]', pk).value = st.game;
         if (st.server) $('[data-hoyo-server]', pk).value = st.server;
         if (!jobId) toForm('');
         pk.hidden = false;

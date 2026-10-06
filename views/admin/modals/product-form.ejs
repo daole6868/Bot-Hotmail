@@ -12,6 +12,9 @@
     <% } else { %><span class="a-type-badge reroll"><%- I('refresh') %> Reroll · bán tới khi hết acc</span><% } %>
   </div>
 
+  <% const hg = /zenless|zzz/i.test(cat.game_name) ? 'zzz' : /star ?rail|hsr|honkai/i.test(cat.game_name) ? 'hsr' : /genshin/i.test(cat.game_name) ? 'genshin' : ''; %>
+  <div class="a-pf-box">
+  <div class="a-pf-title"><%- I('key') %> <%= isVip ? 'Thông tin Acc' : 'Thông tin sản phẩm' %></div>
   <label>Tên sản phẩm <%- R %></label>
   <input name="title" required maxlength="200" value="<%= p.title || '' %>" autofocus>
   <div class="a-row a-row-3">
@@ -46,16 +49,16 @@
     <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>" alt=""><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ</span></label><% }) %>
   </div>
   <input type="file" name="images" accept="image/*" multiple data-preview-multi-input>
+  </div>
 
-  <% if (isVip) { %>
+  <% if (isVip && hg) { %>
   <input type="hidden" name="acc_detail" data-acc-field value="<%= p.acc_detail || '' %>">
-  <div class="a-acc-detail" data-acc-box data-guess="<%= /zenless|zzz/i.test(cat.game_name) ? 'zzz' : /star ?rail|hsr|honkai/i.test(cat.game_name) ? 'hsr' : /genshin/i.test(cat.game_name) ? 'genshin' : '' %>" data-games="<%= hoyoGamesJson %>" data-servers="<%= hoyoServersJson %>">
-    <div class="a-fieldset-title"><%- I('star') %> Chi tiết tài khoản
+  <div class="a-pf-box a-acc-detail" data-acc-box data-guess="<%= hg %>" data-games="<%= hoyoGamesJson %>" data-servers="<%= hoyoServersJson %>">
+    <div class="a-pf-title"><%- I('star') %> Chi tiết tài khoản
       <% if (hoyoOn) { %><button type="button" class="a-btn a-btn-sm a-primary a-acc-fetch" data-hoyo-open><%- I('download') %> Lấy dữ liệu HoYoLAB</button>
       <% } else { %><small class="a-muted">Bật “Máy lấy dữ liệu HoYoLAB” ở <a href="/admin/api#hoyo" target="_blank">Kết nối API</a> để lấy tự động</small><% } %>
     </div>
     <div class="a-acc-view" data-acc-view></div>
-    <p class="a-field-hint">AR/cấp, máy chủ, nhân vật và vũ khí 5★/4★ hiện cho khách xem. Bấm “Lấy dữ liệu HoYoLAB” để tự điền từ acc (chỉ Genshin / Star Rail / ZZZ).</p>
   </div>
 
   <!-- Popup lấy dữ liệu HoYoLAB -->
@@ -63,8 +66,7 @@
     <div class="a-picker-box a-hoyo-box">
       <div class="a-picker-head"><b>Lấy dữ liệu HoYoLAB</b><button type="button" class="a-icon-btn" data-hoyo-close aria-label="Đóng"><%- I('x') %></button></div>
       <div data-hoyo-form>
-        <label>Game</label>
-        <select data-hoyo-game><% Object.entries(hoyoGames).forEach(([k, g]) => { %><option value="<%= k %>"><%= g.name %></option><% }) %></select>
+        <input type="hidden" data-hoyo-game value="<%= hg %>">
         <div class="a-row">
           <div><label>Tài khoản HoYoLAB</label><input data-hoyo-user autocomplete="off" placeholder="email / tên đăng nhập"></div>
           <div><label>Mật khẩu</label><input type="password" data-hoyo-pass autocomplete="new-password"></div>
@@ -86,6 +88,8 @@
   </div>
   <% } %>
 
+  <div class="a-pf-box">
+  <div class="a-pf-title"><%- I('list') %> Trạng thái & mô tả</div>
   <label>Mô tả</label>
   <textarea name="description" rows="3" maxlength="5000"><%= p.description || '' %></textarea>
 
@@ -97,6 +101,7 @@
         <% if (isVip) { %><option value="sold" <%= p.status === 'sold' ? 'selected' : '' %>>Đã bán</option><% } %>
       </select></div>
     <div class="a-check-cell"><label class="a-check"><input type="checkbox" name="is_featured" <%= p.is_featured ? 'checked' : '' %>> Nổi bật (nhãn Hot, hiện trang chủ)</label></div>
+  </div>
   </div>
 
   <div class="a-modal-foot">
