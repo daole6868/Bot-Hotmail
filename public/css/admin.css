@@ -1300,3 +1300,7 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .ai-tone.set::after { content: ''; position: absolute; bottom: 3px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #f5c542; }
 .ai-tone-r { width: 100%; accent-color: #f5c542; }
 @media (max-width: 900px) { .ai-filters { grid-template-columns: repeat(4, 1fr); } .ai-flt { font-size: .68rem; } }
+.ai-out { width: auto; padding: 5px 8px; font-size: .8rem; border-radius: 9px; }
+.ai-sm { display: none; }
+@media (max-width: 900px) { .ai-sm { display: inline; } .ai-bar .ai-bar-l .a-btn { padding: 6px 8px; } }
+@media (max-width: 900px) { .ai-out { max-width: 92px; padding: 5px 4px; font-size: .74rem; } }

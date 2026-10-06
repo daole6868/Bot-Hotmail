@@ -25,6 +25,15 @@
   document.addEventListener('DOMContentLoaded', () => AIM.setMode(MODES[B.mode] ? B.mode : 'make'));
   /** Gửi ảnh về form sản phẩm đã mở trang này (nếu có) */
   AIM.toForm = (msg) => { try { if (B.fromForm && window.opener && !window.opener.closed) { window.opener.postMessage(Object.assign({ type: 'accimg' }, msg), location.origin); return true; } } catch (e) { /* bỏ qua */ } return false; };
+  // Định dạng + chất lượng ảnh xuất (nhớ trong trình duyệt), dùng chung cho Tạo ảnh / Sửa ảnh / Hàng loạt
+  const OUTS = [['png', 'PNG (nét nhất)'], ['jpeg:1', 'JPG 100%'], ['jpeg:0.95', 'JPG 95%'], ['jpeg:0.9', 'JPG 90%'], ['webp:1', 'WebP 100%'], ['webp:0.95', 'WebP 95%'], ['webp:0.9', 'WebP 90%'], ['webp:0.8', 'WebP 80%']];
+  let outKey = 'webp:0.95';
+  try { const v = localStorage.getItem('ai_out'); if (OUTS.some(([k]) => k === v)) outKey = v; } catch (e) { /* bỏ qua */ }
+  AIM.out = () => { const [f, q] = outKey.split(':'); return { type: 'image/' + f, q: q ? +q : 1, ext: f === 'jpeg' ? 'jpg' : f }; };
+  AIM.outSelect = () => `<select class="ai-out" data-out title="Định dạng & chất lượng ảnh">${OUTS.map(([k, l]) => `<option value="${k}" ${k === outKey ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  AIM.fileOf = (blob, name) => { const o = AIM.out(); return new File([blob], name + '.' + o.ext, { type: o.type }); };
+  AIM.tooBig = (blob) => { if (blob && blob.size > 7.8 * 1024 * 1024) { toast('Ảnh ' + (blob.size / 1048576).toFixed(1) + ' MB vượt giới hạn 8 MB. Chọn JPG / WebP hoặc giảm cỡ ảnh.', true); return true; } return false; };
+  barEl.addEventListener('change', (e) => { if (e.target.matches('[data-out]')) { outKey = e.target.value; try { localStorage.setItem('ai_out', outKey); } catch (x) { /* bỏ qua */ } } });
   AIM.download = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); };
   AIM.libCache = {};
   AIM.lib = (game) => { if (!game) return Promise.resolve({ c: [], w: [] }); if (!AIM.libCache[game]) AIM.libCache[game] = api('/admin/hoyo/lib/' + game).then((r) => (r && r.ok ? r : { c: [], w: [] })); return AIM.libCache[game]; };
@@ -209,7 +218,7 @@
     if (AIM.current !== 'make') return;
     const target = B.fromForm ? 'Gắn vào sản phẩm' : (st.product && st.product.id ? `Lưu vào acc #${esc(st.product.code)}` : 'Lưu ảnh');
     barEl.innerHTML = `<div class="ai-bar-l"><button type="button" class="a-btn a-btn-sm a-ghost" data-undo ${hi > 0 ? '' : 'disabled'} title="Hoàn tác">↶</button><button type="button" class="a-btn a-btn-sm a-ghost" data-redo ${hi < hist.length - 1 ? '' : 'disabled'} title="Làm lại">↷</button></div>` +
-      `<div class="ai-bar-r"><label class="ai-ck"><input type="checkbox" data-also53 ${st.W + 'x' + st.H === '1500x900' ? 'disabled' : ''}><span><span class="ai-hm">Kèm bản </span>5:3</span></label><button type="button" class="a-btn a-btn-sm a-ghost" data-dl>Tải về</button><button type="button" class="a-btn a-btn-sm a-primary" data-save>${target}</button></div>`;
+      `<div class="ai-bar-r"><label class="ai-ck"><input type="checkbox" data-also53 ${st.W + 'x' + st.H === '1500x900' ? 'disabled' : ''}><span><span class="ai-hm">Kèm bản </span>5:3</span></label>${AIM.outSelect()}<button type="button" class="a-btn a-btn-sm a-ghost" data-dl title="Tải về"><span class="ai-hm">Tải về</span><span class="ai-sm">⬇</span></button><button type="button" class="a-btn a-btn-sm a-primary" data-save><span class="ai-hm">${target}</span><span class="ai-sm">Lưu</span></button></div>`;
   }
 
   // ---------- Sự kiện bảng điều khiển ----------
@@ -440,8 +449,9 @@
 
   // ---------- Xuất / lưu ----------
   async function blobs(also53) {
-    const out = [{ blob: await A.exportBlob(st), tag: 'full' }];
-    if (also53) { const s2 = JSON.parse(JSON.stringify(st)); A.applyTpl(s2, A.TPL.C); s2.bg = st.bg; s2.logo = st.logo; s2.note = st.note; out.push({ blob: await A.exportBlob(s2), tag: '53' }); }
+    const o = AIM.out();
+    const out = [{ blob: await A.exportBlob(st, o.type, o.q), tag: 'full' }];
+    if (also53) { const s2 = JSON.parse(JSON.stringify(st)); A.applyTpl(s2, A.TPL.C); s2.bg = st.bg; s2.logo = st.logo; s2.note = st.note; out.push({ blob: await A.exportBlob(s2, o.type, o.q), tag: '53' }); }
     return out;
   }
   barEl.addEventListener('click', async (e) => {
@@ -451,7 +461,7 @@
     const also53 = !!$('[data-also53]', barEl)?.checked;
     if (e.target.closest('[data-dl]')) {
       const code = (A.codeText(st) || 'anh-acc').replace(/[^\w-]+/g, '-');
-      (await blobs(also53)).forEach((b) => AIM.download(b.blob, code + (b.tag === '53' ? '-5x3' : '') + '.webp'));
+      (await blobs(also53)).forEach((b) => AIM.download(b.blob, code + (b.tag === '53' ? '-5x3' : '') + '.' + AIM.out().ext));
       return;
     }
     const sv = e.target.closest('[data-save]');
@@ -459,12 +469,13 @@
     sv.disabled = true; toast('Đang lưu ảnh...');
     try {
       const list = await blobs(also53);
+      if (list.some((b) => AIM.tooBig(b.blob))) { sv.disabled = false; return; }
       // bản 5:3 làm ảnh đại diện (đứng đầu), bản đầy đủ ngay sau
       const order = list.length > 1 ? [list[0], list[1]] : list;
       const pid = !B.fromForm && st.product && st.product.id ? st.product.id : 0;
       const urls = [];
       for (const b of order) {
-        const r = await upload('/admin/acc-image/save', { product_id: pid, attach: pid ? '1' : '0' }, new File([b.blob], 'acc.webp', { type: 'image/webp' }), 'accimg');
+        const r = await upload('/admin/acc-image/save', { product_id: pid, attach: pid ? '1' : '0' }, AIM.fileOf(b.blob, 'acc'), 'accimg');
         if (!r.ok) throw new Error(r.message || 'Không lưu được');
         urls.unshift(r.url);
       }

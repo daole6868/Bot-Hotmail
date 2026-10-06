@@ -169,7 +169,7 @@
     if (AIM.current !== 'edit') return;
     const target = B.fromForm ? (source.url ? 'Thay ảnh trong form' : 'Gắn vào sản phẩm') : (source.product && source.url ? `Lưu đè ảnh acc #${esc(source.product.code)}` : 'Lưu ảnh');
     barEl.innerHTML = `<div class="ai-bar-l"><button type="button" class="a-btn a-btn-sm a-ghost" data-eundo ${undoSt.length ? '' : 'disabled'}>↶</button><button type="button" class="a-btn a-btn-sm a-ghost" data-eredo ${redoSt.length ? '' : 'disabled'}>↷</button></div>` +
-      `<div class="ai-bar-r"><button type="button" class="a-btn a-btn-sm a-ghost" data-edl ${work ? '' : 'disabled'}>Tải về</button><button type="button" class="a-btn a-btn-sm a-primary" data-esave ${work ? '' : 'disabled'}>${target}</button></div>`;
+      `<div class="ai-bar-r">${AIM.outSelect()}<button type="button" class="a-btn a-btn-sm a-ghost" data-edl ${work ? '' : 'disabled'} title="Tải về"><span class="ai-hm">Tải về</span><span class="ai-sm">⬇</span></button><button type="button" class="a-btn a-btn-sm a-primary" data-esave ${work ? '' : 'disabled'}><span class="ai-hm">${target}</span><span class="ai-sm">Lưu</span></button></div>`;
   }
   tabsEl.addEventListener('click', (e) => { const b = e.target.closest('[data-etab]'); if (!b || AIM.current !== 'edit') return; tab = b.dataset.etab; if (tab === 'crop' && work && !o.crop) initCrop(); if (tab !== 'hide') o.sel = null; renderPanel(); draw(); });
   bodyEl.addEventListener('input', (e) => {
@@ -253,12 +253,14 @@
     if (e.target.closest('[data-eundo]') && undoSt.length) { redoSt.push(clone(work)); work = undoSt.pop(); o.crop = null; draw(); bar(); return; }
     if (e.target.closest('[data-eredo]') && redoSt.length) { undoSt.push(clone(work)); work = redoSt.pop(); o.crop = null; draw(); bar(); return; }
     if (!work) return;
-    const blob = await new Promise((res) => work.toBlob(res, 'image/webp', 0.92));
-    if (e.target.closest('[data-edl]')) { AIM.download(blob, 'anh-sua.webp'); return; }
+    const o = AIM.out();
+    const blob = await new Promise((res) => work.toBlob(res, o.type, o.q));
+    if (e.target.closest('[data-edl]')) { AIM.download(blob, 'anh-sua.' + o.ext); return; }
     const sv = e.target.closest('[data-esave]'); if (!sv) return;
+    if (AIM.tooBig(blob)) return;
     sv.disabled = true; toast('Đang lưu ảnh...');
     const pid = !B.fromForm && source.product && source.url ? source.product.id : 0;
-    const r = await upload('/admin/acc-image/save', { product_id: pid, attach: pid ? '1' : '0', replace: source.url || '' }, new File([blob], 'edit.webp', { type: 'image/webp' }), 'accimg');
+    const r = await upload('/admin/acc-image/save', { product_id: pid, attach: pid ? '1' : '0', replace: source.url || '' }, AIM.fileOf(blob, 'edit'), 'accimg');
     sv.disabled = false;
     if (!r.ok) { toast(r.message || 'Không lưu được', true); return; }
     if (AIM.toForm({ urls: [r.url], replace: source.url || '' })) toast('Đã gửi ảnh về form sản phẩm. Nhớ bấm Lưu ở form.');
