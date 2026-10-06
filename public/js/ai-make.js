@@ -44,7 +44,28 @@
   const redo = () => { if (hi < hist.length - 1) restore(hist[++hi]); };
 
   let raf = 0;
-  function drawNow() { raf = 0; if (canvas.width !== st.W || canvas.height !== st.H) { canvas.width = st.W; canvas.height = st.H; } last = A.render(ctx, st, true, sel) || {}; }
+  // Khung của khối: lưới nhân vật / vũ khí dùng đúng vùng lưới đang vẽ (ôm sát các ô), khối khác dùng khung đã đặt
+  function boxOf(key) { const L = last[key]; return (key === 'chars' || key === 'weapons') && L && L.cells.length ? L.box : A.rect(st, key); }
+  const uiK = () => st.W / Math.max(1, canvas.clientWidth || st.W); // 1 px màn hình = bao nhiêu px ảnh
+  const handleSize = () => Math.max(Math.min(st.W, st.H * 1.87) * 0.02, 26 * uiK());
+  function drawNow() {
+    raf = 0;
+    if (canvas.width !== st.W || canvas.height !== st.H) { canvas.width = st.W; canvas.height = st.H; }
+    last = A.render(ctx, st, true, '') || {};
+    // viền mờ cho mọi khối đang hiện (biết là kéo được), khối đang chọn viền xanh + tay nắm đổi cỡ ở góc
+    const k = uiK(); const lw = Math.max(1, 1.5 * k);
+    ctx.save();
+    A.BLOCKS.forEach(([key]) => {
+      if (!st.on[key]) return;
+      const R = boxOf(key); const on = key === sel;
+      ctx.setLineDash(on ? [6 * k, 4 * k] : [4 * k, 4 * k]); ctx.lineWidth = on ? lw * 1.6 : lw;
+      ctx.strokeStyle = on ? '#4fd1ff' : 'rgba(255,255,255,.35)'; ctx.strokeRect(R.x, R.y, R.w, R.h);
+      if (on) { const hs = handleSize(); ctx.setLineDash([]); ctx.fillStyle = '#4fd1ff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = lw; ctx.fillRect(R.x + R.w - hs / 2, R.y + R.h - hs / 2, hs, hs); ctx.strokeRect(R.x + R.w - hs / 2, R.y + R.h - hs / 2, hs, hs); }
+    });
+    ctx.restore();
+  }
+  /** Bắt đầu kéo lưới: khớp khối theo đúng vùng lưới để kéo to / nhỏ theo góc lưới */
+  function snapBlock(key) { if (key !== 'chars' && key !== 'weapons') return; const L = last[key]; if (!L || !L.cells.length) return; const b = L.box; st.blocks[key] = [b.x / st.W, b.y / st.H, b.w / st.W, b.h / st.H]; }
   const draw = () => { if (!raf) raf = requestAnimationFrame(drawNow); };
   const changed = () => { draw(); commit(); };
 
@@ -258,10 +279,10 @@
       const c = L && L.cells.find((x) => inR(p, x));
       if (c) { drag = { type: 'cell', k: tab, it: c.it }; return; }
     }
-    if (sel && st.on[sel]) { const R = A.rect(st, sel); const hs = Math.min(st.W, st.H * 1.87) * 0.03; if (p.x >= R.x + R.w - hs && p.x <= R.x + R.w + hs * 0.3 && p.y >= R.y + R.h - hs && p.y <= R.y + R.h + hs * 0.3) { drag = { type: 'size', key: sel, p0: p, b0: st.blocks[sel].slice() }; return; } }
-    const key = ORDER.find((k) => st.on[k] && inR(p, A.rect(st, k)));
+    if (sel && st.on[sel]) { const R = boxOf(sel); const hs = handleSize() * 0.9; if (Math.abs(p.x - (R.x + R.w)) <= hs && Math.abs(p.y - (R.y + R.h)) <= hs) { snapBlock(sel); drag = { type: 'size', key: sel, p0: p, b0: st.blocks[sel].slice() }; return; } }
+    const key = ORDER.find((k) => st.on[k] && inR(p, boxOf(k)));
     sel = key || '';
-    if (key) drag = { type: 'move', key, p0: p, b0: st.blocks[key].slice() };
+    if (key) { snapBlock(key); drag = { type: 'move', key, p0: p, b0: st.blocks[key].slice() }; }
     draw();
   });
   canvas.addEventListener('pointermove', (e) => {
@@ -270,7 +291,15 @@
     if (drag.type === 'pinch' && pts.size >= 2) { const [a, b] = [...pts.values()]; st.bg.zoom = clamp(drag.z0 * Math.hypot(a.x - b.x, a.y - b.y) / (drag.d0 || 1), 1, 3); draw(); return; }
     if (drag.type === 'pan') { const s = bgSpan(); if (!s) return; if (s.dw > st.W) st.bg.x = clamp(drag.x0 + (p.x - drag.p0.x) / (st.W - s.dw), 0, 1); if (s.dh > st.H) st.bg.y = clamp(drag.y0 + (p.y - drag.p0.y) / (st.H - s.dh), 0, 1); draw(); return; }
     if (drag.type === 'move') { const b = st.blocks[drag.key]; b[0] = clamp(drag.b0[0] + (p.x - drag.p0.x) / st.W, -b[2] * 0.5, 1 - b[2] * 0.5); b[1] = clamp(drag.b0[1] + (p.y - drag.p0.y) / st.H, -b[3] * 0.5, 1 - b[3] * 0.5); draw(); return; }
-    if (drag.type === 'size') { const b = st.blocks[drag.key]; b[2] = clamp(drag.b0[2] + (p.x - drag.p0.x) / st.W, 0.03, 1.2); b[3] = clamp(drag.b0[3] + (p.y - drag.p0.y) / st.H, 0.03, 1.2); draw(); }
+    if (drag.type === 'size') {
+      const b = st.blocks[drag.key];
+      if (drag.key === 'chars' || drag.key === 'weapons') { // lưới: giữ tỉ lệ (theo số cột × hàng), kéo hướng nào cũng phóng to / thu nhỏ
+        const f = Math.max((drag.b0[2] + (p.x - drag.p0.x) / st.W) / drag.b0[2], (drag.b0[3] + (p.y - drag.p0.y) / st.H) / drag.b0[3]);
+        const ff = clamp(f, 0.1, Math.min(1.5 / drag.b0[2], 1.5 / drag.b0[3]));
+        b[2] = drag.b0[2] * ff; b[3] = drag.b0[3] * ff;
+      } else { b[2] = clamp(drag.b0[2] + (p.x - drag.p0.x) / st.W, 0.03, 1.2); b[3] = clamp(drag.b0[3] + (p.y - drag.p0.y) / st.H, 0.03, 1.2); }
+      draw();
+    }
   });
   function endDrag(e) {
     if (!pts.has(e.pointerId)) return;

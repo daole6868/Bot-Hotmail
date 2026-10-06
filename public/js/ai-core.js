@@ -193,8 +193,8 @@
     const hasLv = g.lv && show.some((x) => x.lv);
     const asp = hasLv ? 1.2 : 1;
     let cw = (R.w - 2 * pad - gap * (cols - 1)) / cols;
-    const needH = rows * cw * asp + gap * (rows - 1) + 2 * pad;
-    if (needH > R.h) cw = (R.h - 2 * pad - gap * (rows - 1)) / (rows * asp);
+    const needH = usedRows * cw * asp + gap * (usedRows - 1) + 2 * pad;
+    if (needH > R.h) cw = (R.h - 2 * pad - gap * (usedRows - 1)) / (usedRows * asp);
     cw = Math.max(4, cw);
     const ch = cw * asp;
     const gw = cols * cw + (cols - 1) * gap;
