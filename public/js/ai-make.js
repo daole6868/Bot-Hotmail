@@ -62,6 +62,10 @@
       ctx.strokeStyle = on ? '#4fd1ff' : 'rgba(255,255,255,.35)'; ctx.strokeRect(R.x, R.y, R.w, R.h);
       if (on) { const hs = handleSize(); ctx.setLineDash([]); ctx.fillStyle = '#4fd1ff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = lw; ctx.fillRect(R.x + R.w - hs / 2, R.y + R.h - hs / 2, hs, hs); ctx.strokeRect(R.x + R.w - hs / 2, R.y + R.h - hs / 2, hs, hs); }
     });
+    // đường gióng khi khối đang thẳng hàng với khối khác / giữa ảnh
+    ctx.setLineDash([]); ctx.strokeStyle = '#ff3da5'; ctx.lineWidth = lw * 1.4;
+    guides.x.forEach((x) => { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, st.H); ctx.stroke(); });
+    guides.y.forEach((y) => { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(st.W, y); ctx.stroke(); });
     ctx.restore();
   }
   /** Bắt đầu kéo lưới: khớp khối theo đúng vùng lưới để kéo to / nhỏ theo góc lưới */
@@ -95,6 +99,7 @@
       (tpls.length ? `<div class="ai-sec"><b>Mẫu đã lưu</b><div class="ai-tpls">${tpls.map((t) => `<span class="ai-tpl-s"><button type="button" class="ai-tpl" data-tpl-s="${esc(t.id)}">${esc(t.name)}</button>${t.by === B.me || B.staff ? `<button type="button" class="ai-x" data-tpl-del="${esc(t.id)}" title="Xóa mẫu">×</button>` : ''}</span>`).join('')}</div></div>` : '') +
       `<div class="ai-sec"><b>Cỡ ảnh</b><select data-size>${A.SIZES.map(([k, l]) => `<option value="${k}" ${(known ? k === sizeKey : k === 'custom') ? 'selected' : ''}>${l}</option>`).join('')}</select>` +
       `<div class="ai-row2">${num('W', 'Rộng (px)', 600, 2560)}${num('H', 'Cao (px)', 400, 2560)}</div></div>` +
+      `<div class="ai-sec"><b>Căn khối đang chọn</b>${sel ? `<div class="ai-tpls">${[['l', '⇤ Trái'], ['cx', '↔ Giữa ngang'], ['r', 'Phải ⇥'], ['t', '⤒ Trên'], ['cy', '↕ Giữa dọc'], ['b', 'Dưới ⤓']].map(([k, l]) => `<button type="button" class="ai-tpl" data-align="${k}">${l}</button>`).join('')}</div>` : '<p class="ai-hint">Bấm vào 1 khối trên ảnh để chọn. Khi kéo, khối tự hút thẳng hàng với khối khác (đường hồng).</p>'}</div>` +
       `<div class="ai-sec"><b>Hiện các khối</b><div class="ai-cks">${A.BLOCKS.map(([k, l]) => chk('on.' + k, l)).join('')}</div>${range('panel', 'Độ đậm khung', 0, 1, 0.05)}<p class="ai-hint">Kéo khối trên ảnh để di chuyển, kéo ô vuông ở góc phải dưới để đổi cỡ.</p></div>` +
       `<div class="ai-sec"><b>Lưu bố cục hiện tại làm mẫu</b><div class="ai-inline"><input data-tpl-name maxlength="40" placeholder="Tên mẫu"><button type="button" class="a-btn a-btn-sm" data-tpl-save>Lưu mẫu</button></div></div>`;
   }
@@ -212,6 +217,12 @@
   bodyEl.addEventListener('click', async (e) => {
     if (AIM.current !== 'make') return;
     const t = e.target;
+    const al = t.closest('[data-align]');
+    if (al && sel && st.on[sel]) {
+      snapBlock(sel); const b = st.blocks[sel]; const m = 0.012; // lề sát mép ảnh
+      ({ l: () => { b[0] = m; }, cx: () => { b[0] = (1 - b[2]) / 2; }, r: () => { b[0] = 1 - b[2] - m; }, t: () => { b[1] = m * 1.87; }, cy: () => { b[1] = (1 - b[3]) / 2; }, b: () => { b[1] = 1 - b[3] - m * 1.87; } })[al.dataset.align]();
+      changed(); return;
+    }
     const tp = t.closest('[data-tpl]'); if (tp) { A.applyTpl(st, A.TPL[tp.dataset.tpl]); sel = ''; renderPanel(); changed(); return; }
     const ts = t.closest('[data-tpl-s]');
     if (ts) { const x = (B.tpls || []).find((y) => y.id === ts.dataset.tplS); if (x) { A.applyTpl(st, x.data); await preload(A.srcsOf(st)); sel = ''; renderPanel(); changed(); } return; }
@@ -253,10 +264,16 @@
     el.innerHTML = rows.length ? rows.map((x) => { const done = have.has(fold(x.n)); return `<button type="button" class="ai-prow ${s.has(x.n) ? 'on' : ''} ${done ? 'done' : ''}" data-prow="${k}" data-n="${esc(x.n)}" ${done ? 'disabled' : ''}><span class="ai-pck"></span><img src="${esc(x.t || x.i)}" alt="" loading="lazy"><span>${esc(x.n)}</span></button>`; }).join('')
       : `<p class="ai-hint">${list.length ? 'Không tìm thấy' : 'Chưa có ảnh trong thư viện của game này.'}</p>`;
   }
+  /** Chèn sau mục cuối cùng có độ hiếm >= mục mới: 5★ luôn ở trên, 4★ (và thấp hơn) luôn ở dưới, giữ thứ tự đã thêm trong từng nhóm */
+  function insertByRarity(list, it) {
+    let at = list.length;
+    for (let i = list.length - 1; i >= 0; i--) { if ((list[i].r || 0) >= it.r) { at = i + 1; break; } if (i === 0) at = 0; }
+    list.splice(at, 0, it);
+  }
   async function pickAdd(k) {
     const lib = await AIM.lib(st.game);
     const s = picked[k]; if (!s || !s.size) return;
-    (lib[k] || []).filter((x) => s.has(x.n)).forEach((x) => st.grids[k].items.push({ n: x.n, i: x.i, r: x.r || (k === 'c' ? 4 : 4), lv: '', k: 0, on: true }));
+    [...s].map((n) => (lib[k] || []).find((x) => x.n === n)).filter(Boolean).forEach((x) => insertByRarity(st.grids[k].items, { n: x.n, i: x.i, r: x.r || 4, lv: '', k: 0, on: true }));
     picked[k] = new Set();
     await preload(st.grids[k].items.map((x) => x.i));
     renderPanel(); changed();
@@ -295,23 +312,58 @@
     }
     if (sel && st.on[sel]) { const R = boxOf(sel); const hs = handleSize() * 0.9; if (Math.abs(p.x - (R.x + R.w)) <= hs && Math.abs(p.y - (R.y + R.h)) <= hs) { snapBlock(sel); drag = { type: 'size', key: sel, p0: p, b0: st.blocks[sel].slice() }; return; } }
     const key = ORDER.find((k) => st.on[k] && inR(p, boxOf(k)));
+    const was = sel;
     sel = key || '';
+    if (was !== sel && tab === 'tpl') renderPanel(); // hiện / ẩn nút căn khối
     if (key) { snapBlock(key); drag = { type: 'move', key, p0: p, b0: st.blocks[key].slice() }; }
     draw();
   });
+  let guides = { x: [], y: [] };
+  function snapTargets(except) {
+    const xs = [0, st.W / 2, st.W]; const ys = [0, st.H / 2, st.H];
+    A.BLOCKS.forEach(([k]) => { if (!st.on[k] || k === except) return; const R = boxOf(k); xs.push(R.x, R.x + R.w / 2, R.x + R.w); ys.push(R.y, R.y + R.h / 2, R.y + R.h); });
+    return { xs, ys };
+  }
+  function nearest(vals, targets, th) {
+    let best = null;
+    vals.forEach((v) => targets.forEach((t) => { const d = t - v; if (Math.abs(d) <= th && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, t }; }));
+    return best;
+  }
   canvas.addEventListener('pointermove', (e) => {
     if (!drag || AIM.current !== 'make') return;
     const p = toC(e); pts.set(e.pointerId, p);
     if (drag.type === 'pinch' && pts.size >= 2) { const [a, b] = [...pts.values()]; st.bg.zoom = clamp(drag.z0 * Math.hypot(a.x - b.x, a.y - b.y) / (drag.d0 || 1), 1, 3); draw(); return; }
     if (drag.type === 'pan') { const s = bgSpan(); if (!s) return; if (s.dw > st.W) st.bg.x = clamp(drag.x0 + (p.x - drag.p0.x) / (st.W - s.dw), 0, 1); if (s.dh > st.H) st.bg.y = clamp(drag.y0 + (p.y - drag.p0.y) / (st.H - s.dh), 0, 1); draw(); return; }
-    if (drag.type === 'move') { const b = st.blocks[drag.key]; b[0] = clamp(drag.b0[0] + (p.x - drag.p0.x) / st.W, -b[2] * 0.5, 1 - b[2] * 0.5); b[1] = clamp(drag.b0[1] + (p.y - drag.p0.y) / st.H, -b[3] * 0.5, 1 - b[3] * 0.5); draw(); return; }
+    if (drag.type === 'move') {
+      const b = st.blocks[drag.key];
+      b[0] = clamp(drag.b0[0] + (p.x - drag.p0.x) / st.W, -b[2] * 0.5, 1 - b[2] * 0.5); b[1] = clamp(drag.b0[1] + (p.y - drag.p0.y) / st.H, -b[3] * 0.5, 1 - b[3] * 0.5);
+      const T = snapTargets(drag.key); const th = 8 * uiK();
+      const x = b[0] * st.W; const y = b[1] * st.H; const w = b[2] * st.W; const h = b[3] * st.H;
+      const sx = nearest([x, x + w / 2, x + w], T.xs, th); const sy = nearest([y, y + h / 2, y + h], T.ys, th);
+      if (sx) b[0] += sx.d / st.W;
+      if (sy) b[1] += sy.d / st.H;
+      guides = { x: sx ? [sx.t] : [], y: sy ? [sy.t] : [] };
+      draw(); return;
+    }
     if (drag.type === 'size') {
       const b = st.blocks[drag.key];
       if (drag.key === 'chars' || drag.key === 'weapons') { // lưới: giữ tỉ lệ (theo số cột × hàng), kéo hướng nào cũng phóng to / thu nhỏ
         const f = Math.max((drag.b0[2] + (p.x - drag.p0.x) / st.W) / drag.b0[2], (drag.b0[3] + (p.y - drag.p0.y) / st.H) / drag.b0[3]);
-        const ff = clamp(f, 0.1, Math.min(1.5 / drag.b0[2], 1.5 / drag.b0[3]));
+        let ff = clamp(f, 0.1, Math.min(1.5 / drag.b0[2], 1.5 / drag.b0[3]));
+        // hút mép phải / dưới của lưới vào đường thẳng của khối khác
+        const T = snapTargets(drag.key); const th = 8 * uiK(); const x = b[0] * st.W; const y = b[1] * st.H;
+        const sx = nearest([x + drag.b0[2] * ff * st.W], T.xs, th); const sy = !sx && nearest([y + drag.b0[3] * ff * st.H], T.ys, th);
+        if (sx) ff = (sx.t - x) / (drag.b0[2] * st.W); else if (sy) ff = (sy.t - y) / (drag.b0[3] * st.H);
+        guides = { x: sx ? [sx.t] : [], y: sy ? [sy.t] : [] };
         b[2] = drag.b0[2] * ff; b[3] = drag.b0[3] * ff;
-      } else { b[2] = clamp(drag.b0[2] + (p.x - drag.p0.x) / st.W, 0.03, 1.2); b[3] = clamp(drag.b0[3] + (p.y - drag.p0.y) / st.H, 0.03, 1.2); }
+      } else {
+        b[2] = clamp(drag.b0[2] + (p.x - drag.p0.x) / st.W, 0.03, 1.2); b[3] = clamp(drag.b0[3] + (p.y - drag.p0.y) / st.H, 0.03, 1.2);
+        const T = snapTargets(drag.key); const th = 8 * uiK();
+        const sx = nearest([(b[0] + b[2]) * st.W], T.xs, th); const sy = nearest([(b[1] + b[3]) * st.H], T.ys, th);
+        if (sx) b[2] += sx.d / st.W;
+        if (sy) b[3] += sy.d / st.H;
+        guides = { x: sx ? [sx.t] : [], y: sy ? [sy.t] : [] };
+      }
       draw();
     }
   });
@@ -325,7 +377,7 @@
       if (c && c.it !== drag.it) { const list = st.grids[drag.k].items; const i = list.indexOf(drag.it); const j = list.indexOf(c.it); list.splice(i, 1); list.splice(j, 0, drag.it); renderPanel(); }
     }
     if (drag.type === 'pan' || drag.type === 'pinch') renderPanelVals();
-    drag = null; changed();
+    drag = null; guides = { x: [], y: [] }; changed();
   }
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
