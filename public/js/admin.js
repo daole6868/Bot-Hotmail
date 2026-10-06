@@ -1105,3 +1105,24 @@
     g.addEventListener('change', sync); sync();
   });
 })();
+
+// Giao diện -> Nền trang: xem trước làm tối / làm mờ / kiểu nền
+(() => {
+  const pv = document.querySelector('[data-sbg-pv]');
+  if (!pv) return;
+  const form = pv.closest('form');
+  form.addEventListener('input', (e) => {
+    const r = e.target.closest('[data-sbg-r]');
+    if (!r) return;
+    const k = r.dataset.sbgR;
+    form.querySelector(`[data-sbg-v="${k}"]`).textContent = r.value;
+    pv.style.setProperty(k === 'dark' ? '--o' : '--b', k === 'dark' ? r.value / 100 : r.value + 'px');
+  });
+  form.addEventListener('change', (e) => {
+    if (e.target.name !== 'type') return;
+    const v = pv.querySelector('[data-sbg-video]');
+    if (v) v.hidden = e.target.value !== 'video';
+    pv.classList.toggle('is-none', e.target.value === 'none');
+  });
+  if (form.querySelector('[name=type]:checked')?.value === 'none') pv.classList.add('is-none');
+})();

@@ -6,7 +6,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { db, getSettings, setSetting, logActivity, vnDay } = require('../db');
 const { requireStaff, verifyCsrf, blockIp, unblockIp } = require('../middleware/security');
-const { upload, uploadBig, saveImage, removeImage, optimizeUploads } = require('../utils/upload');
+const { upload, uploadBig, uploadMedia, saveImage, removeImage, optimizeUploads } = require('../utils/upload');
 const thumbs = require('../utils/thumbs');
 const { encrypt, decrypt, sha256, randomCode } = require('../utils/crypto');
 const H = require('../utils/helpers');
@@ -24,7 +24,7 @@ const router = express.Router();
 // ---------- Phân quyền: admin / CTV quản lý / CTV bán hàng / CSKH ----------
 // Quản lý: mọi trang trừ nhóm Giao diện & Hệ thống. Bán hàng: chỉ sản phẩm / cày thuê / nạp game được cấp + ví.
 // CSKH: chỉ ví (trang chat ở /admin/chat).
-const MANAGER_BLOCK = ['/images', '/search-filter', '/card-ui', '/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
+const MANAGER_BLOCK = ['/images', '/search-filter', '/card-ui', '/site-bg', '/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
 const SELLER_ALLOW = [
   /^\/(vip|reroll)$/, /^\/products\/(rows|form|save|bulk|import-form|import)$/, /^\/products\/\d+\/(edit|duplicate|delete|stock|toggle)$/, /^\/stock\/\d+\/delete$/,
   /^\/boost(\/(c\/\d+|topup(\/\d+)?|orders(\/\d+(\/(login|status|note))?)?|topup-orders|categories\/(form|save|\d+(\/delete)?)|packages\/(form|save|\d+\/(pause|delete))))?$/,
@@ -65,10 +65,10 @@ router.use((req, res, next) => {
 // Multipart (upload ảnh): parse rồi kiểm tra CSRF
 router.use((req, res, next) => {
   if (!req.is('multipart/form-data') || req.path === '/maintenance/restore') return next(); // khôi phục dữ liệu có bộ nhận file riêng
-  (req.path === '/acc-image/save' ? uploadBig : upload).any()(req, res, (err) => {
+  (req.path === '/acc-image/save' ? uploadBig : req.path === '/site-bg' ? uploadMedia : upload).any()(req, res, (err) => {
     if (err) {
       if (req.path === '/acc-image/save') return res.json({ ok: false, message: err.code === 'LIMIT_FILE_SIZE' ? 'Ảnh vượt quá 20MB, chọn JPG / WebP hoặc độ phân giải thấp hơn' : err.message });
-      req.flash('error', err.code === 'LIMIT_FILE_SIZE' ? 'Ảnh vượt quá 8MB' : err.message);
+      req.flash('error', err.code === 'LIMIT_FILE_SIZE' ? (req.path === '/site-bg' ? 'File vượt quá 40MB' : 'Ảnh vượt quá 8MB') : err.message);
       return res.redirect(req.get('referer') || '/admin');
     }
     if (!verifyCsrf(req)) return res.status(403).render('errors/error', { code: 403, message: 'CSRF token không hợp lệ' });
@@ -229,6 +229,7 @@ router.use('/images', require('./admin-images')); // Giao diện -> Quản lý �
 router.use('/search-filter', require('./admin-filter')); // Giao diện -> Bộ lọc tìm kiếm
 router.use('/card-ui', require('./admin-card-ui')); // Giao diện -> Thẻ sản phẩm
 router.use('/acc-image', require('./admin-acc-image')); // Tổng quan -> Tạo ảnh acc
+router.use('/site-bg', require('./admin-site-bg')); // Giao diện -> Nền trang
 router.use('/', require('./admin-ctv').router); // Quản lý CTV + trang của CTV (/admin/me)
 router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google
 

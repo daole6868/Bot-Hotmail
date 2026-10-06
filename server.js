@@ -134,6 +134,9 @@ app.use((req, res, next) => { res.locals.newIdem = newIdem; next(); });
 // Giao diện -> Thẻ sản phẩm: số ô mỗi hàng + cỡ icon / chữ (biến CSS)
 const cardUi = require('./src/services/card-ui');
 app.use((req, res, next) => { res.locals.cardCss = cardUi.css(); res.locals.cardCfg = cardUi.cfg(); next(); });
+// Giao diện -> Nền trang (ảnh / video phía sau trang khách)
+const siteBg = require('./src/services/site-bg');
+app.use((req, res, next) => { if (!req.path.startsWith('/admin')) res.locals.siteBg = siteBg.forPage(req.path); next(); });
 app.use(security.flash);
 app.use(security.csrf);
 app.use(security.loadUser);

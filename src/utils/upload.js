@@ -41,6 +41,9 @@ async function optimizeBuffer(buf, field) {
   if (field === 'og_image') {
     return { buf: await img.resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true }).flatten({ background: '#ffffff' }).jpeg({ quality: 85, mozjpeg: true }).toBuffer(), mime: 'image/jpeg' };
   }
+  if (field === 'sitebg') { // ảnh nền toàn trang: giữ nét trên màn hình lớn
+    return { buf: await img.resize({ width: 2560, height: 2560, fit: 'inside', withoutEnlargement: true }).webp({ quality: 85, effort: 4 }).toBuffer(), mime: 'image/webp' };
+  }
   if (field === 'accimg') return null; // ảnh từ Tạo ảnh acc / Sửa ảnh: giữ nguyên định dạng + chất lượng người dùng chọn (không nén lần 2 cho khỏi mờ)
   return { buf: await img.resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true }).webp({ quality: 82, effort: 4 }).toBuffer(), mime: 'image/webp' };
 }
@@ -83,4 +86,25 @@ function removeImage(publicPath) {
 const uploadBig = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024, files: 2, fields: 20 },
   fileFilter(req, file, cb) { if (!/^image\/(jpeg|png|webp)$/.test(file.mimetype)) return cb(new Error('Chỉ cho phép ảnh JPG, PNG, WEBP')); cb(null, true); } });
 
-module.exports = { uploadBig, upload, saveImage, removeImage, optimizeUploads, optimizeBuffer, SIGNATURES };
+// Nền trang: ảnh hoặc video ngắn (MP4 / WebM) tới 40MB
+const VIDEO_SIG = [
+  { ext: '.mp4', mime: 'video/mp4', test: (b) => b.length > 12 && b.slice(4, 8).toString('ascii') === 'ftyp' },
+  { ext: '.webm', mime: 'video/webm', test: (b) => b.length > 4 && b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3 },
+];
+const uploadMedia = multer({ storage: multer.memoryStorage(), limits: { fileSize: 40 * 1024 * 1024, files: 2, fields: 30 },
+  fileFilter(req, file, cb) { if (!/^(image\/(jpeg|png|webp|gif)|video\/(mp4|webm))$/.test(file.mimetype)) return cb(new Error('Chỉ cho phép ảnh JPG, PNG, WEBP hoặc video MP4, WEBM')); cb(null, true); } });
+/** Lưu video đã upload (kiểm tra đúng file MP4 / WebM theo nội dung, đổi tên ngẫu nhiên) */
+function saveVideo(file, folder = 'sitebg') {
+  if (!file || !file.buffer) return null;
+  const sig = VIDEO_SIG.find((s) => s.test(file.buffer));
+  if (!sig) return null;
+  const now = new Date();
+  const sub = path.join(folder, `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`);
+  const dir = path.join(config.paths.uploads, sub);
+  fs.mkdirSync(dir, { recursive: true });
+  const name = crypto.randomBytes(12).toString('hex') + sig.ext;
+  fs.writeFileSync(path.join(dir, name), file.buffer);
+  return '/uploads/' + sub.split(path.sep).join('/') + '/' + name;
+}
+
+module.exports = { uploadMedia, saveVideo, uploadBig, upload, saveImage, removeImage, optimizeUploads, optimizeBuffer, SIGNATURES };

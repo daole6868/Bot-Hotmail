@@ -1321,3 +1321,18 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 }
 .ai-out { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 @media (max-width: 900px) { .ai-bar-r .ai-out { min-width: 96px; } }
+
+/* Giao diện -> Nền trang */
+.a-sbg-types { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.a-sbg-type { flex: 1 1 90px; cursor: pointer; }
+.a-sbg-type input { position: absolute; opacity: 0; pointer-events: none; }
+.a-sbg-type span { display: block; text-align: center; padding: 10px; border: 1px solid var(--a-border, #333); border-radius: 10px; font-weight: 600; }
+.a-sbg-type input:checked + span { border-color: var(--a-primary, #8b5cf6); background: color-mix(in srgb, var(--a-primary, #8b5cf6) 18%, transparent); }
+.a-sbg-pv { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #0b0b12; display: grid; place-items: center; }
+.a-sbg-pv-img, .a-sbg-pv video { position: absolute; inset: 0; width: 100%; height: 100%; background: center / cover no-repeat; object-fit: cover; filter: blur(calc(var(--b) / 2)); }
+.a-sbg-pv video[hidden] { display: none; }
+.a-sbg-pv-o { position: absolute; inset: 0; background: rgba(0, 0, 0, var(--o)); }
+.a-sbg-pv.is-none > :not(.a-sbg-pv-card) { display: none; }
+.a-sbg-pv-card { position: relative; padding: 14px 22px; border-radius: 10px; background: rgba(20, 20, 30, .85); color: #fff; font-weight: 600; }
+.a-sbg-cur { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.a-sbg-cur img, .a-sbg-cur video { width: 160px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: #000; }

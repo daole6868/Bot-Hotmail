@@ -48,7 +48,8 @@
   <link rel="stylesheet" href="/css/style.css?v=<%= locals.assetV || 1 %>">
   <%- locals.cardCss || '' %>
 </head>
-<body>
+<body<%- locals.siteBg ? ' class="has-site-bg"' : '' %>>
+<%- include('site-bg') %>
 <header class="topbar">
   <div class="container topbar-inner">
     <button class="icon-btn menu-toggle" data-toggle="#mobileNav" aria-label="Menu"><%- I('menu') %></button>

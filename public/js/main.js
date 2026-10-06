@@ -774,3 +774,16 @@ window.addEventListener('pageshow', (e) => {
   let q = 0;
   new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; scan(); }); }).observe(document.body, { childList: true, subtree: true });
 })();
+
+// Nền trang dạng video: chỉ tải video khi được phép (điện thoại dùng ảnh trừ khi bật, tôn trọng giảm chuyển động)
+(() => {
+  const v = document.querySelector('.site-bg-v[data-src]');
+  if (!v) return;
+  const mob = matchMedia('(max-width: 720px)').matches || matchMedia('(pointer: coarse)').matches;
+  if ((mob && v.dataset.mob !== '1') || matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) { v.remove(); return; }
+  v.src = v.dataset.src; v.preload = 'auto';
+  v.addEventListener('canplay', () => v.classList.add('on'), { once: true });
+  const p = v.play(); if (p) p.catch(() => {});
+  // tab ẩn -> dừng video cho đỡ tốn CPU / pin
+  document.addEventListener('visibilitychange', () => { if (document.hidden) v.pause(); else v.play().catch(() => {}); });
+})();
