@@ -25,7 +25,7 @@
   }
   function bar() {
     if (AIM.current !== 'batch') return;
-    barEl.innerHTML = `<div class="ai-bar-l"></div><div class="ai-bar-r">${AIM.outSelect()}<button type="button" class="a-btn a-btn-sm a-primary" data-b-run ${chosen.size && !running ? '' : 'disabled'}>Tạo ${chosen.size} ảnh</button></div>`;
+    barEl.innerHTML = `<div class="ai-bar-l"></div><div class="ai-bar-r">${AIM.resSelect()}${AIM.outSelect()}<button type="button" class="a-btn a-btn-sm a-primary" data-b-run ${chosen.size && !running ? '' : 'disabled'}>Tạo ${chosen.size} ảnh</button></div>`;
   }
   async function load(q) {
     const r = await api('/admin/acc-image/products?q=' + encodeURIComponent(q || ''));
@@ -68,8 +68,8 @@
         const st = await stateFor(p.id);
         if (!st) throw new Error('không tải được');
         const o = AIM.out();
-        const list = [await A.exportBlob(st, o.type, o.q)];
-        if (also53 && st.W + 'x' + st.H !== '1500x900') { const s2 = JSON.parse(JSON.stringify(st)); A.applyTpl(s2, A.TPL.C); s2.bg = st.bg; list.push(await A.exportBlob(s2, o.type, o.q)); }
+        const list = [await A.exportBlob(st, o.type, o.q, AIM.res())];
+        if (also53 && st.W + 'x' + st.H !== '1500x900') { const s2 = JSON.parse(JSON.stringify(st)); A.applyTpl(s2, A.TPL.C); s2.bg = st.bg; list.push(await A.exportBlob(s2, o.type, o.q, AIM.res())); }
         for (const b of list) { // bản đầy đủ trước, bản 5:3 sau -> bản 5:3 đứng đầu
           const r = await upload('/admin/acc-image/save', { product_id: p.id, attach: '1' }, AIM.fileOf(b, 'acc'), 'accimg');
           if (!r.ok) throw new Error(r.message);

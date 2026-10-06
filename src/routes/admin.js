@@ -6,7 +6,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { db, getSettings, setSetting, logActivity, vnDay } = require('../db');
 const { requireStaff, verifyCsrf, blockIp, unblockIp } = require('../middleware/security');
-const { upload, saveImage, removeImage, optimizeUploads } = require('../utils/upload');
+const { upload, uploadBig, saveImage, removeImage, optimizeUploads } = require('../utils/upload');
 const thumbs = require('../utils/thumbs');
 const { encrypt, decrypt, sha256, randomCode } = require('../utils/crypto');
 const H = require('../utils/helpers');
@@ -65,8 +65,9 @@ router.use((req, res, next) => {
 // Multipart (upload ảnh): parse rồi kiểm tra CSRF
 router.use((req, res, next) => {
   if (!req.is('multipart/form-data') || req.path === '/maintenance/restore') return next(); // khôi phục dữ liệu có bộ nhận file riêng
-  upload.any()(req, res, (err) => {
+  (req.path === '/acc-image/save' ? uploadBig : upload).any()(req, res, (err) => {
     if (err) {
+      if (req.path === '/acc-image/save') return res.json({ ok: false, message: err.code === 'LIMIT_FILE_SIZE' ? 'Ảnh vượt quá 20MB, chọn JPG / WebP hoặc độ phân giải thấp hơn' : err.message });
       req.flash('error', err.code === 'LIMIT_FILE_SIZE' ? 'Ảnh vượt quá 8MB' : err.message);
       return res.redirect(req.get('referer') || '/admin');
     }

@@ -79,4 +79,8 @@ function removeImage(publicPath) {
   if (/\/uploads\/products\/.+\.(webp|jpe?g|png|gif)$/i.test(publicPath) && !/\.t\.webp$/i.test(publicPath)) fs.promises.unlink(full.replace(/\.[a-z]+$/i, '.t.webp')).catch(() => {});
 }
 
-module.exports = { upload, saveImage, removeImage, optimizeUploads, optimizeBuffer, SIGNATURES };
+// Ảnh dựng sẵn từ Tạo ảnh acc / Sửa ảnh (có thể xuất 2× PNG): cho phép tới 20MB, chỉ 1-2 file
+const uploadBig = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024, files: 2, fields: 20 },
+  fileFilter(req, file, cb) { if (!/^image\/(jpeg|png|webp)$/.test(file.mimetype)) return cb(new Error('Chỉ cho phép ảnh JPG, PNG, WEBP')); cb(null, true); } });
+
+module.exports = { uploadBig, upload, saveImage, removeImage, optimizeUploads, optimizeBuffer, SIGNATURES };

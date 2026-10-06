@@ -420,11 +420,15 @@
     ctx.putImageData(img, 0, 0);
   }
 
-  async function exportBlob(st, type = 'image/webp', q = 0.92) {
+  /** Xuất ảnh. scale = độ phân giải (2 = gấp đôi cỡ ảnh): vẽ lại toàn bộ ở cỡ lớn nên chữ / khung nét thật, không phải phóng ảnh nhỏ */
+  async function exportBlob(st, type = 'image/webp', q = 0.92, scale = 1) {
     await preload(srcsOf(st));
-    const c = document.createElement('canvas'); c.width = st.W; c.height = st.H;
-    render(c.getContext('2d'), st, false);
-    applyFx(c.getContext('2d'), st.W, st.H, st.fx);
+    const k = Math.min(scale || 1, 6000 / Math.max(st.W, st.H));
+    const c = document.createElement('canvas'); c.width = Math.round(st.W * k); c.height = Math.round(st.H * k);
+    const x = c.getContext('2d'); x.scale(k, k);
+    render(x, st, false);
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    applyFx(x, c.width, c.height, st.fx);
     return new Promise((res) => c.toBlob((b) => res(b), type, q));
   }
 

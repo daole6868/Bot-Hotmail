@@ -31,9 +31,14 @@
   try { const v = localStorage.getItem('ai_out'); if (OUTS.some(([k]) => k === v)) outKey = v; } catch (e) { /* bỏ qua */ }
   AIM.out = () => { const [f, q] = outKey.split(':'); return { type: 'image/' + f, q: q ? +q : 1, ext: f === 'jpeg' ? 'jpg' : f }; };
   AIM.outSelect = () => `<select class="ai-out" data-out title="Định dạng & chất lượng ảnh">${OUTS.map(([k, l]) => `<option value="${k}" ${k === outKey ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const RES = [['0.75', '0,75×'], ['1', '1×'], ['1.5', '1,5×'], ['2', '2× (nét nhất)']];
+  let resKey = '1';
+  try { const v = localStorage.getItem('ai_res'); if (RES.some(([k]) => k === v)) resKey = v; } catch (e) { /* bỏ qua */ }
+  AIM.res = () => +resKey;
+  AIM.resSelect = (W, H) => `<select class="ai-out" data-res title="Độ phân giải ảnh xuất">${RES.map(([k, l]) => `<option value="${k}" ${k === resKey ? 'selected' : ''}>${l}${W ? ' · ' + Math.round(W * k) + '×' + Math.round(H * k) : ''}</option>`).join('')}</select>`;
   AIM.fileOf = (blob, name) => { const o = AIM.out(); return new File([blob], name + '.' + o.ext, { type: o.type }); };
-  AIM.tooBig = (blob) => { if (blob && blob.size > 7.8 * 1024 * 1024) { toast('Ảnh ' + (blob.size / 1048576).toFixed(1) + ' MB vượt giới hạn 8 MB. Chọn JPG / WebP hoặc giảm cỡ ảnh.', true); return true; } return false; };
-  barEl.addEventListener('change', (e) => { if (e.target.matches('[data-out]')) { outKey = e.target.value; try { localStorage.setItem('ai_out', outKey); } catch (x) { /* bỏ qua */ } } });
+  AIM.tooBig = (blob) => { if (blob && blob.size > 19.5 * 1024 * 1024) { toast('Ảnh ' + (blob.size / 1048576).toFixed(1) + ' MB vượt giới hạn 20 MB. Chọn JPG / WebP hoặc độ phân giải thấp hơn.', true); return true; } return false; };
+  barEl.addEventListener('change', (e) => { if (e.target.matches('[data-res]')) { resKey = e.target.value; try { localStorage.setItem('ai_res', resKey); } catch (x) { /* bỏ qua */ } } if (e.target.matches('[data-out]')) { outKey = e.target.value; try { localStorage.setItem('ai_out', outKey); } catch (x) { /* bỏ qua */ } } });
   AIM.download = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); };
   AIM.libCache = {};
   AIM.lib = (game) => { if (!game) return Promise.resolve({ c: [], w: [] }); if (!AIM.libCache[game]) AIM.libCache[game] = api('/admin/hoyo/lib/' + game).then((r) => (r && r.ok ? r : { c: [], w: [] })); return AIM.libCache[game]; };
@@ -218,7 +223,7 @@
     if (AIM.current !== 'make') return;
     const target = B.fromForm ? 'Gắn vào sản phẩm' : (st.product && st.product.id ? `Lưu vào acc #${esc(st.product.code)}` : 'Lưu ảnh');
     barEl.innerHTML = `<div class="ai-bar-l"><button type="button" class="a-btn a-btn-sm a-ghost" data-undo ${hi > 0 ? '' : 'disabled'} title="Hoàn tác">↶</button><button type="button" class="a-btn a-btn-sm a-ghost" data-redo ${hi < hist.length - 1 ? '' : 'disabled'} title="Làm lại">↷</button></div>` +
-      `<div class="ai-bar-r"><label class="ai-ck"><input type="checkbox" data-also53 ${st.W + 'x' + st.H === '1500x900' ? 'disabled' : ''}><span><span class="ai-hm">Kèm bản </span>5:3</span></label>${AIM.outSelect()}<button type="button" class="a-btn a-btn-sm a-ghost" data-dl title="Tải về"><span class="ai-hm">Tải về</span><span class="ai-sm">⬇</span></button><button type="button" class="a-btn a-btn-sm a-primary" data-save><span class="ai-hm">${target}</span><span class="ai-sm">Lưu</span></button></div>`;
+      `<div class="ai-bar-r"><label class="ai-ck"><input type="checkbox" data-also53 ${st.W + 'x' + st.H === '1500x900' ? 'disabled' : ''}><span><span class="ai-hm">Kèm bản </span>5:3</span></label>${AIM.resSelect(st.W, st.H)}${AIM.outSelect()}<button type="button" class="a-btn a-btn-sm a-ghost" data-dl title="Tải về"><span class="ai-hm">Tải về</span><span class="ai-sm">⬇</span></button><button type="button" class="a-btn a-btn-sm a-primary" data-save><span class="ai-hm">${target}</span><span class="ai-sm">Lưu</span></button></div>`;
   }
 
   // ---------- Sự kiện bảng điều khiển ----------
@@ -450,8 +455,8 @@
   // ---------- Xuất / lưu ----------
   async function blobs(also53) {
     const o = AIM.out();
-    const out = [{ blob: await A.exportBlob(st, o.type, o.q), tag: 'full' }];
-    if (also53) { const s2 = JSON.parse(JSON.stringify(st)); A.applyTpl(s2, A.TPL.C); s2.bg = st.bg; s2.logo = st.logo; s2.note = st.note; out.push({ blob: await A.exportBlob(s2, o.type, o.q), tag: '53' }); }
+    const out = [{ blob: await A.exportBlob(st, o.type, o.q, AIM.res()), tag: 'full' }];
+    if (also53) { const s2 = JSON.parse(JSON.stringify(st)); A.applyTpl(s2, A.TPL.C); s2.bg = st.bg; s2.logo = st.logo; s2.note = st.note; out.push({ blob: await A.exportBlob(s2, o.type, o.q, AIM.res()), tag: '53' }); }
     return out;
   }
   barEl.addEventListener('click', async (e) => {

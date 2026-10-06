@@ -1312,3 +1312,12 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
   .ai-tabs button.on { border-color: var(--primary); }
   .ai-body { max-height: calc(74vh - 90px); }
 }
+/* Điện thoại: thanh nút 2 hàng (hoàn tác + độ phân giải + định dạng / 5:3 + tải về + lưu) */
+@media (max-width: 900px) {
+  .ai-bar { flex-wrap: wrap; row-gap: 6px; }
+  .ai-bar-r { flex: 1 1 auto; flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
+  .ai-bar-r .ai-out { flex: 1 1 0; max-width: none; min-width: 0; }
+  .ai-app { padding-bottom: 132px; }
+}
+.ai-out { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+@media (max-width: 900px) { .ai-bar-r .ai-out { min-width: 96px; } }
