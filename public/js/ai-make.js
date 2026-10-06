@@ -48,10 +48,21 @@
   function boxOf(key) { const L = last[key]; return (key === 'chars' || key === 'weapons') && L && L.cells.length ? L.box : A.rect(st, key); }
   const uiK = () => st.W / Math.max(1, canvas.clientWidth || st.W); // 1 px màn hình = bao nhiêu px ảnh
   const handleSize = () => Math.max(Math.min(st.W, st.H * 1.87) * 0.02, 26 * uiK());
+  let fastUntil = 0; let fastT = 0;
+  const fastFx = () => { fastUntil = performance.now() + 280; clearTimeout(fastT); fastT = setTimeout(draw, 300); };
+  const ensureFx = () => { if (!st.fx) st.fx = { filter: 'none', amount: 100, tone: {} }; if (!st.fx.tone) st.fx.tone = {}; };
   function drawNow() {
-    raf = 0;
+    raf = 0; ensureFx();
     if (canvas.width !== st.W || canvas.height !== st.H) { canvas.width = st.W; canvas.height = st.H; }
     last = A.render(ctx, st, true, '') || {};
+    if (!drag && A.fxActive(st.fx)) {
+      if (performance.now() < fastUntil) { // đang kéo thanh chỉnh: xem trước ở nửa độ phân giải cho mượt, thả tay vẽ lại đủ nét
+        const h = document.createElement('canvas'); h.width = Math.round(st.W / 2); h.height = Math.round(st.H / 2);
+        const hc = h.getContext('2d'); hc.drawImage(canvas, 0, 0, h.width, h.height);
+        A.applyFx(hc, h.width, h.height, { ...st.fx, tone: { ...st.fx.tone, sharp: 0 } });
+        ctx.drawImage(h, 0, 0, st.W, st.H);
+      } else A.applyFx(ctx, st.W, st.H, st.fx);
+    }
     // viền mờ cho mọi khối đang hiện (biết là kéo được), khối đang chọn viền xanh + tay nắm đổi cỡ ở góc
     const k = uiK(); const lw = Math.max(1, 1.5 * k);
     ctx.save();
@@ -83,7 +94,7 @@
   }
 
   // ---------- Bảng điều khiển ----------
-  const TABS = [['tpl', 'Mẫu & cỡ'], ['data', 'Acc'], ['bg', 'Nền'], ['info', 'Thông tin'], ['c', 'Nhân vật'], ['w', 'Vũ khí'], ['text', 'Mã & chữ'], ['logo', 'Logo']];
+  const TABS = [['tpl', 'Mẫu & cỡ'], ['data', 'Acc'], ['bg', 'Nền'], ['info', 'Thông tin'], ['c', 'Nhân vật'], ['w', 'Vũ khí'], ['text', 'Mã & chữ'], ['logo', 'Logo'], ['filter', 'Bộ lọc'], ['tone', 'Tông màu']];
   const get = (path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), st);
   function set(path, v) { const ks = path.split('.'); const k = ks.pop(); const o = ks.reduce((x, y) => x[y], st); o[k] = v; }
   const num = (path, label, min, max, step = 1) => `<label class="ai-f"><span>${label}</span><input type="number" data-b="${path}" min="${min}" max="${max}" step="${step}" value="${get(path)}"></label>`;
@@ -147,6 +158,41 @@
       `<div class="ai-sec"><b>Khung ghi chú</b>${chk('on.note', 'Hiện khung ghi chú')}<textarea data-b="note.text" rows="4" placeholder="Mỗi dòng 1 ý: thánh di vật, điểm nổi bật...">${esc(st.note.text)}</textarea></div>`;
   }
   function statsPreview() { const g = A.G(st); const lab = (n) => { const v = g['r' + n] || n + '★'; return v.includes('★') ? v : 'hạng ' + v; }; const c5 = st.grids.c.items.filter((x) => x.on && x.r === 5).length; const w5 = st.grids.w.items.filter((x) => x.on && x.r === 5).length; return [c5 ? `${c5} nhân vật ${lab(5)}` : '', w5 ? `${w5} ${g.w} ${lab(5)}` : '', st.info.lv ? `${g.lv} ${st.info.lv}` : ''].filter(Boolean).join(' · ') || 'Chưa có dữ liệu'; }
+  // ---------- Bộ lọc & tông màu ----------
+  const TICON = { // biểu tượng nút tông màu
+    bright: '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>',
+    contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+    sat: '<path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/><path d="M12 9.5v9a4 4 0 0 0 4-4" />',
+    vib: '<path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/>',
+    warm: '<path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/><path d="M12 10v6"/>',
+    tint: '<circle cx="8.5" cy="9" r="4.5"/><circle cx="15.5" cy="9" r="4.5"/><circle cx="12" cy="15" r="4.5"/>',
+    hi: '<circle cx="12" cy="13" r="4"/><path d="M12 3v3M5 6l2 2M19 6l-2 2M3 20h18"/>',
+    sh: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    sharp: '<path d="M12 3l9 17H3z"/><path d="M12 9v6"/>',
+    vig: '<rect x="3" y="5" width="18" height="14" rx="3"/><ellipse cx="12" cy="12" rx="5" ry="3.5"/>',
+    fade: '<path d="M4 8h16M4 12h12M4 16h8"/>',
+  };
+  let toneKey = 'bright';
+  function tabFilter() {
+    return `<div class="ai-sec"><b>Bộ lọc</b><div class="ai-filters">${A.FILTERS.map(([k, l]) => `<button type="button" class="ai-flt ${st.fx.filter === k ? 'on' : ''}" data-flt="${k}"><canvas width="132" height="80" data-fthumb="${k}"></canvas><span>${l}</span></button>`).join('')}</div>` +
+      (st.fx.filter !== 'none' ? range('fx.amount', 'Độ mạnh (%)', 0, 100, 1) : '') + '</div>';
+  }
+  function tabTone() {
+    const t = st.fx.tone || {}; const cur = A.TONES.find((x) => x[0] === toneKey) || A.TONES[0];
+    return `<div class="ai-sec"><b class="ai-tone-name">${cur[1]} <span data-tone-v>${+t[cur[0]] || 0}</span></b><div class="ai-tones">${A.TONES.map(([k, l]) => `<button type="button" class="ai-tone ${k === toneKey ? 'on' : ''} ${+t[k] ? 'set' : ''}" data-tone="${k}" title="${l}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TICON[k]}</svg></button>`).join('')}</div>` +
+      `<input type="range" class="ai-tone-r" data-tone-r min="${cur[2]}" max="${cur[3]}" step="1" value="${+t[cur[0]] || 0}"><div class="ai-inline"><button type="button" class="a-btn a-btn-sm a-ghost" data-tone-zero>Về 0</button><button type="button" class="a-btn a-btn-sm a-ghost" data-tone-reset>Đặt lại tất cả</button></div></div>`;
+  }
+  // Ảnh xem trước nhỏ của từng bộ lọc (từ ảnh hiện tại, chưa có hiệu ứng)
+  function filterThumbs() {
+    const src = document.createElement('canvas'); src.width = st.W; src.height = st.H;
+    A.render(src.getContext('2d'), st, false);
+    A.FILTERS.forEach(([k]) => {
+      const c = $(`[data-fthumb="${k}"]`, bodyEl); if (!c) return;
+      const x = c.getContext('2d'); const sc = Math.max(c.width / st.W, c.height / st.H);
+      x.drawImage(src, (c.width - st.W * sc) / 2, (c.height - st.H * sc) / 2, st.W * sc, st.H * sc);
+      A.applyFx(x, c.width, c.height, { filter: k, amount: st.fx.filter === k ? st.fx.amount : 100, tone: st.fx.tone });
+    });
+  }
   function tabLogo() {
     return `<div class="ai-sec">${chk('on.logo', 'Hiện logo')}${range('logo.op', 'Độ rõ', 0.1, 1, 0.05)}` +
       `<div class="ai-inline"><label class="a-btn a-btn-sm">Chọn logo khác<input type="file" accept="image/*" hidden data-logo-local></label>${B.logo ? '<button type="button" class="a-btn a-btn-sm a-ghost" data-logo-shop>Dùng logo shop</button>' : ''}</div>` +
@@ -154,8 +200,10 @@
   }
   function renderTabs() { tabsEl.innerHTML = TABS.map(([k, l]) => `<button type="button" class="${k === tab ? 'on' : ''}" data-tab="${k}">${l}</button>`).join(''); }
   function renderPanel() {
+    ensureFx();
     renderTabs();
-    bodyEl.innerHTML = { tpl: tabTpl, data: tabData, bg: tabBg, info: tabInfo, c: () => tabGrid('c'), w: () => tabGrid('w'), text: tabText, logo: tabLogo }[tab]();
+    bodyEl.innerHTML = { tpl: tabTpl, data: tabData, bg: tabBg, info: tabInfo, c: () => tabGrid('c'), w: () => tabGrid('w'), text: tabText, logo: tabLogo, filter: tabFilter, tone: tabTone }[tab]();
+    if (tab === 'filter') filterThumbs();
   }
   function bar() {
     if (AIM.current !== 'make') return;
@@ -183,6 +231,8 @@
     if (AIM.current !== 'make') return;
     const el = e.target;
     if (el.dataset.b && el.type !== 'checkbox' && el.tagName !== 'SELECT') onBind(el);
+    if (el.matches('[data-tone-r]') || el.dataset.b === 'fx.amount') fastFx();
+    if (el.matches('[data-tone-r]')) { st.fx.tone = st.fx.tone || {}; st.fx.tone[toneKey] = +el.value; const v = $('[data-tone-v]', bodyEl); if (v) v.textContent = el.value; const btn = $(`[data-tone="${toneKey}"]`, bodyEl); if (btn) btn.classList.toggle('set', !!+el.value); changed(); }
     if (el.matches('[data-code]')) { st.code.auto = false; st.code.text = el.value; const a = $('[data-b="code.auto"]', bodyEl); if (a) a.checked = false; changed(); }
     if (el.matches('[data-it="lv"], [data-it="k"]')) {
       const row = el.closest('.ai-it'); const it = st.grids[row.dataset.g].items[+row.dataset.i];
@@ -217,6 +267,10 @@
   bodyEl.addEventListener('click', async (e) => {
     if (AIM.current !== 'make') return;
     const t = e.target;
+    const fl = t.closest('[data-flt]'); if (fl) { st.fx.filter = fl.dataset.flt; if (!st.fx.amount) st.fx.amount = 100; renderPanel(); changed(); return; }
+    const tb = t.closest('[data-tone]'); if (tb) { toneKey = tb.dataset.tone; renderPanel(); return; }
+    if (t.closest('[data-tone-zero]')) { st.fx.tone[toneKey] = 0; renderPanel(); changed(); return; }
+    if (t.closest('[data-tone-reset]')) { st.fx.tone = {}; renderPanel(); changed(); return; }
     const al = t.closest('[data-align]');
     if (al && sel && st.on[sel]) {
       snapBlock(sel); const b = st.blocks[sel]; const m = 0.012; // lề sát mép ảnh

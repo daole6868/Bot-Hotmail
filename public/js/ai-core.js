@@ -73,6 +73,7 @@
     note: { text: '' },
     logo: { src: B.logo || '', op: 0.85 },
     panel: 0.72,
+    fx: { filter: 'none', amount: 100, tone: {} },
   });
   function applyTpl(st, t) {
     st.W = t.W; st.H = t.H;
@@ -87,6 +88,7 @@
     if (t.bgOpt) Object.assign(st.bg, t.bgOpt);
     if (t.logoOpt) Object.assign(st.logo, t.logoOpt);
     if (t.infoOpt) Object.assign(st.info, t.infoOpt);
+    if (t.fx) st.fx = JSON.parse(JSON.stringify(t.fx));
     if (t.panel != null) st.panel = t.panel;
     if (t.note != null) st.note.text = t.note;
   }
@@ -98,6 +100,7 @@
     codeOpt: { auto: st.code.auto, server: st.code.server, color: st.code.color },
     bgOpt: { src: /^\/uploads\//.test(st.bg.src) ? st.bg.src : '', x: st.bg.x, y: st.bg.y, zoom: st.bg.zoom, dark: st.bg.dark, blur: st.bg.blur, color: st.bg.color },
     logoOpt: { op: st.logo.op }, note: st.note.text,
+    fx: st.fx,
     infoOpt: { color: st.info.color || '#ffffff', bg: /^\/uploads\//.test(st.info.bg || '') ? st.info.bg : '', bgDark: st.info.bgDark },
   });
 
@@ -352,15 +355,81 @@
     return out;
   }
   /** Ảnh xuất: canvas đúng cỡ, không khung chọn */
+  // ---------- Bộ lọc & tông màu (áp cho toàn ảnh) ----------
+  // Tông màu: [khóa, nhãn, min, max]
+  const TONES = [['bright', 'Độ sáng', -100, 100], ['contrast', 'Tương phản', -100, 100], ['sat', 'Độ bão hòa', -100, 100], ['vib', 'Độ sống động', -100, 100],
+    ['warm', 'Nhiệt độ', -100, 100], ['tint', 'Sắc thái', -100, 100], ['hi', 'Vùng sáng', -100, 100], ['sh', 'Vùng tối', -100, 100],
+    ['sharp', 'Độ nét', 0, 100], ['vig', 'Làm tối viền', 0, 100], ['fade', 'Phai màu', 0, 100]];
+  // Bộ lọc = bộ tông màu dựng sẵn (+ trắng đen / sepia / tách tông) — độ mạnh 0..100%
+  const FILTERS = [
+    ['none', 'Gốc', {}],
+    ['vivid', 'Sống động', { sat: 30, vib: 25, contrast: 12 }],
+    ['pop', 'Rực rỡ', { sat: 45, contrast: 20, sharp: 30, bright: 4 }],
+    ['warm', 'Ấm áp', { warm: 30, sat: 8 }],
+    ['cool', 'Mát lạnh', { warm: -30, tint: -5 }],
+    ['cinema', 'Điện ảnh', { contrast: 15, sat: -8, split: 45, vig: 25 }],
+    ['dream', 'Mơ màng', { bright: 8, contrast: -12, sat: 10, fade: 18, warm: 6 }],
+    ['retro', 'Hoài cổ', { fade: 28, sat: -22, warm: 18, contrast: -6 }],
+    ['night', 'Đêm', { bright: -10, warm: -25, contrast: 18, vig: 40 }],
+    ['sepia', 'Nâu cổ', { sepia: 85, contrast: 6 }],
+    ['bw', 'Trắng đen', { gray: 100, contrast: 10 }],
+    ['noir', 'Noir', { gray: 100, contrast: 38, vig: 35 }],
+  ];
+  const fxActive = (fx) => !!fx && ((fx.filter && fx.filter !== 'none' && fx.amount > 0) || Object.values(fx.tone || {}).some((v) => +v));
+  function fxParams(fx) {
+    const F = (FILTERS.find((f) => f[0] === fx.filter) || FILTERS[0])[2]; const k = (fx.amount == null ? 100 : fx.amount) / 100;
+    const P = {};
+    ['bright', 'contrast', 'sat', 'vib', 'warm', 'tint', 'hi', 'sh', 'sharp', 'vig', 'fade', 'sepia', 'gray', 'split'].forEach((key) => { P[key] = (+((fx.tone || {})[key]) || 0) + (F[key] || 0) * k; });
+    return P;
+  }
+  /** Áp bộ lọc + tông màu lên ctx (W×H). Chạy 1 vòng qua điểm ảnh, độ nét thêm 1 vòng. */
+  function applyFx(ctx, W, H, fx) {
+    if (!fxActive(fx)) return;
+    const P = fxParams(fx);
+    const img = ctx.getImageData(0, 0, W, H); const d = img.data;
+    const cv = clamp(P.contrast, -100, 100) * 2.55; const cf = (259 * (cv + 255)) / (255 * (259 - cv));
+    const bv = P.bright * 1.2; const sf = 1 + clamp(P.sat, -100, 100) / 100; const vb = P.vib / 100;
+    const wr = P.warm * 0.45; const tn = P.tint * 0.35; const hi = P.hi / 100; const sh = P.sh / 100;
+    const fade = clamp(P.fade, 0, 100) * 0.55; const sep = clamp(P.sepia, 0, 100) / 100; const gray = clamp(P.gray, 0, 100) / 100; const split = clamp(P.split, 0, 100) / 100;
+    const vig = clamp(P.vig, 0, 100) / 100; const cx = W / 2; const cy = H / 2; const md = cx * cx + cy * cy;
+    for (let y = 0, i = 0; y < H; y++) {
+      const dy = (y - cy) * (y - cy);
+      for (let x = 0; x < W; x++, i += 4) {
+        let r = d[i]; let g = d[i + 1]; let b = d[i + 2];
+        r += wr + bv; g += bv - tn; b += bv - wr; // cân bằng trắng + sáng
+        if (hi || sh) { const l = (0.299 * r + 0.587 * g + 0.114 * b) / 255; const lt = hi * l * l * 70 + sh * (1 - l) * (1 - l) * 70; r += lt; g += lt; b += lt; } // vùng sáng / vùng tối
+        r = cf * (r - 128) + 128; g = cf * (g - 128) + 128; b = cf * (b - 128) + 128;
+        let gr = 0.299 * r + 0.587 * g + 0.114 * b;
+        if (vb) { const mx = Math.max(r, g, b); const amt = vb * (1 - Math.abs(mx - gr) / 128); r = gr + (r - gr) * (1 + amt); g = gr + (g - gr) * (1 + amt); b = gr + (b - gr) * (1 + amt); }
+        if (sf !== 1) { r = gr + (r - gr) * sf; g = gr + (g - gr) * sf; b = gr + (b - gr) * sf; }
+        if (gray) { gr = 0.299 * r + 0.587 * g + 0.114 * b; r += (gr - r) * gray; g += (gr - g) * gray; b += (gr - b) * gray; }
+        if (sep) { const sr = 0.393 * r + 0.769 * g + 0.189 * b; const sg = 0.349 * r + 0.686 * g + 0.168 * b; const sb = 0.272 * r + 0.534 * g + 0.131 * b; r += (sr - r) * sep; g += (sg - g) * sep; b += (sb - b) * sep; }
+        if (split) { const l = clamp((0.299 * r + 0.587 * g + 0.114 * b) / 255, 0, 1); const s2 = (1 - l) * split * 40; const h2 = l * split * 40; r += h2 - s2 * 0.6; g += -h2 * 0.1 + s2 * 0.25; b += s2 - h2 * 0.7; } // vùng tối xanh ngọc, vùng sáng cam
+        if (fade) { r = fade + r * (1 - fade / 255); g = fade + g * (1 - fade / 255); b = fade + b * (1 - fade / 255); }
+        if (vig) { const f = 1 - vig * 0.85 * Math.pow(((x - cx) * (x - cx) + dy) / md, 1.3); r *= f; g *= f; b *= f; }
+        d[i] = r < 0 ? 0 : r > 255 ? 255 : r; d[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g; d[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+      }
+    }
+    if (P.sharp > 0) { // làm nét: nhân chập 3x3 (tăng chi tiết cạnh)
+      const k = clamp(P.sharp, 0, 100) / 100 * 0.9; const src = new Uint8ClampedArray(d); const row = W * 4;
+      for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+        const i = y * row + x * 4;
+        for (let c = 0; c < 3; c++) { const v = src[i + c] * (1 + 4 * k) - k * (src[i + c - 4] + src[i + c + 4] + src[i + c - row] + src[i + c + row]); d[i + c] = v < 0 ? 0 : v > 255 ? 255 : v; }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
   async function exportBlob(st, type = 'image/webp', q = 0.92) {
     await preload(srcsOf(st));
     const c = document.createElement('canvas'); c.width = st.W; c.height = st.H;
     render(c.getContext('2d'), st, false);
+    applyFx(c.getContext('2d'), st.W, st.H, st.fx);
     return new Promise((res) => c.toBlob((b) => res(b), type, q));
   }
 
   window.AIC = {
-    B, app, csrf, $, $$, esc, fold, clamp, api, upload, loadImg, preload, imgNow, toast,
+    B, app, csrf, $, $$, esc, fold, clamp, api, upload, loadImg, preload, imgNow, toast, TONES, FILTERS, applyFx, fxActive,
     SIZES, BLOCKS, TPL, blank, applyTpl, tplOf, fromDetail, codeText, svShort, maskUid, sortItems, srcsOf, G,
     render, rect, gridLayout, exportBlob, rr, fitFont, FONT,
   };

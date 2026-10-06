@@ -1285,3 +1285,18 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-img-tools input[type=file] { flex: 1; min-width: 200px; }
 .a-img-edit { margin-left: auto; border: 0; background: var(--primary-l); color: var(--primary); font: inherit; font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 99px; cursor: pointer; }
 .a-img-fresh img { outline: 2px solid var(--green, #16a34a); outline-offset: 1px; }
+/* Tạo ảnh acc: bộ lọc & tông màu */
+.ai-filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ai-flt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; border: 2px solid transparent; border-radius: 10px; background: none; cursor: pointer; font: inherit; font-size: .74rem; font-weight: 600; color: var(--text); }
+.ai-flt canvas { width: 100%; height: auto; aspect-ratio: 132 / 80; border-radius: 7px; background: #1b1f33; display: block; }
+.ai-flt.on { border-color: var(--primary); color: var(--primary); background: var(--primary-l); }
+.ai-tone-name { text-align: center; font-size: .9rem; }
+.ai-tone-name span { color: var(--primary); margin-left: 4px; }
+.ai-tones { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; scrollbar-width: none; }
+.ai-tones::-webkit-scrollbar { display: none; }
+.ai-tone { position: relative; flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; border: 0; background: #262a36; color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.ai-tone svg { width: 22px; height: 22px; }
+.ai-tone.on { background: #fafafa; color: #111; box-shadow: 0 0 0 2px var(--primary); }
+.ai-tone.set::after { content: ''; position: absolute; bottom: 3px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #f5c542; }
+.ai-tone-r { width: 100%; accent-color: #f5c542; }
+@media (max-width: 900px) { .ai-filters { grid-template-columns: repeat(4, 1fr); } .ai-flt { font-size: .68rem; } }
