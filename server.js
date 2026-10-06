@@ -40,6 +40,7 @@ app.use(helmet({
       'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
       'img-src': ["'self'", 'data:', 'blob:', 'https://img.vietqr.io', gAllow('https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.com.vn')], // blob: để xem trước ảnh trước khi upload
+      'media-src': ["'self'", 'blob:'], // blob: để xem trước video nền trước khi tải lên
       'form-action': ["'self'"],
       'frame-ancestors': ["'none'"],
       'upgrade-insecure-requests': config.isProd ? [] : null,

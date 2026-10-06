@@ -1125,4 +1125,37 @@
     pv.classList.toggle('is-none', e.target.value === 'none');
   });
   if (form.querySelector('[name=type]:checked')?.value === 'none') pv.classList.add('is-none');
+  const setType = (t) => { const r = form.querySelector(`[name=type][value=${t}]`); if (r && !r.checked) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); } };
+  const mb = (n) => (n / 1048576).toFixed(1) + 'MB';
+  // chọn file -> xem trước ngay + kiểm tra loại / dung lượng trước khi tải lên
+  form.addEventListener('change', (e) => {
+    const inp = e.target.closest('[data-sbg-file]');
+    if (!inp) return;
+    const k = inp.dataset.sbgFile; const box = form.querySelector(`[data-sbg-pick="${k}"]`); const f = inp.files[0];
+    if (box._u) URL.revokeObjectURL(box._u);
+    box.classList.remove('err'); box.hidden = !f; box.innerHTML = '';
+    if (!f) return;
+    const okType = k === 'img' ? /^image\/(jpeg|png|webp)$/.test(f.type) : /^video\/(mp4|webm)$/.test(f.type);
+    const max = 40;
+    if (!okType || f.size > max * 1048576) {
+      box.classList.add('err');
+      box.textContent = !okType ? (k === 'img' ? 'Chỉ nhận ảnh JPG, PNG, WEBP' : `Chỉ nhận video MP4 / WebM (file này: ${f.type || 'không rõ'})`) : `File ${mb(f.size)} vượt quá ${max}MB`;
+      inp.value = ''; return;
+    }
+    box._u = URL.createObjectURL(f);
+    const el = document.createElement(k === 'img' ? 'img' : 'video');
+    el.src = box._u; if (k === 'video') { el.muted = true; el.loop = true; el.playsInline = true; el.autoplay = true; }
+    const t = document.createElement('span'); t.textContent = `${f.name} · ${mb(f.size)} — bấm Lưu để áp dụng`;
+    box.append(el, t);
+    // cập nhật khung xem trước lớn
+    pv.querySelectorAll(k === 'img' ? '.a-sbg-pv-img' : 'video').forEach((x) => x.remove());
+    const big = k === 'img' ? Object.assign(document.createElement('div'), { className: 'a-sbg-pv-img' }) : el.cloneNode();
+    if (k === 'img') big.style.backgroundImage = `url("${box._u}")`; else { big.dataset.sbgVideo = ''; big.muted = true; }
+    if (k === 'img') pv.prepend(big); else pv.insertBefore(big, pv.querySelector('.a-sbg-pv-o')); // video luôn nằm trên ảnh
+    if (k === 'video') setType('video'); else if (form.querySelector('[name=type]:checked')?.value === 'none') setType('image');
+  });
+  form.addEventListener('submit', () => {
+    const btn = form.querySelector('[data-sbg-save]');
+    if ([...form.querySelectorAll('[data-sbg-file]')].some((i) => i.files.length)) setTimeout(() => { btn.disabled = true; btn.textContent = 'Đang tải lên...'; }, 0);
+  });
 })();

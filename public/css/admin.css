@@ -1324,9 +1324,9 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 
 /* Giao diện -> Nền trang */
 .a-sbg-types { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.a-sbg-type { flex: 1 1 90px; cursor: pointer; }
-.a-sbg-type input { position: absolute; opacity: 0; pointer-events: none; }
-.a-sbg-type span { display: block; text-align: center; padding: 10px; border: 1px solid var(--a-border, #333); border-radius: 10px; font-weight: 600; }
+.a-sbg-type { position: relative; flex: 1 1 80px; min-width: 0; cursor: pointer; }
+.a-sbg-type input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+.a-sbg-type span { display: block; text-align: center; padding: 10px 6px; border: 1px solid var(--a-border, #333); border-radius: 10px; font-weight: 600; white-space: nowrap; }
 .a-sbg-type input:checked + span { border-color: var(--a-primary, #8b5cf6); background: color-mix(in srgb, var(--a-primary, #8b5cf6) 18%, transparent); }
 .a-sbg-pv { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #0b0b12; display: grid; place-items: center; }
 .a-sbg-pv-img, .a-sbg-pv video { position: absolute; inset: 0; width: 100%; height: 100%; background: center / cover no-repeat; object-fit: cover; filter: blur(calc(var(--b) / 2)); }
@@ -1334,5 +1334,8 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-sbg-pv-o { position: absolute; inset: 0; background: rgba(0, 0, 0, var(--o)); }
 .a-sbg-pv.is-none > :not(.a-sbg-pv-card) { display: none; }
 .a-sbg-pv-card { position: relative; padding: 14px 22px; border-radius: 10px; background: rgba(20, 20, 30, .85); color: #fff; font-weight: 600; }
+.a-sbg-pick { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; font-size: 13px; }
+.a-sbg-pick img, .a-sbg-pick video { width: 160px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: #000; }
+.a-sbg-pick.err { color: #dc2626; font-weight: 600; }
 .a-sbg-cur { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 .a-sbg-cur img, .a-sbg-cur video { width: 160px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: #000; }
