@@ -1,0 +1,40 @@
+<%- include('_header') %>
+<form method="post" action="/admin/card-ui" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('list') %> Số ô mỗi hàng</h3>
+      <div class="a-row">
+        <div><label>Máy tính <small class="a-muted">(mặc định <%= D.colsPc %>)</small></label><input type="number" name="colsPc" min="2" max="6" value="<%= c.colsPc %>"></div>
+        <div><label>Điện thoại <small class="a-muted">(mặc định <%= D.colsMb %>)</small></label><input type="number" name="colsMb" min="1" max="3" value="<%= c.colsMb %>"></div>
+      </div>
+    </div>
+    <div class="a-card">
+      <h3><%- I('star') %> Icon nhân vật / vũ khí</h3>
+      <label class="a-check"><input type="checkbox" name="icons" value="1" <%= c.icons ? 'checked' : '' %>> <span>Hiện icon trên thẻ Acc VIP</span></label>
+      <label class="a-check"><input type="checkbox" name="scroll" value="1" <%= c.scroll ? 'checked' : '' %>> <span>Tự chạy sang ngang</span></label>
+      <div class="a-row">
+        <div><label>Số icon tối đa mỗi dòng <small class="a-muted">(mặc định <%= D.maxIcons %>)</small></label><input type="number" name="maxIcons" min="4" max="40" value="<%= c.maxIcons %>"></div>
+        <div><label>Tốc độ chạy (giây / icon) <small class="a-muted">(mặc định <%= D.speed %>, càng nhỏ càng nhanh)</small></label><input type="number" name="speed" min="0.5" max="5" step="0.1" value="<%= c.speed %>"></div>
+      </div>
+    </div>
+  </div>
+  <div class="a-card">
+    <h3><%- I('image') %> Cỡ icon & chữ thẻ Acc VIP <small class="a-muted">(px)</small></h3>
+    <div class="a-table-wrap"><table class="a-table a-nocards">
+      <thead><tr><th>Phần</th><th>Máy tính</th><th>Điện thoại</th></tr></thead>
+      <% SIZES.forEach(([k, label, pc, mb, min, max]) => { %>
+        <tr>
+          <td><%= label %></td>
+          <td><input type="number" name="<%= k %>Pc" min="<%= min %>" max="<%= max %>" step="0.1" value="<%= c[k + 'Pc'] %>"> <small class="a-muted">mặc định <%= pc %></small></td>
+          <td><input type="number" name="<%= k %>Mb" min="<%= min %>" max="<%= max %>" step="0.1" value="<%= c[k + 'Mb'] %>"> <small class="a-muted">mặc định <%= mb %></small></td>
+        </tr>
+      <% }) %>
+    </table></div>
+  </div>
+  <div class="a-btn-row">
+    <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+    <button class="a-btn a-ghost" name="reset" value="1" data-confirm="Khôi phục toàn bộ về mặc định?"><%- I('refresh') %> Khôi phục mặc định</button>
+  </div>
+</form>
+<%- include('_footer') %>

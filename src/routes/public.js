@@ -27,6 +27,7 @@ function maskName(n) {
 
 const { GAMES: HOYO_GAMES } = require('../services/hoyo');
 const thumbs = require('../utils/thumbs');
+const cardUi = require('../services/card-ui');
 // Dòng tóm tắt "Chi tiết tài khoản" cho thẻ sản phẩm (acc chưa có chi tiết -> dùng thuộc tính cũ)
 function accRows(b) {
   if (!b) return null;
@@ -37,7 +38,8 @@ function accRows(b) {
 function accRoll(b) {
   if (!b || b.v !== 2) return null;
   const g = HOYO_GAMES[b.g] || { lv: 'Cấp', w: 'Vũ khí' };
-  const icons = (list) => (list || []).map(([ic, n, r]) => ({ i: ic ? thumbs.thumbOf(ic) : '', n: String(n || ''), r }));
+  const cc = cardUi.cfg();
+  const icons = (list) => (cc.icons ? (list || []).slice(0, cc.maxIcons) : []).map(([ic, n, r]) => ({ i: ic ? thumbs.thumbOf(ic) : '', n: String(n || ''), r }));
   return {
     c: icons(b.ci), w: icons(b.wi),
     info: [[g.lv, b.lv || ''], ['Máy chủ', b.sv || ''], ['Nhân vật', b.nc || 0], [g.w, b.nw || 0]].filter((r) => r[1] !== '').map(([k, v]) => ({ k, v })),

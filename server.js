@@ -131,6 +131,9 @@ app.use((req, res, next) => { if (req.session && !req.session.userId) req.sessio
 // Mã chống trừ tiền 2 lần cho form mua (xem services/idem.js)
 const { newKey: newIdem } = require('./src/services/idem');
 app.use((req, res, next) => { res.locals.newIdem = newIdem; next(); });
+// Giao diện -> Thẻ sản phẩm: số ô mỗi hàng + cỡ icon / chữ (biến CSS)
+const cardUi = require('./src/services/card-ui');
+app.use((req, res, next) => { res.locals.cardCss = cardUi.css(); res.locals.cardCfg = cardUi.cfg(); next(); });
 app.use(security.flash);
 app.use(security.csrf);
 app.use(security.loadUser);

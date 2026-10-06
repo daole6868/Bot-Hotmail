@@ -617,8 +617,12 @@
     const f = e.target;
     if (f.hasAttribute('data-validate') && !validateForm(f)) { e.preventDefault(); return; }
     if (f.dataset.confirm && !confirm(f.dataset.confirm)) { e.preventDefault(); return; }
+    const sb = e.submitter;
+    if (sb && sb.dataset.confirm && !f.dataset.confirm && !confirm(sb.dataset.confirm)) { e.preventDefault(); return; }
     if (f.dataset.submitting) { e.preventDefault(); return; }
     if (f.method.toLowerCase() === 'post') {
+      // Nút bị khóa không được trình duyệt gửi kèm -> giữ tên / giá trị của nút vừa bấm bằng ô ẩn
+      if (sb && sb.name) { const h = document.createElement('input'); h.type = 'hidden'; h.name = sb.name; h.value = sb.value; h.dataset.submitter = '1'; f.querySelectorAll('input[data-submitter]').forEach((x) => x.remove()); f.appendChild(h); }
       f.dataset.submitting = '1';
       $$('button:not([type=button])', f).forEach((b) => { b.disabled = true; });
       setTimeout(() => { delete f.dataset.submitting; $$('button', f).forEach((b) => { b.disabled = false; }); }, 8000);

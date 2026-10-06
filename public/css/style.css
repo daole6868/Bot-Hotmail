@@ -148,7 +148,8 @@ a.card:hover .thumb img { transform: scale(1.06); }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .section-head h1, .section-head h2 { margin: 0; }
 .game-grid, .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; margin-bottom: 18px; }
+.product-grid { display: grid; grid-template-columns: repeat(var(--pg-pc, 4), minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+@media (max-width: 1100px) { .product-grid { grid-template-columns: repeat(var(--pg-tab, 3), minmax(0, 1fr)); } }
 .game-card h3, .cat-card h3 { margin-bottom: 8px; }
 .game-card { border-top: 3px solid var(--c, var(--primary)); }
 .game-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: .8rem; color: var(--muted); margin-bottom: 12px; }
@@ -322,7 +323,7 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
   .stats-bar { grid-template-columns: 1fr 1fr; }
   .slider { aspect-ratio: 2 / 1; }
   .game-grid, .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .product-grid { grid-template-columns: repeat(var(--pg-mb, 2), minmax(0, 1fr)); gap: 10px; }
   .attrs { grid-template-columns: 1fr; }
   .page-hero { flex-direction: column; align-items: flex-start; }
   .page-hero img { width: 100%; }
@@ -469,14 +470,14 @@ select { cursor: pointer; }
 .pd-desc h2 { display: flex; align-items: center; gap: 8px; }
 .section-head-sub { align-items: flex-end; }
 .section-head-sub p { margin: 2px 0 0; }
-.product-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-@media (max-width: 1100px) { .product-grid-4 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.product-grid-4 { grid-template-columns: repeat(var(--pg-pc, 4), minmax(0, 1fr)); }
+@media (max-width: 1100px) { .product-grid-4 { grid-template-columns: repeat(var(--pg-tab, 3), minmax(0, 1fr)); } }
 @media (max-width: 900px) {
   .pd { grid-template-columns: 1fr; }
   .pd-info { position: static; }
 }
 @media (max-width: 720px) {
-  .product-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-grid-4 { grid-template-columns: repeat(var(--pg-mb, 2), minmax(0, 1fr)); }
   .pd-info { padding: 16px; }
   .pd-title { font-size: 1.2rem; }
   .pd-price .price { font-size: 1.6rem; }
@@ -1336,11 +1337,13 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 @media (max-width: 560px) { .sf-foot { flex-direction: column; align-items: stretch; } .sf-mode { justify-content: center; } .sf-btns .btn { flex: 1; justify-content: center; } }
 
 /* Thẻ Acc VIP có dữ liệu HoYoLAB: dòng icon nhân vật / vũ khí tự chạy ngang + 4 thông tin dạng chấm */
-.product-card.has-acc .product-title { font-size: .9rem; min-height: 2.5em; }
+.product-card.has-acc .product-title { font-size: var(--pc-title, 14.4px); min-height: 2.5em; }
+.product-card.has-acc .price-box .price { font-size: var(--pc-price, 16px); }
+.product-card.has-acc .btn-view { font-size: var(--pc-btn, 13px); }
 .pc-roll { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); }
 .product-card .card-body > .pc-roll + .pc-roll { margin-top: -4px !important; }
 .pc-track { display: flex; width: max-content; }
-.pc-ic { flex: 0 0 auto; width: 27px; height: 27px; margin-right: 4px; border-radius: calc(6px * var(--rk)); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 800; color: #fff; background: linear-gradient(160deg, #8a8fa3, #b7bccb); }
+.pc-ic { flex: 0 0 auto; width: var(--pc-ic, 27px); height: var(--pc-ic, 27px); margin-right: 4px; border-radius: calc(6px * var(--rk)); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 800; color: #fff; background: linear-gradient(160deg, #8a8fa3, #b7bccb); }
 .pc-ic.r5 { background: linear-gradient(160deg, #a5662f, #e3a64f); }
 .pc-ic.r4 { background: linear-gradient(160deg, #5e4aa0, #9a78d6); }
 .pc-ic img { width: 100%; height: 100%; object-fit: cover; }
@@ -1348,9 +1351,11 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 .pc-roll.off .pc-track, a.product-card:hover .pc-roll .pc-track { animation-play-state: paused; }
 @keyframes pcroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .pc-roll.run .pc-track { animation: none; } }
-.product-card .attrs.attrs-acc { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; padding: 0; background: none; border: 0; font-size: .72rem; }
+.product-card .attrs.attrs-acc { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; padding: 0; background: none; border: 0; font-size: var(--pc-info, 11.5px); }
 .product-card .attrs.attrs-acc li { justify-content: flex-start; gap: 4px; }
 .product-card .attrs.attrs-acc li::before { content: '•'; color: var(--muted); }
 .product-card .attrs.attrs-acc span::after { content: ':'; }
 .product-card .attrs.attrs-acc b { text-align: left; }
-@media (max-width: 560px) { .pc-ic { width: 21px; height: 21px; margin-right: 3px; border-radius: calc(5px * var(--rk)); font-size: .6rem; } .product-card .card-body > .pc-roll + .pc-roll { margin-top: -6px !important; } .product-card .attrs.attrs-acc { grid-template-columns: auto auto; justify-content: space-between; gap: 1px 6px; font-size: .58rem; } .product-card .attrs.attrs-acc li { gap: 3px; } .product-card.has-acc .product-title { font-size: .74rem; min-height: 2.4em; } .product-card.has-acc .price-box .price { font-size: .78rem; } .product-card.has-acc .btn-view { padding: 5px 9px; font-size: .7rem; } }
+@media (max-width: 560px) { .pc-ic { width: var(--mb-ic, 21px); height: var(--mb-ic, 21px); margin-right: 3px; border-radius: calc(5px * var(--rk)); font-size: .6rem; } .product-card .card-body > .pc-roll + .pc-roll { margin-top: -6px !important; } .product-card .attrs.attrs-acc { grid-template-columns: auto auto; justify-content: space-between; gap: 1px 6px; font-size: var(--mb-info, 9.3px); } .product-card .attrs.attrs-acc li { gap: 3px; } .product-card.has-acc .product-title { font-size: var(--mb-title, 11.8px); min-height: 2.4em; } .product-card.has-acc .price-box .price { font-size: var(--mb-price, 12.5px); } .product-card.has-acc .btn-view { padding: 5px 9px; font-size: var(--mb-btn, 11.2px); } }
+.pc-roll.static { overflow-x: auto; scrollbar-width: none; }
+.pc-roll.static::-webkit-scrollbar { display: none; }

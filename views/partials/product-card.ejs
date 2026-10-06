@@ -10,7 +10,7 @@
     <% if (p.roll) { %>
       <%# Icon nhân vật / vũ khí: mỗi loại 1 dòng, tự chạy ngang nối đuôi (main.js) %>
       <% [p.roll.c, p.roll.w].filter(l => l.length).forEach(list => { %>
-        <div class="pc-roll" data-roll><div class="pc-track"><% list.forEach(it => { %><span class="pc-ic r<%= it.r %>" title="<%= it.n %>"><% if (it.i) { %><img src="<%= it.i %>" alt="<%= it.n %>" loading="lazy" width="34" height="34"><% } else { %><%= it.n.slice(0, 1) %><% } %></span><% }) %></div></div>
+        <div class="pc-roll<%= locals.cardCfg && !cardCfg.scroll ? ' static' : '' %>" <%- locals.cardCfg && !cardCfg.scroll ? '' : 'data-roll data-speed="' + (locals.cardCfg ? cardCfg.speed : 1.6) + '"' %>><div class="pc-track"><% list.forEach(it => { %><span class="pc-ic r<%= it.r %>" title="<%= it.n %>"><% if (it.i) { %><img src="<%= it.i %>" alt="<%= it.n %>" loading="lazy" width="34" height="34"><% } else { %><%= it.n.slice(0, 1) %><% } %></span><% }) %></div></div>
       <% }) %>
     <% } %>
     <% if (p.attrList.length) { %>

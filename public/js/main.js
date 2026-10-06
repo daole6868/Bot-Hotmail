@@ -765,7 +765,7 @@ window.addEventListener('pageshow', (e) => {
     if (!tr || tr.scrollWidth <= el.clientWidth + 1) return;
     const n = tr.children.length;
     Array.from(tr.children).forEach((c) => { const k = c.cloneNode(true); k.setAttribute('aria-hidden', 'true'); tr.appendChild(k); });
-    el.style.setProperty('--dur', Math.max(8, n * 1.6) + 's');
+    el.style.setProperty('--dur', Math.max(6, n * (parseFloat(el.dataset.speed) || 1.6)) + 's');
     el.classList.add('run');
     if (io) io.observe(el);
   }
