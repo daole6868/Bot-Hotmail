@@ -64,7 +64,7 @@
     W: 2000, H: 1070, game: '', tpl: 'A', product: null,
     bg: { src: '', x: 0.5, y: 0.5, zoom: 1, dark: 0.15, blur: 0, color: '#141a33' },
     blocks: JSON.parse(JSON.stringify(TPL.A.blocks)), on: { ...TPL.A.on },
-    info: { name: '', uid: '', mask: true, lv: '', server: '', extra: '' },
+    info: { name: '', uid: '', mask: true, lv: '', server: '', extra: '', color: '#ffffff', bg: '', bgDark: 0.3 },
     grids: {
       c: { cols: 6, rows: 6, over: 'more', lv: true, k: true, items: [] },
       w: { cols: 8, rows: 3, over: 'more', lv: true, k: true, items: [] },
@@ -86,6 +86,7 @@
     if (t.codeOpt) Object.assign(st.code, t.codeOpt);
     if (t.bgOpt) Object.assign(st.bg, t.bgOpt);
     if (t.logoOpt) Object.assign(st.logo, t.logoOpt);
+    if (t.infoOpt) Object.assign(st.info, t.infoOpt);
     if (t.panel != null) st.panel = t.panel;
     if (t.note != null) st.note.text = t.note;
   }
@@ -97,6 +98,7 @@
     codeOpt: { auto: st.code.auto, server: st.code.server, color: st.code.color },
     bgOpt: { src: /^\/uploads\//.test(st.bg.src) ? st.bg.src : '', x: st.bg.x, y: st.bg.y, zoom: st.bg.zoom, dark: st.bg.dark, blur: st.bg.blur, color: st.bg.color },
     logoOpt: { op: st.logo.op }, note: st.note.text,
+    infoOpt: { color: st.info.color || '#ffffff', bg: /^\/uploads\//.test(st.info.bg || '') ? st.info.bg : '', bgDark: st.info.bgDark },
   });
 
   // ---------- Dữ liệu acc -> trạng thái ----------
@@ -126,7 +128,7 @@
   function sortItems(items) {
     return items.slice().sort((a, b) => (b.r - a.r) || ((parseInt(b.lv, 10) || 0) - (parseInt(a.lv, 10) || 0)) || ((b.k || 0) - (a.k || 0)) || a.n.localeCompare(b.n));
   }
-  const srcsOf = (st) => [st.bg.src, st.logo.src, ...st.grids.c.items.map((x) => x.i), ...st.grids.w.items.map((x) => x.i)];
+  const srcsOf = (st) => [st.bg.src, st.logo.src, st.info.bg, ...st.grids.c.items.map((x) => x.i), ...st.grids.w.items.map((x) => x.i)];
 
   // ---------- Vẽ ----------
   function rr(ctx, x, y, w, h, r) {
@@ -253,7 +255,16 @@
   }
   function drawInfo(ctx, st) {
     const R = rect(st, 'info'); const s = Math.min(st.W, st.H * 1.87); const g = G(st);
-    panel(ctx, st, R.x, R.y, R.w, R.h, s);
+    const ib = imgNow[st.info.bg];
+    if (ib) { // ảnh nền riêng của khung thông tin: chỉ vẽ trong khung (cắt theo góc bo)
+      ctx.save(); rr(ctx, R.x, R.y, R.w, R.h, s * 0.012); ctx.clip();
+      const sc = Math.max(R.w / ib.width, R.h / ib.height); ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(ib, R.x + (R.w - ib.width * sc) / 2, R.y + (R.h - ib.height * sc) / 2, ib.width * sc, ib.height * sc);
+      if (st.info.bgDark > 0) { ctx.fillStyle = `rgba(0,0,0,${st.info.bgDark})`; ctx.fillRect(R.x, R.y, R.w, R.h); }
+      ctx.restore();
+      ctx.save(); rr(ctx, R.x, R.y, R.w, R.h, s * 0.012); ctx.lineWidth = Math.max(1, s * 0.0012); ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.stroke(); ctx.restore();
+    } else panel(ctx, st, R.x, R.y, R.w, R.h, s);
+    const tc = st.info.color || '#ffffff';
     const p = R.h * 0.1;
     const lines = [];
     if (st.info.uid) lines.push(['UID', st.info.mask ? maskUid(st.info.uid) : st.info.uid]);
@@ -265,11 +276,11 @@
     const rows = Math.max(1, lines.length);
     const lh = Math.min((R.h - 2 * p - nameH) / rows, R.h * 0.22);
     ctx.save(); ctx.textBaseline = 'middle';
-    if (name) { ctx.fillStyle = '#fff'; fitFont(ctx, name, R.w - 2 * p, nameH * 0.86, 800); ctx.textAlign = 'left'; ctx.fillText(name, R.x + p, R.y + p + nameH / 2); }
+    if (name) { ctx.fillStyle = tc; fitFont(ctx, name, R.w - 2 * p, nameH * 0.86, 800); ctx.textAlign = 'left'; ctx.fillText(name, R.x + p, R.y + p + nameH / 2); }
     lines.forEach(([k, v], i) => {
       const cy = R.y + p + nameH + lh * (i + 0.5);
-      ctx.fillStyle = 'rgba(235,232,255,.85)'; fitFont(ctx, k, (R.w - 2 * p) * 0.5, lh * 0.7, 600); ctx.textAlign = 'left'; ctx.fillText(k, R.x + p, cy);
-      if (v) { ctx.fillStyle = '#fff'; fitFont(ctx, v, (R.w - 2 * p) * 0.48, lh * 0.76, 700); ctx.textAlign = 'right'; ctx.fillText(v, R.x + R.w - p, cy); }
+      ctx.fillStyle = tc; ctx.globalAlpha = 0.82; fitFont(ctx, k, (R.w - 2 * p) * 0.5, lh * 0.7, 600); ctx.textAlign = 'left'; ctx.fillText(k, R.x + p, cy); ctx.globalAlpha = 1;
+      if (v) { ctx.fillStyle = tc; fitFont(ctx, v, (R.w - 2 * p) * 0.48, lh * 0.76, 700); ctx.textAlign = 'right'; ctx.fillText(v, R.x + R.w - p, cy); }
       if (i < lines.length - 1) { ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(R.x + p, cy + lh / 2, R.w - 2 * p, Math.max(1, s * 0.0008)); }
     });
     ctx.restore();

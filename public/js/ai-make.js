@@ -115,7 +115,12 @@
     const g = A.G(st);
     return `<div class="ai-sec">${txt('info.name', 'Tên hiển thị', 'VD: ChunChin')}${txt('info.uid', 'UID', 'VD: 841956798', 'inputmode="numeric"')}${chk('info.mask', 'Che UID (841•••798)')}` +
       `<div class="ai-row2">${txt('info.lv', esc(g.lv), '60', 'inputmode="numeric"')}<label class="ai-f"><span>Máy chủ</span><input data-b="info.server" value="${esc(st.info.server)}" list="aiSv"><datalist id="aiSv">${(B.servers || []).map((s) => `<option value="${esc(s)}">`).join('')}</datalist></label></div>` +
-      `<label class="ai-f"><span>Dòng thêm <small>(mỗi dòng 1 ý, dạng "Nhãn: giá trị")</small></span><textarea data-b="info.extra" rows="3" placeholder="Cấp thế giới: 9">${esc(st.info.extra)}</textarea></label></div>`;
+      `<label class="ai-f"><span>Dòng thêm <small>(mỗi dòng 1 ý, dạng "Nhãn: giá trị")</small></span><textarea data-b="info.extra" rows="3" placeholder="Cấp thế giới: 9">${esc(st.info.extra)}</textarea></label></div>` +
+      `<div class="ai-sec"><b>Kiểu khung thông tin</b><label class="ai-f"><span>Màu chữ</span><input type="color" data-b="info.color" value="${esc(st.info.color || '#ffffff')}"></label>` +
+      `<span class="ai-f"><span>Ảnh nền khung <small>(chỉ hiện trong khung thông tin)</small></span></span>` +
+      `<div class="ai-bgs">${(B.bgs || []).map((b) => `<span class="ai-bg ${st.info.bg === b.u ? 'on' : ''}"><img src="${esc(b.u)}" alt="" loading="lazy" data-ibg="${esc(b.u)}"></span>`).join('')}</div>` +
+      `<div class="ai-inline"><label class="a-btn a-btn-sm">Tải ảnh lên<input type="file" accept="image/*" hidden data-ibg-up></label><label class="a-btn a-btn-sm a-ghost">Ảnh trong máy<input type="file" accept="image/*" hidden data-ibg-local></label>${st.info.bg ? '<button type="button" class="a-btn a-btn-sm a-ghost" data-ibg-none>Bỏ ảnh nền khung</button>' : ''}</div>` +
+      (st.info.bg ? range('info.bgDark', 'Làm tối ảnh nền khung', 0, 0.85, 0.05) : '') + '</div>';
   }
   function tabGrid(k) {
     const g = st.grids[k];
@@ -194,6 +199,13 @@
       if (!r.ok) { toast(r.message || 'Không tải được', true); return; }
       B.bgs = [r.bg, ...(B.bgs || [])]; st.bg.src = r.bg.u; await preload([st.bg.src]); renderPanel(); changed();
     }
+    if (el.matches('[data-ibg-up]') && el.files[0]) {
+      toast('Đang tải ảnh lên...');
+      const r = await upload('/admin/acc-image/bg', { game: st.game }, el.files[0], 'bg');
+      if (!r.ok) { toast(r.message || 'Không tải được', true); return; }
+      B.bgs = [r.bg, ...(B.bgs || [])]; st.info.bg = r.bg.u; await preload([st.info.bg]); renderPanel(); changed();
+    }
+    if (el.matches('[data-ibg-local]') && el.files[0]) { st.info.bg = URL.createObjectURL(el.files[0]); await preload([st.info.bg]); renderPanel(); changed(); }
     if (el.matches('[data-bg-local]') && el.files[0]) { st.bg.src = URL.createObjectURL(el.files[0]); await preload([st.bg.src]); renderPanel(); changed(); }
     if (el.matches('[data-logo-local]') && el.files[0]) { st.logo.src = URL.createObjectURL(el.files[0]); st.on.logo = true; await preload([st.logo.src]); renderPanel(); changed(); }
   });
@@ -211,6 +223,8 @@
       if (r.ok) { B.tpls = [...(B.tpls || []).filter((y) => !(y.name === name)), r.tpl]; renderPanel(); toast('Đã lưu mẫu "' + name + '"'); } else toast(r.message, true);
       return;
     }
+    const ibg = t.closest('[data-ibg]'); if (ibg) { st.info.bg = ibg.dataset.ibg; await preload([st.info.bg]); renderPanel(); changed(); return; }
+    if (t.closest('[data-ibg-none]')) { st.info.bg = ''; renderPanel(); changed(); return; }
     const bgi = t.closest('[data-bg]'); if (bgi) { st.bg.src = bgi.dataset.bg; await preload([st.bg.src]); renderPanel(); changed(); return; }
     const bgd = t.closest('[data-bg-del]');
     if (bgd) { if (!confirm('Xóa ảnh nền này khỏi kho?')) return; const r = await api('/admin/acc-image/bg/delete', { u: bgd.dataset.bgDel }); if (r.ok) { B.bgs = B.bgs.filter((y) => y.u !== bgd.dataset.bgDel); if (st.bg.src === bgd.dataset.bgDel) st.bg.src = ''; renderPanel(); changed(); } else toast(r.message, true); return; }
