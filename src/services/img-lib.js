@@ -150,4 +150,4 @@ const remove = (id) => db.prepare('DELETE FROM hoyo_assets WHERE id = ?').run(id
 // Khởi động: gắn độ hiếm cho ảnh cũ đã lưu (chỉ chạy khi còn ảnh chưa có độ hiếm)
 setTimeout(() => { try { hoyo.rebrief(); } catch (e) { console.error('[img-lib] brief:', e.message); } try { hoyo.libRarityAll(); } catch (e) { console.error('[img-lib] rarity:', e.message); } }, 5000).unref();
 
-module.exports = { parseHtml, importItems, backfill, addOne, replace, rename, remove };
+module.exports = { parseHtml, importItems, backfill, addOne, replace, rename, remove, saveUpload };

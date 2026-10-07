@@ -345,6 +345,8 @@ function addColumn(table, col, def) {
   return true;
 }
 addColumn('products', 'sort_order', 'INTEGER NOT NULL DEFAULT 0');
+// Màu vòng bo cung mệnh của nhân vật (Quản lý ảnh -> Cung mệnh)
+addColumn('hoyo_assets', 'ring', "TEXT NOT NULL DEFAULT ''");
 // Popup "Nạp tiền thành công": seen_at = lúc khách đã thấy thông báo (đơn cũ coi như đã thấy)
 if (addColumn('deposits', 'seen_at', 'INTEGER')) db.exec("UPDATE deposits SET seen_at = completed_at WHERE status = 'success'");
 // Loại danh mục: vip = mỗi acc bán 1 lần ; reroll = 1 sản phẩm chứa nhiều acc, mua nhiều lần tới khi hết
@@ -733,6 +735,15 @@ db.exec(`
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     UNIQUE(game, kind, nkey)
   );
+  -- Cung mệnh / Tinh Hồn / Ý Cảnh của nhân vật trong thư viện ảnh (6 ô mỗi nhân vật)
+  CREATE TABLE IF NOT EXISTS hoyo_consts (
+    asset_id INTEGER NOT NULL REFERENCES hoyo_assets(id) ON DELETE CASCADE,
+    slot INTEGER NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    icon TEXT NOT NULL DEFAULT '',
+    src TEXT,
+    PRIMARY KEY(asset_id, slot)
+  ) WITHOUT ROWID;
   CREATE TABLE IF NOT EXISTS hoyo_workers (
     name TEXT PRIMARY KEY,
     ip TEXT,

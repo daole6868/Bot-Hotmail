@@ -39,7 +39,8 @@ app.use(helmet({
       'frame-src': ['https://challenges.cloudflare.com', gAllow('https://td.doubleclick.net https://www.googletagmanager.com')],
       'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      'img-src': ["'self'", 'data:', 'blob:', 'https://img.vietqr.io', gAllow('https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.com.vn')], // blob: để xem trước ảnh trước khi upload
+      // ảnh HoYoverse: xem trước khi dán HTML trong Quản lý ảnh -> Cung mệnh
+      'img-src': ["'self'", 'data:', 'blob:', 'https://img.vietqr.io', 'https://act-webstatic.hoyoverse.com', 'https://upload-os-bbs.hoyolab.com', 'https://fastcdn.hoyoverse.com', gAllow('https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.com.vn')], // blob: để xem trước ảnh trước khi upload
       'media-src': ["'self'", 'blob:'], // blob: để xem trước video nền trước khi tải lên
       'form-action': ["'self'"],
       'frame-ancestors': ["'none'"],

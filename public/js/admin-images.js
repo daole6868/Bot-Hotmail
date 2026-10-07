@@ -68,3 +68,113 @@
   $('[data-img-check]', box).addEventListener('click', (e) => send(true, e.currentTarget));
   $('[data-img-run]', box).addEventListener('click', (e) => send(false, e.currentTarget));
 })();
+
+// Cung mệnh / Tinh Hồn / Ý Cảnh: bấm nhân vật -> 6 ô xếp theo đường cong, chọn màu vòng bo, dán HTML hoặc sửa từng ô
+(() => {
+  'use strict';
+  const app = document.querySelector('[data-cst-app]');
+  const modal = document.querySelector('[data-cst-modal]');
+  if (!app || !modal) return;
+  const $ = (s, r = modal) => r.querySelector(s);
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const LABEL = app.dataset.label;
+  const PAL = JSON.parse(app.dataset.palette || '[]');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let C = null; let sel = 0;
+
+  const api = async (url, body) => {
+    try {
+      const opt = { headers: { 'X-CSRF-Token': csrf, Accept: 'application/json' } };
+      if (body !== undefined) {
+        opt.method = 'POST';
+        if (body instanceof FormData) opt.body = body;
+        else { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+      }
+      return await (await fetch(url, opt)).json();
+    } catch (e) { return { ok: false, message: 'Lỗi kết nối' }; }
+  };
+  const msg = (t, err) => { const m = $('[data-cst-msg]'); m.hidden = !t; m.className = 'a-small ' + (err ? 'a-text-err' : 'a-muted'); m.textContent = t || ''; };
+  const ic = (icon, extra = '') => `<span class="cst-ic ${extra}">${icon ? `<img src="${esc(icon)}" alt="">` : '<i>+</i>'}</span>`;
+  const row = (s) => `<div class="a-cst-row">${ic(s.icon)}<div><b>${esc(s.name) || '<span class="a-muted">Chưa có tên</span>'}</b><small>${esc(LABEL)} <em>${s.slot}</em></small></div></div>`;
+
+  function render() {
+    modal.style.setProperty('--rc', C.ring);
+    $('[data-cst-title]').textContent = `${C.name} · ${LABEL}`;
+    $('[data-cst-portrait]').src = C.icon;
+    $('[data-cst-arc]').innerHTML = C.slots.map((s) => `<button type="button" class="a-cst-slot s${s.slot} ${sel === s.slot ? 'on' : ''}" data-cst-slot="${s.slot}" title="${esc(LABEL)} ${s.slot}${s.name ? ': ' + esc(s.name) : ''}">${ic(s.icon, s.icon ? '' : 'empty')}</button>`).join('');
+    $('[data-cst-pal]').innerHTML = PAL.map(([c, n]) => `<button type="button" class="a-cst-sw ${c === C.ring ? 'on' : ''}" style="--c:${c}" data-cst-ring="${c}" title="${esc(n)}"></button>`).join('');
+    const p = PAL.find((x) => x[0] === C.ring);
+    $('[data-cst-color]').value = C.ring;
+    $('.a-cst-custom').firstChild.textContent = p ? p[1] + ' · ' : 'Màu tự chọn · ';
+    $('[data-cst-list]').innerHTML = C.slots.map(row).join('');
+    const ed = $('[data-cst-edit]');
+    ed.hidden = !sel;
+    if (sel) {
+      const s = C.slots[sel - 1];
+      $('[data-cst-edit-t]').textContent = `${LABEL} ${sel}`;
+      $('[data-cst-name]').value = s.name || '';
+      $('[data-cst-file]').value = ''; $('[data-cst-url]').value = '';
+      $('[data-cst-slot-del]').hidden = !s.icon && !s.name;
+    }
+  }
+  // Cập nhật ô ở lưới bên ngoài (số ô, màu)
+  function syncCard() {
+    const b = app.querySelector(`[data-cst-open="${C.id}"]`);
+    if (!b) return;
+    const n = C.slots.filter((s) => s.icon).length;
+    b.style.setProperty('--rc', C.ring);
+    const sm = b.querySelector('small'); sm.innerHTML = `<i></i>${n}/6`; sm.classList.toggle('full', n >= 6);
+  }
+  async function open(id) {
+    const j = await api('/admin/images/const/' + id);
+    if (!j.ok) return alert(j.message || 'Có lỗi');
+    C = j.c; sel = 0;
+    $('[data-cst-html]').value = ''; msg('');
+    render();
+    modal.hidden = false; document.body.classList.add('a-modal-open');
+  }
+  const close = () => { modal.hidden = true; document.body.classList.remove('a-modal-open'); };
+  const done = (j, t) => { if (!j.ok) { msg(j.message || 'Có lỗi', true); return false; } C = j.c; render(); syncCard(); if (t) msg(t); return true; };
+
+  app.addEventListener('click', (e) => { const b = e.target.closest('[data-cst-open]'); if (b) open(b.dataset.cstOpen); });
+  modal.addEventListener('click', async (e) => {
+    const t = e.target;
+    if (t === modal || t.closest('[data-cst-close]')) return close();
+    const sl = t.closest('[data-cst-slot]');
+    if (sl) { sel = sel === +sl.dataset.cstSlot ? 0 : +sl.dataset.cstSlot; render(); if (sel) $('[data-cst-name]').focus({ preventScroll: true }); return; }
+    const sw = t.closest('[data-cst-ring]');
+    if (sw) { done(await api(`/admin/images/const/${C.id}/ring`, { ring: sw.dataset.cstRing })); return; }
+    if (t.closest('[data-cst-parse]') || t.closest('[data-cst-import]')) {
+      const html = $('[data-cst-html]').value;
+      if (!html.trim()) return msg('Dán HTML trước', true);
+      const save = !!t.closest('[data-cst-import]');
+      const btn = t.closest('button'); btn.disabled = true;
+      msg(save ? 'Đang tải ảnh...' : 'Đang đọc...');
+      const j = await api(`/admin/images/const/${C.id}/${save ? 'import' : 'parse'}`, { html });
+      btn.disabled = false;
+      if (!j.ok) return msg(j.message || 'Có lỗi', true);
+      if (!save) {
+        $('[data-cst-list]').innerHTML = '<p class="a-small a-muted">Xem trước — bấm Lưu để áp dụng:</p>' + j.items.map((x) => row({ slot: x.slot, name: x.name, icon: x.src })).join('');
+        return msg(`Tìm thấy ${j.items.length} ô: ${j.items.map((x) => x.slot).join(', ')}`);
+      }
+      if (done(j, `Đã lưu ${j.saved} ô` + (j.failed.length ? ` · không tải được ảnh ô ${j.failed.join(', ')}` : ''))) $('[data-cst-html]').value = '';
+      return;
+    }
+    if (t.closest('[data-cst-slot-save]')) {
+      const fd = new FormData();
+      fd.append('name', $('[data-cst-name]').value);
+      fd.append('url', $('[data-cst-url]').value);
+      const f = $('[data-cst-file]').files[0]; if (f) fd.append('image', f);
+      done(await api(`/admin/images/const/${C.id}/slot/${sel}`, fd), `Đã lưu ${LABEL} ${sel}`);
+      return;
+    }
+    if (t.closest('[data-cst-slot-del]')) {
+      if (!confirm(`Xóa ${LABEL} ${sel}?`)) return;
+      const s = sel; sel = 0;
+      done(await api(`/admin/images/const/${C.id}/slot/${s}/delete`, {}), `Đã xóa ${LABEL} ${s}`);
+    }
+  });
+  $('[data-cst-color]').addEventListener('change', async (e) => done(await api(`/admin/images/const/${C.id}/ring`, { ring: e.target.value })));
+  $('[data-cst-color]').addEventListener('input', (e) => modal.style.setProperty('--rc', e.target.value));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) close(); });
+})();

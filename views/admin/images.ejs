@@ -1,6 +1,6 @@
 <%- include('_header') %>
 <% const kb = (n) => n ? (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB') : '—'; %>
-<% const TABN = [['games', 'Ảnh game'], ['cats', 'Danh mục lớn'], ['subcats', 'Danh mục nhỏ'], ['products', 'Ảnh sản phẩm'], ['hoyo', 'Nhân vật & vũ khí']]; %>
+<% const TABN = [['games', 'Ảnh game'], ['cats', 'Danh mục lớn'], ['subcats', 'Danh mục nhỏ'], ['products', 'Ảnh sản phẩm'], ['hoyo', 'Nhân vật & vũ khí'], ['const', 'Cung mệnh']]; %>
 <div class="a-ctv-tabs a-img-tabs">
   <% TABN.forEach(([k, l]) => { %><a href="/admin/images?tab=<%= k %>" class="<%= tab === k ? 'on' : '' %>"><%= l %></a><% }) %>
 </div>
@@ -96,6 +96,66 @@
     <%- include('partials/lib-items', { assets, libG: GAMES[game], libKind: kind }) %>
   </div>
   <% if (hasMore) { %><div class="a-lib-more"><button type="button" class="a-btn" data-lib-more data-next="<%= page + 1 %>">Tải thêm (<%= total - page * 120 %> mục)</button></div><% } %>
+<% } %>
+<% if (tab === 'const') { %>
+  <div class="a-img-pills">
+    <% Object.entries(GAMES).forEach(([k, g]) => { %><a href="/admin/images?tab=const&game=<%= k %>" class="<%= game === k ? 'on' : '' %>"><%= g.name %> <i><%= counts[k] || 0 %></i></a><% }) %>
+  </div>
+  <form method="get" class="a-img-search">
+    <input type="hidden" name="tab" value="const"><input type="hidden" name="game" value="<%= game %>">
+    <input name="q" value="<%= q %>" placeholder="Tìm nhân vật..."><button class="a-btn">Tìm</button>
+    <span class="a-muted a-small"><%= chars.length %> nhân vật · <%= chars.filter(c => c.n >= 6).length %> đủ 6 <%= LABEL[game].toLowerCase() %></span>
+  </form>
+  <% if (!chars.length) { %><div class="a-card a-empty">Chưa có nhân vật nào. Nạp nhân vật ở tab "Nhân vật &amp; vũ khí" trước.</div><% } %>
+  <div class="a-cst-grid" data-cst-app data-label="<%= LABEL[game] %>" data-palette="<%= JSON.stringify(PALETTES[game]) %>">
+    <% chars.forEach(c => { %>
+      <button type="button" class="a-cst-char r<%= c.rarity %>" data-cst-open="<%= c.id %>" style="--rc: <%= c.ring %>">
+        <img src="<%= c.icon %>" alt="" loading="lazy" width="72" height="72">
+        <b title="<%= c.name %>"><%= c.name %></b>
+        <small class="<%= c.n >= 6 ? 'full' : '' %>"><i></i><%= c.n %>/6</small>
+      </button>
+    <% }) %>
+  </div>
+  <div class="a-modal" data-cst-modal hidden>
+    <div class="a-modal-box a-cst-box" role="dialog" aria-modal="true">
+      <div class="a-modal-head"><h3 data-cst-title></h3><button type="button" class="a-icon-btn" data-cst-close title="Đóng"><%- I('x') %></button></div>
+      <div class="a-modal-body a-cst-body">
+        <div class="a-cst-stage" data-cst-stage>
+          <img class="a-cst-portrait" data-cst-portrait alt="">
+          <div class="a-cst-arc" data-cst-arc></div>
+        </div>
+        <div class="a-cst-side">
+          <div class="a-cst-sec">
+            <b>Màu vòng bo</b>
+            <div class="a-cst-pal" data-cst-pal></div>
+            <label class="a-cst-custom">Màu khác <input type="color" data-cst-color></label>
+          </div>
+          <div class="a-cst-sec" data-cst-edit hidden>
+            <b data-cst-edit-t></b>
+            <input name="name" maxlength="80" placeholder="Tên" data-cst-name>
+            <div class="a-row">
+              <div><input type="file" accept="image/*" data-cst-file></div>
+              <div><input maxlength="500" placeholder="hoặc link ảnh HoYoverse" data-cst-url></div>
+            </div>
+            <div class="a-btn-row">
+              <button type="button" class="a-btn a-primary a-btn-sm" data-cst-slot-save><%- I('save') %> Lưu ô</button>
+              <button type="button" class="a-btn a-btn-sm a-danger-soft" data-cst-slot-del><%- I('trash') %> Xóa ô</button>
+            </div>
+          </div>
+          <div class="a-cst-sec">
+            <b>Nạp từ HTML</b>
+            <textarea rows="4" data-cst-html placeholder="Dán HTML khối tên (ảnh + tên + số) từ HoYoLAB, có thể dán cả 6 khối một lần"></textarea>
+            <div class="a-btn-row">
+              <button type="button" class="a-btn a-btn-sm" data-cst-parse><%- I('search') %> Xem trước</button>
+              <button type="button" class="a-btn a-btn-sm a-primary" data-cst-import><%- I('download') %> Lưu</button>
+            </div>
+            <div class="a-small" data-cst-msg hidden></div>
+          </div>
+          <div class="a-cst-list" data-cst-list></div>
+        </div>
+      </div>
+    </div>
+  </div>
 <% } %>
 <script src="/js/admin-images.js?v=<%= locals.assetV || 1 %>" defer></script>
 <%- include('_footer') %>

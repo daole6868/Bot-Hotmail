@@ -12,6 +12,7 @@ const H = require('../utils/helpers');
 const { saveImage, removeImage } = require('../utils/upload');
 const hoyo = require('../services/hoyo');
 const lib = require('../services/img-lib');
+const cst = require('../services/hoyo-const');
 
 const router = express.Router();
 const { toInt, str, clientIp } = H;
@@ -35,7 +36,7 @@ function size(pub) {
   try { return fs.statSync(full).size; } catch { return 0; }
 }
 
-const TABS = ['games', 'cats', 'subcats', 'products', 'hoyo'];
+const TABS = ['games', 'cats', 'subcats', 'products', 'hoyo', 'const'];
 router.get('/', (req, res) => {
   const tab = TABS.includes(req.query.tab) ? req.query.tab : 'games';
   const q = str(req.query.q, 60).trim();
@@ -68,6 +69,12 @@ router.get('/', (req, res) => {
     data.hasMore = data.page * PER < data.total;
     if (req.query.frag) return res.render('admin/partials/lib-items', { assets: data.assets, libG: hoyo.GAMES[data.game], libKind: data.kind, csrfToken: res.locals.csrfToken }, (err, html) => res.json(err ? { ok: false } : { ok: true, html, more: data.hasMore }));
     data.counts = Object.fromEntries(db.prepare('SELECT game || kind AS k, COUNT(*) n FROM hoyo_assets GROUP BY game, kind').all().map((r) => [r.k, r.n]));
+  }
+  if (tab === 'const') {
+    data.game = hoyo.GAMES[req.query.game] ? req.query.game : 'genshin';
+    data.chars = cst.list(data.game, q);
+    data.LABEL = cst.LABEL; data.PALETTES = cst.PALETTES;
+    data.counts = Object.fromEntries(db.prepare("SELECT game, COUNT(*) n FROM hoyo_assets WHERE kind = 'char' GROUP BY game").all().map((r) => [r.game, r.n]));
   }
   res.render('admin/images', data);
 });
@@ -158,5 +165,32 @@ router.post('/hoyo/:id/delete', (req, res) => {
   if (ok) audit(req, 'image_lib_delete', '#' + req.params.id);
   back(req, res, ok ? 'success' : 'error', ok ? 'Đã xóa khỏi thư viện' : 'Không tìm thấy', libUrl(a.game, a.kind));
 });
+
+// ---------- Cung mệnh / Tinh Hồn / Ý Cảnh (6 ô mỗi nhân vật) ----------
+const cid = (req) => toInt(req.params.id);
+const cstOut = (res, id, extra) => { const c = cst.get(id); res.json(c ? { ok: true, c, ...extra } : { ok: false, message: 'Không tìm thấy nhân vật' }); };
+router.get('/const/:id', (req, res) => cstOut(res, cid(req)));
+// Dán HTML -> xem trước (chưa lưu)
+router.post('/const/:id/parse', (req, res) => {
+  const items = cst.parse(String((req.body && req.body.html) || ''));
+  if (!items.length) return res.json({ ok: false, message: 'Không tìm thấy ảnh nào trong HTML đã dán' });
+  res.json({ ok: true, items });
+});
+router.post('/const/:id/import', async (req, res) => {
+  const items = cst.parse(String((req.body && req.body.html) || ''));
+  if (!items.length) return res.json({ ok: false, message: 'Không tìm thấy ảnh nào trong HTML đã dán' });
+  const r = await cst.saveParsed(cid(req), items);
+  if (!r.ok) return res.json(r);
+  audit(req, 'const_import', `#${cid(req)}: ${r.saved} ô`);
+  cstOut(res, cid(req), { saved: r.saved, failed: r.failed });
+});
+router.post('/const/:id/slot/:slot', async (req, res) => {
+  const f = fileOf(req, 'image');
+  const r = await cst.setSlot(cid(req), toInt(req.params.slot), { name: str(req.body.name, 80), buffer: f && f.buffer, url: str(req.body.url, 500) });
+  if (!r.ok) return res.json(r);
+  cstOut(res, cid(req));
+});
+router.post('/const/:id/slot/:slot/delete', (req, res) => { cst.removeSlot(cid(req), toInt(req.params.slot)); cstOut(res, cid(req)); });
+router.post('/const/:id/ring', (req, res) => { if (!cst.setRing(cid(req), str(req.body.ring, 7))) return res.json({ ok: false, message: 'Không tìm thấy' }); cstOut(res, cid(req)); });
 
 module.exports = router;
