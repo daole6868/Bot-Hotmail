@@ -199,16 +199,17 @@
     const pad = s * 0.008; const gap = s * 0.006;
     const hasLv = g.lv && show.some((x) => x.lv);
     const asp = hasLv ? 1.2 : 1;
-    let cw = (R.w - 2 * pad - gap * (cols - 1)) / cols;
-    const needH = usedRows * cw * asp + gap * (usedRows - 1) + 2 * pad;
-    if (needH > R.h) cw = (R.h - 2 * pad - gap * (usedRows - 1)) / (usedRows * asp);
+    // Khung kéo dài ngang / dọc tự do: ô vuông lớn nhất vừa khung, phần dư chia đều vào khoảng giữa các ô -> ô ngoài cùng luôn cách mép đúng bằng pad
+    let cw = Math.min((R.w - 2 * pad - gap * (cols - 1)) / cols, (R.h - 2 * pad - gap * (usedRows - 1)) / (usedRows * asp));
     cw = Math.max(4, cw);
     const ch = cw * asp;
-    const gw = cols * cw + (cols - 1) * gap;
-    const x0 = R.x + (R.w - gw) / 2; const y0 = R.y + pad;
-    const cells = show.map((it, i) => ({ it, x: x0 + (i % cols) * (cw + gap), y: y0 + Math.floor(i / cols) * (ch + gap), w: cw, h: ch }));
-    const moreCell = more ? { x: x0 + (show.length % cols) * (cw + gap), y: y0 + Math.floor(show.length / cols) * (ch + gap), w: cw, h: ch, more } : null;
-    const box = { x: x0 - pad, y: R.y, w: gw + 2 * pad, h: usedRows * ch + (usedRows - 1) * gap + 2 * pad };
+    const gx = cols > 1 ? Math.max(gap, (R.w - 2 * pad - cols * cw) / (cols - 1)) : 0;
+    const gy = usedRows > 1 ? Math.max(gap, (R.h - 2 * pad - usedRows * ch) / (usedRows - 1)) : 0;
+    const x0 = cols > 1 ? R.x + pad : R.x + (R.w - cw) / 2;
+    const y0 = usedRows > 1 ? R.y + pad : R.y + (R.h - ch) / 2;
+    const cells = show.map((it, i) => ({ it, x: x0 + (i % cols) * (cw + gx), y: y0 + Math.floor(i / cols) * (ch + gy), w: cw, h: ch }));
+    const moreCell = more ? { x: x0 + (show.length % cols) * (cw + gx), y: y0 + Math.floor(show.length / cols) * (ch + gy), w: cw, h: ch, more } : null;
+    const box = { x: R.x, y: R.y, w: R.w, h: R.h };
     return { g, cells, moreCell, hasLv, box, kind: key === 'chars' ? 'c' : 'w', n };
   }
   function drawCell(ctx, st, c, L) {
@@ -264,7 +265,8 @@
     const b = st.blocks[c.key]; if (!b || !c.slots.length) return;
     const R = rect(st, c.key); const [r, g, bl] = rgbOf(c.ring); const rgba = (a) => `rgba(${r},${g},${bl},${a})`;
     const n = c.slots.length; const pad = Math.min(R.w, R.h) * 0.06;
-    const rowH = (R.h - 2 * pad) / n; const d = Math.max(4, Math.min(rowH * 0.8, R.w * 0.36));
+    const rowH = (R.h - 2 * pad) / n; const d = Math.max(4, Math.min(rowH * 0.8, R.w * 0.3));
+    const amp = n > 1 ? Math.min(d * 0.95, R.w * 0.15) : 0; // xếp cong ")": dòng giữa lệch sang phải nhiều nhất
     ctx.save();
     rr(ctx, R.x, R.y, R.w, R.h, Math.min(R.w, R.h) * 0.08);
     const bgG = ctx.createLinearGradient(R.x, R.y, R.x + R.w, R.y + R.h);
@@ -272,7 +274,7 @@
     ctx.fillStyle = bgG; ctx.fill();
     ctx.lineWidth = Math.max(1, d * 0.03); ctx.strokeStyle = rgba(0.45); ctx.stroke();
     c.slots.forEach((x, i) => {
-      const cx = R.x + pad + d / 2; const cy = R.y + pad + rowH * i + rowH / 2;
+      const cx = R.x + pad + d / 2 + amp * Math.sin(Math.PI * (i + 0.5) / n); const cy = R.y + pad + rowH * i + rowH / 2;
       ctx.save();
       ctx.beginPath(); ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
       const cg = ctx.createRadialGradient(cx, cy - d * 0.1, d * 0.05, cx, cy, d / 2); cg.addColorStop(0, '#2c2236'); cg.addColorStop(1, '#0c0912');

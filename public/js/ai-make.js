@@ -58,11 +58,11 @@
   const redo = () => { if (hi < hist.length - 1) restore(hist[++hi]); };
 
   let raf = 0;
-  // Khung của khối: lưới nhân vật / vũ khí dùng đúng vùng lưới đang vẽ (ôm sát các ô), khối khác dùng khung đã đặt
+  // Khung của khối = vùng đã đặt (lưới chia đều ô bên trong vùng này)
   // Khung cung mệnh: mỗi nhân vật 1 khối riêng 'k:<tên>'
   const cstKeys = () => (st.cstOn !== false ? (st.cst || []).map((c) => c.key) : []);
   const allKeys = () => [...A.BLOCKS.map(([k]) => k), ...cstKeys()];
-  function boxOf(key) { const L = last[key]; return (key === 'chars' || key === 'weapons') && L && L.cells.length ? L.box : A.rect(st, key); }
+  const boxOf = (key) => A.rect(st, key);
   const uiK = () => st.W / Math.max(1, canvas.clientWidth || st.W); // 1 px màn hình = bao nhiêu px ảnh
   const handleSize = () => Math.max(Math.min(st.W, st.H * 1.87) * 0.02, 26 * uiK());
   let fastUntil = 0; let fastT = 0;
@@ -97,7 +97,7 @@
     ctx.restore();
   }
   /** Bắt đầu kéo lưới: khớp khối theo đúng vùng lưới để kéo to / nhỏ theo góc lưới */
-  function snapBlock(key) { if (key !== 'chars' && key !== 'weapons') return; const L = last[key]; if (!L || !L.cells.length) return; const b = L.box; st.blocks[key] = [b.x / st.W, b.y / st.H, b.w / st.W, b.h / st.H]; }
+  function snapBlock() { /* khung lưới = đúng khối đã đặt, không cần khớp lại */ }
   const draw = () => { if (!raf) raf = requestAnimationFrame(drawNow); };
   const changed = () => { draw(); commit(); };
 
@@ -472,23 +472,13 @@
     }
     if (drag.type === 'size') {
       const b = st.blocks[drag.key];
-      if (drag.key === 'chars' || drag.key === 'weapons') { // lưới: giữ tỉ lệ (theo số cột × hàng), kéo hướng nào cũng phóng to / thu nhỏ
-        const f = Math.max((drag.b0[2] + (p.x - drag.p0.x) / st.W) / drag.b0[2], (drag.b0[3] + (p.y - drag.p0.y) / st.H) / drag.b0[3]);
-        let ff = clamp(f, 0.1, Math.min(1.5 / drag.b0[2], 1.5 / drag.b0[3]));
-        // hút mép phải / dưới của lưới vào đường thẳng của khối khác
-        const T = snapTargets(drag.key); const th = 8 * uiK(); const x = b[0] * st.W; const y = b[1] * st.H;
-        const sx = nearest([x + drag.b0[2] * ff * st.W], T.xs, th); const sy = !sx && nearest([y + drag.b0[3] * ff * st.H], T.ys, th);
-        if (sx) ff = (sx.t - x) / (drag.b0[2] * st.W); else if (sy) ff = (sy.t - y) / (drag.b0[3] * st.H);
-        guides = { x: sx ? [sx.t] : [], y: sy ? [sy.t] : [] };
-        b[2] = drag.b0[2] * ff; b[3] = drag.b0[3] * ff;
-      } else {
-        b[2] = clamp(drag.b0[2] + (p.x - drag.p0.x) / st.W, 0.03, 1.2); b[3] = clamp(drag.b0[3] + (p.y - drag.p0.y) / st.H, 0.03, 1.2);
-        const T = snapTargets(drag.key); const th = 8 * uiK();
-        const sx = nearest([(b[0] + b[2]) * st.W], T.xs, th); const sy = nearest([(b[1] + b[3]) * st.H], T.ys, th);
-        if (sx) b[2] += sx.d / st.W;
-        if (sy) b[3] += sy.d / st.H;
-        guides = { x: sx ? [sx.t] : [], y: sy ? [sy.t] : [] };
-      }
+      // mọi khối (cả lưới): kéo ngang dài ngang, kéo dọc dài dọc; lưới tự chia đều ô bên trong
+      b[2] = clamp(drag.b0[2] + (p.x - drag.p0.x) / st.W, 0.03, 1.2); b[3] = clamp(drag.b0[3] + (p.y - drag.p0.y) / st.H, 0.03, 1.2);
+      const T = snapTargets(drag.key); const th = 8 * uiK();
+      const sx = nearest([(b[0] + b[2]) * st.W], T.xs, th); const sy = nearest([(b[1] + b[3]) * st.H], T.ys, th);
+      if (sx) b[2] += sx.d / st.W;
+      if (sy) b[3] += sy.d / st.H;
+      guides = { x: sx ? [sx.t] : [], y: sy ? [sy.t] : [] };
       draw();
     }
   });
