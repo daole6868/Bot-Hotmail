@@ -1,0 +1,14 @@
+<% const st = block.settings || {}, banners = block.items, sw = +st.w || 1200, sh = +st.h || 450; %>
+<% if (block.title && st.show_title) { %><div class="section-head"><h2><%- I('image') %> <%= block.title %></h2></div><% } %>
+<section class="slider" data-slider style="--ar: <%= sw %> / <%= sh %>">
+  <div class="slides">
+    <% banners.forEach((b, i) => { %>
+      <a class="slide <%= i === 0 ? 'active' : '' %>" href="<%= b.link || '#' %>"><img src="<%= sz(b.image, 'wide') %>" alt="<%= b.title || block.title || 'Banner' %>" <%= i ? 'loading=lazy' : '' %>></a>
+    <% }) %>
+  </div>
+  <% if (banners.length > 1) { %>
+    <button class="slider-nav prev" data-prev aria-label="Trước"><%- I('chevron-left') %></button>
+    <button class="slider-nav next" data-next aria-label="Sau"><%- I('chevron-right') %></button>
+    <div class="dots"><% banners.forEach((b, i) => { %><button data-dot="<%= i %>" class="<%= i === 0 ? 'active' : '' %>" aria-label="Banner <%= i + 1 %>"></button><% }) %></div>
+  <% } %>
+</section>

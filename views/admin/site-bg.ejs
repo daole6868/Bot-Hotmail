@@ -1,0 +1,48 @@
+<%- include('_header') %>
+<form method="post" action="/admin/site-bg" enctype="multipart/form-data" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('image') %> Kiểu nền</h3>
+      <div class="a-sbg-types">
+        <% [['none', 'Không dùng'], ['image', 'Ảnh'], ['video', 'Video']].forEach(([k, l]) => { %>
+          <label class="a-sbg-type"><input type="radio" name="type" value="<%= k %>" <%= c.type === k ? 'checked' : '' %>><span><%= l %></span></label>
+        <% }) %>
+      </div>
+      <label>Hiện ở</label>
+      <select name="scope"><option value="all" <%= c.scope === 'all' ? 'selected' : '' %>>Toàn bộ trang</option><option value="home" <%= c.scope === 'home' ? 'selected' : '' %>>Chỉ trang chủ</option></select>
+      <div class="a-row">
+        <div><label>Làm tối (%) <b data-sbg-v="dark"><%= c.dark %></b></label><input type="range" name="dark" min="0" max="90" value="<%= c.dark %>" data-sbg-r="dark"></div>
+        <div><label>Làm mờ (px) <b data-sbg-v="blur"><%= c.blur %></b></label><input type="range" name="blur" min="0" max="20" value="<%= c.blur %>" data-sbg-r="blur"></div>
+      </div>
+      <label class="a-check"><input type="checkbox" name="mobileImg" value="1" <%= c.mobileImg ? 'checked' : '' %>> <span>Điện thoại dùng ảnh nền thay video <small class="a-muted">(cần có ảnh nền)</small></span></label>
+    </div>
+    <div class="a-card">
+      <h3><%- I('eye') %> Xem trước</h3>
+      <div class="a-sbg-pv" data-sbg-pv style="--o: <%= c.dark / 100 %>; --b: <%= c.blur %>px">
+        <% if (c.img) { %><div class="a-sbg-pv-img" style="background-image:url('<%= c.img %>')"></div><% } %>
+        <% if (c.video) { %><video src="<%= c.video %>" muted loop autoplay playsinline <%- c.img ? `poster="${c.img}"` : '' %> data-sbg-video <%= c.type === 'video' ? '' : 'hidden' %>></video><% } %>
+        <span class="a-sbg-pv-o"></span>
+        <div class="a-sbg-pv-card">Nội dung trang</div>
+      </div>
+    </div>
+  </div>
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('image') %> Ảnh nền</h3>
+      <% if (c.img) { %><div class="a-sbg-cur"><img src="<%= c.img %>" alt=""><label class="a-check"><input type="checkbox" name="remove_img" value="1"> <span>Gỡ ảnh này</span></label></div><% } %>
+      <input type="file" name="sitebg" accept="image/jpeg,image/png,image/webp" data-sbg-file="img">
+      <div class="a-sbg-pick" data-sbg-pick="img" hidden></div>
+      <p class="a-muted">Gợi ý 1920 × 1080 trở lên. Khi dùng video, ảnh này hiện trong lúc video đang tải và trên điện thoại.</p>
+    </div>
+    <div class="a-card">
+      <h3><%- I('monitor') %> Video nền</h3>
+      <% if (c.video) { %><div class="a-sbg-cur"><video src="<%= c.video %>" muted playsinline preload="metadata"></video><label class="a-check"><input type="checkbox" name="remove_video" value="1"> <span>Gỡ video này</span></label></div><% } %>
+      <input type="file" name="bg_video" accept="video/mp4,video/webm" data-sbg-file="video">
+      <div class="a-sbg-pick" data-sbg-pick="video" hidden></div>
+      <p class="a-muted">MP4 / WebM, tối đa 40MB. Nên dùng video ngắn 5–15 giây, không tiếng, khoảng 3–8MB cho trang tải nhanh.</p>
+    </div>
+  </div>
+  <button class="a-btn a-primary" data-sbg-save><%- I('save') %> Lưu nền trang</button>
+</form>
+<%- include('_footer') %>

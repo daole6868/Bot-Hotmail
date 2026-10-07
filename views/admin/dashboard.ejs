@@ -1,0 +1,88 @@
+<%- include('_header') %>
+<% if (!s.bank_account) { %><div class="a-alert a-alert-error"><%- I('alert') %> Chưa cấu hình tài khoản ngân hàng — khách chưa nạp tiền được. <a href="/admin/settings/bank">Cài đặt bank ngay</a></div><% } %>
+<div class="a-card a-card-flush">
+  <div class="a-card-head a-pad"><h3><%- I('chart') %> Doanh thu</h3></div>
+  <div class="a-table-wrap"><table class="a-table a-rev a-nocards">
+    <thead><tr><th></th><th>Hôm nay</th><th>7 ngày</th><th>30 ngày</th><th>Tất cả</th></tr></thead>
+    <% const R = ['today', 'd7', 'd30', 'all']; %>
+    <% KINDS.forEach(([k, label]) => { %>
+      <tr><th><%= label %></th><% R.forEach(r => { const x = rev[r][k]; %><td><b><%= H.money(x.amount) %></b><small><%= x.n %> đơn</small></td><% }) %></tr>
+    <% }) %>
+    <tr class="a-rev-total"><th>Tổng doanh thu</th><% R.forEach(r => { const x = rev[r].total; %><td><b><%= H.money(x.amount) %></b><small><%= x.n %> đơn</small></td><% }) %></tr>
+    <tr><th>Trả CTV</th><% R.forEach(r => { %><td><b><%= H.money(rev[r].total.ctv) %></b></td><% }) %></tr>
+    <tr class="a-rev-profit"><th>Lãi shop</th><% R.forEach(r => { %><td><b><%= H.money(rev[r].total.amount - rev[r].total.ctv) %></b></td><% }) %></tr>
+  </table></div>
+</div>
+
+<div class="a-dash-2">
+  <div class="a-card">
+    <h3><%- I('card') %> Tiền khách nạp</h3>
+    <div class="a-dash-kv">
+      <div><span>Hôm nay</span><b><%= H.money(money.depToday) %></b><small><%= money.depTodayN %> giao dịch</small></div>
+      <div><span>30 ngày</span><b><%= H.money(money.dep30) %></b></div>
+      <div><span>Tất cả</span><b><%= H.money(money.depAll) %></b></div>
+      <div><span>Số dư khách đang giữ</span><b><%= H.money(money.balance) %></b><small><%= money.users.toLocaleString('vi-VN') %> khách · <%= money.newUsers %> mới 30 ngày</small></div>
+      <div><span>Số dư CTV chưa rút</span><b><%= H.money(money.ctvBalance) %></b></div>
+    </div>
+  </div>
+  <div class="a-card">
+    <h3><%- I('bell') %> Việc cần làm</h3>
+    <div class="a-todo">
+      <a href="/admin/boost/orders?status=open" class="<%= todo.boost ? 'on' : '' %>"><b><%= todo.boost %></b><span>Đơn cày thuê chưa xong</span></a>
+      <a href="/admin/boost/topup-orders?status=open" class="<%= todo.topup ? 'on' : '' %>"><b><%= todo.topup %></b><span>Đơn nạp game chưa xong</span></a>
+      <a href="/admin/deposits?status=pending" class="<%= adminBadges.deposits ? 'on' : '' %>"><b><%= adminBadges.deposits %></b><span>Nạp tiền đang chờ</span></a>
+      <a href="/admin/bank" class="<%= adminBadges.bank ? 'on' : '' %>"><b><%= adminBadges.bank %></b><span>GD ngân hàng chưa khớp</span></a>
+      <a href="/admin/chat" class="<%= adminBadges.chat ? 'on' : '' %>"><b><%= adminBadges.chat %></b><span>Chat chưa đọc</span></a>
+      <a href="/admin/ctv/withdrawals" class="<%= adminBadges.ctv ? 'on' : '' %>"><b><%= adminBadges.ctv %></b><span>Lệnh rút CTV chờ</span></a>
+      <a href="/admin/vip" class="<%= todo.lowStock ? 'on' : '' %>"><b><%= todo.lowStock %></b><span>Sản phẩm kho sắp hết</span></a>
+      <a href="/admin/vip"><b><%= todo.products %></b><span>Sản phẩm đang bán</span></a>
+    </div>
+  </div>
+</div>
+
+<div class="a-card">
+  <div class="a-card-head"><h3>Tổng doanh thu & Nạp tiền 30 ngày</h3><div class="a-legend"><span class="l1"></span>Doanh thu <span class="l2"></span>Nạp</div></div>
+  <%
+    // Trục tiền: lấy đỉnh 30 ngày, làm tròn lên số "đẹp" rồi chia đều khoảng 5 mốc
+    const peak = Math.max(0, ...series.map(d => Math.max(d.revenue, d.deposits)));
+    const rough = (peak || 100000) / 5;
+    const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(v => v >= rough);
+    const maxV = step * Math.ceil((peak || 100000) / step);
+    const ticks = []; for (let v = 0; v <= maxV + step / 2; v += step) ticks.push(v);
+    const short = (v) => v >= 1e9 ? (v / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tỷ' : v >= 1e6 ? (v / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + 'tr' : v >= 1e3 ? (v / 1e3).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + 'k' : String(v);
+  %>
+  <div class="a-chart-wrap">
+  <div class="a-chart-y"><% ticks.forEach(v => { %><span style="bottom:<%= (v / maxV * 100).toFixed(2) %>%"><%= short(v) %></span><% }) %></div>
+  <div class="a-chart">
+    <div class="a-chart-grid"><% ticks.forEach(v => { %><i style="bottom:<%= (v / maxV * 100).toFixed(2) %>%"></i><% }) %></div>
+    <% series.forEach(d => { %>
+      <div class="a-bar-col" title="<%= d.day %>&#10;Doanh thu: <%= H.money(d.revenue) %>&#10;Nạp: <%= H.money(d.deposits) %>">
+        <div class="a-bars"><i class="b1" style="height:<%= (d.revenue / maxV * 100).toFixed(1) %>%"></i><i class="b2" style="height:<%= (d.deposits / maxV * 100).toFixed(1) %>%"></i></div>
+        <small><%= d.day.slice(8) %></small>
+      </div>
+    <% }) %>
+  </div>
+  </div>
+</div>
+
+<div class="a-grid-2">
+  <div class="a-card">
+    <div class="a-card-head"><h3>Đơn hàng mới</h3><a href="/admin/orders">Tất cả <%- I('chevron-right') %></a></div>
+    <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Mã</th><th>Khách</th><th>SP</th><th>Tổng</th><th>Lúc</th></tr></thead>
+    <% recentOrders.forEach(o => { %><tr><td><a href="/admin/orders/<%= o.id %>"><%= o.order_code %></a></td><td><%= o.username %></td><td class="a-trunc"><%= o.product_title %></td><td><%= H.money(o.total) %></td><td class="a-muted a-small"><%= H.fmtDate(o.created_at) %></td></tr><% }) %>
+    </table></div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-head"><h3>Nạp tiền đang chờ</h3><a href="/admin/deposits?status=pending">Tất cả <%- I('chevron-right') %></a></div>
+    <table class="a-table"><thead><tr><th>Mã</th><th>Khách</th><th>Số tiền</th><th>Lúc</th></tr></thead>
+    <% if (!pendingDeposits.length) { %><tr><td colspan="4" class="a-muted">Không có</td></tr><% } %>
+    <% pendingDeposits.forEach(d => { %><tr><td><%= d.code %></td><td><%= d.username %></td><td><%= H.money(d.amount) %></td><td class="a-muted a-small"><%= H.fmtDate(d.created_at) %></td></tr><% }) %>
+    </table>
+    <% if (lowStock.length) { %>
+      <h3 class="a-mt"><%- I('alert') %> Sản phẩm kho sắp hết</h3>
+      <table class="a-table"><thead><tr><th>Sản phẩm</th><th>Còn</th></tr></thead><% lowStock.forEach(p => { %><tr><td><a href="/admin/products/<%= p.id %>/edit"><%= p.title %></a></td><td><b class="a-red">Còn <%= p.left_count %></b></td></tr><% }) %></table>
+    <% } %>
+  </div>
+</div>
+<%- include('_footer') %>

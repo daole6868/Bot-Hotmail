@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+
+<div class="tabs-scroll">
+  <% siblings.forEach(c => { %>
+    <a href="/game/<%= game.slug %>/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><%= c.name %></a>
+  <% }) %>
+</div>
+
+<div class="section-head"><h1><%= category.name %> <span class="muted small">(<%= result.total %> sản phẩm)</span></h1></div>
+
+<%- include('../partials/search-filter', { filter, query }) %>
+
+<% if (!result.rows.length) { %>
+  <div class="empty">Không có sản phẩm phù hợp.</div>
+<% } %>
+<div class="product-grid" data-sf-grid data-page="<%= result.page %>" data-more="<%= result.page < result.pages ? 1 : 0 %>">
+  <% result.rows.forEach(p => { %><%- include('../partials/product-card', { p }) %><% }) %>
+</div>
+<div class="sf-more" data-sf-more hidden><span class="sf-spin"></span> Đang tải thêm...</div>
+<div data-sf-pager><%- include('../partials/pagination', { result, query: pageQuery }) %></div>
+
+<script src="/js/filter.js?v=<%= locals.assetV || 1 %>" defer></script>
+<%- include('../partials/footer') %>

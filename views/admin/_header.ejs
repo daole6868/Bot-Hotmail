@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= title %> | Admin <%= s.site_name || 'ShopAcc' %></title>
+  <% const FAV = (locals.s && locals.s.favicon) || ''; %><% if (FAV) { %><link rel="icon" href="<%= FAV %>" type="image/png"><link rel="apple-touch-icon" href="<%= FAV %>"><% } else { %><link rel="icon" href="/img/favicon.svg" type="image/svg+xml"><% } %>
+  <link rel="stylesheet" href="/css/fonts.css?v=<%= locals.assetV || 1 %>">
+  <link rel="stylesheet" href="/css/admin.css?v=<%= locals.assetV || 1 %>">
+</head>
+<body class="admin">
+<% const B = locals.adminBadges || {}; const P = locals.path || ''; const act = (p) => (p === '/' ? P === '/' : P.startsWith(p)) ? 'active' : ''; %>
+<div class="a-side-mask" data-side-mask></div>
+<aside class="a-side" id="aSide">
+  <% const PM = locals.perm || (locals.agentRole === 'staff' ? 'support' : 'admin'); const CT = locals.ctvTypes || []; const isCtv = PM === 'seller' || PM === 'support'; %>
+  <a href="<%= PM === 'seller' ? '/admin/me' : PM === 'support' ? '/admin/chat' : '/admin' %>" class="a-logo <%= s.logo ? 'has-img' : '' %>">
+    <% if (s.logo) { %><img src="<%= s.logo %>" alt="<%= s.site_name || 'Logo' %>"><small>Quản trị</small>
+    <% } else { %><span class="a-logo-mark"><%- I('gamepad') %></span><span><%= s.site_name || 'ShopAcc' %><small>Quản trị</small></span><% } %>
+  </a>
+  <nav>
+    <% const chatLink = `<a href="/admin/chat" class="${act('/chat') && !P.startsWith('/chat/settings') ? 'active' : ''}" data-chat-nav>${I('chat')} Chat trực tiếp <span class="a-badge" data-chat-nav-badge${B.chat ? '' : ' hidden'}>${B.chat || 0}</span></a>`; %>
+    <% if (isCtv) { %>
+    <% if (PM === 'seller') { %>
+      <div class="a-group">Cộng tác viên</div>
+      <a href="/admin/me" class="<%= P === '/me' ? 'active' : '' %>"><%- I('chart') %> Tổng quan CTV</a>
+      <a href="/admin/me/wallet" class="<%= P === '/me/wallet' ? 'active' : '' %>"><%- I('money') %> Ví & rút tiền</a>
+      <div class="a-group">Bán hàng</div>
+      <% if (CT.includes('vip')) { %><a href="/admin/vip" class="<%= act('/vip') || (P.startsWith('/products') ? 'active' : '') %>"><%- I('star') %> Acc VIP</a>
+        <a href="/admin/acc-image" class="<%= act('/acc-image') %>"><%- I('image') %> Tạo ảnh acc</a><% } %>
+      <% if (CT.includes('reroll')) { %><a href="/admin/reroll" class="<%= act('/reroll') %>"><%- I('refresh') %> Reroll</a><% } %>
+      <% if (CT.includes('boost')) { %><a href="/admin/boost" class="<%= P === '/boost' || P.startsWith('/boost/c') || P.startsWith('/boost/categories') ? 'active' : '' %>"><%- I('g-swords') %> Cày thuê</a>
+        <a href="/admin/boost/orders" class="<%= act('/boost/orders') %>"><%- I('g-swords') %> Đơn cày thuê</a><% } %>
+      <% if (CT.includes('topup')) { %><a href="/admin/boost/topup" class="<%= P === '/boost/topup' || P.startsWith('/boost/topup/') ? 'active' : '' %>"><%- I('g-gem') %> Nạp game</a>
+        <a href="/admin/boost/topup-orders" class="<%= act('/boost/topup-orders') %>"><%- I('g-gem') %> Đơn nạp game</a><% } %>
+    <% } %>
+    <% if (user.staff) { %><div class="a-group">CSKH</div><%- chatLink %><% } %>
+    <% } else { %>
+    <div class="a-group">Tổng quan</div>
+    <a href="/admin" class="<%= act('/') %>"><%- I('chart') %> Dashboard</a>
+    <%- chatLink %>
+    <% if (P.startsWith('/chat')) { %><a href="/admin/chat/settings" class="a-sub <%= P.startsWith('/chat/settings') ? 'active' : '' %>"><%- I('gear') %> Cài đặt chat</a><% } %>
+    <a href="/admin/acc-image" class="<%= act('/acc-image') %>"><%- I('image') %> Tạo ảnh acc</a>
+    <a href="/admin/ctv" class="<%= act('/ctv') %>"><%- I('users') %> Quản lý CTV <span class="a-badge"<%= B.ctv ? '' : ' hidden' %>><%= B.ctv || 0 %></span></a>
+    <div class="a-group">Sản phẩm</div>
+    <a href="/admin/games" class="<%= act('/games') %>"><%- I('gamepad') %> Game</a>
+    <a href="/admin/categories" class="<%= act('/categories') %>"><%- I('folder') %> Danh mục</a>
+    <a href="/admin/vip" class="<%= act('/vip') || (P.startsWith('/products') ? 'active' : '') %>"><%- I('star') %> Acc VIP</a>
+    <a href="/admin/reroll" class="<%= act('/reroll') %>"><%- I('refresh') %> Reroll</a>
+    <a href="/admin/boost" class="<%= P === '/boost' || P.startsWith('/boost/c') || P.startsWith('/boost/categories') ? 'active' : '' %>"><%- I('g-swords') %> Cày thuê</a>
+    <a href="/admin/boost/topup" class="<%= P === '/boost/topup' || P.startsWith('/boost/topup/') ? 'active' : '' %>"><%- I('g-gem') %> Nạp game</a>
+    <div class="a-group">Kinh doanh</div>
+    <a href="/admin/orders" class="<%= act('/orders') %>"><%- I('bag') %> Đơn hàng</a>
+    <a href="/admin/boost/orders" class="<%= act('/boost/orders') %>"><%- I('g-swords') %> Đơn cày thuê <% if (B.boost) { %><span class="a-badge"><%= B.boost %></span><% } %></a>
+    <a href="/admin/boost/topup-orders" class="<%= act('/boost/topup-orders') %>"><%- I('g-gem') %> Đơn nạp game <% if (B.topup) { %><span class="a-badge"><%= B.topup %></span><% } %></a>
+    <a href="/admin/deposits" class="<%= act('/deposits') %>"><%- I('card') %> Nạp tiền <% if (B.deposits) { %><span class="a-badge"><%= B.deposits %></span><% } %></a>
+    <a href="/admin/bank" class="<%= act('/bank') %>"><%- I('bank') %> GD ngân hàng <% if (B.bank) { %><span class="a-badge warn"><%= B.bank %></span><% } %></a>
+    <div class="a-group">Khuyến mãi & khách</div>
+    <a href="/admin/coupons" class="<%= act('/coupons') %>"><%- I('ticket') %> Mã giảm giá</a>
+    <a href="/admin/users" class="<%= act('/users') %>"><%- I('users') %> Người dùng</a>
+    <div class="a-group">SEO & Bài viết</div>
+    <a href="/admin/posts" class="<%= act('/posts') %>"><%- I('g-book') %> Bài viết</a>
+    <a href="/admin/post-categories" class="<%= act('/post-categories') %>"><%- I('folder') %> Chuyên mục bài viết</a>
+    <a href="/admin/ai" class="<%= act('/ai') %>"><%- I('g-sparkles') %> AI viết bài</a>
+    <a href="/admin/seo" class="<%= act('/seo') %>"><%- I('globe') %> SEO & Google</a>
+    <% if (PM === 'admin') { %>
+    <div class="a-group">Giao diện</div>
+    <a href="/admin/home-layout" class="<%= act('/home-layout') %>"><%- I('list') %> Bố cục trang chủ</a>
+    <a href="/admin/site-bg" class="<%= act('/site-bg') %>"><%- I('image') %> Nền trang</a>
+    <a href="/admin/banners" class="<%= act('/banners') %>"><%- I('image') %> Sidebar</a>
+    <a href="/admin/popup" class="<%= act('/popup') %>"><%- I('square') %> Popup</a>
+    <a href="/admin/footer" class="<%= act('/footer') %>"><%- I('layers') %> Footer</a>
+    <a href="/admin/images" class="<%= act('/images') %>"><%- I('image') %> Quản lý ảnh</a>
+    <a href="/admin/search-filter" class="<%= act('/search-filter') %>"><%- I('search') %> Bộ lọc tìm kiếm</a>
+    <a href="/admin/card-ui" class="<%= act('/card-ui') %>"><%- I('square') %> Thẻ sản phẩm</a>
+    <a href="/admin/support" class="<%= act('/support') %>"><%- I('headset') %> Hỗ trợ</a>
+    <a href="/admin/settings" class="<%= P === '/settings' ? 'active' : '' %>"><%- I('tools') %> Cài đặt thông tin</a>
+    <a href="/admin/settings/bank" class="<%= act('/settings/bank') %>"><%- I('bank') %> Cài đặt bank</a>
+    <a href="/admin/boost/settings" class="<%= act('/boost/settings') %>"><%- I('g-swords') %> Cài đặt cày thuê & nạp</a>
+    <a href="/admin/settings/email" class="<%= act('/settings/email') %>"><%- I('mail') %> Email & Bảo mật</a>
+    <div class="a-group">Hệ thống</div>
+    <a href="/admin/api" class="<%= act('/api') %>"><%- I('key') %> Kết nối API</a>
+    <a href="/admin/security" class="<%= act('/security') %>"><%- I('shield') %> Bảo mật</a>
+    <a href="/admin/antispam" class="<%= act('/antispam') %>"><%- I('bolt') %> Chống spam & DDoS</a>
+    <a href="/admin/logs" class="<%= act('/logs') %>"><%- I('list') %> Nhật ký</a>
+    <a href="/admin/maintenance" class="<%= act('/maintenance') %>"><%- I('broom') %> Bảo trì dữ liệu</a>
+    <% } %>
+    <% } %>
+  </nav>
+</aside>
+<div class="a-main">
+  <header class="a-top">
+    <button class="a-icon-btn a-menu" data-toggle-side aria-label="Menu"><%- I('menu') %></button>
+    <div class="a-title"><small>Quản trị</small><h1><%= title %></h1></div>
+    <div class="a-top-right">
+      <a href="/" target="_blank" class="a-btn a-ghost"><%- I('globe') %> <span class="a-hide-sm">Xem web</span></a>
+      <a href="<%= PM === 'admin' ? '/admin/profile' : '/user' %>" class="a-btn a-ghost"><%- I('user') %> <span class="a-hide-sm"><%= user.username %></span></a>
+      <form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-danger-soft" title="Đăng xuất"><%- I('logout') %> <span class="a-hide-sm">Đăng xuất</span></button></form>
+    </div>
+  </header>
+  <div class="a-content">
+  <% (locals.flashes || []).forEach(f => { %><div class="a-alert a-alert-<%= f.type %>"><%- I(f.type === 'success' ? 'check' : 'alert') %> <span><%= f.msg %></span></div><% }) %>

@@ -1,0 +1,36 @@
+<%- include('_header') %>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3><%- I('money') %> Rút tiền</h3>
+    <div class="a-wallet-bal"><span>Số dư có thể rút</span><b><%= H.money(u.ctv_balance) %></b></div>
+    <form method="post" action="/admin/me/withdraw" class="a-form" data-confirm="Gửi lệnh rút tiền?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Số tiền rút <small class="a-muted">(tối thiểu <%= H.money(MIN) %>, không mất phí)</small></label>
+      <input type="number" name="amount" min="<%= MIN %>" max="<%= Math.max(MIN, u.ctv_balance) %>" step="1000" required value="<%= u.ctv_balance >= MIN ? u.ctv_balance : '' %>">
+      <label>Ngân hàng</label>
+      <select name="bank_code" required><option value="">-- Chọn ngân hàng --</option><% BANKS.forEach(([c, n]) => { %><option value="<%= c %>" <%= bank.code === c ? 'selected' : '' %>><%= n %></option><% }) %></select>
+      <div class="a-row">
+        <div><label>Số tài khoản</label><input name="bank_acc" required inputmode="numeric" maxlength="20" value="<%= bank.acc || '' %>"></div>
+        <div><label>Tên chủ tài khoản</label><input name="bank_owner" required maxlength="60" value="<%= bank.owner || '' %>" placeholder="VD: NGUYEN VAN A"></div>
+      </div>
+      <button class="a-btn a-primary" <%= u.ctv_balance >= MIN ? '' : 'disabled' %>><%- I('send') %> Gửi lệnh rút</button>
+    </form>
+  </div>
+  <div class="a-card a-card-flush">
+    <h3 class="a-pad"><%- I('send') %> Lệnh rút của bạn</h3>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Mã</th><th>Số tiền</th><th>Về tài khoản</th><th>Trạng thái</th></tr></thead>
+      <% if (!withdrawals.length) { %><tr><td colspan="4" class="a-empty">Chưa có lệnh rút</td></tr><% } %>
+      <% withdrawals.forEach(w => { %><tr><td><%= w.code %><div class="a-small a-muted"><%= H.fmtDate(w.created_at) %></div></td><td><b><%= H.money(w.amount) %></b></td><td class="a-small"><%= bankName(w.bank_code) %> · <%= w.bank_acc %></td><td><span class="a-tag <%= w.status === 'paid' ? 'green' : w.status === 'rejected' ? 'red' : 'yellow' %>"><%= w.status === 'paid' ? 'Đã chuyển' : w.status === 'rejected' ? 'Từ chối' : 'Chờ chuyển' %></span><% if (w.note) { %><div class="a-small a-muted"><%= w.note %></div><% } %></td></tr><% }) %>
+    </table></div>
+  </div>
+</div>
+<div class="a-card a-card-flush">
+  <h3 class="a-pad"><%- I('list') %> Biến động số dư</h3>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th><th>Số dư</th></tr></thead>
+    <% if (!ledger.length) { %><tr><td colspan="4" class="a-empty">Chưa có</td></tr><% } %>
+    <% ledger.forEach(l => { %><tr><td class="a-small a-muted"><%= H.fmtDate(l.created_at) %></td><td><%= LEDGER_NAME[l.type] || l.type %><div class="a-small a-muted"><%= l.ref || '' %> <%= l.note || '' %></div></td><td class="<%= l.amount > 0 ? 'a-text-ok' : 'a-text-err' %>"><b><%= l.amount > 0 ? '+' : '' %><%= H.money(l.amount) %></b></td><td><%= H.money(l.balance_after) %></td></tr><% }) %>
+  </table></div>
+</div>
+<%- include('_footer') %>

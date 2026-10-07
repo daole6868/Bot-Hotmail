@@ -1,0 +1,101 @@
+<% const S2 = locals.s || {}; const NAV2 = locals.nav || { sideRight: [] }; %>
+  </main>
+  <% const bzR = H.bannerSize(S2, 'sidebar_right'); %>
+  <aside class="side side-right" style="--ar: <%= bzR.w %> / <%= bzR.h %>">
+    <% NAV2.sideRight.forEach(b => { %>
+      <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= sz(b.image, 'wide') %>" alt="<%= b.title || '' %>" loading="lazy"></a>
+    <% }) %>
+  </aside>
+</div>
+
+<%
+  // Cột liên kết do admin nhập: mỗi dòng "Tên | link"; chỉ nhận link nội bộ, http(s), mailto, tel
+  const footerCols = [1, 2, 3].map(n => ({
+    title: S2['footer_col' + n + '_title'],
+    items: String(S2['footer_col' + n + '_links'] || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+      const i = l.lastIndexOf('|');
+      const text = (i > 0 ? l.slice(0, i) : l).trim();
+      let url = i > 0 ? l.slice(i + 1).trim() : '';
+      if (url && !/^(\/(?!\/)|https?:\/\/|mailto:|tel:)/i.test(url)) url = '';
+      return { text, url };
+    }),
+  })).filter(c => c.title);
+  const socials = [['facebook', 'Facebook'], ['zalo', 'Zalo'], ['tiktok', 'TikTok'], ['youtube', 'YouTube'], ['telegram', 'Telegram']]
+    .filter(([k]) => S2['social_' + k]);
+%>
+<footer class="footer">
+  <div class="container footer-grid" style="--cols: <%= footerCols.length %>">
+    <div class="footer-about">
+      <% if (S2.footer_about_title || !S2.logo) { %><h4><%= S2.footer_about_title || S2.site_name || 'ShopAcc' %></h4>
+      <% } else { %><a href="/" class="footer-logo"><img src="<%= sz(S2.logo, 'logo') %>" alt="<%= S2.site_name || 'Logo' %>"></a><% } %>
+      <p><%= S2.footer_about_text || S2.site_description %></p>
+      <% if (socials.length) { %>
+        <div class="socials">
+          <% socials.forEach(([k, label]) => { %><a href="<%= S2['social_' + k] %>" target="_blank" rel="noopener nofollow" class="social social-<%= k %>" aria-label="<%= label %>" title="<%= label %>"><%- I('s-' + k) %></a><% }) %>
+        </div>
+      <% } %>
+    </div>
+    <% footerCols.forEach(c => { %>
+      <div>
+        <h4><%= c.title %></h4>
+        <ul>
+          <% c.items.forEach(it => { %><li><% if (it.url) { %><a href="<%= it.url %>"<%- /^https?:/i.test(it.url) ? ' target="_blank" rel="noopener nofollow"' : '' %>><%= it.text %></a><% } else { %><%= it.text %><% } %></li><% }) %>
+        </ul>
+      </div>
+    <% }) %>
+  </div>
+  <div class="container footer-bottom"><%= S2.footer_text %></div>
+</footer>
+
+<% const PP = locals.popup; if (PP && !locals.layoutAdmin && (PP.pages === 'all' || locals.currentPath === '/')) { %>
+<% function ppImg() { if (!PP.image) return; %><<%= PP.img_link ? 'a' : 'div' %> class="popup-img<%= PP.img_style !== 'full' || PP.img_w < 100 ? ' popup-img-in' : '' %>" style="width:<%= PP.img_w %>%"<% if (PP.img_link) { %> href="<%= PP.img_link %>"<% } %>><img src="<%= sz(PP.image, 'wide') %>" alt="<%= PP.title %>"<% if (PP.ratio) { %> style="aspect-ratio:<%= PP.ratio %>"<% } %>></<%= PP.img_link ? 'a' : 'div' %>><% } %>
+<div class="popup" id="sitePopup" data-popup-id="<%= PP.v %>" data-delay="<%= PP.delay %>" data-repeat="<%= PP.repeat %>" hidden>
+  <div class="popup-box<%= PP.body ? '' : ' popup-imgonly' %>" role="dialog" aria-modal="true" style="--pw:<%= PP.width %>px">
+    <button class="popup-close" data-close-popup aria-label="Đóng"><%- I('x') %></button>
+    <div class="popup-inner">
+      <% if (PP.img_pos !== 'bottom') ppImg(); %>
+      <% if (PP.body) { %><div class="popup-body">
+        <% if (PP.title) { %><h3 class="popup-title" style="<%= PP.title_theme === false ? 'color:' + PP.title_color + ';' : '' %>font-size:<%= PP.title_size %>px;text-align:<%= PP.title_align %>"><%= PP.title %></h3><% } %>
+        <% if (PP.content) { %><div class="popup-content"><%- PP.content %></div><% } %>
+        <% if (PP.btn_text) { %><a class="popup-btn" href="<%= PP.btn_link || '#' %>"<%- PP.btn_link ? '' : ' data-close-popup' %>><%= PP.btn_text %></a><% } %>
+      </div><% } %>
+      <% if (PP.img_pos === 'bottom') ppImg(); %>
+    </div>
+  </div>
+</div>
+<% } %>
+<% if (locals.user) { const DP = locals.depositPopup; %>
+<!-- Popup nạp tiền thành công (hiện khi tiền về: trang nạp tự điền số liệu, trang khác do server gửi sẵn) -->
+<div class="dp-modal" id="depPopup" <%= DP ? '' : 'hidden' %>>
+  <div class="dp-box" role="dialog" aria-modal="true" aria-labelledby="dpTitle">
+    <div class="dp-check"><%- I('check') %></div>
+    <h3 id="dpTitle">Nạp tiền thành công</h3>
+    <div class="dp-amount" data-dp="received">+<%= DP ? H.money(DP.received) : '' %></div>
+    <div class="dp-lines">
+      <div><span>Số dư trước</span><b data-dp="before"><%= DP && DP.before != null ? H.money(DP.before) : '—' %></b></div>
+      <div class="dp-arrow"><%- I('caret-down') %></div>
+      <div class="dp-after"><span>Số dư sau</span><b data-dp="after"><%= DP && DP.after != null ? H.money(DP.after) : '—' %></b></div>
+    </div>
+    <div class="dp-meta">Mã nạp <b data-dp="code"><%= DP ? DP.code : '' %></b> · <span data-dp="at"><%= DP ? H.fmtDate(DP.at) : '' %></span></div>
+    <div class="dp-actions">
+      <button type="button" class="btn btn-ghost" data-dp-close>Đóng</button>
+      <a href="/" class="btn btn-primary">Mua sắm ngay</a>
+    </div>
+  </div>
+</div>
+<% } %>
+<%- include('ui-settings') %>
+<% const CH = !locals.layoutAdmin && locals.chat; const chInSp = CH && CH.in_support && locals.support && locals.support.device === 'all'; %>
+<% if (locals.support && !locals.layoutAdmin) { %><%- include('support', { sp: locals.support, chat: chInSp ? CH : null }) %><% } %>
+<% if (CH) { %><div id="gzChat" hidden data-layout="<%= CH.layout %>" data-title="<%= CH.title %>" data-greeting="<%= CH.greeting %>" data-agent="<%= CH.agent %>" data-pos="<%= locals.support && chInSp ? (locals.support.mode === 'side' ? locals.support.side === 'left' ? 'bl' : 'br' : locals.support.corner.endsWith('l') ? 'bl' : 'br') : CH.position %>"></div>
+<% if (!chInSp) { %><button type="button" class="ch-fab ch-<%= CH.position %>" data-chat-open aria-label="<%= CH.title %>"><%- I('chat') %><span class="ch-badge" data-chat-badge hidden></span></button><% } %><% } %>
+<script src="/js/slow.js?v=<%= locals.assetV || 1 %>" defer></script>
+<script src="/js/main.js?v=<%= locals.assetV || 1 %>" defer></script>
+<% const G = locals.s || {}; const gid = G.ga4_id || G.gads_id; if (gid && !locals.preview) { %>
+<script async src="https://www.googletagmanager.com/gtag/js?id=<%= encodeURIComponent(gid) %>"></script>
+<script src="/js/gtag-init.js?v=<%= locals.assetV || 1 %>" defer data-ga4="<%= G.ga4_id || '' %>" data-ads="<%= G.gads_id || '' %>"
+  data-l-signup="<%= G.gads_label_signup || '' %>" data-l-deposit="<%= G.gads_label_deposit || '' %>" data-l-purchase="<%= G.gads_label_purchase || '' %>"
+  data-events="<%= JSON.stringify(locals.gtagEvents || []) %>"></script>
+<% } %>
+</body>
+</html>

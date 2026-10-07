@@ -1,0 +1,120 @@
+<form method="post" action="/admin/home-blocks/save" enctype="multipart/form-data" class="a-form" novalidate data-validate data-hb-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= b ? b.id : '' %>">
+  <input type="hidden" name="type" value="<%= type %>">
+
+  <div class="a-form-context">
+    <span class="a-folder"><%- I(info.icon) %></span>
+    <div class="a-minw0"><small class="a-muted">Loại khối</small><b><%= info.name %></b></div>
+    <% if (!b) { %><button type="button" class="a-btn a-xs a-ghost a-ml-auto" data-modal-url="/admin/home-blocks/new" data-modal-title="Thêm khối – chọn loại">Đổi loại</button><% } %>
+  </div>
+  <p class="a-field-hint a-mt0"><%= info.desc %></p>
+
+  <label>Tiêu đề</label>
+  <input name="title" maxlength="120" value="<%= b ? b.title : (info.title || '') %>" placeholder="<%= info.title || ({ slider: 'VD: Slider đầu trang', strip: 'VD: Dải ảnh khuyến mãi', banner: 'VD: Banner giữa trang' })[type] %>">
+  <% if (info.images) { %>
+    <label class="a-check"><input type="checkbox" name="show_title" value="1" <%= settings.show_title ? 'checked' : '' %>> Hiện tiêu đề phía trên khối ngoài web</label>
+  <% } %>
+
+  <% if (info.images) { %>
+    <div class="a-row">
+      <div><label>Kích cỡ mỗi ảnh (Rộng × Cao, px)</label>
+        <div class="a-size"><input type="number" name="w" min="100" max="4000" value="<%= settings.w %>" data-hb-w><span class="a-size-x">×</span><input type="number" name="h" min="50" max="4000" value="<%= settings.h %>" data-hb-h><span class="a-size-unit">px</span></div>
+      </div>
+      <% if (type === 'banner') { %>
+      <div><label>Số ảnh mỗi hàng</label>
+        <div class="a-row">
+          <select name="cols_pc" data-hb-cols title="Trên PC"><% [1,2,3,4,5,6].forEach(n => { %><option value="<%= n %>" <%= (settings.cols_pc || 1) == n ? 'selected' : '' %>>PC: <%= n %></option><% }) %></select>
+          <select name="cols_m" title="Trên điện thoại"><% [1,2,3].forEach(n => { %><option value="<%= n %>" <%= (settings.cols_m || 1) == n ? 'selected' : '' %>>ĐT: <%= n %></option><% }) %></select>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <div class="a-chip-row">
+      <% [[1200,450,'Slider 8:3'],[1200,300,'Dải ngang 4:1'],[1200,400,'3:1'],[800,400,'2:1'],[600,300,'2:1 nhỏ'],[600,600,'Vuông'],[600,800,'Dọc 3:4']].forEach(([w,h,l]) => { %><button type="button" class="a-btn a-xs" data-hb-preset="<%= w %>x<%= h %>"><%= l %></button><% }) %>
+    </div>
+    <div class="a-hb-preview" data-hb-preview data-hb-kind="<%= type %>">
+      <div class="a-hb-pv-head"><b>Xem trước trên web</b><span class="a-muted a-small" data-hb-note></span></div>
+      <div class="a-hb-view" data-hb-view></div>
+      <div class="a-hb-pv-head a-mt"><b>Kiểm tra cắt ảnh</b><span class="a-muted a-small"><i class="a-lg-keep"></i> xanh: phần hiện <i class="a-lg-cut"></i> đỏ: phần bị cắt</span></div>
+      <div class="a-hb-crops" data-hb-crops hidden></div>
+    </div>
+    <p class="a-field-hint">Chọn ảnh ở ô “Thêm ảnh” bên dưới là thấy ngay. Ảnh khác tỉ lệ khung sẽ bị cắt phần giữa — nên chọn kích cỡ gần với ảnh gốc.</p>
+
+    <% if (items.length) { %>
+      <label>Ảnh trong khối <small class="a-muted">(<%= items.length %>)</small></label>
+      <div class="a-hb-items">
+        <% items.forEach((it, k) => { %>
+          <div class="a-hb-item <%= it.is_active ? '' : 'a-row-off' %>">
+            <img src="<%= it.image %>" alt="">
+            <div class="a-grow a-minw0">
+              <input name="link_<%= it.id %>" value="<%= it.link %>" maxlength="300" placeholder="Link khi bấm (VD /game/lien-quan-mobile)">
+              <div class="a-hb-item-foot">
+                <label class="a-hb-order">Thứ tự <input type="number" name="order_<%= it.id %>" value="<%= k + 1 %>" min="0" max="999"></label>
+                <label class="a-check"><input type="checkbox" name="hide_<%= it.id %>" value="1" <%= it.is_active ? '' : 'checked' %>> Ẩn</label>
+                <label class="a-check a-hb-del"><input type="checkbox" name="remove_<%= it.id %>" value="1"> Xóa</label>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+    <label>Thêm ảnh <%- items.length ? '' : '<span class="req">*</span>' %> <small class="a-muted">(chọn được nhiều ảnh, tối đa 10 ảnh / lần, ≤ 8MB mỗi ảnh)</small></label>
+    <input type="file" name="images" accept="image/*" multiple <%= items.length ? '' : 'required' %>>
+    <input name="new_link" maxlength="300" placeholder="Link cho các ảnh vừa thêm (sửa riêng từng ảnh sau)">
+  <% } %>
+
+  <% if (type === 'games') { const sel = (settings.game_ids || []).map(Number); %>
+    <label>Game hiển thị <small class="a-muted">(không tích game nào = hiện tất cả game đang bật)</small></label>
+    <div class="a-check-grid">
+      <% games.forEach(g => { %><label class="a-check"><input type="checkbox" name="game_ids" value="<%= g.id %>" <%= sel.includes(g.id) ? 'checked' : '' %>> <%= g.name %></label><% }) %>
+    </div>
+  <% } %>
+
+  <% if (type === 'coupons') { %>
+    <div class="a-row">
+      <div><label>Số mã tối đa</label><input type="number" name="limit" min="1" max="50" value="<%= settings.limit || 8 %>"></div>
+      <div><label>Chỉ mã của game</label><select name="game_id"><option value="">Tất cả mã</option><% games.forEach(g => { %><option value="<%= g.id %>" <%= settings.game_id == g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select></div>
+    </div>
+    <p class="a-field-hint">Kích cỡ thẻ mã và số mã mỗi hàng chỉnh ở mục <a href="/admin/coupons">Mã giảm giá → Giao diện thẻ mã</a>.</p>
+  <% } %>
+
+  <% if (type === 'featured') { %>
+    <label>Lấy acc theo</label>
+    <select name="source"><% Object.entries(sources).forEach(([k, l]) => { %><option value="<%= k %>" <%= (settings.source || 'featured') === k ? 'selected' : '' %>><%= l %></option><% }) %></select>
+    <div class="a-row">
+      <div><label>Chỉ acc của game</label><select name="game_id"><option value="">Mọi game</option><% games.forEach(g => { %><option value="<%= g.id %>" <%= settings.game_id == g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select></div>
+      <div><label>Hoặc chỉ 1 danh mục</label><select name="category_id"><option value="">Mọi danh mục</option><% categories.forEach(c => { %><option value="<%= c.id %>" <%= settings.category_id == c.id ? 'selected' : '' %>><%= c.game %> › <%= c.name %></option><% }) %></select></div>
+    </div>
+    <label>Số acc tối đa</label><input type="number" name="limit" min="1" max="48" value="<%= settings.limit || 12 %>">
+    <p class="a-field-hint">Chọn danh mục thì bỏ qua ô game. Khối tự ẩn nếu không có acc nào phù hợp. Nguồn “Nổi bật” lấy các acc tích “Nổi bật” ở mục Sản phẩm.</p>
+  <% } %>
+
+  <% if (type === 'boost') { %>
+    <label>Lấy gói theo</label>
+    <select name="source"><% Object.entries(boostSources).forEach(([k, l]) => { %><option value="<%= k %>" <%= (settings.source || 'bestseller') === k ? 'selected' : '' %>><%= l %></option><% }) %></select>
+    <div class="a-row">
+      <div><label>Chỉ gói của game</label><select name="game_id"><option value="">Mọi game</option><% games.forEach(g => { %><option value="<%= g.id %>" <%= settings.game_id == g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select></div>
+      <div><label>Số gói tối đa</label><input type="number" name="limit" min="1" max="48" value="<%= settings.limit || 8 %>"></div>
+    </div>
+    <p class="a-field-hint">Kiểu hiển thị (Ảnh / Icon) theo mục Cài đặt cày thuê → Gói. Khối tự ẩn nếu chưa có gói nào.</p>
+  <% } %>
+
+  <% if (type === 'posts') { %>
+    <div class="a-row">
+      <div><label>Chuyên mục</label><select name="category_id"><option value="">Tất cả</option><% postCats.forEach(c => { %><option value="<%= c.id %>" <%= settings.category_id == c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select></div>
+      <div><label>Số bài</label><input type="number" name="limit" min="1" max="12" value="<%= settings.limit || 4 %>"></div>
+    </div>
+    <p class="a-field-hint">Khối tự ẩn nếu chưa có bài viết nào được đăng.</p>
+  <% } %>
+
+  <% if (type === 'recent') { %>
+    <label>Số đơn hiển thị</label><input type="number" name="limit" min="1" max="30" value="<%= settings.limit || 10 %>">
+  <% } %>
+
+  <div class="a-modal-foot">
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= b ? 'Lưu thay đổi' : 'Thêm khối' %></button>
+  </div>
+</form>

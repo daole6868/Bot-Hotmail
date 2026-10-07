@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+<%- include('../partials/user-nav') %>
+<div class="card">
+  <div class="table-wrap">
+  <table class="table table-cards">
+    <thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Giá</th><th>Giảm</th><th>Thanh toán</th><th>Trạng thái</th><th>Thời gian</th><th></th></tr></thead>
+    <tbody>
+    <% if (!result.rows.length) { %><tr><td colspan="8" class="center muted tc-empty">Chưa có đơn hàng</td></tr><% } %>
+    <% result.rows.forEach(o => { %>
+      <tr>
+        <td class="tc-head"><b><%= o.order_code %></b></td>
+        <td class="tc-full"><%= o.product_title %><div class="muted small"><%= o.game_name %></div></td>
+        <td data-label="Giá"><%= H.money(o.price) %></td>
+        <td data-label="Giảm"><span><%= o.discount ? '-' + H.money(o.discount) : '—' %><% if (o.coupon_code) { %> <span class="muted small">(<%= o.coupon_code %>)</span><% } %></span></td>
+        <td data-label="Thanh toán" class="price"><%= H.money(o.total) %></td>
+        <td data-label="Trạng thái"><span class="status status-<%= o.status %>"><%= o.status === 'completed' ? 'Thành công' : 'Đã hoàn tiền' %></span></td>
+        <td data-label="Thời gian" class="muted small"><%= H.fmtDate(o.created_at) %></td>
+        <td class="tc-action"><a class="btn btn-xs btn-primary" href="/user/orders/<%= o.order_code %>">Xem acc</a></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<%- include('../partials/pagination', { result, query }) %>
+<%- include('../partials/footer') %>

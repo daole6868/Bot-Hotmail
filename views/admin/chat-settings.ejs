@@ -1,0 +1,135 @@
+<%- include('_header') %>
+<form method="post" action="/admin/chat/settings" class="a-form a-chs">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('chat') %> Chung</h3>
+      <label class="a-check a-sp-enable"><input type="checkbox" name="enabled" value="1" <%= cfg.enabled ? 'checked' : '' %>> <b>Bật chat trực tiếp ngoài web</b></label>
+      <div class="a-row">
+        <div><label>Tiêu đề khung chat</label><input name="title" maxlength="60" value="<%= cfg.title %>"></div>
+        <div><label>Tên shop hiện với khách</label><input name="agent_name" maxlength="40" value="<%= cfg.agent_name %>"></div>
+      </div>
+      <label>Lời chào (hiện đầu khung chat)</label>
+      <textarea name="greeting" rows="2" maxlength="300"><%= cfg.greeting %></textarea>
+      <div class="a-row">
+        <div><label>Khung chat trên máy tính</label><select name="layout"><option value="center" <%= cfg.layout !== 'corner' ? 'selected' : '' %>>Giữa màn hình (to, dễ nhìn)</option><option value="corner" <%= cfg.layout === 'corner' ? 'selected' : '' %>>Góc màn hình (nhỏ gọn)</option></select></div>
+      </div>
+      <div class="a-row">
+        <div><label>Vị trí nút chat riêng</label><select name="position"><option value="br" <%= cfg.position !== 'bl' ? 'selected' : '' %>>Góc dưới phải</option><option value="bl" <%= cfg.position === 'bl' ? 'selected' : '' %>>Góc dưới trái</option></select></div>
+      </div>
+      <label class="a-check"><input type="checkbox" name="in_support" value="1" <%= cfg.in_support ? 'checked' : '' %>> <span>Hiện mục “Chat trực tiếp” trong nút <a href="/admin/support">Hỗ trợ</a> (khi nút Hỗ trợ đang bật; tắt = dùng nút chat riêng)</span></label>
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('clock') %> Giờ làm việc</h3>
+      <label class="a-check"><input type="checkbox" name="hours_on" value="1" <%= cfg.hours_on ? 'checked' : '' %>> Giới hạn giờ làm việc (tắt = hỗ trợ 24/7)</label>
+      <div class="a-row">
+        <div><label>Bắt đầu</label><input type="time" name="open" value="<%= cfg.open %>"></div>
+        <div><label>Kết thúc</label><input type="time" name="close" value="<%= cfg.close %>"></div>
+      </div>
+      <label>Tin tự động khi khách nhắn ngoài giờ <small class="a-muted">(gửi 1 lần / ngày / khách)</small></label>
+      <textarea name="offline_msg" rows="3" maxlength="300"><%= cfg.offline_msg %></textarea>
+    </div>
+  </div>
+
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('users') %> Thành viên <small class="a-muted">(đã đăng ký tài khoản)</small></h3>
+      <label class="a-check"><input type="checkbox" name="member" value="1" <%= cfg.member !== false ? 'checked' : '' %>> Cho phép thành viên chat</label>
+      <label class="a-check"><input type="checkbox" name="member_images" value="1" <%= cfg.member_images ? 'checked' : '' %>> Cho gửi ảnh</label>
+      <label class="a-check"><input type="checkbox" name="member_orders" value="1" <%= cfg.member_orders ? 'checked' : '' %>> Cho gửi đơn hàng vào chat</label>
+      <div class="a-row">
+        <div><label>Tin tối đa / phút</label><input type="number" name="member_rate" min="1" max="120" value="<%= cfg.member_rate %>"></div>
+        <div><label>Tin tối đa / ngày <small class="a-muted">(0 = không giới hạn)</small></label><input type="number" name="member_day_limit" min="0" max="10000" value="<%= cfg.member_day_limit %>"></div>
+      </div>
+      <label>Độ dài tối đa 1 tin (ký tự)</label>
+      <input type="number" name="member_max_len" min="50" max="5000" value="<%= cfg.member_max_len %>">
+      <% const kdmember = keepM % 24 === 0; %>
+      <label>Tự xóa cuộc chat không hoạt động sau <small class="a-muted">(xóa cả tin nhắn và ảnh, tối thiểu 1 giờ)</small></label>
+      <div class="a-keep"><input type="number" name="member_keep_n" min="1" max="87600" value="<%= kdmember ? keepM / 24 : keepM %>"><select name="member_keep_unit"><option value="h" <%= kdmember ? '' : 'selected' %>>giờ</option><option value="d" <%= kdmember ? 'selected' : '' %>>ngày</option></select></div>
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('user') %> Khách lạ <small class="a-muted">(chưa đăng nhập)</small></h3>
+      <label class="a-check"><input type="checkbox" name="guest" value="1" <%= cfg.guest ? 'checked' : '' %>> Cho phép khách chưa đăng nhập chat</label>
+      <label class="a-check"><input type="checkbox" name="guest_contact" value="1" <%= cfg.guest_contact ? 'checked' : '' %>> Bắt nhập số điện thoại / Zalo / email trước khi chat</label>
+      <label class="a-check"><input type="checkbox" name="guest_images" value="1" <%= cfg.guest_images ? 'checked' : '' %>> Cho gửi ảnh</label>
+      <div class="a-row">
+        <div><label>Số tin tối đa / khách</label><input type="number" name="guest_limit" min="1" max="200" value="<%= cfg.guest_limit %>"></div>
+        <div><label>Cuộc chat mới tối đa / IP / ngày</label><input type="number" name="guest_ip_day" min="1" max="100" value="<%= cfg.guest_ip_day %>"></div>
+      </div>
+      <div class="a-row">
+        <div><label>Tin tối đa / phút</label><input type="number" name="guest_rate" min="1" max="60" value="<%= cfg.guest_rate %>"></div>
+        <div><label>Độ dài tối đa 1 tin (ký tự)</label><input type="number" name="guest_max_len" min="50" max="3000" value="<%= cfg.guest_max_len %>"></div>
+      </div>
+      <% const kdguest = keepG % 24 === 0; %>
+      <label>Tự xóa cuộc chat không hoạt động sau <small class="a-muted">(xóa cả tin nhắn và ảnh, tối thiểu 1 giờ)</small></label>
+      <div class="a-keep"><input type="number" name="guest_keep_n" min="1" max="87600" value="<%= kdguest ? keepG / 24 : keepG %>"><select name="guest_keep_unit"><option value="h" <%= kdguest ? '' : 'selected' %>>giờ</option><option value="d" <%= kdguest ? 'selected' : '' %>>ngày</option></select></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="a-card">
+      <h3><%- I('send') %> Telegram</h3>
+      <div class="acn-status <%= tgReady && tgChat ? 'ok' : 'err' %>"><span>Bot Telegram: <b><%= tgReady && tgChat ? 'đã kết nối' : 'chưa kết nối' %></b></span><a href="/admin/api#telegram">Cài ở Kết nối API</a></div>
+      <label class="a-check"><input type="checkbox" name="tg_notify" value="1" <%= cfg.tg_notify ? 'checked' : '' %>> Báo tin nhắn mới của khách qua Telegram (kèm ảnh)</label>
+      <label class="a-check"><input type="checkbox" name="tg_reply" value="1" <%= cfg.tg_reply ? 'checked' : '' %>> Cho phép trả lời khách ngay trong Telegram</label>
+      <p class="a-field-hint">Trong Telegram: bấm <b>Trả lời (Reply)</b> vào tin nhắn bot gửi rồi gõ nội dung (gửi được cả ảnh). Hoặc gõ <code>/c 12 nội dung</code> để nhắn cho cuộc chat số 12.</p>
+      <% if (cfg.tg_reply && tgReady) { %><div class="acn-status <%= tg === 'ok' ? 'ok' : tg ? 'err' : '' %>"><span>Nhận tin trả lời: <b><%= tg === 'ok' ? 'đang hoạt động' : tg || 'chưa chạy (bật chat rồi lưu, đợi vài giây)' %></b></span></div><% } %>
+    </div>
+  </div>
+
+  <div class="a-card">
+    <h3><%- I('g-sparkles') %> AI tự trả lời</h3>
+    <% if (!ai.ready) { %><div class="a-alert a-alert-error"><%- I('alert') %> <span>AI đang chọn chưa có API key. Nhập API key ở <a href="/admin/api#ai">Kết nối API</a>.</span></div><% } %>
+    <label class="a-check a-sp-enable"><input type="checkbox" name="ai_on" value="1" <%= cfg.ai_on ? 'checked' : '' %>> <b>Bật AI tự trả lời khách</b></label>
+    <div class="a-row">
+      <div><label>Dùng AI</label><select name="ai_provider"><option value="" <%= !cfg.ai_provider ? 'selected' : '' %>>Giống AI viết bài (<%= PROVIDERS[aiWrite].name %>)</option><% Object.entries(PROVIDERS).forEach(([k, v]) => { %><option value="<%= k %>" <%= cfg.ai_provider === k ? 'selected' : '' %>><%= v.name %><%= aiReady[k] ? ' ✓' : ' (chưa có key)' %></option><% }) %></select></div>
+      <div><label>Khi nào AI trả lời</label><select name="ai_mode"><option value="offline" <%= cfg.ai_mode !== 'always' ? 'selected' : '' %>>Khi không có nhân viên trực hoặc ngoài giờ</option><option value="always" <%= cfg.ai_mode === 'always' ? 'selected' : '' %>>Luôn trả lời trước, nhân viên vào thì AI dừng</option></select></div>
+      <div><label>Tên hiển thị của AI</label><input name="ai_name" maxlength="40" value="<%= cfg.ai_name %>"></div>
+      <div><label>Tối đa câu trả lời / khách / ngày</label><input type="number" name="ai_max" min="1" max="500" value="<%= cfg.ai_max %>"></div>
+      <div><label>Tối đa câu trả lời / ngày (cả shop)</label><input type="number" name="ai_day" min="1" max="100000" value="<%= cfg.ai_day %>"></div>
+    </div>
+    <label>Thông tin thêm cho AI <small class="a-muted">(chính sách bảo hành, thời gian cày, cách nạp, khuyến mãi... — AI chỉ trả lời dựa trên đây và danh mục, giá đang bán)</small></label>
+    <textarea name="ai_info" rows="6" maxlength="8000" placeholder="VD:&#10;- Acc VIP bảo hành 7 ngày, lỗi do shop hoàn tiền 100%.&#10;- Cày thuê: hoàn thành trong 1-3 ngày tùy gói.&#10;- Nạp game qua UID nhận trong 5-15 phút."><%= cfg.ai_info %></textarea>
+    <p class="a-field-hint">Nhân viên trả lời một cuộc chat thì AI tự dừng cuộc đó 30 phút. Khách đòi gặp người thật, khiếu nại hoặc AI không chắc → AI báo đã chuyển nhân viên, tắt AI cho cuộc đó và báo Telegram.</p>
+  </div>
+
+  <div class="a-card" id="quick">
+    <div class="a-card-head"><h3><%- I('bolt') %> Câu trả lời mẫu</h3><button type="button" class="a-btn a-soft" data-qr-add><%- I('plus') %> Thêm câu</button></div>
+    <p class="a-muted a-small">Trong khung chat gõ <b>/</b> để chọn nhanh.</p>
+    <div class="a-qr-list" data-qr-list>
+      <% cfg.quick.forEach(q => { %>
+        <div class="a-qr-row"><input name="q_t" maxlength="40" value="<%= q.t %>" placeholder="Tên ngắn"><textarea name="q_b" rows="2" maxlength="1000" placeholder="Nội dung"><%= q.b %></textarea><button type="button" class="a-icon-btn a-icon-danger" data-qr-del title="Xóa"><%- I('trash') %></button></div>
+      <% }) %>
+    </div>
+    <template data-qr-tpl><div class="a-qr-row"><input name="q_t" maxlength="40" placeholder="Tên ngắn"><textarea name="q_b" rows="2" maxlength="1000" placeholder="Nội dung"></textarea><button type="button" class="a-icon-btn a-icon-danger" data-qr-del title="Xóa"><%- I('trash') %></button></div></template>
+  </div>
+  <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt chat</button>
+</form>
+
+<div class="a-card a-mt" id="staff">
+  <h3><%- I('users') %> Nhân viên chat</h3>
+  <p class="a-muted a-small">Nhân viên dùng tài khoản khách bình thường, đăng nhập rồi vào <b>/admin/chat</b>. Nhân viên chỉ thấy trang Chat và thông tin đơn hàng của khách — không thấy email, số dư, IP và không vào được các trang quản trị khác.</p>
+  <form method="post" action="/admin/chat/staff/add" class="a-form a-staff-add">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="user" required maxlength="120" placeholder="Tên đăng nhập hoặc email của nhân viên">
+    <input name="name" maxlength="40" placeholder="Tên hiện với khách (VD: Lan - CSKH)">
+    <button class="a-btn a-primary"><%- I('plus') %> Thêm nhân viên</button>
+  </form>
+  <% if (!staff.length) { %><div class="a-empty">Chưa có nhân viên.</div><% } %>
+  <% staff.forEach(u => { %>
+    <form method="post" action="/admin/chat/staff/<%= u.id %>/save" class="a-form a-staff-row">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="a-staff-who"><b><%= u.username %></b><small class="a-muted"><%= u.email || '' %></small></div>
+      <div><label>Tên hiện với khách</label><input name="staff_name" maxlength="40" value="<%= u.staff_name || '' %>"></div>
+      <div><label>Telegram chat ID <small class="a-muted">(nhận & trả lời tin)</small></label><input name="staff_tg" maxlength="30" value="<%= u.staff_tg || '' %>" placeholder="VD: 123456789"></div>
+      <div class="a-staff-btns">
+        <button class="a-btn a-soft"><%- I('save') %> Lưu</button>
+        <button class="a-btn a-danger-soft" form="rmStaff<%= u.id %>"><%- I('x') %> Gỡ</button>
+      </div>
+    </form>
+    <form method="post" action="/admin/chat/staff/<%= u.id %>/remove" id="rmStaff<%= u.id %>" data-confirm="Gỡ quyền nhân viên của <%= u.username %>?" hidden><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form>
+  <% }) %>
+</div>
+<%- include('_footer') %>

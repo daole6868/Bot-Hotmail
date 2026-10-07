@@ -1,0 +1,31 @@
+<%- include('_header') %>
+<p class="a-muted a-small a-page-note"><%- I('list') %> <span>Các khối hiển thị ở <b>phần thân trang chủ</b> theo đúng thứ tự dưới đây. <b>Giữ nút 6 chấm ⠿ rồi kéo</b> (hoặc bấm mũi tên) để đổi vị trí, gạt công tắc để ẩn/hiện. Bấm <b>Thêm khối</b> để chọn 1 trong các loại khối (thêm được nhiều lần), rồi kéo khối tới chỗ muốn đặt. Nội dung & cài đặt của từng khối sửa bằng nút ✏️.</span></p>
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-pad">
+    <div><h3>Bố cục trang chủ <span class="a-count"><%= blocks.length %></span></h3><p class="a-muted a-small">Từ trên xuống dưới giống ngoài web</p></div>
+    <div class="a-head-actions">
+      <a href="/" target="_blank" class="a-btn a-ghost"><%- I('globe') %> <span class="a-hide-sm">Xem trang chủ</span></a>
+      <button type="button" class="a-btn a-primary" data-modal-url="/admin/home-blocks/new" data-modal-title="Thêm khối – chọn loại"><%- I('plus') %> Thêm khối</button>
+    </div>
+  </div>
+  <div class="a-hb-list">
+    <% if (!blocks.length) { %><div class="a-empty">Trang chủ chưa có khối nào. Bấm <b>Thêm khối</b> để bắt đầu.</div><% } %>
+    <% blocks.forEach((b, i) => { %>
+      <div class="a-hb-row <%= b.is_active ? '' : 'a-row-off' %>">
+        <%- include('partials/move', { kind: 'home-blocks', id: b.id, first: i === 0, last: i === blocks.length - 1 }) %>
+        <span class="a-hb-no"><%= i + 1 %></span>
+        <% if (b.thumb) { %><img class="a-hb-thumb" src="<%= b.thumb %>" alt=""><% } else { %><span class="a-folder"><%- I(b.info.icon) %></span><% } %>
+        <div class="a-minw0 a-grow">
+          <b><%= b.title || b.info.name %></b> <span class="a-type-badge vip sm"><%= b.info.name %></span>
+          <div class="a-muted a-small"><%= b.summary %></div>
+        </div>
+        <%- include('partials/switch', { kind: 'home-blocks', id: b.id, on: b.is_active, disabled: false }) %>
+        <div class="a-actions">
+          <button type="button" class="a-icon-btn" data-modal-url="/admin/home-blocks/form?id=<%= b.id %>" data-modal-title="Sửa – <%= b.title || b.info.name %>" title="Sửa"><%- I('edit') %></button>
+          <form method="post" action="/admin/home-blocks/<%= b.id %>/delete" data-confirm="Xóa khối “<%= b.title || b.info.name %>”?<%= b.info.images ? ' Ảnh trong khối cũng bị xóa.' : '' %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</section>
+<%- include('_footer') %>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title><%= s.site_name || 'Shop' %></title>
+  <% const FAV = (locals.s && locals.s.favicon) || ''; %><% if (FAV) { %><link rel="icon" href="<%= FAV %>" type="image/png"><link rel="apple-touch-icon" href="<%= FAV %>"><% } else { %><link rel="icon" href="/img/favicon.svg" type="image/svg+xml"><% } %>
+  <script src="/js/theme-init.js?v=<%= assetV %>"></script>
+  <link rel="stylesheet" href="/css/fonts.css?v=<%= assetV %>">
+  <link rel="stylesheet" href="/css/style.css?v=<%= assetV %>">
+</head>
+<body class="gate-body" data-slow-page="<%= method %>">
+  <div class="slow-toast slow-static" role="status"><span class="spinner"></span><span>Bạn đang thao tác quá nhanh, vui lòng chậm lại sau <b data-slow-left><%= seconds %></b> giây</span></div>
+  <script src="/js/slow.js?v=<%= assetV %>"></script>
+</body>
+</html>

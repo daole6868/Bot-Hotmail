@@ -1,0 +1,9 @@
+<p class="a-field-hint a-mt0">Chọn loại khối muốn thêm vào trang chủ. Mỗi loại thêm được nhiều lần; khối mới nằm cuối trang, kéo nút ⠿ để đưa tới vị trí mong muốn.</p>
+<div class="a-type-grid">
+  <% Object.entries(types).forEach(([key, t]) => { %>
+    <button type="button" class="a-type-card" data-modal-url="/admin/home-blocks/form?type=<%= key %>" data-modal-title="Thêm khối – <%= t.name %>">
+      <span class="a-folder"><%- I(t.icon) %></span>
+      <span class="a-minw0"><b><%= t.name %></b><small><%= t.desc %></small></span>
+    </button>
+  <% }) %>
+</div>

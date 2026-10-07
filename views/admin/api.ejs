@@ -1,0 +1,94 @@
+<%- include('_header') %>
+<% const chatCfg = (() => { try { return JSON.parse(s.chat_cfg || '{}'); } catch { return {}; } })(); %>
+<div class="a-grid-2 a-api">
+  <form method="post" action="/admin/api/telegram" class="a-card a-form" id="telegram" autocomplete="off">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h3><%- I('send') %> Telegram <span class="a-tag <%= tg.hasToken && tg.chat ? 'green' : '' %>"><%= tg.hasToken && tg.chat ? 'đã kết nối' : 'chưa kết nối' %></span></h3>
+    <div class="a-row">
+      <div><label>Bot token <%- tg.hasToken ? '<small class="a-green">(đã lưu)</small>' : '' %></label><input type="password" name="tg_token" autocomplete="new-password" placeholder="<%= tg.hasToken ? 'Để trống = giữ token cũ' : '123456789:AAF...' %>"></div>
+      <div><label>Chat ID admin</label><input name="tg_chat_id" value="<%= tg.chat %>" placeholder="VD: 123456789"></div>
+    </div>
+    <% if (tg.hasToken) { %><label class="a-check"><input type="checkbox" name="tg_clear" value="1"> <span>Xóa bot token đã lưu</span></label><% } %>
+    <p class="a-field-hint">Lấy <b>Bot token</b>: nhắn <b>@BotFather</b> trên Telegram → <code>/newbot</code>. Lấy <b>Chat ID</b>: nhắn <b>@userinfobot</b>. Sau đó nhắn <code>/start</code> cho bot của bạn 1 lần để bot được phép gửi tin.</p>
+    <div class="a-btn-row">
+      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+      <button type="button" class="a-btn" data-api-test="/admin/api/telegram/test" <%= tg.hasToken && tg.chat ? '' : 'disabled' %>><%- I('send') %> Gửi tin thử</button>
+    </div>
+    <div class="a-small a-ai-test-out" data-api-out hidden></div>
+    <div class="a-api-use">
+      <b>Đang dùng ở</b>
+      <a href="/admin/maintenance">Sao lưu tự động <span class="a-tag <%= s.tg_enabled === '1' ? 'green' : '' %>"><%= s.tg_enabled === '1' ? 'bật' : 'tắt' %></span></a>
+      <a href="/admin/maintenance">Báo thao tác nhạy cảm <span class="a-tag <%= s.alert_admin !== '0' ? 'green' : '' %>"><%= s.alert_admin !== '0' ? 'bật' : 'tắt' %></span></a>
+      <a href="/admin/boost/settings">Báo đơn cày thuê / nạp game mới <span class="a-tag <%= s.boost_tg_notify !== '0' ? 'green' : '' %>"><%= s.boost_tg_notify !== '0' ? 'bật' : 'tắt' %></span></a>
+      <a href="/admin/chat/settings">Chat trực tiếp: báo & trả lời khách <span class="a-tag <%= chatCfg.enabled && chatCfg.tg_notify !== false ? 'green' : '' %>"><%= chatCfg.enabled && chatCfg.tg_notify !== false ? 'bật' : 'tắt' %></span></a>
+      <% if (tg.listen) { %><small class="<%= tg.listen === 'ok' ? 'a-text-ok' : 'a-text-err' %>">Nhận tin trả lời từ Telegram: <%= tg.listen === 'ok' ? 'đang hoạt động' : tg.listen %></small><% } %>
+    </div>
+  </form>
+
+  <form method="post" action="/admin/api/ai" class="a-card a-form" id="ai" autocomplete="off">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h3><%- I('g-sparkles') %> AI</h3>
+    <p class="a-muted a-small">Nhập API key cho nhà cung cấp muốn dùng (trả phí theo lượng dùng ở trang của họ). Key được mã hóa, không hiện lại sau khi lưu.</p>
+    <% Object.entries(PROVIDERS).forEach(([k, v]) => { %>
+      <details class="a-seo-box">
+        <summary><%= v.name %> <% if (ready[k]) { %><span class="a-tag green">sẵn sàng</span><% } else if (st.hasKey[k]) { %><span class="a-tag">thiếu địa chỉ API</span><% } %></summary>
+        <% if (k === 'custom') { %>
+          <label>Địa chỉ API <small class="a-muted">(VD https://openrouter.ai/api/v1)</small></label>
+          <input name="ai_custom_url" maxlength="200" value="<%= s.ai_custom_url || '' %>" placeholder="https://...">
+        <% } %>
+        <% if (k === 'anthropic') { %>
+          <label>Workspace ID <small class="a-muted">(chỉ cần khi báo lỗi "not scoped to a workspace")</small></label>
+          <input name="ai_anthropic_workspace" maxlength="100" value="<%= s.ai_anthropic_workspace || '' %>" placeholder="VD: wrkspc_01AbCd...">
+        <% } %>
+        <label>Model</label>
+        <input name="model_<%= k %>" maxlength="80" value="<%= s['ai_model_' + k] || v.models[0] || '' %>" list="models_<%= k %>" placeholder="tên model">
+        <datalist id="models_<%= k %>"><% v.models.forEach(m => { %><option value="<%= m %>"><% }) %></datalist>
+        <label>API key <small class="a-muted"><%= st.hasKey[k] ? '(để trống = giữ key cũ)' : '' %></small></label>
+        <input type="password" name="key_<%= k %>" maxlength="300" autocomplete="new-password" placeholder="<%= v.keyHint %>">
+        <div class="a-api-row">
+          <% if (st.hasKey[k]) { %><label class="a-check"><input type="checkbox" name="clear_<%= k %>" value="1"> <span>Xóa API key này</span></label><% } %>
+          <button type="button" class="a-btn a-btn-sm" data-api-test="/admin/ai/test" data-provider="<%= k %>" <%= ready[k] ? '' : 'disabled' %>><%- I('bolt') %> Thử kết nối</button>
+        </div>
+        <div class="a-small a-ai-test-out" data-api-out hidden></div>
+      </details>
+    <% }) %>
+    <div class="a-btn-row"><button class="a-btn a-primary"><%- I('save') %> Lưu kết nối AI</button></div>
+    <div class="a-api-use">
+      <b>Đang dùng ở</b>
+      <a href="/admin/ai">AI viết bài: <%= PROVIDERS[st.provider].name %> <span class="a-tag <%= st.ready ? 'green' : '' %>"><%= st.ready ? 'sẵn sàng' : 'chưa có key' %></span></a>
+      <a href="/admin/chat/settings">Chat trực tiếp — AI tự trả lời: <%= chatCfg.ai_provider && PROVIDERS[chatCfg.ai_provider] ? PROVIDERS[chatCfg.ai_provider].name : 'giống AI viết bài' %> <span class="a-tag <%= chatCfg.ai_on ? 'green' : '' %>"><%= chatCfg.ai_on ? 'bật' : 'tắt' %></span></a>
+    </div>
+  </form>
+
+  <div class="a-card" id="hoyo">
+    <h3><%- I('g-sparkles') %> HoYoLAB worker <span class="a-tag <%= hoyo.workers.some(w => w.online) ? 'green' : '' %>"><%= hoyo.workers.some(w => w.online) ? 'đang bật' : 'chưa bật' %></span></h3>
+    <p class="a-muted a-small">Máy worker nhận việc khi bấm “Lấy dữ liệu HoYoLAB” trong form sản phẩm. Cách kết nối: <code>docs/hoyolab-worker-api.md</code>.</p>
+    <% if (hoyo.newToken) { %>
+      <div class="a-hoyo-token"><span>Mã worker mới (chỉ hiện 1 lần):</span><code><%= hoyo.newToken %></code><button type="button" class="a-icon-btn" data-copy="<%= hoyo.newToken %>" title="Sao chép"><%- I('copy') %></button></div>
+    <% } %>
+    <form method="post" action="/admin/api/hoyo/token" class="a-api-row">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <span class="a-small">Mã worker: <b><%= hoyo.hasToken ? 'đã tạo' : 'chưa có' %></b></span>
+      <span class="a-btn-row a-mt0">
+        <button class="a-btn a-btn-sm" data-confirm="<%= hoyo.hasToken ? 'Tạo mã mới? Worker đang dùng mã cũ sẽ phải nhập lại mã mới.' : 'Tạo mã worker?' %>"><%- I('key') %> <%= hoyo.hasToken ? 'Tạo mã mới' : 'Tạo mã' %></button>
+        <% if (hoyo.hasToken) { %><button class="a-btn a-btn-sm a-danger-soft" name="clear" value="1" data-confirm="Thu hồi mã? Worker sẽ ngừng nhận việc."><%- I('x') %> Thu hồi</button><% } %>
+      </span>
+    </form>
+    <form method="post" action="/admin/api/hoyo" class="a-form" autocomplete="off">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="a-row a-row-3">
+        <div><label>Giải captcha tối đa (giây)</label><input type="number" name="captcha_sec" min="20" max="600" value="<%= hoyo.cfg.captcha_sec %>"></div>
+        <div><label>1 lượt tối đa (phút)</label><input type="number" name="job_min" min="2" max="30" value="<%= hoyo.cfg.job_min %>"></div>
+        <div><label>Chờ worker nhận (giây)</label><input type="number" name="wait_sec" min="20" max="900" value="<%= hoyo.cfg.wait_sec %>"></div>
+      </div>
+      <p class="a-field-hint">Quá thời gian giải captcha (tự giải + chờ giải tay), quá thời gian 1 lượt hoặc không có worker nhận việc → báo lỗi “thao tác lại sau” cho người bấm.</p>
+      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+    </form>
+    <div class="a-api-use">
+      <b>Máy worker</b>
+      <% if (!hoyo.workers.length) { %><small class="a-muted">Chưa có máy nào kết nối</small><% } %>
+      <% hoyo.workers.forEach(w => { %><span class="a-hoyo-w"><span><i class="a-dot <%= w.online ? 'on' : '' %>"></i> <%= w.name %> <small class="a-muted">v<%= w.version || '?' %> · <%= w.ip %></small></span><small class="a-muted"><%= w.online ? 'đang bật' : H.fmtDate(w.last_seen) %></small></span><% }) %>
+    </div>
+  </div>
+</div>
+<%- include('_footer') %>

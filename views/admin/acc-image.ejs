@@ -1,0 +1,22 @@
+<%- include('_header') %>
+<div class="ai-app" data-ai-app data-boot="<%= JSON.stringify(boot) %>">
+  <div class="ai-modes" role="tablist">
+    <button type="button" data-ai-mode="make"><%- I('image') %> Tạo ảnh acc</button>
+    <button type="button" data-ai-mode="edit"><%- I('edit') %> Sửa ảnh</button>
+    <button type="button" data-ai-mode="batch"><%- I('layers') %> Hàng loạt</button>
+  </div>
+  <div class="ai-main" data-ai-main>
+    <div class="ai-stage" data-ai-stage><canvas data-ai-canvas></canvas><div class="ai-empty" data-ai-empty hidden></div></div>
+    <aside class="ai-panel">
+      <div class="ai-tabs" data-ai-tabs></div>
+      <div class="ai-body" data-ai-body></div>
+    </aside>
+  </div>
+  <div class="ai-bar" data-ai-bar></div>
+  <div class="ai-toast" data-ai-toast hidden></div>
+</div>
+<script src="/js/ai-core.js?v=<%= locals.assetV || 1 %>" defer></script>
+<script src="/js/ai-make.js?v=<%= locals.assetV || 1 %>" defer></script>
+<script src="/js/ai-edit.js?v=<%= locals.assetV || 1 %>" defer></script>
+<script src="/js/ai-batch.js?v=<%= locals.assetV || 1 %>" defer></script>
+<%- include('_footer') %>

@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+<%- include('../partials/user-nav') %>
+<div class="card pad">
+  <h2>Đơn hàng <%= o.order_code %></h2>
+  <table class="table">
+    <tr><th>Sản phẩm</th><td><%= o.product_title %> (<%= o.game_name %>)</td></tr>
+    <tr><th>Giá</th><td><%= H.money(o.price) %></td></tr>
+    <tr><th>Giảm giá</th><td><%= o.discount ? '-' + H.money(o.discount) + (o.coupon_code ? ' (' + o.coupon_code + ')' : '') : '—' %></td></tr>
+    <tr><th>Thanh toán</th><td class="price"><b><%= H.money(o.total) %></b></td></tr>
+    <tr><th>Trạng thái</th><td><span class="status status-<%= o.status %>"><%= o.status === 'completed' ? 'Thành công' : 'Đã hoàn tiền' %></span><% if (o.note) { %> - <%= o.note %><% } %></td></tr>
+    <tr><th>Thời gian</th><td><%= H.fmtDate(o.created_at) %></td></tr>
+  </table>
+  <% if (o.status === 'completed') { %>
+  <h3><%- I('key') %> Thông tin tài khoản</h3>
+  <div class="secret-box">
+    <pre id="delivered" class="blurred" data-reveal><%= o.delivered %></pre>
+    <div class="secret-actions">
+      <button type="button" class="btn btn-sm btn-ghost" data-reveal-btn="#delivered"><%- I('eye') %> Hiện / Ẩn</button>
+      <button type="button" class="btn btn-sm btn-primary" data-copy-target="#delivered"><%- I('copy') %> Sao chép</button>
+    </div>
+  </div>
+  <div class="alert alert-info">Hãy đổi mật khẩu và thông tin bảo mật ngay sau khi nhận acc. Không chia sẻ thông tin này cho người khác.</div>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

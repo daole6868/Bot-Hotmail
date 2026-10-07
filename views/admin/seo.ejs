@@ -1,0 +1,49 @@
+<%- include('_header') %>
+<% const base = baseUrl.replace(/\/$/, ''); %>
+<form method="post" action="/admin/seo" class="a-form" autocomplete="off">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('globe') %> Google Search Console</h3>
+      <p class="a-muted a-small">Báo cho Google biết web của bạn và theo dõi từ khóa, số lượt hiển thị. Vào <b>search.google.com/search-console</b> → Thêm tài sản → Tiền tố URL → chọn cách xác minh <b>Thẻ HTML</b> → dán mã vào đây.</p>
+      <label>Mã xác minh <small class="a-muted">(dán cả thẻ meta cũng được)</small></label>
+      <input name="gsc_verify" maxlength="300" value="<%= s.gsc_verify || '' %>" placeholder='VD: AbCdEf123... hoặc <meta name="google-site-verification" content="...">'>
+      <p class="a-field-hint">Xác minh xong, vào mục Sơ đồ trang web, gửi địa chỉ: <b><%= base %>/sitemap.xml</b></p>
+      <div class="a-kv-mini">
+        <div><span>Sitemap</span><a href="/sitemap.xml" target="_blank" rel="noopener"><%= base %>/sitemap.xml</a></div>
+        <div><span>Robots</span><a href="/robots.txt" target="_blank" rel="noopener"><%= base %>/robots.txt</a></div>
+        <div><span>Trong sitemap</span><b><%= counts.posts %> bài viết · <%= counts.products.toLocaleString('vi-VN') %> acc + game, danh mục</b></div>
+      </div>
+      <h3><%- I('chart') %> Google Analytics 4</h3>
+      <label>Mã đo lường GA4</label>
+      <input name="ga4_id" maxlength="30" value="<%= s.ga4_id || '' %>" placeholder="G-XXXXXXXXXX">
+      <p class="a-field-hint">Google Analytics → Quản trị → Luồng dữ liệu → Web → Mã đo lường.</p>
+    </div>
+    <div class="a-card">
+      <h3><%- I('bolt') %> Google Ads</h3>
+      <p class="a-muted a-small">Đo chuyển đổi để Google Ads tự tối ưu quảng cáo theo khách thật sự nạp tiền / mua hàng. Google Ads → Mục tiêu → Chuyển đổi → Tạo hành động chuyển đổi (Trang web, cài thủ công bằng mã) → lấy <b>ID chuyển đổi</b> (AW-...) và <b>Nhãn chuyển đổi</b> của từng hành động.</p>
+      <label>ID chuyển đổi</label>
+      <input name="gads_id" maxlength="30" value="<%= s.gads_id || '' %>" placeholder="AW-123456789">
+      <label>Nhãn: Đăng ký tài khoản</label>
+      <input name="gads_label_signup" maxlength="60" value="<%= s.gads_label_signup || '' %>" placeholder="VD: AbC-D_efG12">
+      <label>Nhãn: Nạp tiền thành công <small class="a-muted">(gửi kèm số tiền)</small></label>
+      <input name="gads_label_deposit" maxlength="60" value="<%= s.gads_label_deposit || '' %>">
+      <label>Nhãn: Mua hàng <small class="a-muted">(mua acc, đặt cày thuê, nạp game — kèm số tiền)</small></label>
+      <input name="gads_label_purchase" maxlength="60" value="<%= s.gads_label_purchase || '' %>">
+      <p class="a-field-hint">Để trống mục nào thì mục đó không gửi. GA4 cũng nhận các sự kiện: sign_up, deposit, purchase.</p>
+      <div class="a-alert a-alert-warn a-small">⚠️ Google Ads hạn chế quảng cáo mua bán tài khoản game. Nên chạy quảng cáo vào trang nạp game, cày thuê, khuyến mãi, bài hướng dẫn và kiểm tra chính sách quảng cáo của Google trước khi chạy.</div>
+    </div>
+  </div>
+  <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt</button>
+</form>
+
+<div class="a-card a-mt">
+  <h3><%- I('users') %> Nguồn khách 30 ngày</h3>
+  <p class="a-muted a-small">Khách đăng ký đến từ đâu (theo link có gắn utm_source / utm_campaign, hoặc gclid của Google Ads) và đã nạp bao nhiêu. Gắn link quảng cáo dạng: <code><%= base %>/?utm_source=facebook&amp;utm_campaign=ten-chien-dich</code></p>
+  <div class="a-table-wrap"><table class="a-table a-src-table">
+    <thead><tr><th>Nguồn</th><th>Chiến dịch</th><th class="a-num">Khách đăng ký</th><th class="a-num">Đã nạp tiền</th><th class="a-num">Tổng nạp</th></tr></thead>
+    <% if (!sources.length) { %><tr><td colspan="5" class="a-empty">Chưa có khách đăng ký trong 30 ngày.</td></tr><% } %>
+    <% sources.forEach(r => { %><tr><td><b><%= r.src %></b></td><td class="a-small"><%= r.camp || '—' %></td><td class="a-num"><%= r.users %></td><td class="a-num"><%= r.paying || 0 %></td><td class="a-num"><%= H.money(r.deposit) %></td></tr><% }) %>
+  </table></div>
+</div>
+<%- include('_footer') %>
