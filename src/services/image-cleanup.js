@@ -33,8 +33,10 @@ async function unlinkUpload(pub) {
   if (!full.startsWith(config.paths.uploads + path.sep)) return 0;
   let size = 0;
   try { const st = await fsp.stat(full); await fsp.unlink(full); size = st.size; } catch { return 0; }
-  const t = thumbs.thumbPath(pub); // ảnh nhỏ của thẻ sản phẩm đi kèm
-  if (t) { try { const tf = path.join(config.paths.uploads, t.slice('/uploads/'.length)); const st = await fsp.stat(tf); await fsp.unlink(tf); size += st.size; } catch { /* chưa có */ } }
+  for (const sz of ['card', 'wide', 'logo']) { // các bản nhỏ đi kèm
+    const t = thumbs.thumbPath(pub, sz);
+    if (t) { try { const tf = path.join(config.paths.uploads, t.slice('/uploads/'.length)); const st = await fsp.stat(tf); await fsp.unlink(tf); size += st.size; } catch { /* chưa có */ } }
+  }
   return size;
 }
 

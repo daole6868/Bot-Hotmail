@@ -1,6 +1,6 @@
 <%- include('../partials/header') %>
 <section class="page-hero" style="--c: <%= game.color %>">
-  <% const heroImg = parent.image || game.image; if (heroImg) { %><img src="<%= heroImg %>" alt="<%= parent.name %>"><% } %>
+  <% const heroImg = parent.image || game.image; if (heroImg) { %><img src="<%= sz(heroImg, 'wide') %>" alt="<%= parent.name %>"><% } %>
   <div><h1><%= parent.name %></h1><% if (parent.description) { %><p><%= parent.description %></p><% } %></div>
 </section>
 <section class="section">

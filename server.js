@@ -25,6 +25,8 @@ app.set('trust proxy', config.trustProxy);
 app.disable('x-powered-by');
 // Mã phiên bản file tĩnh: đổi mỗi lần khởi động lại -> trình duyệt tự tải CSS/JS mới sau khi cập nhật code
 app.locals.assetV = Date.now().toString(36);
+// Ảnh vừa cỡ hiển thị (bản nhỏ tự tạo ở nền): sz(url, 'card' | 'wide' | 'logo')
+app.locals.sz = (u, size) => require('./src/utils/thumbs').thumbOf(u, size);
 
 // ---------- Bảo mật HTTP headers ----------
 const gAllow = (domains) => () => { const s = getSettings(); return s.ga4_id || s.gads_id ? domains : "'self'"; };
@@ -58,6 +60,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders(res, filePath) {
     // Không cho trình duyệt thực thi file trong thư mục upload
     if (filePath.includes(`${path.sep}uploads${path.sep}`)) res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'");
+    // css / js luôn gắn ?v=<phiên bản> (đổi mỗi lần cập nhật), font không bao giờ đổi -> cho trình duyệt nhớ 1 năm
+    else if (config.isProd && /[\\/](css|js|fonts)[\\/]/.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   },
 }));
 

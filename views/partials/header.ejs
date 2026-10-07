@@ -54,7 +54,7 @@
   <div class="container topbar-inner">
     <button class="icon-btn menu-toggle" data-toggle="#mobileNav" aria-label="Menu"><%- I('menu') %></button>
     <a href="/" class="logo">
-      <% if (S.logo) { %><img src="<%= S.logo %>" alt="<%= siteName %>"><% } else { %><span class="logo-mark"><%- I('gamepad') %></span><span><%= siteName %></span><% } %>
+      <% if (S.logo) { %><img src="<%= sz(S.logo, 'logo') %>" alt="<%= siteName %>"><% } else { %><span class="logo-mark"><%- I('gamepad') %></span><span><%= siteName %></span><% } %>
     </a>
     <form class="search" action="/search" method="get">
       <input type="search" name="q" placeholder="Tìm acc, game, mã sản phẩm..." value="<%= locals.q || '' %>" maxlength="60">
@@ -109,7 +109,7 @@
   <% const bzL = H.bannerSize(S, 'sidebar_left'); %>
   <aside class="side side-left" style="--ar: <%= bzL.w %> / <%= bzL.h %>">
     <% NAV.sideLeft.forEach(b => { %>
-      <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= b.image %>" alt="<%= b.title || '' %>" loading="lazy"></a>
+      <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= sz(b.image, 'wide') %>" alt="<%= b.title || '' %>" loading="lazy"></a>
     <% }) %>
   </aside>
   <main class="main">

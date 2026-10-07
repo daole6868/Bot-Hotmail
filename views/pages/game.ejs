@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 
 <section class="page-hero" style="--c: <%= game.color %>">
-  <% if (game.image) { %><img src="<%= game.image %>" alt="<%= game.name %>"><% } %>
+  <% if (game.image) { %><img src="<%= sz(game.image, 'wide') %>" alt="<%= game.name %>"><% } %>
   <div>
     <h1><%= game.name %></h1>
     <p><%= game.description %></p>

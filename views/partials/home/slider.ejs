@@ -3,7 +3,7 @@
 <section class="slider" data-slider style="--ar: <%= sw %> / <%= sh %>">
   <div class="slides">
     <% banners.forEach((b, i) => { %>
-      <a class="slide <%= i === 0 ? 'active' : '' %>" href="<%= b.link || '#' %>"><img src="<%= b.image %>" alt="<%= b.title || block.title || 'Banner' %>" <%= i ? 'loading=lazy' : '' %>></a>
+      <a class="slide <%= i === 0 ? 'active' : '' %>" href="<%= b.link || '#' %>"><img src="<%= sz(b.image, 'wide') %>" alt="<%= b.title || block.title || 'Banner' %>" <%= i ? 'loading=lazy' : '' %>></a>
     <% }) %>
   </div>
   <% if (banners.length > 1) { %>

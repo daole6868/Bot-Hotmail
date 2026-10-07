@@ -79,7 +79,8 @@ function removeImage(publicPath) {
   const full = path.normalize(path.join(config.paths.uploads, publicPath.slice('/uploads/'.length)));
   if (!full.startsWith(config.paths.uploads)) return;
   fs.promises.unlink(full).catch(() => {});
-  if (/\/uploads\/products\/.+\.(webp|jpe?g|png|gif)$/i.test(publicPath) && !/\.t\.webp$/i.test(publicPath)) fs.promises.unlink(full.replace(/\.[a-z]+$/i, '.t.webp')).catch(() => {});
+  // các bản nhỏ đi kèm (thẻ / banner / logo)
+  if (/\.(webp|jpe?g|png|gif)$/i.test(publicPath) && !/\.(t|m|w|l)\.webp$/i.test(publicPath)) ['.t.webp', '.w.webp', '.l.webp'].forEach((e) => fs.promises.unlink(full.replace(/\.[a-z]+$/i, e)).catch(() => {}));
 }
 
 // Ảnh dựng sẵn từ Tạo ảnh acc / Sửa ảnh (có thể xuất 2× PNG): cho phép tới 20MB, chỉ 1-2 file

@@ -4,7 +4,7 @@
     <% block.games.forEach(g => { %>
       <a href="/game/<%= g.slug %>" class="card game-card" style="--c: <%= g.color %>">
         <div class="thumb">
-          <img src="<%= g.image || '/img/no-image.svg' %>" alt="<%= g.name %>" loading="lazy">
+          <img src="<%= g.image ? sz(g.image, 'card') : '/img/no-image.svg' %>" alt="<%= g.name %>" loading="lazy">
           <% if (g.is_hot) { %><span class="ribbon hot">HOT</span><% } %>
         </div>
         <div class="card-body">

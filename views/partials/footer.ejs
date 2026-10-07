@@ -3,7 +3,7 @@
   <% const bzR = H.bannerSize(S2, 'sidebar_right'); %>
   <aside class="side side-right" style="--ar: <%= bzR.w %> / <%= bzR.h %>">
     <% NAV2.sideRight.forEach(b => { %>
-      <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= b.image %>" alt="<%= b.title || '' %>" loading="lazy"></a>
+      <a href="<%= b.link || '#' %>" class="side-banner"><img src="<%= sz(b.image, 'wide') %>" alt="<%= b.title || '' %>" loading="lazy"></a>
     <% }) %>
   </aside>
 </div>
@@ -27,7 +27,7 @@
   <div class="container footer-grid" style="--cols: <%= footerCols.length %>">
     <div class="footer-about">
       <% if (S2.footer_about_title || !S2.logo) { %><h4><%= S2.footer_about_title || S2.site_name || 'ShopAcc' %></h4>
-      <% } else { %><a href="/" class="footer-logo"><img src="<%= S2.logo %>" alt="<%= S2.site_name || 'Logo' %>"></a><% } %>
+      <% } else { %><a href="/" class="footer-logo"><img src="<%= sz(S2.logo, 'logo') %>" alt="<%= S2.site_name || 'Logo' %>"></a><% } %>
       <p><%= S2.footer_about_text || S2.site_description %></p>
       <% if (socials.length) { %>
         <div class="socials">
@@ -48,7 +48,7 @@
 </footer>
 
 <% const PP = locals.popup; if (PP && !locals.layoutAdmin && (PP.pages === 'all' || locals.currentPath === '/')) { %>
-<% function ppImg() { if (!PP.image) return; %><<%= PP.img_link ? 'a' : 'div' %> class="popup-img<%= PP.img_style !== 'full' || PP.img_w < 100 ? ' popup-img-in' : '' %>" style="width:<%= PP.img_w %>%"<% if (PP.img_link) { %> href="<%= PP.img_link %>"<% } %>><img src="<%= PP.image %>" alt="<%= PP.title %>"<% if (PP.ratio) { %> style="aspect-ratio:<%= PP.ratio %>"<% } %>></<%= PP.img_link ? 'a' : 'div' %>><% } %>
+<% function ppImg() { if (!PP.image) return; %><<%= PP.img_link ? 'a' : 'div' %> class="popup-img<%= PP.img_style !== 'full' || PP.img_w < 100 ? ' popup-img-in' : '' %>" style="width:<%= PP.img_w %>%"<% if (PP.img_link) { %> href="<%= PP.img_link %>"<% } %>><img src="<%= sz(PP.image, 'wide') %>" alt="<%= PP.title %>"<% if (PP.ratio) { %> style="aspect-ratio:<%= PP.ratio %>"<% } %>></<%= PP.img_link ? 'a' : 'div' %>><% } %>
 <div class="popup" id="sitePopup" data-popup-id="<%= PP.v %>" data-delay="<%= PP.delay %>" data-repeat="<%= PP.repeat %>" hidden>
   <div class="popup-box<%= PP.body ? '' : ' popup-imgonly' %>" role="dialog" aria-modal="true" style="--pw:<%= PP.width %>px">
     <button class="popup-close" data-close-popup aria-label="Đóng"><%- I('x') %></button>

@@ -11,7 +11,7 @@
       <% if (p.game_name) { %><a href="/game/<%= p.game_slug %>"><%- I('gamepad') %> <%= p.game_name %></a><% } %>
     </div>
   </header>
-  <% if (p.cover) { %><img class="post-cover" src="<%= p.cover %>" alt="<%= p.title %>"><% } %>
+  <% if (p.cover) { %><img class="post-cover" src="<%= sz(p.cover, 'wide') %>" alt="<%= p.title %>"><% } %>
   <% if (toc.length >= 3) { %>
   <details class="post-toc card" open>
     <summary><%- I('list') %> Mục lục</summary>
