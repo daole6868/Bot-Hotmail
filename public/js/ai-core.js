@@ -273,8 +273,32 @@
     bgG.addColorStop(0, `rgba(${Math.round(r * 0.35)},${Math.round(g * 0.25)},${Math.round(bl * 0.45)},${0.55 + st.panel * 0.4})`); bgG.addColorStop(1, `rgba(8,6,18,${0.5 + st.panel * 0.4})`);
     ctx.fillStyle = bgG; ctx.fill();
     ctx.lineWidth = Math.max(1, d * 0.03); ctx.strokeStyle = rgba(0.45); ctx.stroke();
-    c.slots.forEach((x, i) => {
-      const cx = R.x + pad + d / 2 + amp * Math.sin(Math.PI * (i + 0.5) / n); const cy = R.y + pad + rowH * i + rowH / 2;
+    // Chữ: 1 cỡ chung cho cả khung (theo cỡ khung, không theo độ dài tên); tên dài tự xuống dòng trong phạm vi dòng của nó,
+    // không đủ chỗ thì thu nhỏ chữ của CẢ khung cho đều -> khoảng cách giữa các cung mệnh không đổi
+    const rows = c.slots.map((x, i) => {
+      const cx = R.x + pad + d / 2 + amp * Math.sin(Math.PI * (i + 0.5) / n);
+      const tx = cx + d / 2 + pad * 0.9;
+      return { x, cx, cy: R.y + pad + rowH * i + rowH / 2, tx, maxW: R.x + R.w - pad - tx };
+    });
+    const wrap = (text, maxW) => {
+      const words = String(text).split(/\s+/).filter(Boolean); const lines = []; let cur = '';
+      words.forEach((w) => { const t = cur ? cur + ' ' + w : w; if (cur && ctx.measureText(t).width > maxW) { lines.push(cur); cur = w; } else cur = t; });
+      if (cur) lines.push(cur);
+      return lines;
+    };
+    let fs = Math.max(6, Math.min(rowH * 0.32, d * 0.4));
+    const lh = 1.18;
+    for (let k = 0; k < 30; k++) {
+      ctx.font = `700 ${fs}px ${FONT}`;
+      const ok = rows.every((o) => {
+        if (!o.x.n || o.maxW <= 4) return true;
+        const L = wrap(o.x.n, o.maxW);
+        return L.length * fs * lh <= rowH * 0.96 && L.every((t) => ctx.measureText(t).width <= o.maxW);
+      });
+      if (ok || fs <= 6) break;
+      fs = Math.max(6, fs * 0.93);
+    }
+    rows.forEach(({ x, cx, cy, tx, maxW }) => {
       ctx.save();
       ctx.beginPath(); ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
       const cg = ctx.createRadialGradient(cx, cy - d * 0.1, d * 0.05, cx, cy, d / 2); cg.addColorStop(0, '#2c2236'); cg.addColorStop(1, '#0c0912');
@@ -283,13 +307,13 @@
       ctx.restore();
       const im = imgNow[x.i];
       if (im) { const s2 = d * 0.74; const sc = Math.min(s2 / im.width, s2 / im.height); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, cx - im.width * sc / 2, cy - im.height * sc / 2, im.width * sc, im.height * sc); }
-      if (x.n) {
-        const tx = cx + d / 2 + pad * 0.9; const maxW = R.x + R.w - pad - tx;
-        if (maxW > 4) {
-          ctx.save(); fitFont(ctx, x.n, maxW, Math.min(rowH * 0.34, d * 0.42), 700);
-          ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = d * 0.12;
-          ctx.fillText(x.n, tx, cy); ctx.restore();
-        }
+      if (x.n && maxW > 4) {
+        ctx.save(); ctx.font = `700 ${fs}px ${FONT}`;
+        const L = wrap(x.n, maxW);
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = d * 0.12;
+        const y0 = cy - (L.length - 1) * fs * lh / 2;
+        L.forEach((t, j) => ctx.fillText(t, tx, y0 + j * fs * lh, maxW));
+        ctx.restore();
       }
     });
     ctx.restore();
