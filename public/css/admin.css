@@ -1397,3 +1397,9 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
   .a-cst-slot.s4 { left: 132px; top: 182px; } .a-cst-slot.s5 { left: 98px; top: 238px; } .a-cst-slot.s6 { left: 36px; top: 278px; }
   .a-modal:has(.a-cst-box) { padding: 8px; }
 }
+
+/* Tạo ảnh acc -> tab Cung mệnh */
+.ai-cst-it { grid-template-columns: 18px 30px minmax(0, 1fr) 12px 30px 26px; }
+.ai-cst-it.on { background: rgba(79, 209, 255, .14); }
+.ai-cst-dot { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
+.ai-cst-k { font-size: .78rem; text-align: center; }

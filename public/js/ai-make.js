@@ -59,6 +59,9 @@
 
   let raf = 0;
   // Khung của khối: lưới nhân vật / vũ khí dùng đúng vùng lưới đang vẽ (ôm sát các ô), khối khác dùng khung đã đặt
+  // Khung cung mệnh: mỗi nhân vật 1 khối riêng 'k:<tên>'
+  const cstKeys = () => (st.cstOn !== false ? (st.cst || []).map((c) => c.key) : []);
+  const allKeys = () => [...A.BLOCKS.map(([k]) => k), ...cstKeys()];
   function boxOf(key) { const L = last[key]; return (key === 'chars' || key === 'weapons') && L && L.cells.length ? L.box : A.rect(st, key); }
   const uiK = () => st.W / Math.max(1, canvas.clientWidth || st.W); // 1 px màn hình = bao nhiêu px ảnh
   const handleSize = () => Math.max(Math.min(st.W, st.H * 1.87) * 0.02, 26 * uiK());
@@ -80,7 +83,7 @@
     // viền mờ cho mọi khối đang hiện (biết là kéo được), khối đang chọn viền xanh + tay nắm đổi cỡ ở góc
     const k = uiK(); const lw = Math.max(1, 1.5 * k);
     ctx.save();
-    A.BLOCKS.forEach(([key]) => {
+    allKeys().forEach((key) => {
       if (!st.on[key]) return;
       const R = boxOf(key); const on = key === sel;
       ctx.setLineDash(on ? [6 * k, 4 * k] : [4 * k, 4 * k]); ctx.lineWidth = on ? lw * 1.6 : lw;
@@ -108,7 +111,7 @@
   }
 
   // ---------- Bảng điều khiển ----------
-  const TABS = [['tpl', 'Mẫu & cỡ'], ['data', 'Acc'], ['bg', 'Nền'], ['info', 'Thông tin'], ['c', 'Nhân vật'], ['w', 'Vũ khí'], ['text', 'Mã & chữ'], ['logo', 'Logo'], ['filter', 'Bộ lọc'], ['tone', 'Tông màu']];
+  const TABS = [['tpl', 'Mẫu & cỡ'], ['data', 'Acc'], ['bg', 'Nền'], ['info', 'Thông tin'], ['c', 'Nhân vật'], ['w', 'Vũ khí'], ['k', 'Cung mệnh'], ['text', 'Mã & chữ'], ['logo', 'Logo'], ['filter', 'Bộ lọc'], ['tone', 'Tông màu']];
   const get = (path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), st);
   function set(path, v) { const ks = path.split('.'); const k = ks.pop(); const o = ks.reduce((x, y) => x[y], st); o[k] = v; }
   const num = (path, label, min, max, step = 1) => `<label class="ai-f"><span>${label}</span><input type="number" data-b="${path}" min="${min}" max="${max}" step="${step}" value="${get(path)}"></label>`;
@@ -164,6 +167,13 @@
       `<p class="ai-hint">Bỏ tích để ẩn khỏi ảnh. Ô Lv / ${sym} để trống thì không hiện. Có thể kéo ô trên ảnh để đổi chỗ.</p>` +
       `<div class="ai-items">${g.items.map((it, i) => `<div class="ai-it" data-g="${k}" data-i="${i}"><input type="checkbox" data-it="on" ${it.on ? 'checked' : ''}><span class="ai-it-ic r${it.r}">${it.i ? `<img src="${esc(it.i)}" alt="" loading="lazy">` : esc((it.n || '?').slice(0, 1))}</span><span class="ai-it-n" title="${esc(it.n)}">${esc(it.n)}</span><input data-it="lv" value="${esc(it.lv)}" placeholder="Lv" inputmode="numeric" maxlength="3"><input data-it="k" value="${it.k || ''}" placeholder="${sym}" inputmode="numeric" maxlength="1"><button type="button" data-it-mv="-1" title="Lên">↑</button><button type="button" data-it-mv="1" title="Xuống">↓</button><button type="button" data-it-del title="Xóa">×</button></div>`).join('')}</div></div>`;
   }
+  function tabCst() {
+    const sym = A.G(st).c;
+    const list = st.cst || [];
+    return `<div class="ai-sec">${chk('cstOn', 'Hiện khung cung mệnh')}<div class="ai-inline"><b>${list.length} nhân vật</b>${list.length ? '<button type="button" class="a-btn a-btn-sm a-ghost" data-cst-reset>Xếp lại vị trí</button>' : ''}</div>` +
+      (list.length ? `<div class="ai-items">${list.map((c) => `<div class="ai-it ai-cst-it ${c.key === sel ? 'on' : ''}"><input type="checkbox" data-cst-on="${esc(c.key)}" ${st.on[c.key] ? 'checked' : ''}><span class="ai-it-ic r${c.r}">${c.ic ? `<img src="${esc(c.ic)}" alt="" loading="lazy">` : esc((c.n || '?').slice(0, 1))}</span><span class="ai-it-n" title="${esc(c.n)}">${esc(c.n)}</span><i class="ai-cst-dot" style="background:${esc(c.ring)}"></i><b class="ai-cst-k">${esc(sym)}${c.k}</b><button type="button" data-cst-sel="${esc(c.key)}" title="Chọn khung trên ảnh">◎</button></div>`).join('')}</div>` : '') +
+      `<p class="ai-hint">${list.length ? 'Bỏ tích để ẩn. Bấm ◎ hoặc bấm khung trên ảnh để chọn, kéo để di chuyển, kéo góc để đổi cỡ.' : `Chưa có nhân vật nào từ ${sym}1 trở lên có dữ liệu cung mệnh. Nạp ở Quản lý ảnh → Cung mệnh.`}</p></div>`;
+  }
   function tabText() {
     return `<div class="ai-sec"><b>Mã acc</b>${chk('code.auto', 'Tự sinh theo mã sản phẩm')}${chk('code.server', 'Kèm máy chủ (VD: A455 AS)')}` +
       `<label class="ai-f"><span>Mã hiển thị <small>(sửa tay sẽ tắt tự sinh)</small></span><input data-code value="${esc(A.codeText(st))}" maxlength="30"></label>` +
@@ -216,7 +226,7 @@
   function renderPanel() {
     ensureFx();
     renderTabs();
-    bodyEl.innerHTML = { tpl: tabTpl, data: tabData, bg: tabBg, info: tabInfo, c: () => tabGrid('c'), w: () => tabGrid('w'), text: tabText, logo: tabLogo, filter: tabFilter, tone: tabTone }[tab]();
+    bodyEl.innerHTML = { tpl: tabTpl, data: tabData, bg: tabBg, info: tabInfo, c: () => tabGrid('c'), w: () => tabGrid('w'), k: tabCst, text: tabText, logo: tabLogo, filter: tabFilter, tone: tabTone }[tab]();
     if (tab === 'filter') filterThumbs();
   }
   function bar() {
@@ -252,6 +262,7 @@
       const row = el.closest('.ai-it'); const it = st.grids[row.dataset.g].items[+row.dataset.i];
       if (el.dataset.it === 'lv') it.lv = el.value.replace(/\D/g, '').slice(0, 3); else it.k = clamp(parseInt(el.value, 10) || 0, 0, 6);
       changed();
+      if (el.dataset.it === 'k' && row.dataset.g === 'c') { clearTimeout(el._k); el._k = setTimeout(syncCst, 400); }
     }
     if (el.matches('[data-pq]')) pickRender(el.dataset.pq);
     if (el.matches('[data-psearch]')) { clearTimeout(el._t); el._t = setTimeout(() => psearch(el.value), 250); }
@@ -261,7 +272,9 @@
     const el = e.target;
     if (el.dataset.b && (el.type === 'checkbox' || el.tagName === 'SELECT')) { onBind(el); if (el.dataset.b === 'game' || el.dataset.b.startsWith('on.')) renderPanel(); }
     if (el.matches('[data-size]')) { if (el.value !== 'custom') { const [w, h] = el.value.split('x').map(Number); st.W = w; st.H = h; } renderPanel(); changed(); }
-    if (el.matches('[data-it="on"]')) { const row = el.closest('.ai-it'); st.grids[row.dataset.g].items[+row.dataset.i].on = el.checked; changed(); }
+    if (el.matches('[data-it="on"]')) { const row = el.closest('.ai-it'); st.grids[row.dataset.g].items[+row.dataset.i].on = el.checked; changed(); if (row.dataset.g === 'c') syncCst(); }
+    if (el.matches('[data-cst-on]')) { st.on[el.dataset.cstOn] = el.checked; if (!el.checked && sel === el.dataset.cstOn) sel = ''; changed(); }
+    if (el.dataset.b === 'game') syncCst();
     if (el.matches('[data-bg-up]') && el.files[0]) {
       toast('Đang tải ảnh nền lên...');
       const r = await upload('/admin/acc-image/bg', { game: st.game }, el.files[0], 'bg');
@@ -291,9 +304,11 @@
       ({ l: () => { b[0] = m; }, cx: () => { b[0] = (1 - b[2]) / 2; }, r: () => { b[0] = 1 - b[2] - m; }, t: () => { b[1] = m * 1.87; }, cy: () => { b[1] = (1 - b[3]) / 2; }, b: () => { b[1] = 1 - b[3] - m * 1.87; } })[al.dataset.align]();
       changed(); return;
     }
-    const tp = t.closest('[data-tpl]'); if (tp) { A.applyTpl(st, A.TPL[tp.dataset.tpl]); sel = ''; renderPanel(); changed(); return; }
+    const cs = t.closest('[data-cst-sel]'); if (cs) { sel = cs.dataset.cstSel; st.on[sel] = true; renderPanel(); draw(); return; }
+    if (t.closest('[data-cst-reset]')) { (st.cst || []).forEach((c) => { delete st.blocks[c.key]; delete st.on[c.key]; }); st.cst = []; await syncCst(); renderPanel(); return; }
+    const tp = t.closest('[data-tpl]'); if (tp) { A.applyTpl(st, A.TPL[tp.dataset.tpl]); sel = ''; await syncCst(true); renderPanel(); changed(); return; }
     const ts = t.closest('[data-tpl-s]');
-    if (ts) { const x = (B.tpls || []).find((y) => y.id === ts.dataset.tplS); if (x) { A.applyTpl(st, x.data); await preload(A.srcsOf(st)); sel = ''; renderPanel(); changed(); } return; }
+    if (ts) { const x = (B.tpls || []).find((y) => y.id === ts.dataset.tplS); if (x) { A.applyTpl(st, x.data); await syncCst(true); await preload(A.srcsOf(st)); sel = ''; renderPanel(); changed(); } return; }
     const td = t.closest('[data-tpl-del]');
     if (td) { if (!confirm('Xóa mẫu này?')) return; const r = await api('/admin/acc-image/tpl/' + td.dataset.tplDel + '/delete', {}); if (r.ok) { B.tpls = B.tpls.filter((y) => y.id !== td.dataset.tplDel); renderPanel(); } else toast(r.message, true); return; }
     if (t.closest('[data-tpl-save]')) {
@@ -312,7 +327,7 @@
     const so = t.closest('[data-sort]'); if (so) { const g = st.grids[so.dataset.sort]; g.items = A.sortItems(g.items); renderPanel(); changed(); return; }
     const mv = t.closest('[data-it-mv]');
     if (mv) { const row = mv.closest('.ai-it'); const list = st.grids[row.dataset.g].items; const i = +row.dataset.i; const j = i + (+mv.dataset.itMv); if (j < 0 || j >= list.length) return; [list[i], list[j]] = [list[j], list[i]]; renderPanel(); changed(); return; }
-    const dl = t.closest('[data-it-del]'); if (dl) { const row = dl.closest('.ai-it'); st.grids[row.dataset.g].items.splice(+row.dataset.i, 1); renderPanel(); changed(); return; }
+    const dl = t.closest('[data-it-del]'); if (dl) { const row = dl.closest('.ai-it'); st.grids[row.dataset.g].items.splice(+row.dataset.i, 1); if (row.dataset.g === 'c') await syncCst(); renderPanel(); changed(); return; }
     const pk = t.closest('[data-pick]'); if (pk) { const box = $(`[data-pickbox="${pk.dataset.pick}"]`, bodyEl); box.hidden = !box.hidden; if (!box.hidden) { if (!st.game) { toast('Chọn game ở tab "Acc" trước', true); box.hidden = true; return; } picked[pk.dataset.pick] = new Set(); pickRender(pk.dataset.pick); } return; }
     const pr = t.closest('[data-prow]'); if (pr) { const k = pr.dataset.prow; const s = picked[k] || (picked[k] = new Set()); if (s.has(pr.dataset.n)) s.delete(pr.dataset.n); else s.add(pr.dataset.n); pr.classList.toggle('on'); $(`[data-pn="${k}"]`, bodyEl).textContent = s.size; return; }
     const pa = t.closest('[data-padd]'); if (pa) { await pickAdd(pa.dataset.padd); return; }
@@ -344,6 +359,7 @@
     [...s].map((n) => (lib[k] || []).find((x) => x.n === n)).filter(Boolean).forEach((x) => insertByRarity(st.grids[k].items, { n: x.n, i: x.i, r: x.r || 4, lv: '', k: 0, on: true }));
     picked[k] = new Set();
     await preload(st.grids[k].items.map((x) => x.i));
+    if (k === 'c') await syncCst();
     renderPanel(); changed();
   }
   async function psearch(q) {
@@ -355,9 +371,50 @@
     const r = await api('/admin/acc-image/product/' + id);
     if (!r.ok) { toast(r.message || 'Không tải được acc', true); return; }
     A.fromDetail(st, r.product.detail, r.product);
+    await syncCst();
     await preload(A.srcsOf(st));
     toast('Đã lấy dữ liệu acc #' + r.product.code);
     renderPanel(); changed(); bar();
+  }
+
+  // ---------- Khung cung mệnh ----------
+  // Nhân vật đang hiện có C1 trở lên + đã nạp cung mệnh -> 1 khung riêng, 5★ trước 4★, chỉ lấy tới đúng số C của acc
+  const cstCache = {};
+  let cstTok = 0;
+  async function syncCst(fresh) {
+    const tok = ++cstTok;
+    const game = st.game;
+    const want = st.grids.c.items.filter((x) => x.on && x.k >= 1).sort((a, b) => (b.r || 0) - (a.r || 0));
+    const cache = cstCache[game] || (cstCache[game] = {});
+    const miss = game ? [...new Set(want.map((x) => x.n))].filter((n) => !(n in cache)) : [];
+    if (miss.length) { const r = await api('/admin/acc-image/consts', { game, names: miss }); if (r && r.ok) miss.forEach((n) => { cache[n] = r.data[n] || null; }); }
+    if (tok !== cstTok) return;
+    const list = [];
+    if (game) {
+      want.forEach((x) => {
+        const d = cache[x.n]; if (!d) return;
+        const slots = d.slots.filter((s) => s.s <= x.k).map((s) => ({ n: s.n, i: s.i }));
+        const key = 'k:' + fold(x.n);
+        if (slots.length && !list.some((c) => c.key === key)) list.push({ key, n: x.n, r: x.r, k: x.k, ic: x.i, ring: d.ring, slots });
+      });
+    }
+    const old = new Map((st.cst || []).map((c) => [c.key, c]));
+    old.forEach((c, key) => { if (!list.some((l) => l.key === key)) { delete st.blocks[key]; delete st.on[key]; if (sel === key) sel = ''; } });
+    // khung mới: xếp thành cột từ giữa ảnh, hết chỗ thì sang cột kế bên; khung cũ đổi số C -> giữ chỗ, đổi chiều cao
+    const rowPx = st.W * 0.031; const padPx = st.W * 0.008; const w = 0.16;
+    let x = 0.335; let y = 0.28;
+    list.forEach((c) => {
+      const h = (c.slots.length * rowPx + 2 * padPx) / st.H;
+      if (y + h > 0.98) { y = 0.28; x += w + 0.01; if (x + w > 1) x = 0.335; }
+      const o = old.get(c.key);
+      if (fresh || !st.blocks[c.key]) { st.blocks[c.key] = [x, y, w, h]; st.on[c.key] = true; }
+      else if (o && o.slots.length !== c.slots.length) st.blocks[c.key][3] *= c.slots.length / o.slots.length;
+      y += h + 0.012;
+    });
+    st.cst = list;
+    await preload(A.srcsOf(st));
+    if (tab === 'k') renderPanel();
+    changed();
   }
 
   // ---------- Kéo trên ảnh ----------
@@ -379,7 +436,7 @@
       if (c) { drag = { type: 'cell', k: tab, it: c.it }; return; }
     }
     if (sel && st.on[sel]) { const R = boxOf(sel); const hs = handleSize() * 0.9; if (Math.abs(p.x - (R.x + R.w)) <= hs && Math.abs(p.y - (R.y + R.h)) <= hs) { snapBlock(sel); drag = { type: 'size', key: sel, p0: p, b0: st.blocks[sel].slice() }; return; } }
-    const key = ORDER.find((k) => st.on[k] && inR(p, boxOf(k)));
+    const key = [...cstKeys().reverse(), ...ORDER].find((k) => st.on[k] && inR(p, boxOf(k)));
     const was = sel;
     sel = key || '';
     if (was !== sel && tab === 'tpl') renderPanel(); // hiện / ẩn nút căn khối
@@ -389,7 +446,7 @@
   let guides = { x: [], y: [] };
   function snapTargets(except) {
     const xs = [0, st.W / 2, st.W]; const ys = [0, st.H / 2, st.H];
-    A.BLOCKS.forEach(([k]) => { if (!st.on[k] || k === except) return; const R = boxOf(k); xs.push(R.x, R.x + R.w / 2, R.x + R.w); ys.push(R.y, R.y + R.h / 2, R.y + R.h); });
+    allKeys().forEach((k) => { if (!st.on[k] || k === except) return; const R = boxOf(k); xs.push(R.x, R.x + R.w / 2, R.x + R.w); ys.push(R.y, R.y + R.h / 2, R.y + R.h); });
     return { xs, ys };
   }
   function nearest(vals, targets, th) {
@@ -497,5 +554,6 @@
   boot();
   AIM.lib(st.game);
   commitNow();
+  syncCst();
   if (document.fonts && document.fonts.load) document.fonts.load("800 40px 'Be Vietnam Pro'").then(() => { if (AIM.current === 'make') draw(); });
 })();

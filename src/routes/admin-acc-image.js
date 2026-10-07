@@ -66,6 +66,24 @@ router.get('/products', (req, res) => {
     FROM products p WHERE ${where.join(' AND ')} ORDER BY p.id DESC LIMIT 200`).all(...params);
   res.json({ ok: true, rows: rows.filter((r) => owns(req, r)).map((r) => ({ id: r.id, code: r.code, title: r.title, game: r.game, img: H.parseJSON(r.images, []).length })) });
 });
+// Cung mệnh đã nạp (Quản lý ảnh -> Cung mệnh) của các nhân vật theo tên: { tên: { ring, slots: [{ s, n, i }] } }
+router.post('/consts', (req, res) => {
+  const b = req.body || {};
+  const game = hoyo.GAMES[b.game] ? b.game : '';
+  const names = Array.isArray(b.names) ? b.names.slice(0, 200).map((n) => H.str(n, 60)).filter(Boolean) : [];
+  if (!game || !names.length) return res.json({ ok: true, data: {} });
+  const cst = require('../services/hoyo-const');
+  const one = db.prepare("SELECT id, ring FROM hoyo_assets WHERE game = ? AND kind = 'char' AND nkey = ?");
+  const slots = db.prepare("SELECT slot AS s, name AS n, icon AS i FROM hoyo_consts WHERE asset_id = ? AND icon <> '' ORDER BY slot");
+  const data = {};
+  for (const n of names) {
+    const a = one.get(game, hoyo.nkey(n));
+    if (!a) continue;
+    const s = slots.all(a.id);
+    if (s.length) data[n] = { ring: cst.ringOf(game, a.ring), slots: s };
+  }
+  res.json({ ok: true, data });
+});
 router.get('/product/:id', (req, res) => {
   const p = productData(req, H.toInt(req.params.id, 0));
   res.json(p ? { ok: true, product: p } : { ok: false, message: 'Không tìm thấy sản phẩm' });

@@ -74,6 +74,7 @@
     logo: { src: B.logo || '', op: 0.85 },
     panel: 0.72,
     fx: { filter: 'none', amount: 100, tone: {} },
+    cst: [], cstOn: true, // khung cung mệnh từng nhân vật (khối 'k:<tên>' trong blocks / on)
   });
   function applyTpl(st, t) {
     st.W = t.W; st.H = t.H;
@@ -93,8 +94,9 @@
     if (t.note != null) st.note.text = t.note;
   }
   /** Lưu mẫu: chỉ bố cục + kiểu, không mang dữ liệu acc */
+  const noCst = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => !k.startsWith('k:')));
   const tplOf = (st) => ({
-    W: st.W, H: st.H, blocks: st.blocks, on: st.on, panel: st.panel,
+    W: st.W, H: st.H, blocks: noCst(st.blocks), on: noCst(st.on), panel: st.panel,
     grids: { c: [st.grids.c.cols, st.grids.c.rows], w: [st.grids.w.cols, st.grids.w.rows] },
     gridOpt: { c: { over: st.grids.c.over, lv: st.grids.c.lv, k: st.grids.c.k }, w: { over: st.grids.w.over, lv: st.grids.w.lv, k: st.grids.w.k } },
     codeOpt: { auto: st.code.auto, server: st.code.server, color: st.code.color },
@@ -131,7 +133,7 @@
   function sortItems(items) {
     return items.slice().sort((a, b) => (b.r - a.r) || ((parseInt(b.lv, 10) || 0) - (parseInt(a.lv, 10) || 0)) || ((b.k || 0) - (a.k || 0)) || a.n.localeCompare(b.n));
   }
-  const srcsOf = (st) => [st.bg.src, st.logo.src, st.info.bg, ...st.grids.c.items.map((x) => x.i), ...st.grids.w.items.map((x) => x.i)];
+  const srcsOf = (st) => [st.bg.src, st.logo.src, st.info.bg, ...st.grids.c.items.map((x) => x.i), ...st.grids.w.items.map((x) => x.i), ...(st.cst || []).flatMap((c) => c.slots.map((x) => x.i))];
 
   // ---------- Vẽ ----------
   function rr(ctx, x, y, w, h, r) {
@@ -256,6 +258,40 @@
     }
     return L;
   }
+  // Khung cung mệnh của 1 nhân vật: nền + viền theo màu đã lưu, mỗi dòng = ô tròn phát sáng + tên
+  const rgbOf = (hex) => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); const n = m ? parseInt(m[1], 16) : 0xe9c98b; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  function drawCst(ctx, st, c) {
+    const b = st.blocks[c.key]; if (!b || !c.slots.length) return;
+    const R = rect(st, c.key); const [r, g, bl] = rgbOf(c.ring); const rgba = (a) => `rgba(${r},${g},${bl},${a})`;
+    const n = c.slots.length; const pad = Math.min(R.w, R.h) * 0.06;
+    const rowH = (R.h - 2 * pad) / n; const d = Math.max(4, Math.min(rowH * 0.8, R.w * 0.36));
+    ctx.save();
+    rr(ctx, R.x, R.y, R.w, R.h, Math.min(R.w, R.h) * 0.08);
+    const bgG = ctx.createLinearGradient(R.x, R.y, R.x + R.w, R.y + R.h);
+    bgG.addColorStop(0, `rgba(${Math.round(r * 0.35)},${Math.round(g * 0.25)},${Math.round(bl * 0.45)},${0.55 + st.panel * 0.4})`); bgG.addColorStop(1, `rgba(8,6,18,${0.5 + st.panel * 0.4})`);
+    ctx.fillStyle = bgG; ctx.fill();
+    ctx.lineWidth = Math.max(1, d * 0.03); ctx.strokeStyle = rgba(0.45); ctx.stroke();
+    c.slots.forEach((x, i) => {
+      const cx = R.x + pad + d / 2; const cy = R.y + pad + rowH * i + rowH / 2;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
+      const cg = ctx.createRadialGradient(cx, cy - d * 0.1, d * 0.05, cx, cy, d / 2); cg.addColorStop(0, '#2c2236'); cg.addColorStop(1, '#0c0912');
+      ctx.fillStyle = cg; ctx.shadowColor = rgba(0.95); ctx.shadowBlur = d * 0.35; ctx.fill();
+      ctx.shadowBlur = d * 0.2; ctx.lineWidth = Math.max(1, d * 0.06); ctx.strokeStyle = rgba(1); ctx.stroke();
+      ctx.restore();
+      const im = imgNow[x.i];
+      if (im) { const s2 = d * 0.74; const sc = Math.min(s2 / im.width, s2 / im.height); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, cx - im.width * sc / 2, cy - im.height * sc / 2, im.width * sc, im.height * sc); }
+      if (x.n) {
+        const tx = cx + d / 2 + pad * 0.9; const maxW = R.x + R.w - pad - tx;
+        if (maxW > 4) {
+          ctx.save(); fitFont(ctx, x.n, maxW, Math.min(rowH * 0.34, d * 0.42), 700);
+          ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = d * 0.12;
+          ctx.fillText(x.n, tx, cy); ctx.restore();
+        }
+      }
+    });
+    ctx.restore();
+  }
   function drawInfo(ctx, st) {
     const R = rect(st, 'info'); const s = Math.min(st.W, st.H * 1.87); const g = G(st);
     const ib = imgNow[st.info.bg];
@@ -346,6 +382,7 @@
     if (st.on.stats) drawStats(ctx, st);
     if (st.on.code) drawCode(ctx, st);
     if (st.on.logo) drawLogo(ctx, st);
+    if (st.cstOn !== false) (st.cst || []).forEach((c) => { if (st.on[c.key]) drawCst(ctx, st, c); });
     if (guides && sel && st.on[sel]) {
       const R = rect(st, sel); const s = Math.min(st.W, st.H * 1.87); const hs = s * 0.018;
       ctx.save(); ctx.setLineDash([s * 0.008, s * 0.006]); ctx.lineWidth = Math.max(2, s * 0.0018); ctx.strokeStyle = '#4fd1ff'; ctx.strokeRect(R.x, R.y, R.w, R.h);
