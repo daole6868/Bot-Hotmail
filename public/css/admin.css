@@ -1430,3 +1430,5 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-ap-st.refunded { background: #fee2e2; color: #b91c1c; }
 .a-mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; width: 100%; }
 .a-ap-filter select { width: auto; }
+.a-ap-ui { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 18px; }
+.a-ap-ui small { display: block; }

@@ -1,17 +1,16 @@
 <%- include('../partials/header') %>
-<div class="bp-head">
-  <h1><%- I('box') %> <%= game.name %></h1>
-  <% if (game.description) { %><p class="muted prewrap"><%= game.description %></p><% } %>
-</div>
+<div class="bp-head"><h1><%- I('box') %> <%= game.name %></h1></div>
+<div class="as-page" style="--as-name-pc:<%= ui.namePc %>px;--as-name-mb:<%= ui.nameMb %>px;--as-desc-pc:<%= ui.descPc %>px;--as-desc-mb:<%= ui.descMb %>px;--as-lh:<%= ui.lh %>">
+<% if (game.description) { %><div class="bp-desc prewrap as-intro"><%= game.description %></div><% } %>
 <% if (!groups.length) { %><div class="card pad muted center">Hiện chưa có sản phẩm nào. Vui lòng quay lại sau.</div><% } %>
 <% groups.forEach(g => { %>
-  <section class="as-cat">
-    <h2 class="as-cat-h"><% if (g.icon) { %><img src="<%= g.icon %>" alt="" width="28" height="28" loading="lazy"><% } %> <%= g.name %></h2>
+  <section class="card as-cat">
+    <h2 class="as-cat-h"><% if (g.icon) { %><img src="<%= g.icon %>" alt="" width="28" height="28" loading="lazy"><% } %> <%= g.name %> <span class="muted small"><%= g.items.length %> sản phẩm</span></h2>
     <div class="as-grid">
       <% g.items.forEach(p => { const out = p.stock < p.min; %>
         <div class="card as-item<%= out ? ' is-out' : '' %>">
           <h3><%= p.name %></h3>
-          <% if (p.desc) { %><p class="muted small as-desc prewrap" data-expand><%= p.desc %></p><% } %>
+          <% if (p.desc) { %><p class="muted as-desc prewrap"><%= p.desc %></p><% } %>
           <div class="as-meta">
             <span><%- I('box') %> Kho: <b><%= p.stock.toLocaleString('vi-VN') %></b></span>
             <% if (p.sold) { %><span><%- I('check') %> Đã bán: <b><%= p.sold.toLocaleString('vi-VN') %></b></span><% } %>
@@ -28,6 +27,7 @@
   </section>
 <% }) %>
 
+</div>
 <% if (user) { %>
 <div class="as-modal" data-as-modal hidden data-balance="<%= user.balance %>">
   <div class="as-box card" role="dialog" aria-modal="true">

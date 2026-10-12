@@ -251,24 +251,32 @@ router.get('/api-orders', (req, res) => {
     select: 'code, title, qty, delivered, unit_price, total, refunded, status, created_at', from: 'api_orders', where: 'WHERE user_id = ?', params: [req.user.id],
     order: 'ORDER BY id DESC', page: toInt(req.query.page, 1, 1), perPage: 15,
   });
-  res.render('user/api-orders', { title: 'Đơn ' + (res.locals.apiTab || 'hàng API'), result, query: {}, STATUS: AP_STATUS, tab: 'api' });
+  res.render('user/api-orders', { title: 'Đơn ' + (res.locals.apiTab || 'hàng API'), result, query: {}, STATUS: AP_STATUS, keepDays: require('../services/apishop').cfg().keepDays, tab: 'api' });
 });
 const myApi = (req) => db.prepare('SELECT * FROM api_orders WHERE code = ? AND user_id = ?').get(str(req.params.code, 30).toUpperCase(), req.user.id);
 router.get('/api-orders/:code', (req, res, next) => {
   const o = myApi(req);
   if (!o) return next();
-  const data = require('../services/apishop').dataOf(o);
-  const lines = data ? data.split('\n') : [];
+  const ap = require('../services/apishop');
+  const data = ap.dataOf(o);
+  const lines = data ? data.split('\n').filter(Boolean) : [];
+  const head = lines.slice(0, 100).join('\n');
   res.set('Cache-Control', 'no-store');
-  res.render('user/api-order', { title: 'Đơn hàng ' + o.code, o, STATUS: AP_STATUS, preview: lines.slice(0, 100), lineCount: lines.length, tab: 'api' });
+  res.render('user/api-order', {
+    title: 'Đơn hàng ' + o.code, o, STATUS: AP_STATUS, lineCount: lines.length, tab: 'api',
+    raw: head, mp: ap.mailPass(head, o.fmt), fmt: o.fmt || '', keepDays: ap.cfg().keepDays,
+  });
 });
 router.get('/api-orders/:code/data.txt', (req, res, next) => {
   const o = myApi(req);
   if (!o || !o.data_enc) return next();
+  const ap = require('../services/apishop');
+  const mp = req.query.type === 'mp'; // chỉ mail|pass
   res.set('Cache-Control', 'no-store');
   res.type('text/plain; charset=utf-8');
-  if (req.query.dl) res.attachment(`${o.code}.txt`);
-  res.send(require('../services/apishop').dataOf(o));
+  if (req.query.dl) res.attachment(`${o.code}${mp ? '-mail-pass' : ''}.txt`);
+  const data = ap.dataOf(o);
+  res.send(mp ? ap.mailPass(data, o.fmt) : data);
 });
 
 module.exports = router;

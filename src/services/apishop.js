@@ -22,7 +22,11 @@ const s_ = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b-\u
 class ApiErr extends Error {}
 
 // ---------- Cấu hình (settings.apishop_cfg) ----------
-const DEFAULTS = { url: 'https://1smail.shop', markup: 30, low: 100000, gameId: 0 };
+const DEFAULTS = { url: 'https://1smail.shop', markup: 30, low: 100000, gameId: 0, keepDays: 15 };
+// Cỡ chữ trang khách (px) + khoảng cách dòng
+const UI = { namePc: 15, nameMb: 14, descPc: 13, descMb: 12, lh: 1.4 };
+const fl = (v, d, min, max) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n * 10) / 10)) : d; };
+const fl2 = (v, d, min, max) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n * 100) / 100)) : d; };
 function cfg(s = getSettings()) {
   let c = {};
   try { c = JSON.parse(s.apishop_cfg || '{}') || {}; } catch { c = {}; }
@@ -32,7 +36,35 @@ function cfg(s = getSettings()) {
     markup: int(c.markup, DEFAULTS.markup, 0, 1000),
     low: int(c.low, DEFAULTS.low, 0, 1e10),
     gameId: int(c.gameId, 0, 0, 1e9),
+    keepDays: int(c.keepDays, DEFAULTS.keepDays, 0, 3650), // 0 = giữ mãi
+    ui: {
+      namePc: fl(c.ui && c.ui.namePc, UI.namePc, 10, 32), nameMb: fl(c.ui && c.ui.nameMb, UI.nameMb, 10, 28),
+      descPc: fl(c.ui && c.ui.descPc, UI.descPc, 9, 24), descMb: fl(c.ui && c.ui.descMb, UI.descMb, 9, 22),
+      lh: fl2(c.ui && c.ui.lh, UI.lh, 1, 2.2),
+    },
   };
+}
+/** Định dạng dữ liệu trong mô tả sản phẩm: "Định dạng : mail|pass|refresh_token|client_id" -> ['mail','pass','refresh_token','client_id'] */
+function fmtOf(desc) {
+  for (const line of String(desc || '').split(/\r?\n/)) {
+    const m = /([A-Za-z_]\w*(?:\s*\|\s*[A-Za-z_][\w ]*)+)/.exec(line);
+    if (m) return m[1].split('|').map((x) => x.trim()).filter(Boolean).join('|').slice(0, 200);
+  }
+  return '';
+}
+/** Vị trí ô mail / pass trong định dạng (không có định dạng -> ô 1, 2) */
+function mpIndex(fmt) {
+  const f = String(fmt || '').toLowerCase().split('|');
+  let mi = f.findIndex((x) => /^(e-?mail|mail|account|tài khoản|user(name)?|login)$/.test(x));
+  if (mi < 0) mi = f.findIndex((x) => /mail/.test(x) && !/recovery|khôi phục/.test(x));
+  let pi = f.findIndex((x, i) => i !== mi && /^pass(word)?$/.test(x));
+  if (pi < 0) pi = f.findIndex((x, i) => i !== mi && /pass/.test(x) && !/recovery/.test(x));
+  return [mi < 0 ? 0 : mi, pi < 0 ? 1 : pi];
+}
+/** Dữ liệu gốc -> chỉ mail|pass (dòng không đủ ô thì giữ nguyên) */
+function mailPass(data, fmt) {
+  const [mi, pi] = mpIndex(fmt);
+  return String(data || '').split('\n').filter(Boolean).map((l) => { const f = l.split('|'); return f.length > Math.max(mi, pi) ? `${f[mi].trim()}|${f[pi].trim()}` : l; }).join('\n');
 }
 function saveCfg(patch) {
   const c = { ...cfg(), ...patch };
@@ -228,8 +260,8 @@ const openTx = db.transaction((userId, p, qty, unit, ip, key) => {
   if (upd.changes !== 1) throw new ApiErr('Số dư không đủ');
   const code = genCode();
   const title = p.title || p.name || 'Sản phẩm ' + p.src_id;
-  const id = db.prepare(`INSERT INTO api_orders(code, user_id, product_id, title, qty, unit_price, total, ip) VALUES(?,?,?,?,?,?,?,?)`)
-    .run(code, userId, p.id, title, qty, unit, total, ip || null).lastInsertRowid;
+  const id = db.prepare(`INSERT INTO api_orders(code, user_id, product_id, title, qty, unit_price, total, ip, fmt) VALUES(?,?,?,?,?,?,?,?,?)`)
+    .run(code, userId, p.id, title, qty, unit, total, ip || null, fmtOf(p.description) || null).lastInsertRowid;
   logBal(userId, -total, 'purchase', code, `Mua ${qty} × ${title}`);
   idem.save(userId, key, 'apiorder', code);
   return { id, code, total };
@@ -400,6 +432,14 @@ function adminDeliver(orderId, adminId, text) {
 }
 const dataOf = (o) => { try { return o.data_enc ? decrypt(o.data_enc) : ''; } catch { return ''; } };
 
+/** Xóa dữ liệu hàng của đơn quá số ngày lưu (giữ lại đơn để đối soát), giải phóng dung lượng */
+function purgeOld(c = cfg()) {
+  if (!c.keepDays) return 0;
+  const n = db.prepare("UPDATE api_orders SET data_enc = NULL, purged_at = unixepoch() WHERE data_enc IS NOT NULL AND status IN ('completed', 'refunded') AND created_at < ?")
+    .run(nowS() - c.keepDays * 86400).changes;
+  return n;
+}
+
 // ---------- Chạy nền (chỉ bản PM2 số 0) ----------
 let timer = null;
 function start() {
@@ -409,6 +449,7 @@ function start() {
     if (!ready(c)) return;
     try { await sync(); } catch (e) { /* lỗi mạng: thử lại lần sau */ }
     await checkLowBalance();
+    purgeOld(c);
     // Đơn kẹt "đang xử lý" quá 10 phút (máy chủ khởi động lại giữa chừng) -> chuyển chờ kiểm tra
     for (const o of db.prepare("SELECT * FROM api_orders WHERE status = 'processing' AND created_at < ?").all(nowS() - 600)) {
       await unknown(o, null, new Error('Đơn bị gián đoạn khi đang xử lý (máy chủ khởi động lại)'));
@@ -421,5 +462,5 @@ function start() {
 
 module.exports = {
   DEFAULTS, cfg, saveCfg, setKey, maskKey, ready, profile, balance, sync, syncInfo, priceOf, losing, listing, view, gameOf,
-  buy, adminRefund, adminDeliver, dataOf, start, notify,
+  buy, adminRefund, adminDeliver, dataOf, start, notify, fmtOf, mailPass, purgeOld, UI,
 };

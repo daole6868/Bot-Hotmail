@@ -47,6 +47,18 @@
   </div>
 </div>
 
+<form method="post" action="/admin/api-shop/ui" class="a-card a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <h3><%- I('palette') %> Giao diện trang khách & lưu đơn</h3>
+  <div class="a-ap-ui">
+    <div><label>Cỡ chữ tên sản phẩm (px)</label><div class="a-row"><div><small class="a-muted">Máy tính · mặc định <%= UI.namePc %></small><input type="number" name="namePc" step="0.5" min="10" max="32" value="<%= c.ui.namePc %>"></div><div><small class="a-muted">Điện thoại · mặc định <%= UI.nameMb %></small><input type="number" name="nameMb" step="0.5" min="10" max="28" value="<%= c.ui.nameMb %>"></div></div></div>
+    <div><label>Cỡ chữ mô tả (px)</label><div class="a-row"><div><small class="a-muted">Máy tính · mặc định <%= UI.descPc %></small><input type="number" name="descPc" step="0.5" min="9" max="24" value="<%= c.ui.descPc %>"></div><div><small class="a-muted">Điện thoại · mặc định <%= UI.descMb %></small><input type="number" name="descMb" step="0.5" min="9" max="22" value="<%= c.ui.descMb %>"></div></div></div>
+    <div><label>Khoảng cách dòng <small class="a-muted">(mặc định <%= UI.lh %>, nhỏ hơn = sát hơn)</small></label><input type="number" name="lh" step="0.05" min="1" max="2.2" value="<%= c.ui.lh %>"></div>
+    <div><label>Lưu dữ liệu đơn (ngày) <small class="a-muted">(0 = giữ mãi)</small></label><input type="number" name="keepDays" min="0" max="3650" value="<%= c.keepDays %>"><small class="a-muted">Quá hạn web tự xóa dữ liệu hàng, đơn vẫn còn để đối soát. Khách được nhắc tải về.</small></div>
+  </div>
+  <div class="a-btn-row"><button class="a-btn a-primary"><%- I('save') %> Lưu</button><button class="a-btn" name="reset" value="1" data-confirm="Về cỡ chữ & số ngày lưu mặc định?">Mặc định</button></div>
+</form>
+
 <div class="a-card a-card-flush">
   <div class="a-card-head a-pad a-ap-head">
     <h3><%- I('box') %> Sản phẩm <small class="a-muted"><%= counts.active || 0 %> đang bán / <%= counts.total || 0 %> · <%= counts.instock || 0 %> còn hàng</small></h3>

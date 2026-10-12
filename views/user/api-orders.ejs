@@ -1,5 +1,6 @@
 <%- include('../partials/header') %>
 <%- include('../partials/user-nav') %>
+<% if (keepDays) { %><div class="alert alert-warning small as-keep"><%- I('alert') %><span>Dữ liệu mỗi đơn chỉ được lưu <b><%= keepDays %> ngày</b> kể từ lúc mua. Hãy tải file về máy để không bị mất.</span></div><% } %>
 <div class="card">
   <div class="table-wrap">
   <table class="table table-cards">

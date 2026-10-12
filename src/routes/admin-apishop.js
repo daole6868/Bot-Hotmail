@@ -21,7 +21,7 @@ router.get('/', (req, res) => {
   const groups = cats.map((cat) => ({ cat, items: prods.filter((p) => p.cat_src_id === cat.src_id) })).filter((g) => g.items.length || (!q && !show));
   const counts = db.prepare('SELECT COUNT(*) total, SUM(is_active) active, SUM(CASE WHEN removed = 0 AND stock > 0 THEN 1 ELSE 0 END) instock FROM api_products').get();
   res.render('admin/apishop', {
-    title: 'Nguồn hàng API', c, key: ap.maskKey(c), game: ap.gameOf(c), apiGames: db.prepare("SELECT id, name FROM games WHERE kind = 'api' ORDER BY id").all(),
+    title: 'Nguồn hàng API', UI: ap.UI, c, key: ap.maskKey(c), game: ap.gameOf(c), apiGames: db.prepare("SELECT id, name FROM games WHERE kind = 'api' ORDER BY id").all(),
     groups, counts, q, show, sync: ap.syncInfo(), priceOf: (p) => ap.priceOf(p, c), losing: ap.losing,
     checking: db.prepare("SELECT COUNT(*) c FROM api_orders WHERE status = 'checking'").get().c,
   });
@@ -40,6 +40,15 @@ router.post('/settings', (req, res) => {
   else if (str(b.api_key, 300).trim()) ap.setKey(str(b.api_key, 300).trim());
   audit(req, 'apishop_settings', `lãi ${patch.markup}%, cảnh báo ${patch.low}${b.api_key ? ', đổi API key' : ''}${b.remove_key ? ', gỡ API key' : ''}`);
   back(req, res, 'success', 'Đã lưu cài đặt nguồn hàng');
+});
+
+router.post('/ui', (req, res) => {
+  const b = req.body;
+  if (b.reset) ap.saveCfg({ ui: {}, keepDays: ap.DEFAULTS.keepDays });
+  else ap.saveCfg({ keepDays: toInt(b.keepDays, ap.DEFAULTS.keepDays, 0, 3650), ui: { namePc: b.namePc, nameMb: b.nameMb, descPc: b.descPc, descMb: b.descMb, lh: b.lh } });
+  require('./public').clearCache();
+  audit(req, 'apishop_ui', b.reset ? 'khôi phục mặc định' : `lưu ${toInt(b.keepDays, 0, 0, 3650)} ngày`);
+  back(req, res, 'success', b.reset ? 'Đã khôi phục mặc định' : 'Đã lưu giao diện & thời gian lưu đơn');
 });
 
 router.post('/test', async (req, res) => {
@@ -137,7 +146,8 @@ router.get('/orders/:id/data.txt', (req, res, next) => {
   const o = orderOf(toInt(req.params.id));
   if (!o) return next();
   audit(req, 'apishop_data_view', o.code);
-  res.type('text/plain; charset=utf-8').attachment(`${o.code}.txt`).send(ap.dataOf(o));
+  const mp = req.query.type === 'mp';
+  res.type('text/plain; charset=utf-8').attachment(`${o.code}${mp ? '-mail-pass' : ''}.txt`).send(mp ? ap.mailPass(ap.dataOf(o), o.fmt) : ap.dataOf(o));
 });
 router.post('/orders/:id/refund', (req, res) => {
   const r = ap.adminRefund(toInt(req.params.id), req.user.id, str(req.body.reason, 200).trim() || 'Admin hoàn tiền');

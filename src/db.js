@@ -748,6 +748,8 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_api_orders_user ON api_orders(user_id, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_api_orders_status ON api_orders(status, created_at);`);
+addColumn('api_orders', 'fmt', 'TEXT'); // định dạng dữ liệu lúc mua (đọc từ mô tả sản phẩm, vd mail|pass|refresh_token|client_id)
+addColumn('api_orders', 'purged_at', 'INTEGER'); // đã xóa dữ liệu hàng sau số ngày lưu
 
 // ===== CHI TIẾT TÀI KHOẢN (thay thuộc tính) + LẤY DỮ LIỆU HOYOLAB =====
 // acc_detail: JSON đầy đủ (game, cấp, server, nhân vật / vũ khí 5★ 4★) cho trang sản phẩm

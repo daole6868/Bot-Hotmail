@@ -39,11 +39,13 @@
     <% } %>
   </div>
 </div>
+<% if (o.purged_at) { %><div class="a-card a-muted">Dữ liệu hàng đã tự xóa lúc <%= fmtT(o.purged_at) %> (quá số ngày lưu).</div><% } %>
 <% if (lineCount) { %>
 <div class="a-card">
   <h3><%- I('list') %> Dữ liệu đã giao <small class="a-muted"><%= lineCount.toLocaleString('vi-VN') %> dòng<%= lineCount > preview.length ? ', hiện ' + preview.length + ' dòng đầu' : '' %></small></h3>
   <textarea rows="10" readonly class="a-mono"><%= preview.join('\n') %></textarea>
-  <div class="a-btn-row"><a class="a-btn" href="/admin/api-shop/orders/<%= o.id %>/data.txt"><%- I('download') %> Tải file .txt</a></div>
+  <% if (o.fmt) { %><p class="a-small a-muted">Định dạng: <%= o.fmt %></p><% } %>
+  <div class="a-btn-row"><a class="a-btn" href="/admin/api-shop/orders/<%= o.id %>/data.txt"><%- I('download') %> Tải dữ liệu gốc</a><a class="a-btn" href="/admin/api-shop/orders/<%= o.id %>/data.txt?type=mp"><%- I('download') %> Tải mail|pass</a></div>
 </div>
 <% } %>
 <%- include('_footer') %>

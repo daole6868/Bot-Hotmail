@@ -1,30 +1,46 @@
 <%- include('../partials/header') %>
 <%- include('../partials/user-nav') %>
-<div class="card pad">
-  <h2>Đơn hàng <%= o.code %></h2>
-  <table class="table">
-    <tr><th>Sản phẩm</th><td><%= o.title %></td></tr>
-    <tr><th>Số lượng</th><td><%= o.qty.toLocaleString('vi-VN') %><% if (o.status === 'completed' && o.delivered < o.qty) { %> <span class="muted small">(đã giao <%= o.delivered.toLocaleString('vi-VN') %>, phần thiếu đã hoàn tiền)</span><% } %></td></tr>
-    <tr><th>Đơn giá</th><td><%= H.money(o.unit_price) %></td></tr>
-    <tr><th>Thanh toán</th><td class="price"><b><%= H.money(o.total - o.refunded) %></b><% if (o.refunded) { %> <span class="muted small">(đã hoàn <%= H.money(o.refunded) %>)</span><% } %></td></tr>
-    <tr><th>Trạng thái</th><td><span class="status as-st-<%= o.status %>"><%= STATUS[o.status] || o.status %></span></td></tr>
-    <tr><th>Thời gian</th><td><%= H.fmtDate(o.created_at) %></td></tr>
-  </table>
-  <% if (o.status === 'checking' || o.status === 'processing') { %>
-    <div class="alert alert-info">Đơn đang được shop kiểm tra lại với nhà cung cấp. Tiền của bạn được giữ an toàn: shop sẽ giao hàng hoặc hoàn tiền sớm nhất. Bạn có thể nhắn shop qua khung chat nếu cần.</div>
-  <% } else if (o.status === 'refunded') { %>
-    <div class="alert alert-info">Đơn không thành công, tiền đã được hoàn lại vào số dư của bạn.</div>
-  <% } %>
-  <% if (lineCount) { %>
-  <h3><%- I('key') %> Dữ liệu đã mua <span class="muted small"><%= lineCount.toLocaleString('vi-VN') %> dòng<%= lineCount > preview.length ? ' · hiện ' + preview.length + ' dòng đầu' : '' %></span></h3>
-  <div class="secret-box">
-    <pre class="as-data"><%= preview.join('\n') %></pre>
-    <div class="secret-actions">
-      <button type="button" class="btn btn-sm btn-primary" data-as-copy="/user/api-orders/<%= o.code %>/data.txt"><%- I('copy') %> Sao chép tất cả</button>
-      <a class="btn btn-sm btn-ghost" href="/user/api-orders/<%= o.code %>/data.txt?dl=1"><%- I('download') %> Tải file .txt</a>
-    </div>
+<div class="card as-order">
+  <div class="as-order-head">
+    <h2>Đơn hàng <%= o.code %></h2>
+    <span class="status as-st-<%= o.status %>"><%= STATUS[o.status] || o.status %></span>
   </div>
-  <div class="alert alert-info">Nên tải file về và lưu cẩn thận. Không chia sẻ dữ liệu này cho người khác.</div>
+  <div class="as-kv">
+    <div class="as-kv-wide"><span>Sản phẩm</span><b><%= o.title %></b></div>
+    <div><span>Số lượng</span><b><%= o.qty.toLocaleString('vi-VN') %><% if (o.status === 'completed' && o.delivered < o.qty) { %> <small class="muted">(giao <%= o.delivered.toLocaleString('vi-VN') %>)</small><% } %></b></div>
+    <div><span>Đơn giá</span><b><%= H.money(o.unit_price) %></b></div>
+    <div><span>Thanh toán</span><b class="price"><%= H.money(o.total - o.refunded) %></b></div>
+    <div><span>Thời gian</span><b><%= H.fmtDate(o.created_at) %></b></div>
+  </div>
+  <% if (o.refunded) { %><div class="alert alert-info small">Đã hoàn <%= H.money(o.refunded) %> vào số dư<%= o.status === 'completed' ? ' cho phần không giao được' : '' %>.</div><% } %>
+  <% if (o.status === 'checking' || o.status === 'processing') { %>
+    <div class="alert alert-info small">Đơn đang được shop kiểm tra lại với nhà cung cấp. Tiền của bạn được giữ an toàn: shop sẽ giao hàng hoặc hoàn tiền sớm nhất. Cần hỗ trợ hãy nhắn shop qua khung chat.</div>
+  <% } else if (o.status === 'refunded') { %>
+    <div class="alert alert-info small">Đơn không thành công, tiền đã được hoàn lại vào số dư của bạn.</div>
+  <% } %>
+  <% if (o.purged_at) { %>
+    <div class="alert alert-info small">Dữ liệu của đơn này đã được xóa sau <%= keepDays || '' %> ngày lưu trữ.</div>
+  <% } else if (lineCount) { %>
+    <% if (keepDays) { %><div class="alert alert-warning small as-keep"><%- I('alert') %><span>Dữ liệu chỉ được lưu <b><%= keepDays %> ngày</b> (đến hết ngày <%= H.fmtDate(o.created_at + keepDays * 86400).split(" ")[0] %>). Hãy tải file về máy ngay.</span></div><% } %>
+    <div class="as-datas">
+      <div class="as-dbox">
+        <div class="as-dhead"><b><%- I('key') %> Dữ liệu gốc</b><small class="muted"><%= lineCount.toLocaleString('vi-VN') %> dòng<%= fmt ? ' · ' + fmt : '' %></small></div>
+        <pre class="as-data"><%= raw %></pre>
+        <div class="as-dact">
+          <button type="button" class="btn btn-sm btn-primary" data-as-copy="/user/api-orders/<%= o.code %>/data.txt"><%- I('copy') %> Sao chép</button>
+          <a class="btn btn-sm btn-ghost" href="/user/api-orders/<%= o.code %>/data.txt?dl=1"><%- I('download') %> Tải .txt</a>
+        </div>
+      </div>
+      <div class="as-dbox">
+        <div class="as-dhead"><b><%- I('user') %> Chỉ mail|pass</b><small class="muted"><%= lineCount.toLocaleString('vi-VN') %> dòng · mail|pass</small></div>
+        <pre class="as-data"><%= mp %></pre>
+        <div class="as-dact">
+          <button type="button" class="btn btn-sm btn-primary" data-as-copy="/user/api-orders/<%= o.code %>/data.txt?type=mp"><%- I('copy') %> Sao chép</button>
+          <a class="btn btn-sm btn-ghost" href="/user/api-orders/<%= o.code %>/data.txt?type=mp&dl=1"><%- I('download') %> Tải .txt</a>
+        </div>
+      </div>
+    </div>
+    <% if (lineCount > 100) { %><p class="muted small center">Đang hiện 100 dòng đầu. Bấm Sao chép hoặc Tải .txt để lấy đủ <%= lineCount.toLocaleString('vi-VN') %> dòng.</p><% } %>
   <% } %>
 </div>
 <%- include('../partials/footer') %>

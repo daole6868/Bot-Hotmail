@@ -15,7 +15,7 @@ router.get('/game/:slug', (req, res, next) => {
   const groups = c.gameId === game.id && ap.ready(c) ? ap.listing(c) : [];
   const all = groups.flatMap((g) => g.items);
   res.render('pages/api-shop', {
-    title: game.name, game, groups, breadcrumb: [{ name: game.name }],
+    title: game.name, game, groups, ui: c.ui, breadcrumb: [{ name: game.name }],
     seoTitle: game.seo_title,
     metaDesc: game.seo_desc || game.description || `${game.name}: ${all.length} sản phẩm${all.length ? ', giá từ ' + Math.min(...all.map((x) => x.price)).toLocaleString('vi-VN') + 'đ' : ''}. Giao hàng tự động ngay sau khi thanh toán.`,
     metaImage: game.image,
