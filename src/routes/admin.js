@@ -24,7 +24,7 @@ const router = express.Router();
 // ---------- Phân quyền: admin / CTV quản lý / CTV bán hàng / CSKH ----------
 // Quản lý: mọi trang trừ nhóm Giao diện & Hệ thống. Bán hàng: chỉ sản phẩm / cày thuê / nạp game được cấp + ví.
 // CSKH: chỉ ví (trang chat ở /admin/chat).
-const MANAGER_BLOCK = ['/images', '/search-filter', '/card-ui', '/site-bg', '/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
+const MANAGER_BLOCK = ['/api-shop', '/images', '/search-filter', '/card-ui', '/site-bg', '/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
 const SELLER_ALLOW = [
   /^\/(vip|reroll)$/, /^\/products\/(rows|form|save|bulk|import-form|import)$/, /^\/products\/\d+\/(edit|duplicate|delete|stock|toggle)$/, /^\/stock\/\d+\/delete$/,
   /^\/boost(\/(c\/\d+|topup(\/\d+)?|orders(\/\d+(\/(login|status|note))?)?|topup-orders|categories\/(form|save|\d+(\/delete)?)|packages\/(form|save|\d+\/(pause|delete))))?$/,
@@ -58,6 +58,7 @@ router.use((req, res, next) => {
     bank: db.prepare("SELECT COUNT(*) c FROM bank_transactions WHERE status = 'unmatched'").get().c,
     chat: db.prepare('SELECT COUNT(*) c FROM chat_convs WHERE unread_admin > 0 AND blocked = 0').get().c,
     ctv: db.prepare("SELECT COUNT(*) c FROM ctv_withdrawals WHERE status = 'pending'").get().c,
+    api: req.perm === 'admin' ? db.prepare("SELECT COUNT(*) c FROM api_orders WHERE status = 'checking'").get().c : 0,
   };
   next();
 });
@@ -99,13 +100,13 @@ router.get('/', (req, res) => {
   const dayStart = (ago) => Math.floor((Date.now() + 7 * 3600e3) / 86400e3 - ago) * 86400 - 7 * 3600;
   const ranges = { today: dayStart(0), d7: dayStart(6), d30: dayStart(29), all: 0 };
   // Doanh thu = tiền khách trả (đã trừ mã giảm giá, không tính đơn hoàn / hủy). Trả CTV = phần CTV nhận. Lãi shop = doanh thu − trả CTV
-  const KINDS = [['vip', 'Acc VIP'], ['reroll', 'Reroll'], ['boost', 'Cày thuê'], ['topup', 'Nạp game']];
+  const KINDS = [['vip', 'Acc VIP'], ['reroll', 'Reroll'], ['boost', 'Cày thuê'], ['topup', 'Nạp game'], ['api', 'Hàng API']];
   const rev = {};
   for (const [r, from] of Object.entries(ranges)) {
-    const rows = db.prepare("SELECT kind, COUNT(*) n, COALESCE(SUM(amount), 0) amount, COALESCE(SUM(ctv_amount), 0) ctv FROM sales WHERE status = 'ok' AND created_at >= ? GROUP BY kind").all(from);
+    const rows = db.prepare("SELECT kind, COUNT(*) n, COALESCE(SUM(amount), 0) amount, COALESCE(SUM(ctv_amount), 0) ctv, COALESCE(SUM(cost), 0) cost FROM sales WHERE status = 'ok' AND created_at >= ? GROUP BY kind").all(from);
     const by = Object.fromEntries(rows.map((x) => [x.kind, x]));
-    rev[r] = Object.fromEntries(KINDS.map(([k]) => [k, by[k] || { n: 0, amount: 0, ctv: 0 }]));
-    rev[r].total = KINDS.reduce((acc, [k]) => ({ n: acc.n + rev[r][k].n, amount: acc.amount + rev[r][k].amount, ctv: acc.ctv + rev[r][k].ctv }), { n: 0, amount: 0, ctv: 0 });
+    rev[r] = Object.fromEntries(KINDS.map(([k]) => [k, by[k] || { n: 0, amount: 0, ctv: 0, cost: 0 }]));
+    rev[r].total = KINDS.reduce((acc, [k]) => ({ n: acc.n + rev[r][k].n, amount: acc.amount + rev[r][k].amount, ctv: acc.ctv + rev[r][k].ctv, cost: acc.cost + rev[r][k].cost }), { n: 0, amount: 0, ctv: 0, cost: 0 });
   }
   const statRows = db.prepare('SELECT * FROM daily_stats WHERE day >= ?').all(days[0]);
   const map = Object.fromEntries(statRows.map((r) => [r.day, r]));
@@ -230,6 +231,7 @@ router.use('/search-filter', require('./admin-filter')); // Giao diện -> Bộ 
 router.use('/card-ui', require('./admin-card-ui')); // Giao diện -> Thẻ sản phẩm
 router.use('/acc-image', require('./admin-acc-image')); // Tổng quan -> Tạo ảnh acc
 router.use('/site-bg', require('./admin-site-bg')); // Giao diện -> Nền trang
+router.use('/api-shop', require('./admin-apishop')); // Nguồn hàng API (chỉ admin)
 router.use('/', require('./admin-ctv').router); // Quản lý CTV + trang của CTV (/admin/me)
 router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google
 

@@ -1403,3 +1403,30 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .ai-cst-it.on { background: rgba(79, 209, 255, .14); }
 .ai-cst-dot { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
 .ai-cst-k { font-size: .78rem; text-align: center; }
+
+/* Nguồn hàng API */
+.a-ap-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.a-ap-head h3 { margin: 0 auto 0 0; }
+.a-ap-filter, .a-ap-bulk, .a-ap-search { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.a-ap-filter input { width: 200px; max-width: 100%; }
+.a-ap-search { margin: 0 0 12px; }
+.a-ap-search input { flex: 1 1 220px; max-width: 360px; }
+.a-ap-cat { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; background: #f5f7fc; border-top: 1px solid var(--border2); }
+.a-ap-cat img { border-radius: 8px; object-fit: contain; background: #fff; }
+.a-ap-cat input[name=title] { flex: 0 1 280px; font-weight: 700; }
+.a-ap-sort { width: 70px; }
+.a-ap-table td { vertical-align: middle; }
+.a-ap-name { min-width: 260px; }
+.a-ap-name input { width: 100%; margin-bottom: 3px; }
+.a-ap-name small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 420px; }
+.a-ap-name .a-badge { margin: 4px 0 0; display: inline-block; }
+.a-ap-price { width: 90px; }
+.a-ap-cur { display: inline-block; min-width: 54px; color: var(--primary); }
+.a-ap-ok { display: inline-block; margin-left: 6px; color: #16a34a; font-style: normal; font-weight: 700; }
+.a-ap-ok.err { color: #dc2626; }
+.a-ap-st { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: .75rem; font-weight: 700; background: #e5e7eb; color: #374151; }
+.a-ap-st.completed { background: #dcfce7; color: #15803d; }
+.a-ap-st.checking, .a-ap-st.processing { background: #fef3c7; color: #b45309; }
+.a-ap-st.refunded { background: #fee2e2; color: #b91c1c; }
+.a-mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; width: 100%; }
+.a-ap-filter select { width: auto; }

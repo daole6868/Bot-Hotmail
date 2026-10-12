@@ -79,9 +79,12 @@ function loadHomeBlocks() {
     if (['slider', 'strip', 'banner'].includes(b.type)) b.items = items.all(b.id);
     else if (b.type === 'games') {
       allGames = allGames || db.prepare(`SELECT g.*,
-          (SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id
-             WHERE c.game_id = g.id AND c.is_active = 1 AND p.status = 'available') AS product_count,
-          (SELECT COALESCE(SUM(p.sold_count),0) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id) AS sold
+          CASE WHEN g.kind = 'api' THEN (SELECT COUNT(*) FROM api_products a JOIN api_cats ac ON ac.src_id = a.cat_src_id AND ac.is_active = 1
+             WHERE a.is_active = 1 AND a.removed = 0 AND a.paused IS NULL AND a.stock > 0)
+          ELSE (SELECT COUNT(*) FROM products p JOIN categories c ON c.id = p.category_id
+             WHERE c.game_id = g.id AND c.is_active = 1 AND p.status = 'available') END AS product_count,
+          CASE WHEN g.kind = 'api' THEN (SELECT COALESCE(SUM(sold_count), 0) FROM api_products)
+          ELSE (SELECT COALESCE(SUM(p.sold_count),0) FROM products p JOIN categories c ON c.id = p.category_id WHERE c.game_id = g.id) END AS sold
         FROM games g WHERE g.is_active = 1 ORDER BY g.sort_order, g.id`).all();
       const ids = toIds(st.game_ids);
       b.games = ids.length ? allGames.filter((g) => ids.includes(g.id)) : allGames;

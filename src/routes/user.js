@@ -15,6 +15,8 @@ const mailer = require('../services/mailer');
 const GMAIL = /^[a-z0-9](?:[a-z0-9.+_-]{0,62}[a-z0-9])?@(gmail|googlemail)\.com$/i; // khách chỉ dùng Gmail
 const router = express.Router();
 router.use(requireLogin);
+// Mục Nguồn hàng API đang bật -> hiện tab đơn hàng của mục đó
+router.use((req, res, next) => { const g = require('../services/apishop').gameOf(); res.locals.apiTab = g ? g.name : ''; next(); });
 
 router.get('/', (req, res) => {
   const uid = req.user.id;
@@ -240,6 +242,33 @@ router.post('/password', limiters.login, async (req, res) => {
     req.session.adminLastSeen = Date.now();
     back('success', 'Đổi mật khẩu thành công. Các thiết bị khác đã bị đăng xuất.');
   });
+});
+
+// ---------- Đơn hàng Nguồn hàng API (/user/api-orders) ----------
+const AP_STATUS = { processing: 'Đang xử lý', completed: 'Hoàn thành', refunded: 'Đã hoàn tiền', checking: 'Đang kiểm tra' };
+router.get('/api-orders', (req, res) => {
+  const result = paginate(db, {
+    select: 'code, title, qty, delivered, unit_price, total, refunded, status, created_at', from: 'api_orders', where: 'WHERE user_id = ?', params: [req.user.id],
+    order: 'ORDER BY id DESC', page: toInt(req.query.page, 1, 1), perPage: 15,
+  });
+  res.render('user/api-orders', { title: 'Đơn ' + (res.locals.apiTab || 'hàng API'), result, query: {}, STATUS: AP_STATUS, tab: 'api' });
+});
+const myApi = (req) => db.prepare('SELECT * FROM api_orders WHERE code = ? AND user_id = ?').get(str(req.params.code, 30).toUpperCase(), req.user.id);
+router.get('/api-orders/:code', (req, res, next) => {
+  const o = myApi(req);
+  if (!o) return next();
+  const data = require('../services/apishop').dataOf(o);
+  const lines = data ? data.split('\n') : [];
+  res.set('Cache-Control', 'no-store');
+  res.render('user/api-order', { title: 'Đơn hàng ' + o.code, o, STATUS: AP_STATUS, preview: lines.slice(0, 100), lineCount: lines.length, tab: 'api' });
+});
+router.get('/api-orders/:code/data.txt', (req, res, next) => {
+  const o = myApi(req);
+  if (!o || !o.data_enc) return next();
+  res.set('Cache-Control', 'no-store');
+  res.type('text/plain; charset=utf-8');
+  if (req.query.dl) res.attachment(`${o.code}.txt`);
+  res.send(require('../services/apishop').dataOf(o));
 });
 
 module.exports = router;

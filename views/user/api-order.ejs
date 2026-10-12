@@ -1,0 +1,30 @@
+<%- include('../partials/header') %>
+<%- include('../partials/user-nav') %>
+<div class="card pad">
+  <h2>Đơn hàng <%= o.code %></h2>
+  <table class="table">
+    <tr><th>Sản phẩm</th><td><%= o.title %></td></tr>
+    <tr><th>Số lượng</th><td><%= o.qty.toLocaleString('vi-VN') %><% if (o.status === 'completed' && o.delivered < o.qty) { %> <span class="muted small">(đã giao <%= o.delivered.toLocaleString('vi-VN') %>, phần thiếu đã hoàn tiền)</span><% } %></td></tr>
+    <tr><th>Đơn giá</th><td><%= H.money(o.unit_price) %></td></tr>
+    <tr><th>Thanh toán</th><td class="price"><b><%= H.money(o.total - o.refunded) %></b><% if (o.refunded) { %> <span class="muted small">(đã hoàn <%= H.money(o.refunded) %>)</span><% } %></td></tr>
+    <tr><th>Trạng thái</th><td><span class="status as-st-<%= o.status %>"><%= STATUS[o.status] || o.status %></span></td></tr>
+    <tr><th>Thời gian</th><td><%= H.fmtDate(o.created_at) %></td></tr>
+  </table>
+  <% if (o.status === 'checking' || o.status === 'processing') { %>
+    <div class="alert alert-info">Đơn đang được shop kiểm tra lại với nhà cung cấp. Tiền của bạn được giữ an toàn: shop sẽ giao hàng hoặc hoàn tiền sớm nhất. Bạn có thể nhắn shop qua khung chat nếu cần.</div>
+  <% } else if (o.status === 'refunded') { %>
+    <div class="alert alert-info">Đơn không thành công, tiền đã được hoàn lại vào số dư của bạn.</div>
+  <% } %>
+  <% if (lineCount) { %>
+  <h3><%- I('key') %> Dữ liệu đã mua <span class="muted small"><%= lineCount.toLocaleString('vi-VN') %> dòng<%= lineCount > preview.length ? ' · hiện ' + preview.length + ' dòng đầu' : '' %></span></h3>
+  <div class="secret-box">
+    <pre class="as-data"><%= preview.join('\n') %></pre>
+    <div class="secret-actions">
+      <button type="button" class="btn btn-sm btn-primary" data-as-copy="/user/api-orders/<%= o.code %>/data.txt"><%- I('copy') %> Sao chép tất cả</button>
+      <a class="btn btn-sm btn-ghost" href="/user/api-orders/<%= o.code %>/data.txt?dl=1"><%- I('download') %> Tải file .txt</a>
+    </div>
+  </div>
+  <div class="alert alert-info">Nên tải file về và lưu cẩn thận. Không chia sẻ dữ liệu này cho người khác.</div>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

@@ -10,7 +10,8 @@
     <% }) %>
     <tr class="a-rev-total"><th>Tổng doanh thu</th><% R.forEach(r => { const x = rev[r].total; %><td><b><%= H.money(x.amount) %></b><small><%= x.n %> đơn</small></td><% }) %></tr>
     <tr><th>Trả CTV</th><% R.forEach(r => { %><td><b><%= H.money(rev[r].total.ctv) %></b></td><% }) %></tr>
-    <tr class="a-rev-profit"><th>Lãi shop</th><% R.forEach(r => { %><td><b><%= H.money(rev[r].total.amount - rev[r].total.ctv) %></b></td><% }) %></tr>
+    <% if (R.some(r => rev[r].total.cost)) { %><tr><th>Giá vốn hàng API</th><% R.forEach(r => { %><td><b><%= H.money(rev[r].total.cost) %></b></td><% }) %></tr><% } %>
+    <tr class="a-rev-profit"><th>Lãi shop</th><% R.forEach(r => { %><td><b><%= H.money(rev[r].total.amount - rev[r].total.ctv - rev[r].total.cost) %></b></td><% }) %></tr>
   </table></div>
 </div>
 

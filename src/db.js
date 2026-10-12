@@ -689,6 +689,66 @@ if (!db.prepare("SELECT 1 FROM settings WHERE key = 'sales_backfill_v1'").get())
     db.prepare("INSERT OR REPLACE INTO settings(key, value) VALUES('sales_backfill_v1', '1')").run();
   })();
 }
+// ===== NGUỒN HÀNG API (bán lại hàng của web khác qua API, vd 1smail.shop) =====
+// games.kind = 'api': mục hiển thị cùng cấp game, bấm vào ra danh sách sản phẩm API
+addColumn('games', 'kind', "TEXT NOT NULL DEFAULT 'game'");
+addColumn('sales', 'cost', 'INTEGER NOT NULL DEFAULT 0'); // giá vốn (tiền trả web nguồn) -> lãi = doanh thu - trả CTV - giá vốn
+db.exec(`
+  CREATE TABLE IF NOT EXISTS api_cats (
+    src_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    title TEXT,
+    icon_src TEXT,
+    icon TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1
+  ) WITHOUT ROWID;
+  CREATE TABLE IF NOT EXISTS api_products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    src_id TEXT NOT NULL UNIQUE,
+    cat_src_id TEXT,
+    name TEXT NOT NULL DEFAULT '',
+    title TEXT,
+    description TEXT,
+    cost REAL NOT NULL DEFAULT 0,
+    stock INTEGER NOT NULL DEFAULT 0,
+    min_qty INTEGER NOT NULL DEFAULT 1,
+    max_qty INTEGER NOT NULL DEFAULT 1,
+    price INTEGER,
+    is_active INTEGER NOT NULL DEFAULT 0,
+    paused TEXT,
+    removed INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    sold_count INTEGER NOT NULL DEFAULT 0,
+    synced_at INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX IF NOT EXISTS idx_api_products_cat ON api_products(cat_src_id, is_active);
+  -- status: processing (đang gọi web nguồn) | completed | refunded | checking (mất kết nối, chờ admin kiểm tra)
+  CREATE TABLE IF NOT EXISTS api_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    product_id INTEGER REFERENCES api_products(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    qty INTEGER NOT NULL,
+    delivered INTEGER NOT NULL DEFAULT 0,
+    unit_price INTEGER NOT NULL,
+    total INTEGER NOT NULL,
+    refunded INTEGER NOT NULL DEFAULT 0,
+    cost INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'processing',
+    trans_id TEXT,
+    data_enc TEXT,
+    msg TEXT,
+    src_balance_before INTEGER,
+    src_balance_after INTEGER,
+    ip TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE INDEX IF NOT EXISTS idx_api_orders_user ON api_orders(user_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_api_orders_status ON api_orders(status, created_at);`);
+
 // ===== CHI TIẾT TÀI KHOẢN (thay thuộc tính) + LẤY DỮ LIỆU HOYOLAB =====
 // acc_detail: JSON đầy đủ (game, cấp, server, nhân vật / vũ khí 5★ 4★) cho trang sản phẩm
 // acc_brief: JSON ngắn cho thẻ sản phẩm (danh sách không phải đọc cả khối lớn)

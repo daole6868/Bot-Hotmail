@@ -1159,3 +1159,36 @@
     if ([...form.querySelectorAll('[data-sbg-file]')].some((i) => i.files.length)) setTimeout(() => { btn.disabled = true; btn.textContent = 'Đang tải lên...'; }, 0);
   });
 })();
+
+// Nguồn hàng API: sửa sản phẩm / chuyên mục ngay trên bảng (lưu tự động), kiểm tra kết nối
+(() => {
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const post = async (url, body) => {
+    try { return await (await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, Accept: 'application/json' }, body: JSON.stringify(body) })).json(); } catch (e) { return { ok: false, message: 'Lỗi kết nối' }; }
+  };
+  const fields = (box) => { const o = {}; box.querySelectorAll('input[name]').forEach((i) => { o[i.name] = i.type === 'checkbox' ? (i.checked ? 1 : 0) : i.value; }); return o; };
+  const mark = (box, r) => {
+    const ok = box.querySelector('.a-ap-ok'); if (!ok) return;
+    ok.hidden = false; ok.classList.toggle('err', !r.ok); ok.textContent = r.ok ? '✓' : '✗ ' + (r.message || 'Lỗi'); clearTimeout(ok._t);
+    if (r.ok) ok._t = setTimeout(() => { ok.hidden = true; }, 1500);
+  };
+  document.addEventListener('change', async (e) => {
+    const row = e.target.closest('[data-ap-row]');
+    const cat = e.target.closest('[data-ap-cat]');
+    if (!row && !cat) return;
+    if (row) {
+      const r = await post('/admin/api-shop/products/' + row.dataset.apRow, fields(row));
+      mark(row, r);
+      if (r.ok) { row.classList.toggle('a-row-off', !row.querySelector('[name=is_active]').checked); const cur = row.querySelector('.a-ap-cur'); if (cur) cur.textContent = Number(r.price).toLocaleString('vi-VN') + 'đ'; }
+      else if (e.target.name === 'is_active') e.target.checked = !e.target.checked;
+    } else mark(cat, await post('/admin/api-shop/cats/' + encodeURIComponent(cat.dataset.apCat), fields(cat)));
+  });
+  const tb = document.querySelector('[data-ap-test]');
+  if (tb) tb.addEventListener('click', async () => {
+    const out = document.querySelector('[data-ap-test-out]'); out.hidden = false; out.textContent = 'Đang kiểm tra...'; tb.disabled = true;
+    const r = await post('/admin/api-shop/test', {});
+    tb.disabled = false;
+    out.className = 'a-small ' + (r.ok ? '' : 'a-text-err');
+    out.textContent = r.ok ? `Kết nối tốt · tài khoản ${r.username} · số dư ${Number(r.money).toLocaleString('vi-VN')}đ` : 'Lỗi: ' + r.message;
+  });
+})();

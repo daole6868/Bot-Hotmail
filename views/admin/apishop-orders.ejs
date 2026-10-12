@@ -1,0 +1,33 @@
+<%- include('_header') %>
+<% const fmtT = (t) => new Date(t * 1000).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }); const CLS = { completed: 'ok', refunded: '', checking: 'warn', processing: 'warn' }; %>
+<div class="a-ctv-tabs">
+  <a href="/admin/api-shop/orders" class="<%= !status ? 'on' : '' %>">Tất cả</a>
+  <% Object.entries(STATUS).forEach(([k, l]) => { %><a href="/admin/api-shop/orders?status=<%= k %>" class="<%= status === k ? 'on' : '' %>"><%= l %></a><% }) %>
+</div>
+<form method="get" class="a-ap-search">
+  <% if (status) { %><input type="hidden" name="status" value="<%= status %>"><% } %>
+  <input name="q" value="<%= q %>" placeholder="Mã đơn, mã đơn nguồn, tên khách..."><button class="a-btn">Tìm</button>
+</form>
+<div class="a-card a-card-flush">
+  <% if (!result.rows.length) { %><div class="a-empty">Chưa có đơn nào</div><% } else { %>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Mã đơn</th><th>Khách</th><th>Sản phẩm</th><th>Số lượng</th><th>Tiền</th><th>Giá vốn</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
+    <tbody>
+      <% result.rows.forEach(o => { %>
+        <tr>
+          <td data-label="Mã đơn"><a href="/admin/api-shop/orders/<%= o.id %>"><b><%= o.code %></b></a></td>
+          <td data-label="Khách"><%= o.username %></td>
+          <td data-label="Sản phẩm"><%= o.title %></td>
+          <td data-label="Số lượng"><%= o.delivered && o.delivered !== o.qty ? o.delivered + ' / ' : '' %><%= o.qty.toLocaleString('vi-VN') %></td>
+          <td data-label="Tiền"><%= H.money(o.total - o.refunded) %><% if (o.refunded) { %><small class="a-muted"> (hoàn <%= H.money(o.refunded) %>)</small><% } %></td>
+          <td data-label="Giá vốn"><%= o.cost ? H.money(o.cost) : '—' %></td>
+          <td data-label="Trạng thái"><span class="a-ap-st <%= o.status %>"><%= STATUS[o.status] || o.status %></span></td>
+          <td data-label="Thời gian"><%= fmtT(o.created_at) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+  <div class="a-pad"><%- include('_pagination') %></div>
+  <% } %>
+</div>
+<%- include('_footer') %>

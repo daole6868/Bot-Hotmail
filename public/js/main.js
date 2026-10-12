@@ -795,3 +795,72 @@ window.addEventListener('pageshow', (e) => {
   // tab ẩn -> dừng video cho đỡ tốn CPU / pin
   document.addEventListener('visibilitychange', () => { if (document.hidden) v.pause(); else play(); });
 })();
+
+// Nguồn hàng API: hộp mua (hỏi số lượng) + sao chép toàn bộ dữ liệu đơn
+(() => {
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  document.querySelectorAll('.as-desc').forEach((d) => { if (d.scrollHeight > d.clientHeight + 2) { d.style.cursor = 'pointer'; d.addEventListener('click', () => d.classList.toggle('open')); } });
+  const m = document.querySelector('[data-as-modal]');
+  if (m) {
+    const q = (s) => m.querySelector(s);
+    const balance = +m.dataset.balance || 0;
+    const fmt = (n) => Number(n).toLocaleString('vi-VN') + 'đ';
+    let P = null; let busy = false;
+    const inp = q('[data-as-qty]');
+    const clampQ = (v) => Math.min(P.max, Math.max(P.min, Math.floor(+v || 0)));
+    const update = () => {
+      const n = Math.floor(+inp.value || 0);
+      const total = n * P.price;
+      q('[data-as-total]').textContent = fmt(Math.max(0, total));
+      const err = n < P.min ? `Số lượng tối thiểu là ${P.min.toLocaleString('vi-VN')}` : n > P.max ? `Tối đa ${P.max.toLocaleString('vi-VN')} mỗi đơn` : total > balance ? `Số dư không đủ, cần thêm ${fmt(total - balance)}` : '';
+      const e = q('[data-as-err]'); e.hidden = !err; e.textContent = err;
+      q('[data-as-ok]').disabled = !!err || busy;
+      q('[data-as-deposit]').hidden = !(total > balance && n >= P.min && n <= P.max);
+    };
+    const open = (p) => {
+      P = p; busy = false;
+      q('[data-as-name]').textContent = p.name;
+      q('[data-as-unit]').textContent = fmt(p.price);
+      q('[data-as-stock]').textContent = p.stock.toLocaleString('vi-VN');
+      q('[data-as-range]').textContent = `(${p.min.toLocaleString('vi-VN')} – ${p.max.toLocaleString('vi-VN')})`;
+      inp.min = p.min; inp.max = p.max; inp.value = p.min;
+      const quick = [10, 50, 100, 500, 1000].filter((x) => x > p.min && x <= p.max).slice(0, 4);
+      q('[data-as-quick]').innerHTML = quick.map((x) => `<button type="button" data-as-set="${x}">${x.toLocaleString('vi-VN')}</button>`).join('') + (p.max > p.min && Math.floor(balance / p.price) >= p.min ? `<button type="button" data-as-set="max">Tối đa theo số dư</button>` : '');
+      q('[data-as-wait]').hidden = true;
+      m.hidden = false; document.body.style.overflow = 'hidden';
+      update(); setTimeout(() => inp.select(), 50);
+    };
+    const close = () => { if (busy) return; m.hidden = true; document.body.style.overflow = ''; };
+    document.addEventListener('click', (e) => { const b = e.target.closest('[data-as-buy]'); if (b) { try { open(JSON.parse(b.dataset.asBuy)); } catch (x) { /* bỏ qua */ } } });
+    m.addEventListener('click', async (e) => {
+      if (e.target === m || e.target.closest('[data-as-close]')) return close();
+      const st = e.target.closest('[data-as-step]'); if (st) { inp.value = clampQ((+inp.value || 0) + (+st.dataset.asStep)); return update(); }
+      const set = e.target.closest('[data-as-set]'); if (set) { inp.value = set.dataset.asSet === 'max' ? clampQ(Math.floor(balance / P.price)) : set.dataset.asSet; return update(); }
+      if (!e.target.closest('[data-as-ok]') || busy) return;
+      busy = true; update(); q('[data-as-wait]').hidden = false;
+      let r;
+      try {
+        const res = await fetch('/api-shop/buy', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, Accept: 'application/json' }, body: JSON.stringify({ id: P.id, qty: +inp.value, unit: P.price, idem: q('[data-as-idem]').value }) });
+        r = await res.json();
+      } catch (x) { r = { ok: false, message: 'Mất kết nối. Vui lòng xem lại mục đơn hàng trước khi mua lại để tránh mua trùng.', lost: true }; }
+      if (r.ok && r.code) { location.href = '/user/api-orders/' + r.code; return; }
+      busy = false; q('[data-as-wait]').hidden = true;
+      if (r.login) { location.href = '/login?next=' + encodeURIComponent(location.pathname); return; }
+      if (!r.lost) q('[data-as-idem]').value = (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : String(Date.now()) + Math.random().toString(36).slice(2)).slice(0, 32); // lỗi đã rõ (đã hoàn / chưa trừ tiền) -> lần sau là đơn mới
+      const er = q('[data-as-err]'); er.hidden = false; er.textContent = r.message || 'Có lỗi xảy ra'; q('[data-as-ok]').disabled = false;
+      if (r.code) er.innerHTML += ` <a href="/user/api-orders/${encodeURIComponent(r.code)}">Xem đơn</a>`;
+    });
+    inp.addEventListener('input', update);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !m.hidden) close(); });
+  }
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-as-copy]'); if (!b) return;
+    const t0 = b.innerHTML;
+    try {
+      const text = await (await fetch(b.dataset.asCopy, { credentials: 'same-origin' })).text();
+      await navigator.clipboard.writeText(text);
+      b.textContent = 'Đã sao chép ' + text.split('\n').filter(Boolean).length.toLocaleString('vi-VN') + ' dòng';
+    } catch (x) { b.textContent = 'Không sao chép được, hãy tải file .txt'; }
+    setTimeout(() => { b.innerHTML = t0; }, 2000);
+  });
+})();

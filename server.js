@@ -78,6 +78,7 @@ app.use(require('./src/routes/seo')); // robots.txt, sitemap.xml (không cần p
 const shield = require('./src/services/shield');
 app.use(shield.early);
 
+app.use('/admin/api-shop/orders', express.urlencoded({ extended: false, limit: '6mb', parameterLimit: 20 })); // admin dán dữ liệu hàng giao tay (có thể hàng nghìn dòng)
 app.use(express.urlencoded({ extended: false, limit: '200kb', parameterLimit: 500 }));
 app.use('/admin/ai/write', express.json({ limit: '300kb' }));
 app.use('/admin/images/hoyo/import', express.json({ limit: '4mb' })); // HTML dán vào để tách ảnh nhân vật có thể dài // lệnh cho AI viết bài có thể dài (dán cả bài gốc)
@@ -187,6 +188,7 @@ app.use('/chat', require('./src/routes/chat')); // chat trực tiếp (khách)
 app.use('/admin/chat', require('./src/routes/admin-chat')); // chat trực tiếp (admin + nhân viên), trước router admin
 app.use('/admin', require('./src/routes/admin'));
 app.use('/', require('./src/routes/posts')); // tin tức / hướng dẫn
+app.use('/', require('./src/routes/apishop')); // nguồn hàng API: /game/:slug (mục kind = api), mua hàng
 app.use('/', require('./src/routes/boost')); // cày thuê (trước public: /game/:slug/cay-thue)
 app.use('/', require('./src/routes/public'));
 
@@ -204,6 +206,7 @@ app.use((err, req, res, next) => {
 if (!process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0') {
   maintenance.startScheduler();
   require('./src/services/apicanhan').start(); // quét giao dịch APICANHAN (chỉ chạy khi bật trong Cài đặt bank và có đơn chờ)
+  require('./src/services/apishop').start(); // nguồn hàng API: đồng bộ giá / tồn kho 5 phút, cảnh báo số dư thấp
   require('./src/services/traffic').start(); // tự phát hiện truy cập bất thường -> tự chặn khách mới / bật Cloudflare Under Attack
   require('./src/services/chat-bot').startTelegram(); // chat: nhận tin trả lời khách từ Telegram
 }
