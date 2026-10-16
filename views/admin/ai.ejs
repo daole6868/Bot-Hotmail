@@ -1,0 +1,23 @@
+<%- include('_header') %>
+<form method="post" action="/admin/ai" class="a-form" autocomplete="off">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('g-sparkles') %> AI dùng để viết bài</h3>
+      <label>Nhà cung cấp</label>
+      <select name="ai_provider"><% Object.entries(PROVIDERS).forEach(([k, v]) => { %><option value="<%= k %>" <%= st.provider === k ? 'selected' : '' %>><%= v.name %><%= ready[k] ? ' ✓' : ' (chưa có key)' %></option><% }) %></select>
+      <p class="a-small">Trạng thái: <b class="<%= st.ready ? 'a-text-ok' : 'a-text-err' %>"><%= st.ready ? 'Sẵn sàng (' + st.model + ')' : 'Chưa có API key cho nhà cung cấp này' %></b></p>
+      <div class="a-actions"><button type="button" class="a-btn" data-ai-test><%- I('bolt') %> Thử kết nối</button><a class="a-btn a-ghost" href="/admin/api#ai"><%- I('key') %> API key & model</a></div>
+      <div data-ai-test-out class="a-small a-ai-test-out" hidden></div>
+    </div>
+    <div class="a-card">
+      <h3><%- I('edit') %> Cách viết</h3>
+      <label>Giọng văn mặc định</label>
+      <input name="ai_tone" maxlength="200" value="<%= s.ai_tone || '' %>" placeholder="VD: thân thiện, dễ hiểu, chuyên nghiệp">
+      <label>Thông tin thêm cho AI <small class="a-muted">(về shop, điều cần nhấn mạnh, điều không được viết)</small></label>
+      <textarea name="ai_extra" rows="5" maxlength="2000" placeholder="VD: Shop có bảo hành theo mô tả từng acc, hỗ trợ qua Zalo 24/7. Không nhắc tên shop khác."><%= s.ai_extra || '' %></textarea>
+    </div>
+  </div>
+  <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt AI viết bài</button>
+</form>
+<%- include('_footer') %>

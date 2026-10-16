@@ -1,0 +1,31 @@
+<%- include('_header') %>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3>Đơn <%= o.order_code %> <% if (o.archived) { %><span class="a-tag">Lưu trữ</span><% } %></h3>
+    <table class="a-table a-kv">
+      <tr><th>Khách hàng</th><td><a href="/admin/users/<%= o.user_id %>"><%= o.username %></a> <%= o.email ? '(' + o.email + ')' : '' %></td></tr>
+      <tr><th>Sản phẩm</th><td><%= o.product_title %> <% if (o.product_id) { %><a href="/admin/products/<%= o.product_id %>/edit">(xem SP)</a><% } %></td></tr>
+      <tr><th>Game</th><td><%= o.game_name %></td></tr>
+      <tr><th>Giá</th><td><%= H.money(o.price) %></td></tr>
+      <tr><th>Giảm giá</th><td><%= H.money(o.discount) %> <%= o.coupon_code ? '(' + o.coupon_code + ')' : '' %></td></tr>
+      <tr><th>Thanh toán</th><td><b><%= H.money(o.total) %></b></td></tr>
+      <tr><th>Trạng thái</th><td><%= o.status === 'completed' ? 'Thành công' : 'Đã hoàn tiền' %> <%= o.note ? '- ' + o.note : '' %></td></tr>
+      <tr><th>IP mua</th><td><%= o.ip %></td></tr>
+      <tr><th>Thời gian</th><td><%= H.fmtDate(o.created_at) %></td></tr>
+    </table>
+    <h3>Dữ liệu đã giao</h3>
+    <pre class="a-pre a-blur" data-reveal-click><%= o.delivered %></pre>
+  </div>
+  <div class="a-card">
+    <% if (o.status === 'completed' && !o.archived) { %>
+    <h3><%- I('money') %> Hoàn tiền</h3>
+    <form method="post" action="/admin/orders/<%= o.id %>/refund" data-confirm="Hoàn <%= H.money(o.total) %> vào số dư khách?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Lý do</label><input name="reason" maxlength="200" placeholder="VD: Acc lỗi, sai thông tin">
+      <label class="a-check"><input type="checkbox" name="restock"> Mở bán lại acc / trả mã về kho</label>
+      <button class="a-btn a-danger">Hoàn tiền</button>
+    </form>
+    <% } else { %><p class="a-muted">Đơn không thể hoàn tiền (đã hoàn hoặc đã lưu trữ).</p><% } %>
+  </div>
+</div>
+<%- include('_footer') %>

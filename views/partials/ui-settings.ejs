@@ -1,0 +1,35 @@
+<div class="ui-modal" id="uiSettings" hidden>
+  <div class="ui-box" role="dialog" aria-modal="true" aria-labelledby="uiTitle">
+    <div class="ui-head">
+      <h2 id="uiTitle">Cài đặt giao diện</h2>
+      <button type="button" class="ui-close" data-ui-close aria-label="Đóng"><%- I('x') %></button>
+    </div>
+
+    <div class="ui-sec">
+      <div class="ui-label"><span class="ui-dot"></span> Màu chính <small data-ui-name="accent"></small></div>
+      <div class="ui-swatches" role="radiogroup" aria-label="Màu chính" data-ui-group="accent"></div>
+    </div>
+
+    <div class="ui-sec">
+      <div class="ui-label"><span class="ui-dot bg"></span> Màu nền <small data-ui-name="bg"></small></div>
+      <div class="ui-swatches bg" role="radiogroup" aria-label="Màu nền" data-ui-group="bg"></div>
+    </div>
+
+    <div class="ui-sec">
+      <div class="ui-label"><%- I('globe') %> Giao diện</div>
+      <div class="ui-seg" role="radiogroup" aria-label="Chế độ sáng tối" data-ui-group="mode">
+        <button type="button" class="ui-opt" role="radio" data-value="light"><%- I('sun') %> Sáng</button>
+        <button type="button" class="ui-opt" role="radio" data-value="dark"><%- I('moon') %> Tối</button>
+        <button type="button" class="ui-opt" role="radio" data-value="system"><%- I('monitor') %> Hệ thống</button>
+      </div>
+    </div>
+
+    <div class="ui-sec">
+      <div class="ui-label"><%- I('square') %> Độ bo góc</div>
+      <div class="ui-seg r5" role="radiogroup" aria-label="Độ bo góc" data-ui-group="radius">
+        <% ['0', '0.125', '0.25', '0.375', '0.5'].forEach(r => { %><button type="button" class="ui-opt" role="radio" data-value="<%= r %>"><%= r %></button><% }) %>
+      </div>
+      <button type="button" class="btn btn-ghost ui-reset" data-ui-reset><%- I('refresh') %> Khôi phục mặc định</button>
+    </div>
+  </div>
+</div>

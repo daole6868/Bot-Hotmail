@@ -1,0 +1,16 @@
+<%- include('_header') %>
+<div class="a-tabs"><a href="?tab=activity" class="<%= tab === 'activity' ? 'active' : '' %>">Hoạt động</a><a href="?tab=login" class="<%= tab === 'login' ? 'active' : '' %>">Đăng nhập</a></div>
+<div class="a-card">
+  <form class="a-filter" method="get"><input type="hidden" name="tab" value="<%= tab %>"><input name="q" value="<%= query.q %>" placeholder="<%= tab === 'login' ? 'Username hoặc IP' : 'Hành động, username hoặc IP' %>"><button class="a-btn">Lọc</button></form>
+  <div class="a-table-wrap"><table class="a-table">
+    <% if (tab === 'login') { %>
+      <thead><tr><th>Thời gian</th><th>Username</th><th>Kết quả</th><th>IP</th><th>Trình duyệt</th></tr></thead>
+      <% result.rows.forEach(l => { %><tr><td class="a-small"><%= H.fmtDate(l.created_at) %></td><td><%= l.username %></td><td><%- l.success ? '<span class="a-tag green">Thành công</span>' : '<span class="a-tag red">Thất bại</span>' %></td><td><%= l.ip %></td><td class="a-small a-trunc"><%= l.user_agent %></td></tr><% }) %>
+    <% } else { %>
+      <thead><tr><th>Thời gian</th><th>Người dùng</th><th>Hành động</th><th>Chi tiết</th><th>IP</th></tr></thead>
+      <% result.rows.forEach(l => { %><tr><td class="a-small"><%= H.fmtDate(l.created_at) %></td><td><%= l.username || '—' %></td><td><code><%= l.action %></code></td><td class="a-small a-trunc"><%= l.detail %></td><td><%= l.ip %></td></tr><% }) %>
+    <% } %>
+  </table></div>
+  <%- include('_pagination') %>
+</div>
+<%- include('_footer') %>

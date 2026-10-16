@@ -1,0 +1,19 @@
+<% const R = '<span class="req" title="Bắt buộc">*</span>'; %>
+<form method="post" action="/admin/products/import" class="a-form" novalidate data-validate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="category_id" value="<%= cat.id %>">
+  <div class="a-form-context">
+    <span class="a-folder"><%- I('folder') %></span>
+    <div class="a-minw0"><small class="a-muted"><%= cat.game_name %></small><b><%= cat.name %></b></div>
+    <span class="a-type-badge vip"><%- I('star') %> VIP · bán 1 lần</span>
+  </div>
+  <label>Danh sách acc <%- R %> <small class="a-muted">mỗi dòng 1 acc: <code>Tên sản phẩm | Giá | Tài khoản | Mật khẩu</code></small></label>
+  <textarea name="lines" rows="8" required placeholder="Acc 50 skin rank Kim Cương | 150000 | acc001 | matkhau001&#10;Acc 80 tướng | 250000 | acc002 | matkhau002" data-count-lines></textarea>
+  <div class="a-muted a-small" data-line-count>0 acc</div>
+  <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><%- R %> là thông tin bắt buộc</span>
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('inbox') %> Nhập</button>
+  </div>
+</form>

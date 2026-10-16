@@ -1,0 +1,115 @@
+<% const isVip = p.type === 'account'; const R = '<span class="req" title="Bắt buộc">*</span>'; %>
+<form method="post" action="/admin/products/save" enctype="multipart/form-data" class="a-form" novalidate data-validate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= p.id || '' %>">
+  <input type="hidden" name="category_id" value="<%= cat.id %>">
+
+  <div class="a-form-context">
+    <span class="a-folder"><%- I('folder') %></span>
+    <div class="a-minw0"><small class="a-muted"><%= cat.game_name %></small><b><%= cat.name %></b></div>
+    <% if (isVip) { %><span class="a-type-badge vip"><%- I('star') %> VIP · bán 1 lần</span>
+    <% } else { %><span class="a-type-badge reroll"><%- I('refresh') %> Reroll · bán tới khi hết acc</span><% } %>
+  </div>
+
+  <% const hg = /zenless|zzz/i.test(cat.game_name) ? 'zzz' : /star ?rail|hsr|honkai/i.test(cat.game_name) ? 'hsr' : /genshin/i.test(cat.game_name) ? 'genshin' : ''; %>
+  <div class="a-pf-box">
+  <div class="a-pf-title"><%- I('key') %> <%= isVip ? 'Thông tin Acc' : 'Thông tin sản phẩm' %></div>
+  <label>Tên sản phẩm <%- R %></label>
+  <input name="title" required maxlength="200" value="<%= p.title || '' %>" autofocus>
+  <div class="a-row a-row-3">
+    <div><label>Giá bán (đ) <%- R %></label><input type="number" name="price" required min="0" value="<%= p.price ?? '' %>" placeholder="0"></div>
+    <div><label>Giá gốc <small class="a-muted">(gạch ngang)</small></label><input type="number" name="old_price" min="0" value="<%= p.old_price || '' %>"></div>
+    <div><label>Mã SP <small class="a-muted">(trống = tự tạo)</small></label><input name="code" maxlength="20" value="<%= p.code || '' %>"></div>
+  </div>
+
+  <% if (isVip) { %>
+    <div class="a-fieldset">
+      <div class="a-fieldset-title"><%- I('key') %> Thông tin acc giao cho khách</div>
+      <div class="a-row">
+        <div><label>Tài khoản <%- R %></label><input name="acc_user" required maxlength="200" value="<%= p.user || '' %>" autocomplete="off" placeholder="Tên đăng nhập / email / SĐT"></div>
+        <div><label>Mật khẩu <%- R %></label><input name="acc_pass" required maxlength="200" value="<%= p.pass || '' %>" autocomplete="off" placeholder="Mật khẩu acc"></div>
+      </div>
+      <label>Thông tin thêm</label>
+      <textarea name="acc_extra" rows="2" maxlength="3000"><%= p.extra || '' %></textarea>
+    </div>
+  <% } else { %>
+    <div class="a-fieldset">
+      <div class="a-fieldset-title"><%- I('box') %> Danh sách acc trong kho
+        <% if (p.id) { %><small class="a-muted">đang còn <b><%= p.stockLeft %></b> acc · <a href="/admin/products/<%= p.id %>/edit">xem / xóa acc trong kho</a></small><% } %></div>
+      <label><%= p.id ? 'Thêm acc vào kho' : 'Các acc' %> <%- p.id ? '' : R %> <small class="a-muted">mỗi dòng 1 acc: <code>tài khoản | mật khẩu</code></small></label>
+      <textarea name="stock_lines" rows="6" <%= p.id ? '' : 'required' %> placeholder="acc001 | matkhau001&#10;acc002 | matkhau002&#10;acc003 | matkhau003" data-count-lines></textarea>
+      <div class="a-muted a-small" data-line-count>0 acc</div>
+    </div>
+  <% } %>
+
+  <label>Ảnh sản phẩm <small class="a-muted">(tối đa 10 ảnh<%= p.imageList.length ? ', bỏ tick “Giữ” để xóa ảnh cũ' : '' %>)</small></label>
+  <div class="a-hint"><%- I('image') %> <span>Kích thước gợi ý <b>1500 × 900 px</b> (tỉ lệ <b>5:3</b>), JPG/PNG/WEBP ≤ 8MB. Ảnh đầu tiên là ảnh đại diện trên thẻ sản phẩm; ảnh khác tỉ lệ sẽ bị cắt bớt phần thừa cho vừa khung.</span></div>
+  <div class="a-images" data-preview-multi>
+    <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>" alt=""><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ<button type="button" class="a-img-edit" data-img-edit="<%= img %>">Sửa</button></span></label><% }) %>
+  </div>
+  <div class="a-img-tools">
+    <input type="file" name="images" accept="image/*" multiple data-preview-multi-input>
+    <% if (isVip && hg) { %><button type="button" class="a-btn a-btn-sm" data-accimg-make><%- I('image') %> Tạo ảnh acc</button><% } %>
+  </div>
+  </div>
+
+  <% if (isVip && hg) { %>
+  <input type="hidden" name="acc_detail" data-acc-field value="<%= p.acc_detail || '' %>">
+  <div class="a-pf-box a-acc-detail" data-acc-box data-guess="<%= hg %>" data-games="<%= hoyoGamesJson %>" data-servers="<%= hoyoServersJson %>">
+    <div class="a-pf-title"><%- I('star') %> Chi tiết tài khoản
+      <% if (hoyoOn) { %><button type="button" class="a-btn a-btn-sm a-primary a-acc-fetch" data-hoyo-open><%- I('download') %> Lấy dữ liệu HoYoLAB</button>
+      <% } else { %><small class="a-muted">Bật “Máy lấy dữ liệu HoYoLAB” ở <a href="/admin/api#hoyo" target="_blank">Kết nối API</a> để lấy tự động</small><% } %>
+    </div>
+    <div class="a-acc-view" data-acc-view></div>
+  </div>
+
+  <!-- Popup lấy dữ liệu HoYoLAB -->
+  <div class="a-picker" data-hoyo-picker hidden>
+    <div class="a-picker-box a-hoyo-box">
+      <div class="a-picker-head"><b>Lấy dữ liệu HoYoLAB</b><button type="button" class="a-icon-btn" data-hoyo-close aria-label="Đóng"><%- I('x') %></button></div>
+      <div data-hoyo-form>
+        <input type="hidden" data-hoyo-game value="<%= hg %>">
+        <div class="a-row">
+          <div><label>Tài khoản HoYoLAB</label><input data-hoyo-user autocomplete="off" placeholder="email / tên đăng nhập"></div>
+          <div><label>Mật khẩu</label><input type="password" data-hoyo-pass autocomplete="new-password"></div>
+        </div>
+        <label>Máy chủ <small class="a-muted">(để kiểm tra acc đúng máy chủ)</small></label>
+        <select data-hoyo-server><option value="">Tự động theo UID</option><% hoyoServers.forEach(sv => { %><option value="<%= sv %>"><%= sv %></option><% }) %></select>
+        <div class="a-picker-error" data-hoyo-error hidden></div>
+        <div class="a-picker-foot">
+          <button type="button" class="a-btn a-ghost" data-hoyo-close>Hủy</button>
+          <button type="button" class="a-btn a-primary" data-hoyo-start><%- I('download') %> Lấy thông tin</button>
+        </div>
+      </div>
+      <div data-hoyo-run hidden>
+        <div class="a-hoyo-prog"><div class="a-hoyo-bar" data-hoyo-bar></div></div>
+        <p class="a-hoyo-msg" data-hoyo-msg>Đang gửi yêu cầu...</p>
+        <div class="a-picker-foot"><button type="button" class="a-btn a-ghost" data-hoyo-cancel>Hủy lượt này</button></div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <div class="a-pf-box">
+  <div class="a-pf-title"><%- I('list') %> Trạng thái & mô tả</div>
+  <label>Mô tả</label>
+  <textarea name="description" rows="3" maxlength="5000"><%= p.description || '' %></textarea>
+
+  <div class="a-row">
+    <div><label>Trạng thái</label>
+      <select name="status">
+        <option value="available" <%= p.status === 'available' ? 'selected' : '' %>>Đang bán</option>
+        <option value="hidden" <%= p.status === 'hidden' ? 'selected' : '' %>>Ẩn</option>
+        <% if (isVip) { %><option value="sold" <%= p.status === 'sold' ? 'selected' : '' %>>Đã bán</option><% } %>
+      </select></div>
+    <div class="a-check-cell"><label class="a-check"><input type="checkbox" name="is_featured" <%= p.is_featured ? 'checked' : '' %>> Nổi bật (nhãn Hot, hiện trang chủ)</label></div>
+  </div>
+  </div>
+
+  <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><%- R %> là thông tin bắt buộc</span>
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= p.id ? 'Lưu thay đổi' : 'Thêm sản phẩm' %></button>
+  </div>
+</form>

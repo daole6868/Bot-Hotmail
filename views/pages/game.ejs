@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+
+<section class="page-hero" style="--c: <%= game.color %>">
+  <% if (game.image) { %><img src="<%= sz(game.image, 'wide') %>" alt="<%= game.name %>"><% } %>
+  <div>
+    <h1><%= game.name %></h1>
+    <p><%= game.description %></p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2><%- I('folder') %> Danh mục <%= game.name %></h2></div>
+  <% if (!categories.length) { %>
+    <div class="empty">Game này chưa có danh mục nào.</div>
+  <% } %>
+  <div class="cat-grid">
+    <% categories.forEach(c => { %>
+      <% if (c.sale_type === 'boost' || c.sale_type === 'topup') { const tp = c.sale_type === 'topup'; %>
+      <a href="/game/<%= game.slug %>/<%= c.slug %>" class="card cat-card boost-tile">
+        <div class="thumb"><% if (c.image) { %><img src="<%= c.image %>" alt="<%= c.name %>" loading="lazy"><% } else { %><span class="boost-tile-art"><%- I(tp ? 'g-gem' : 'g-swords') %></span><% } %></div>
+        <div class="card-body">
+          <h3><%= c.name %></h3>
+          <% if (c.description) { %><p class="muted small card-desc"><%= c.description %></p><% } %>
+          <div class="stat-boxes">
+            <div class="stat-box"><span class="stat-label"><%- I('layers') %> <%= tp ? 'Gói nạp' : 'Dịch vụ' %></span><b><%= (c.pkgs || 0).toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> <%= tp ? 'Đã nạp' : 'Đã thuê' %></span><b><%= (c.sold || 0).toLocaleString('vi-VN') %></b></div>
+          </div>
+          <div class="price-row cat-price">
+            <span class="muted small">Chỉ từ</span>
+            <strong class="price"><%= c.min_price != null ? H.money(c.min_price) : 'Liên hệ' %></strong>
+          </div>
+          <span class="btn btn-block btn-primary"><%= tp ? 'Nạp ngay' : 'Xem dịch vụ' %></span>
+        </div>
+      </a>
+      <% } else { %>
+      <a href="/game/<%= game.slug %>/<%= c.slug %>" class="card cat-card">
+        <div class="thumb"><img src="<%= c.image || game.image || '/img/no-image.svg' %>" alt="<%= c.name %>" loading="lazy"></div>
+        <div class="card-body">
+          <h3><%= c.name %></h3>
+          <% if (c.description) { %><p class="muted small card-desc"><%= c.description %></p><% } %>
+          <div class="stat-boxes">
+            <div class="stat-box"><span class="stat-label"><%- I('cart') %> Đang bán</span><b><%= c.product_count.toLocaleString('vi-VN') %></b></div>
+            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã bán</span><b><%= c.sold.toLocaleString('vi-VN') %></b></div>
+          </div>
+          <div class="price-row cat-price">
+            <span class="muted small">Chỉ từ</span>
+            <strong class="price"><%= c.min_price != null ? H.money(c.min_price) : 'Hết hàng' %></strong>
+          </div>
+          <span class="btn btn-block btn-primary">Xem sản phẩm</span>
+        </div>
+      </a>
+      <% } %>
+    <% }) %>
+  </div>
+</section>
+
+<% if (coupons.length) { %>
+<section class="section">
+  <div class="section-head"><h2><%- I('gift') %> Mã giảm giá áp dụng</h2></div>
+  <%- include('../partials/coupon-list', { coupons }) %>
+</section>
+<% } %>
+
+<%- include('../partials/footer') %>

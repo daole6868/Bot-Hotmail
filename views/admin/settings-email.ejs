@@ -1,0 +1,89 @@
+<%- include('_header') %>
+<% if (!ready) { %>
+  <div class="a-alert a-alert-info"><%- I('alert') %> <span><b>Chưa cấu hình gửi email.</b> Khi chưa có SMTP, web tự <b>bỏ qua xác minh 2 lớp</b> (để không ai bị khóa ngoài), chức năng quên mật khẩu và email thông báo tạm tắt. Điền thông tin SMTP bên dưới rồi bấm “Gửi thử”.</span></div>
+<% } else if (adminsNoEmail.length) { %>
+  <div class="a-alert a-alert-error"><%- I('alert') %> <span>Tài khoản admin <b><%= adminsNoEmail.join(', ') %></b> chưa có email nên chưa được bảo vệ bằng xác minh 2 lớp. Thêm email ở <a href="/user/security">Bảo mật tài khoản</a>.</span></div>
+<% } %>
+<form method="post" action="/admin/settings/email" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('mail') %> Máy chủ gửi email (SMTP) <%- ready ? '<span class="a-tag green">Đã cấu hình</span>' : '<span class="a-tag">Chưa cấu hình</span>' %></h3>
+      <div class="a-row">
+        <div><label>Máy chủ SMTP</label><input name="smtp_host" value="<%= s.smtp_host %>" placeholder="smtp.gmail.com" maxlength="120"></div>
+        <div class="a-row">
+          <div><label>Cổng</label><input type="number" name="smtp_port" value="<%= s.smtp_port || 587 %>" min="1" max="65535"></div>
+          <div><label>Bảo mật</label><select name="smtp_secure"><% [['tls','STARTTLS (587)'],['ssl','SSL (465)'],['none','Không']].forEach(([v,l]) => { %><option value="<%= v %>" <%= (s.smtp_secure || 'tls') === v ? 'selected' : '' %>><%= l %></option><% }) %></select></div>
+        </div>
+      </div>
+      <div class="a-row">
+        <div><label>Tài khoản đăng nhập SMTP</label><input name="smtp_user" value="<%= s.smtp_user %>" placeholder="shop@gmail.com" maxlength="150" autocomplete="off"></div>
+        <div><label>Mật khẩu SMTP <small class="a-muted"><%= hasPass ? '(đã lưu – để trống nếu giữ nguyên)' : '' %></small></label><input type="password" name="smtp_pass" placeholder="<%= hasPass ? '••••••••' : 'Mật khẩu ứng dụng' %>" autocomplete="new-password" maxlength="300">
+          <% if (hasPass) { %><label class="a-check"><input type="checkbox" name="clear_pass" value="1"> Xóa mật khẩu đã lưu</label><% } %></div>
+      </div>
+      <div class="a-row">
+        <div><label>Tên người gửi</label><input name="mail_from_name" value="<%= s.mail_from_name %>" placeholder="<%= s.site_name %>" maxlength="100"></div>
+        <div><label>Email người gửi</label><input name="mail_from_email" value="<%= s.mail_from_email %>" placeholder="shop@gmail.com (trống = tài khoản SMTP)" maxlength="150"></div>
+      </div>
+      <details class="a-help">
+        <summary><%- I('info') %> Hướng dẫn dùng Gmail miễn phí (~500 email/ngày)</summary>
+        <ol>
+          <li>Bật <b>Xác minh 2 bước</b> cho tài khoản Google.</li>
+          <li>Vào <b>myaccount.google.com/apppasswords</b>, tạo “Mật khẩu ứng dụng” (16 ký tự).</li>
+          <li>Điền: máy chủ <code>smtp.gmail.com</code>, cổng <code>587</code>, STARTTLS, tài khoản = địa chỉ Gmail, mật khẩu = mật khẩu ứng dụng vừa tạo.</li>
+        </ol>
+        <p class="a-muted a-small">Shop đông khách nên dùng dịch vụ chuyên gửi email (Zoho Mail, Brevo, Mailgun, Amazon SES) với email tên miền riêng để ít bị vào Spam.</p>
+      </details>
+      <p class="a-field-hint">Mật khẩu SMTP được lưu mã hóa, không hiển thị lại.</p>
+    </div>
+
+    <div>
+      <div class="a-card">
+        <h3><%- I('shield') %> Xác minh 2 lớp (mã 6 số qua email)</h3>
+        <label class="a-check"><input type="checkbox" name="twofa_admin" value="1" <%= s.twofa_admin !== '0' ? 'checked' : '' %>> <b>Bắt buộc với tài khoản admin</b> (khuyên dùng)</label>
+        <label>Với khách hàng</label>
+        <select name="twofa_mode_user">
+          <option value="optional" <%= (s.twofa_mode_user || 'optional') === 'optional' ? 'selected' : '' %>>Khách tự chọn bật/tắt trong mục Bảo mật</option>
+          <option value="required" <%= s.twofa_mode_user === 'required' ? 'selected' : '' %>>Bắt buộc với mọi tài khoản có email</option>
+          <option value="off" <%= s.twofa_mode_user === 'off' ? 'selected' : '' %>>Tắt</option>
+        </select>
+        <label>Hỏi lại mã sau (ngày)</label>
+        <input type="number" name="twofa_days" min="1" max="365" value="<%= s.twofa_days || 30 %>">
+        <p class="a-field-hint">Mã được gửi khi đăng nhập trên <b>thiết bị mới</b>, khi thiết bị quen đã quá số ngày này chưa xác minh lại, hoặc tài khoản quá số ngày này không đăng nhập. Mã hết hạn sau 10 phút, sai 5 lần phải gửi mã mới.</p>
+      </div>
+      <div class="a-card">
+        <h3><%- I('bell') %> Email thông báo gửi cho khách</h3>
+        <% toggles.forEach(([k, l]) => { %><label class="a-check"><input type="checkbox" name="<%= k %>" value="1" <%= s[k] !== '0' ? 'checked' : '' %>> <%= l %></label><% }) %>
+        <p class="a-field-hint">Mã xác minh và link đặt lại mật khẩu luôn được gửi. Email mua hàng <b>không chứa</b> thông tin đăng nhập acc (khách xem trên web sau khi đăng nhập) để tránh lộ acc nếu email bị xâm nhập.</p>
+      </div>
+    </div>
+  </div>
+  <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt</button></div>
+</form>
+
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3><%- I('mail') %> Gửi email thử</h3>
+    <form method="post" action="/admin/settings/email/test" class="a-inline-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="email" name="to" value="<%= user.email || '' %>" placeholder="Email nhận thử" required>
+      <button class="a-btn" <%= ready ? '' : 'disabled' %>>Gửi thử</button>
+    </form>
+    <p class="a-field-hint">Lưu cài đặt trước rồi mới gửi thử. 24 giờ qua: <b class="a-green"><%= stats.sent || 0 %></b> email đã gửi, <b class="a-red"><%= stats.failed || 0 %></b> lỗi.</p>
+  </div>
+  <div class="a-card a-card-flush">
+    <div class="a-card-head a-pad"><h3>Nhật ký email gần đây</h3></div>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Lúc</th><th>Người nhận</th><th>Loại</th><th>Trạng thái</th></tr></thead>
+      <% if (!logs.length) { %><tr><td colspan="4" class="a-muted">Chưa có email nào</td></tr><% } %>
+      <% const tn = { otp: 'Mã xác minh', reset: 'Đặt lại mật khẩu', password_changed: 'Đổi mật khẩu', login_alert: 'Thiết bị mới', welcome: 'Chào mừng', order: 'Mua hàng', boost: 'Cày thuê / Nạp game', deposit: 'Nạp tiền', test: 'Thử nghiệm' }; %>
+      <% logs.forEach(l => { %><tr>
+        <td class="a-small a-muted"><%= H.fmtDate(l.created_at) %></td>
+        <td class="a-small"><%= l.to_email.replace(/^(.{2})[^@]*/, '$1***') %></td>
+        <td class="a-small"><%= tn[l.type] || l.type %></td>
+        <td><%- l.status === 'sent' ? '<span class="a-tag green">Đã gửi</span>' : l.status === 'failed' ? '<span class="a-tag red">Lỗi</span>' : '<span class="a-tag">Đang gửi</span>' %><% if (l.error) { %><div class="a-small a-red"><%= l.error %></div><% } %></td>
+      </tr><% }) %>
+    </table></div>
+  </div>
+</div>
+<%- include('_footer') %>

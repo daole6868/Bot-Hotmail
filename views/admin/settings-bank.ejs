@@ -1,0 +1,74 @@
+<%- include('_header') %>
+<form method="post" action="/admin/settings/bank" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('bank') %> Tài khoản ngân hàng nhận tiền</h3>
+      <label>Mã ngân hàng <small class="a-muted">(VietQR: MB, VCB, TCB, ACB, BIDV, VPB, TPB...)</small></label>
+      <input name="bank_code" value="<%= s.bank_code %>" maxlength="20">
+      <label>Tên ngân hàng hiển thị</label>
+      <input name="bank_name" value="<%= s.bank_name %>" maxlength="100">
+      <label>Số tài khoản</label>
+      <input name="bank_account" value="<%= s.bank_account %>" maxlength="40">
+      <label>Chủ tài khoản <small class="a-muted">(IN HOA, không dấu)</small></label>
+      <input name="bank_owner" value="<%= s.bank_owner %>" maxlength="100" style="text-transform:uppercase">
+      <p class="a-field-hint">Hiện ở trang Nạp tiền của khách (kèm mã QR). Để trống số tài khoản thì khách chưa nạp được.</p>
+    </div>
+    <div class="a-card">
+      <h3><%- I('card') %> Hạn mức nạp</h3>
+      <div class="a-row">
+        <div><label>Nạp tối thiểu (đ)</label><input type="number" name="deposit_min" min="1000" value="<%= s.deposit_min %>"></div>
+        <div><label>Nạp tối đa (đ)</label><input type="number" name="deposit_max" min="1000" value="<%= s.deposit_max %>"></div>
+      </div>
+      <h3 class="a-mt"><%- I('clock') %> Thời gian chờ nạp</h3>
+      <label>Thời gian chờ thanh toán (phút) <span class="req">*</span></label>
+      <input type="number" name="deposit_expire_minutes" min="5" max="10080" step="1" required value="<%= expireMinutes %>">
+      <div class="a-chip-row">
+        <% [[15,'15 phút'],[30,'30 phút'],[60,'1 giờ'],[180,'3 giờ'],[1440,'1 ngày']].forEach(([v, l]) => { %><button type="button" class="a-btn a-xs" data-set-input="deposit_expire_minutes" data-value="<%= v %>"><%= l %></button><% }) %>
+      </div>
+      <p class="a-field-hint">Khách tạo yêu cầu nạp mà quá <b><%= H.fmtDuration(expireMinutes) %></b> chưa chuyển khoản, yêu cầu tự chuyển thành <b>Đã hủy (quá hạn)</b>. Khách không bấm “Thanh toán” hay “Hủy” được nữa, phải tạo yêu cầu mới. Hệ thống kiểm tra mỗi phút; trang nạp của khách có đồng hồ đếm ngược. Hiện có <b><%= pendingCount %></b> yêu cầu đang chờ.</p>
+      <label class="a-check"><input type="checkbox" name="deposit_late_credit" value="1" <%= s.deposit_late_credit !== '0' ? 'checked' : '' %>> <span>Vẫn tự cộng tiền nếu khách chuyển khoản <b>sau khi</b> yêu cầu đã quá hạn</span></label>
+      <p class="a-field-hint">Nên bật: tránh trường hợp khách chuyển muộn vài phút mà không được cộng. Nếu tắt, giao dịch đó nằm ở mục <a href="/admin/bank">GD ngân hàng</a> (chưa khớp) để bạn tự xử lý.</p>
+
+    </div>
+  </div>
+
+  <% const acnAgo = s.acn_last_at ? H.fmtDate(+s.acn_last_at) : ''; %>
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('link') %> NIFY <small class="a-muted">(webhook — NIFY tự gửi về khi có tiền)</small></h3>
+      <label class="a-check"><input type="checkbox" name="nify_enabled" value="1" <%= s.nify_enabled !== '0' ? 'checked' : '' %>> <span><b>Bật nhận webhook NIFY</b></span></label>
+      <label>Webhook URL</label>
+      <div class="a-copy-row"><input value="<%= webhookUrl %>" readonly><button type="button" class="a-btn" data-copy="<%= webhookUrl %>">Sao chép</button></div>
+      <label>Secret Key</label>
+      <div class="a-copy-row"><input value="<%= webhookSecret %>" readonly><button type="button" class="a-btn" data-copy="<%= webhookSecret %>">Sao chép</button></div>
+      <label class="a-check"><input type="checkbox" name="regen_secret" value="1"> <span>Tạo Secret Key mới khi lưu</span></label>
+      <p class="a-field-hint">Dán Webhook URL và Secret Key vào mục Webhook của tài khoản ngân hàng trên NIFY, ô lọc nội dung điền <code><%= depositPrefix %></code>. Tiền được cộng gần như ngay lập tức. Tắt ô trên thì web bỏ qua mọi giao dịch NIFY gửi về. SePay / Casso vẫn dùng header <code>Authorization: Apikey &lt;BANK_WEBHOOK_TOKEN&gt;</code> như cũ.</p>
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('refresh') %> APICANHAN <small class="a-muted">(web tự quét giao dịch)</small></h3>
+      <label class="a-check"><input type="checkbox" name="acn_enabled" value="1" <%= s.acn_enabled === '1' ? 'checked' : '' %>> <span><b>Bật quét giao dịch APICANHAN</b></span></label>
+      <div class="a-row">
+        <div><label>Ngân hàng</label>
+          <select name="acn_bank"><option value="ACBnew" <%= s.acn_bank !== 'MB' ? 'selected' : '' %>>ACB</option><option value="MB" <%= s.acn_bank === 'MB' ? 'selected' : '' %>>MB Bank</option></select></div>
+        <div><label>ApiKey <%- acnHasKey ? '<small class="a-green">(đã lưu)</small>' : '' %></label>
+          <input name="acn_key" type="password" autocomplete="off" placeholder="<%= acnHasKey ? 'Để trống = giữ ApiKey cũ' : 'Dán ApiKey từ APiCaNhan.COM' %>"></div>
+      </div>
+      <% if (acnHasKey) { %><label class="a-check"><input type="checkbox" name="acn_clear_key" value="1"> <span>Xóa ApiKey đã lưu</span></label><% } %>
+      <div class="a-row">
+        <div><label>Hỏi mỗi (giây)</label><input type="number" name="acn_interval" min="3" max="120" value="<%= s.acn_interval || 5 %>"></div>
+        <div><label>Quét thêm sau hạn mã QR (%)</label><input type="number" name="acn_extra_pct" min="0" max="300" value="<%= s.acn_extra_pct || 20 %>"></div>
+      </div>
+      <p class="a-field-hint">Chỉ hỏi khi có khách đang chờ thanh toán, trong <b><%= acnWindowMin %> phút</b> kể từ lúc tạo mã (thời hạn mã QR <%= expireMinutes %> phút + <%= s.acn_extra_pct || 20 %>%). Không có đơn chờ thì không gọi. Mỗi lần hỏi lấy giao dịch của cả tài khoản nên nhiều khách nạp cùng lúc vẫn chỉ 1 lần gọi. Chỉ nhận tiền vào có chứa <code><%= depositPrefix %></code> trong nội dung.</p>
+      <div class="acn-status <%= s.acn_last_ok === '1' ? 'ok' : s.acn_last_at ? 'err' : '' %>">
+        <span>Lần quét gần nhất: <b><%= acnAgo || 'chưa có' %></b></span>
+        <% if (s.acn_last_msg) { %><span><%= s.acn_last_msg %></span><% } %>
+      </div>
+      <button class="a-btn" formaction="/admin/settings/bank/acn-scan" formnovalidate <%= acnHasKey ? '' : 'disabled' %>><%- I('refresh') %> Quét ngay</button>
+    </div>
+  </div>
+  <p class="a-field-hint">Bật cả 2 thì chạy song song: NIFY cộng tiền ngay, APICANHAN bắt lại nếu NIFY lỡ gửi. Cùng 1 lần chuyển khoản chỉ được cộng 1 lần. Xem mọi giao dịch ở mục <a href="/admin/bank">GD ngân hàng</a>.</p>
+  <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt bank</button></div>
+</form>
+<%- include('_footer') %>

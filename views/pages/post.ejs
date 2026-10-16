@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+<% if (preview) { %><div class="alert alert-warning"><b>Xem trước</b> — bài <%= p.status === 'published' ? 'đã đăng' : 'chưa đăng (Nháp)' %>, chỉ admin thấy trang này. <a href="/admin/posts/<%= p.id %>/edit">Quay lại sửa bài</a></div><% } %>
+<article class="post-wrap">
+  <header class="post-head">
+    <% if (p.cat_name) { %><a href="/tin-tuc/chuyen-muc/<%= p.cat_slug %>" class="post-cat-link"><%= p.cat_name %></a><% } %>
+    <h1><%= p.title %></h1>
+    <div class="post-meta muted small">
+      <span><%- I('clock') %> <%= H.fmtDate(p.published_at || p.created_at).slice(0, 10) %></span>
+      <span><%- I('g-book') %> <%= minutes %> phút đọc</span>
+      <span><%- I('eye') %> <%= (p.views || 0).toLocaleString('vi-VN') %> lượt xem</span>
+      <% if (p.game_name) { %><a href="/game/<%= p.game_slug %>"><%- I('gamepad') %> <%= p.game_name %></a><% } %>
+    </div>
+  </header>
+  <% if (p.cover) { %><img class="post-cover" src="<%= sz(p.cover, 'wide') %>" alt="<%= p.title %>"><% } %>
+  <% if (toc.length >= 3) { %>
+  <details class="post-toc card" open>
+    <summary><%- I('list') %> Mục lục</summary>
+    <ol><% toc.forEach(t => { %><li class="lv<%= t.level %>"><a href="#<%= t.id %>"><%= t.text %></a></li><% }) %></ol>
+  </details>
+  <% } %>
+  <div class="post-content"><%- html %></div>
+  <% if (faq.length) { %>
+  <section class="post-faq">
+    <h2><%- I('info') %> Câu hỏi thường gặp</h2>
+    <% faq.forEach(f => { %><details class="card"><summary><%= f.q %></summary><p><%= f.a %></p></details><% }) %>
+  </section>
+  <% } %>
+</article>
+<% if (related.length) { %>
+<section class="section">
+  <div class="section-head"><h2><%- I('g-book') %> Bài viết liên quan</h2></div>
+  <div class="post-grid"><% related.forEach(it => { %><%- include('../partials/post-card', { it }) %><% }) %></div>
+</section>
+<% } %>
+<%- include('../partials/footer') %>

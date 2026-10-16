@@ -1,0 +1,4 @@
+<label class="a-switch" title="<%= locals.disabled ? 'Đã bán' : (on ? 'Đang hiển thị' : 'Đang ẩn') %>">
+  <input type="checkbox" data-toggle-url="/admin/<%= kind %>/<%= id %>/toggle" <%= on ? 'checked' : '' %> <%= locals.disabled ? 'disabled' : '' %>>
+  <span></span>
+</label>

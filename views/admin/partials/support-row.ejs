@@ -1,0 +1,22 @@
+<%# 1 kênh liên hệ trong trang Hỗ trợ. ch, TYPES %>
+<% const T = TYPES[ch.type] || TYPES.website; %>
+<div class="a-sp-row" data-sp-row>
+  <span class="a-sp-tile" style="background:<%= T.color %>" data-sp-tile><%- I(T.icon) %></span>
+  <div class="a-sp-fields">
+    <div class="a-sp-line">
+      <select name="ch_type" data-sp-type><% Object.entries(TYPES).forEach(([k, t]) => { %><option value="<%= k %>" <%= k === ch.type ? 'selected' : '' %>><%= t.name %></option><% }) %></select>
+      <input name="ch_title" maxlength="40" value="<%= ch.title %>" placeholder="Tiêu đề (để trống = tên nền tảng)">
+    </div>
+    <div class="a-sp-line">
+      <input name="ch_value" maxlength="300" value="<%= ch.value %>" placeholder="<%= T.hint %>" data-sp-value>
+      <input name="ch_desc" maxlength="80" value="<%= ch.desc %>" placeholder="Mô tả ngắn<%= T.desc ? ' (VD: ' + T.desc + ')' : '' %>" data-sp-desc>
+    </div>
+  </div>
+  <div class="a-sp-act">
+    <label class="a-switch" title="Hiện / ẩn"><input type="checkbox" data-sp-on <%= ch.on ? 'checked' : '' %>><span></span></label>
+    <input type="hidden" name="ch_on" value="<%= ch.on ? 1 : 0 %>">
+    <button type="button" class="a-icon-btn" data-sp-up title="Lên">↑</button>
+    <button type="button" class="a-icon-btn" data-sp-down title="Xuống">↓</button>
+    <button type="button" class="a-icon-btn a-icon-danger" data-sp-del title="Xóa"><%- I('trash') %></button>
+  </div>
+</div>

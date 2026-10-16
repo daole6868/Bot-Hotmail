@@ -1,0 +1,8 @@
+<% if (result.pages > 1) { const cur = result.page, last = result.pages; %>
+<nav class="a-pagination">
+  <% if (cur > 1) { %><a href="<%= H.pageUrl(query, 1) %>"><%- I('chevrons-left') %></a><a href="<%= H.pageUrl(query, cur - 1) %>"><%- I('chevron-left') %></a><% } %>
+  <% for (let i = Math.max(1, cur - 3); i <= Math.min(last, cur + 3); i++) { %><a href="<%= H.pageUrl(query, i) %>" class="<%= i === cur ? 'active' : '' %>"><%= i %></a><% } %>
+  <% if (cur < last) { %><a href="<%= H.pageUrl(query, cur + 1) %>"><%- I('chevron-right') %></a><a href="<%= H.pageUrl(query, last) %>"><%- I('chevrons-right') %></a><% } %>
+</nav>
+<% } %>
+<div class="a-muted a-small">Tổng: <%= result.total.toLocaleString('vi-VN') %> · Trang <%= result.page %>/<%= result.pages %></div>

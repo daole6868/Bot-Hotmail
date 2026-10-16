@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+<div class="bp-head"><h1><%- I('box') %> <%= game.name %></h1></div>
+<div class="as-page" style="--as-name-pc:<%= ui.namePc %>px;--as-name-mb:<%= ui.nameMb %>px;--as-desc-pc:<%= ui.descPc %>px;--as-desc-mb:<%= ui.descMb %>px;--as-lh:<%= ui.lh %>">
+<% if (game.description) { %><div class="bp-desc prewrap as-intro"><%= game.description %></div><% } %>
+<% if (!groups.length) { %><div class="card pad muted center">Hiện chưa có sản phẩm nào. Vui lòng quay lại sau.</div><% } %>
+<% groups.forEach(g => { %>
+  <section class="card as-cat">
+    <h2 class="as-cat-h"><% if (g.icon) { %><img src="<%= g.icon %>" alt="" width="28" height="28" loading="lazy"><% } %> <%= g.name %> <span class="muted small"><%= g.items.length %> sản phẩm</span></h2>
+    <div class="as-grid">
+      <% g.items.forEach(p => { const out = p.stock < p.min; %>
+        <div class="card as-item<%= out ? ' is-out' : '' %>">
+          <h3><%= p.name %></h3>
+          <% if (p.desc) { %><p class="muted as-desc prewrap"><%= p.desc %></p><% } %>
+          <div class="as-meta">
+            <span><%- I('box') %> Kho: <b><%= p.stock.toLocaleString('vi-VN') %></b></span>
+            <% if (p.sold) { %><span><%- I('check') %> Đã bán: <b><%= p.sold.toLocaleString('vi-VN') %></b></span><% } %>
+          </div>
+          <div class="as-foot">
+            <span class="as-price"><b class="price"><%= H.money(p.price) %></b><span class="muted small">/cái</span></span>
+            <% if (out) { %><span class="btn btn-sm btn-ghost" aria-disabled="true">Hết hàng</span>
+            <% } else if (user) { %><button type="button" class="btn btn-sm btn-primary" data-as-buy='<%= JSON.stringify({ id: p.id, name: p.name, price: p.price, min: p.min, max: p.max, stock: p.stock }) %>'><%- I('cart') %> Mua</button>
+            <% } else { %><a class="btn btn-sm btn-primary" href="/login?next=<%= encodeURIComponent('/game/' + game.slug) %>">Đăng nhập để mua</a><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+<% }) %>
+
+</div>
+<% if (user) { %>
+<div class="as-modal" data-as-modal hidden data-balance="<%= user.balance %>">
+  <div class="as-box card" role="dialog" aria-modal="true">
+    <button type="button" class="as-x" data-as-close aria-label="Đóng"><%- I('x') %></button>
+    <h3 data-as-name></h3>
+    <p class="muted small"><span data-as-unit></span> / cái · Kho còn <b data-as-stock></b></p>
+    <label class="label" for="asQty">Số lượng cần mua <span class="muted small" data-as-range></span></label>
+    <div class="as-qty">
+      <button type="button" class="btn btn-ghost" data-as-step="-1">−</button>
+      <input id="asQty" type="number" inputmode="numeric" data-as-qty>
+      <button type="button" class="btn btn-ghost" data-as-step="1">+</button>
+    </div>
+    <div class="as-quick" data-as-quick></div>
+    <div class="as-sum">
+      <div><span>Thành tiền</span><b class="price" data-as-total></b></div>
+      <div><span>Số dư của bạn</span><b><%= H.money(user.balance) %></b></div>
+    </div>
+    <div class="alert alert-error small" data-as-err hidden></div>
+    <input type="hidden" value="<%= newIdem() %>" data-as-idem>
+    <button type="button" class="btn btn-primary btn-block" data-as-ok><%- I('check') %> Xác nhận mua</button>
+    <a class="btn btn-ghost btn-block" href="/user/deposit" data-as-deposit hidden><%- I('card') %> Nạp thêm tiền</a>
+    <p class="muted small center" data-as-wait hidden>Đang xử lý đơn hàng, vui lòng không tắt trang...</p>
+  </div>
+</div>
+<% } %>
+<%- include('../partials/footer') %>

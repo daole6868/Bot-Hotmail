@@ -1,0 +1,39 @@
+<% const posName = { main: 'Banner chính (slider)', strip: 'Dải ảnh chạy', sidebar_left: 'Sidebar trái', sidebar_right: 'Sidebar phải', popup: 'Popup trang chủ' }; %>
+<form method="post" action="/admin/banners/save" enctype="multipart/form-data" class="a-form" novalidate data-validate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= b ? b.id : '' %>">
+  <input type="hidden" name="position" value="<%= position %>">
+
+  <div class="a-form-context">
+    <span class="a-folder"><%- I('image') %></span>
+    <div class="a-minw0"><small class="a-muted">Vị trí</small><b><%= posName[position] %></b></div>
+    <span class="a-type-badge vip">Hiển thị <%= size.w %> × <%= size.h %></span>
+  </div>
+
+  <label>Ảnh <%- b ? '' : '<span class="req">*</span>' %></label>
+  <div class="a-crop" data-crop data-ratio="<%= size.w %>/<%= size.h %>">
+    <div class="a-crop-stage" data-crop-stage <%= b ? '' : 'hidden' %>>
+      <img data-crop-img <% if (b) { %>src="<%= b.image %>"<% } %> alt="">
+      <div class="a-crop-keep" data-crop-keep><span>Phần hiển thị</span></div>
+    </div>
+    <div class="a-crop-empty a-muted" data-crop-empty <%= b ? 'hidden' : '' %>><%- I('image') %><br>Chọn ảnh để xem trước</div>
+    <div class="a-crop-legend" data-crop-legend <%= b ? '' : 'hidden' %>>
+      <span><i class="lg-keep"></i> Xanh: phần hiển thị trên web</span>
+      <span><i class="lg-cut"></i> Đỏ: phần bị cắt</span>
+      <span class="a-muted" data-crop-info></span>
+    </div>
+  </div>
+  <input type="file" name="image" accept="image/*" <%= b ? '' : 'required' %> data-crop-input>
+
+  <label>Tiêu đề (mô tả ảnh)</label>
+  <input name="title" maxlength="150" value="<%= b ? b.title : '' %>">
+  <label>Link khi bấm vào</label>
+  <input name="link" maxlength="300" value="<%= b ? b.link : '' %>" placeholder="/game/lien-quan-mobile hoặc https://...">
+  <label class="a-check"><input type="checkbox" name="is_active" <%= !b || b.is_active ? 'checked' : '' %>> Hiển thị</label>
+  <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><span class="req">*</span> là thông tin bắt buộc</span>
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= b ? 'Lưu thay đổi' : 'Thêm banner' %></button>
+  </div>
+</form>

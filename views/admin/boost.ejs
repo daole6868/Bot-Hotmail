@@ -1,0 +1,65 @@
+<%- include('_header') %>
+<div class="a-section-head">
+  <div>
+    <% if (single) { %>
+      <h3><a href="/admin/boost" class="a-muted">Cày thuê</a> › <%= single.game_name %> › <%= single.name %></h3>
+      <p class="a-muted a-small">Danh mục con của “<%= single.name %>”. Bấm “Gói” để thêm / sửa gói. Kéo nút ⠿ để đổi thứ tự.</p>
+    <% } else { %>
+      <h3>Cày thuê theo game</h3>
+      <p class="a-muted a-small">Danh mục Cày thuê tạo ở mục <a href="/admin/categories">Danh mục</a> (chọn loại Cày thuê). Bên trong là danh mục con, mỗi danh mục con chứa các gói.</p>
+    <% } %>
+  </div>
+  <div class="a-actions">
+    <% if (single) { %>
+      <a class="a-btn a-ghost" href="/game/<%= single.game_slug %>/<%= single.slug %>" target="_blank" rel="noopener"><%- I('eye') %> Xem ngoài web</a>
+    <% } else { %>
+      <button type="button" class="a-btn" data-acc-all="open">Mở tất cả</button>
+      <button type="button" class="a-btn" data-acc-all="close">Thu gọn</button>
+    <% } %>
+  </div>
+</div>
+<% if (!parents.length) { %><div class="a-card a-empty">Chưa có danh mục Cày thuê nào. Vào <a href="/admin/categories">Danh mục</a> → Thêm danh mục → chọn loại <b>Cày thuê</b>.</div><% } %>
+<% parents.forEach(pc => { %>
+<section class="a-acc<%= single ? ' open' : '' %>" id="bparent-<%= pc.id %>" data-acc="boost-parent-<%= pc.id %>">
+  <div class="a-acc-head">
+    <button type="button" class="a-acc-toggle" data-acc-toggle>
+      <%- include('partials/thumb', { img: pc.image || pc.game_image, name: pc.name, color: pc.game_color, size: 'sm' }) %>
+      <span class="a-acc-title"><b><%= pc.game_name %> › <%= pc.name %></b><small><%= pc.subs.length %> danh mục con<%= pc.is_active ? '' : ' · đang ẩn' %></small></span>
+      <span class="a-chevron"><%- I('caret-down') %></span>
+    </button>
+    <div class="a-actions">
+      <button type="button" class="a-btn a-ghost" data-modal-url="/admin/categories/form?id=<%= pc.id %>" data-modal-title="Sửa danh mục Cày thuê"><%- I('edit') %> <span class="a-hide-sm">Sửa</span></button>
+      <button type="button" class="a-btn a-soft" data-modal-url="/admin/boost/categories/form?parent_id=<%= pc.id %>" data-modal-title="Thêm danh mục con – <%= pc.name %>"><%- I('plus') %> Thêm danh mục con</button>
+    </div>
+  </div>
+  <div class="a-acc-body">
+    <div class="a-table-wrap">
+      <table class="a-table">
+        <thead><tr><th class="a-w-move"></th><th>Danh mục con</th><th class="a-num">Gói</th><th class="a-num">Giá từ</th><th class="a-num">Đã thuê</th><th class="a-center">Hiển thị</th><th class="a-right">Thao tác</th></tr></thead>
+        <tbody>
+        <% if (!pc.subs.length) { %><tr><td colspan="7" class="a-empty">Chưa có danh mục con.</td></tr><% } %>
+        <% pc.subs.forEach((c, i) => { %>
+          <tr class="<%= c.is_active ? '' : 'a-row-off' %>">
+            <td><%- include('partials/move', { kind: 'boost-categories', id: c.id, first: i === 0, last: i === pc.subs.length - 1 }) %></td>
+            <td><div class="a-item">
+              <% if (c.image) { %><img src="<%= c.image %>" class="a-avatar sm" alt="" loading="lazy"><% } else { %><span class="a-bx-ico" style="--ic:<%= c.icon_color %>"><%- I(c.icon) %></span><% } %>
+              <div><a href="/admin/boost/categories/<%= c.id %>"><b><%= c.name %></b></a><% if (c.description) { %><div class="a-muted a-small a-trunc"><%= c.description %></div><% } %></div>
+            </div></td>
+            <td class="a-num"><a href="/admin/boost/categories/<%= c.id %>"><%= c.pkg_count %> gói</a></td>
+            <td class="a-num"><%= c.min_price != null ? H.money(c.min_price) : '—' %></td>
+            <td class="a-num"><%= c.sold.toLocaleString('vi-VN') %></td>
+            <td class="a-center"><%- include('partials/switch', { kind: 'boost-categories', id: c.id, on: c.is_active, disabled: false }) %></td>
+            <td class="a-right"><div class="a-actions">
+              <a class="a-btn a-xs a-soft" href="/admin/boost/categories/<%= c.id %>"><%- I('layers') %> Gói</a>
+              <button type="button" class="a-icon-btn" data-modal-url="/admin/boost/categories/form?id=<%= c.id %>" data-modal-title="Sửa danh mục con" title="Sửa"><%- I('edit') %></button>
+              <form method="post" action="/admin/boost/categories/<%= c.id %>/delete" data-confirm="Xóa danh mục con “<%= c.name %>” và các gói bên trong?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+            </div></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<% }) %>
+<%- include('_footer') %>

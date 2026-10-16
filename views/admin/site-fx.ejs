@@ -1,0 +1,49 @@
+<%- include('_header') %>
+<% const ST = { off: ['Tắt', ''], wait: ['Chờ tới ngày', 'is-wait'], done: ['Đã hết hạn', 'is-done'], live: ['Đang chạy', 'is-live'] }; %>
+<form method="post" action="/admin/site-fx" class="a-form" autocomplete="off">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-card">
+    <h3><%- I('g-sparkles') %> Cài đặt chung</h3>
+    <div class="a-fx-gen">
+      <label class="a-check"><input type="checkbox" name="on" value="1" <%= c.on ? 'checked' : '' %>> <span><b>Bật hiệu ứng trên web</b></span></label>
+      <label class="a-check"><input type="checkbox" name="mobile" value="1" <%= c.mobile ? 'checked' : '' %>> <span>Chạy trên điện thoại</span></label>
+      <label class="a-check"><input type="checkbox" name="banner" value="1" <%= c.banner ? 'checked' : '' %>> <span>Hiện băng chữ chúc mừng dưới đầu trang</span></label>
+      <div class="a-fx-dens"><span>Mật độ</span>
+        <% [[0.5, 'Thưa'], [1, 'Vừa'], [1.7, 'Dày']].forEach(([v, l]) => { %><label class="a-fx-seg"><input type="radio" name="dens" value="<%= v %>" <%= c.dens === v ? 'checked' : '' %>><span><%= l %></span></label><% }) %>
+      </div>
+    </div>
+    <p class="a-muted a-small">
+      <% if (live && c.on) { %>Đang chạy: <b><%= live.keys.map(k => LIST.find(e => e.k === k).name).join(', ') %></b>.
+      <% } else if (!c.on) { %>Hiệu ứng đang tắt toàn bộ.<% } else { %>Chưa có hiệu ứng nào đang chạy.<% } %>
+      Để trống ngày thì hiệu ứng chạy ngay khi bật; có ngày thì tự chạy trong khoảng đó (giờ Việt Nam). Nên bật 1 hiệu ứng dịp lễ cùng lúc.
+    </p>
+  </div>
+
+  <% Object.entries(GROUPS).forEach(([g, gname]) => { const items = LIST.filter(e => e.g === g); %>
+  <div class="a-card a-fx-card">
+    <h3><%= gname %></h3>
+    <div class="a-fx-list">
+      <% items.forEach(e => { const it = c.items[e.k], s = ST[st(e.k)]; %>
+      <div class="a-fx-row<%= it.on ? '' : ' is-off' %>">
+        <div class="a-fx-head">
+          <label class="a-switch" title="Bật / tắt"><input type="checkbox" name="on_<%= e.k %>" value="1" <%= it.on ? 'checked' : '' %>><span></span></label>
+          <div class="a-fx-name"><b><%= e.name %></b><small class="a-muted"><%= e.when %></small></div>
+          <span class="a-fx-st <%= s[1] %>"><%= s[0] %></span>
+          <a class="a-btn a-btn-sm" href="/?fx=<%= e.k %>" target="_blank" rel="noopener"><%- I('eye') %> Xem thử</a>
+        </div>
+        <div class="a-fx-opts">
+          <label><span>Từ</span><input type="datetime-local" name="from_<%= e.k %>" value="<%= it.from %>"></label>
+          <label><span>Đến</span><input type="datetime-local" name="to_<%= e.k %>" value="<%= it.to %>"></label>
+          <% if (e.rb) { %><label class="a-fx-text"><span>Chữ trên băng</span><input name="text_<%= e.k %>" maxlength="160" value="<%= it.text || '' %>" placeholder="<%= e.text || (e.k === 'phunu' ? 'Tự đổi theo dịp: 8/3 hoặc 20/10' : 'Happy New Year + năm mới') %>"></label><% } %>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+  <% }) %>
+  <div class="a-btn-row">
+    <button class="a-btn a-primary"><%- I('save') %> Lưu hiệu ứng</button>
+    <button class="a-btn a-danger-soft" name="all_off" value="1" data-confirm="Tắt tất cả hiệu ứng?">Tắt tất cả</button>
+  </div>
+</form>
+<%- include('_footer') %>

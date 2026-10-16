@@ -1,0 +1,92 @@
+<%- include('_header') %>
+<% const tot = (k) => Object.keys(stats).reduce((a, t) => a + stats[t][k].earn, 0); %>
+<% const isSeller = u.ctv_role === 'seller'; %>
+<% if (isSeller) { %>
+<div class="a-stats a-stats-3">
+  <div class="a-card a-stat"><span>Số dư hiện tại</span><b><%= H.money(u.ctv_balance) %></b><small>Rút tối thiểu 10.000đ</small></div>
+  <div class="a-card a-stat"><span>Đã nhận 30 ngày</span><b><%= H.money(tot('d30')) %></b><small>Hôm nay <%= H.money(tot('today')) %></small></div>
+  <div class="a-card a-stat"><span>Đã nhận tất cả</span><b><%= H.money(tot('all')) %></b><small><%= role %><%= u.ctv_paused ? ' · tạm dừng' : '' %></small></div>
+</div>
+<% } %>
+
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3><%- I('user') %> <%= u.username %> <small class="a-muted"><%= u.email || '' %></small></h3>
+    <% if (!editable) { %><p class="a-muted">Bạn chỉ xem được, không chỉnh được tài khoản này.</p><% } %>
+    <form method="post" action="/admin/ctv/<%= u.id %>/save" class="a-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <fieldset <%= editable ? '' : 'disabled' %> class="a-fieldset">
+      <div class="a-row">
+        <div><label>Vai trò</label><select name="ctv_role">
+          <option value="" <%= !u.ctv_role ? 'selected' : '' %>>Không (chỉ CSKH)</option>
+          <option value="seller" <%= u.ctv_role === 'seller' ? 'selected' : '' %>>Bán hàng</option>
+          <% if (isAdmin || u.ctv_role === 'manager') { %><option value="manager" <%= u.ctv_role === 'manager' ? 'selected' : '' %>>Quản lý</option><% } %>
+        </select></div>
+        <div><label>Hoa hồng shop giữ lại (%)</label><input type="number" name="ctv_rate" min="0" max="100" value="<%= u.ctv_rate %>"></div>
+      </div>
+      <p class="a-field-hint">VD hoa hồng 20%: CTV bán acc 1.000.000đ nhận 800.000đ. Khách dùng mã giảm giá thì shop chịu, CTV vẫn nhận đủ.</p>
+      <label class="a-check"><input type="checkbox" name="staff" value="1" <%= u.staff ? 'checked' : '' %>> <span>CSKH: trả lời chat khách hàng</span></label>
+      <label class="a-check"><input type="checkbox" name="ctv_paused" value="1" <%= u.ctv_paused ? 'checked' : '' %>> <span>Tạm dừng CTV (ẩn toàn bộ sản phẩm đang bán, không vào được trang quản lý)</span></label>
+      <div class="a-row">
+        <div><label>Tên hiện với khách (chat)</label><input name="staff_name" maxlength="40" value="<%= u.staff_name || '' %>"></div>
+        <div><label>Telegram chat ID <small class="a-muted">(nhận báo đơn mới, lệnh rút)</small></label><input name="staff_tg" maxlength="30" value="<%= u.staff_tg || '' %>" placeholder="VD: 123456789"></div>
+      </div>
+      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+      </fieldset>
+    </form>
+  </div>
+
+  <div class="a-card">
+    <h3><%- I('folder') %> Quyền bán</h3>
+    <% if (u.ctv_role !== 'seller') { %><p class="a-muted">Chỉ CTV bán hàng mới cần cấp quyền bán.</p><% } else { %>
+      <% if (!grants.length) { %><p class="a-muted">Chưa cấp quyền bán.</p><% } %>
+      <div class="a-grant-list">
+      <% grants.forEach(g => { %>
+        <div class="a-grant"><span><b><%= g.game_name %></b> › <%= g.category_name ? g.category_name : 'Tất cả danh mục' %><% if (g.sale_type) { %> <span class="a-tag"><%= KIND_NAME[g.sale_type] || g.sale_type %></span><% } %></span>
+          <% if (editable) { %><form method="post" action="/admin/ctv/<%= u.id %>/grants/<%= g.id %>/delete" data-confirm="Gỡ quyền bán này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Gỡ"><%- I('trash') %></button></form><% } %>
+        </div>
+      <% }) %>
+      </div>
+      <% if (editable) { %>
+      <form method="post" action="/admin/ctv/<%= u.id %>/grants/add" class="a-form a-grant-add" data-grant-form>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <select name="game_id" required data-grant-game><option value="">-- Chọn game --</option><% games.forEach(g => { %><option value="<%= g.id %>"><%= g.name %></option><% }) %></select>
+        <select name="category_id" data-grant-cat><option value="">Tất cả danh mục của game</option><% cats.forEach(c => { %><option value="<%= c.id %>" data-game="<%= c.game_id %>" hidden><%= c.name %> (<%= KIND_NAME[c.sale_type] || c.sale_type %>)</option><% }) %></select>
+        <button class="a-btn a-primary"><%- I('plus') %> Cấp quyền</button>
+      </form>
+      <p class="a-field-hint">Cấp cả game: CTV bán được ở mọi danh mục của game (acc, cày thuê, nạp game). Cấp 1 danh mục Cày thuê: CTV tự thêm danh mục con và gói bên trong.</p>
+      <% } %>
+    <% } %>
+    <% if (editable && isSeller) { %>
+    <h3 class="a-mt"><%- I('money') %> Điều chỉnh số dư</h3>
+    <form method="post" action="/admin/ctv/<%= u.id %>/adjust" class="a-form a-grant-add">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="number" name="amount" required placeholder="Số tiền (âm = trừ)">
+      <input name="note" required maxlength="200" placeholder="Lý do (VD: thưởng tháng 10)">
+      <button class="a-btn" data-confirm="Điều chỉnh số dư CTV?"><%- I('save') %> Cập nhật</button>
+    </form>
+    <% } %>
+  </div>
+</div>
+
+<% if (isSeller || ledger.length) { %>
+<div class="a-grid-2">
+  <div class="a-card a-card-flush">
+    <h3 class="a-pad"><%- I('list') %> Biến động số dư</h3>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th><th>Số dư</th></tr></thead>
+      <% if (!ledger.length) { %><tr><td colspan="4" class="a-empty">Chưa có</td></tr><% } %>
+      <% ledger.forEach(l => { %><tr><td class="a-small a-muted"><%= H.fmtDate(l.created_at) %></td><td><%= LEDGER_NAME[l.type] || l.type %><div class="a-small a-muted"><%= l.ref || '' %> <%= l.note || '' %></div></td><td class="<%= l.amount > 0 ? 'a-text-ok' : 'a-text-err' %>"><b><%= l.amount > 0 ? '+' : '' %><%= H.money(l.amount) %></b></td><td><%= H.money(l.balance_after) %></td></tr><% }) %>
+    </table></div>
+  </div>
+  <div class="a-card a-card-flush">
+    <h3 class="a-pad"><%- I('send') %> Lệnh rút tiền</h3>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Mã</th><th>Số tiền</th><th>Ngân hàng</th><th>Trạng thái</th></tr></thead>
+      <% if (!withdrawals.length) { %><tr><td colspan="4" class="a-empty">Chưa có</td></tr><% } %>
+      <% withdrawals.forEach(w => { %><tr><td><%= w.code %><div class="a-small a-muted"><%= H.fmtDate(w.created_at) %></div></td><td><b><%= H.money(w.amount) %></b></td><td class="a-small"><%= bankName(w.bank_code) %> · <%= w.bank_acc %></td><td><span class="a-tag <%= w.status === 'paid' ? 'green' : w.status === 'rejected' ? 'red' : 'yellow' %>"><%= w.status === 'paid' ? 'Đã chuyển' : w.status === 'rejected' ? 'Từ chối' : 'Chờ chuyển' %></span><% if (w.note) { %><div class="a-small a-muted"><%= w.note %></div><% } %></td></tr><% }) %>
+    </table></div>
+  </div>
+</div>
+<% } %>
+<%- include('_footer') %>
