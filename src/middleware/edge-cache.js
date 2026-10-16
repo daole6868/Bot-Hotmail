@@ -44,7 +44,8 @@ function middleware(req, res, next) {
     if (qs >= 0) {
       const src = new URLSearchParams(req.originalUrl.slice(qs + 1));
       const keys = [...src.keys()];
-      const allowed = (k) => rule.params.includes(k) || (TRACK.includes(k) && src.get(k).length <= 300);
+      const allowed = (k) => rule.params.includes(k) || (TRACK.includes(k) && src.get(k).length <= 300)
+        || (k === 'fx' && hasSession(req) && /^\w{1,20}$/.test(src.get(k))); // admin xem thử hiệu ứng (Giao diện -> Hiệu ứng)
       const multi = rule.multi || [];
       const bad = !keys.length || keys.length > 30 || keys.some((k, i) => !allowed(k) || !src.get(k) || (keys.indexOf(k) !== i && !multi.includes(k)));
       if (bad) {

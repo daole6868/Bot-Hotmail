@@ -24,7 +24,7 @@ const router = express.Router();
 // ---------- Phân quyền: admin / CTV quản lý / CTV bán hàng / CSKH ----------
 // Quản lý: mọi trang trừ nhóm Giao diện & Hệ thống. Bán hàng: chỉ sản phẩm / cày thuê / nạp game được cấp + ví.
 // CSKH: chỉ ví (trang chat ở /admin/chat).
-const MANAGER_BLOCK = ['/api-shop', '/images', '/search-filter', '/card-ui', '/site-bg', '/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
+const MANAGER_BLOCK = ['/api-shop', '/images', '/search-filter', '/card-ui', '/site-bg', '/site-fx', '/home-layout', '/home-blocks', '/banners', '/popup', '/footer', '/support', '/settings', '/boost/settings', '/api', '/security', '/antispam', '/logs', '/maintenance', '/profile'];
 const SELLER_ALLOW = [
   /^\/(vip|reroll)$/, /^\/products\/(rows|form|save|bulk|import-form|import)$/, /^\/products\/\d+\/(edit|duplicate|delete|stock|toggle)$/, /^\/stock\/\d+\/delete$/,
   /^\/boost(\/(c\/\d+|topup(\/\d+)?|orders(\/\d+(\/(login|status|note))?)?|topup-orders|categories\/(form|save|\d+(\/delete)?)|packages\/(form|save|\d+\/(pause|delete))))?$/,
@@ -231,6 +231,7 @@ router.use('/search-filter', require('./admin-filter')); // Giao diện -> Bộ 
 router.use('/card-ui', require('./admin-card-ui')); // Giao diện -> Thẻ sản phẩm
 router.use('/acc-image', require('./admin-acc-image')); // Tổng quan -> Tạo ảnh acc
 router.use('/site-bg', require('./admin-site-bg')); // Giao diện -> Nền trang
+router.use('/site-fx', require('./admin-site-fx')); // Giao diện -> Hiệu ứng dịp lễ
 router.use('/api-shop', require('./admin-apishop')); // Nguồn hàng API (chỉ admin)
 router.use('/', require('./admin-ctv').router); // Quản lý CTV + trang của CTV (/admin/me)
 router.use('/', require('./admin-posts')); // bài viết, AI viết bài, SEO & Google

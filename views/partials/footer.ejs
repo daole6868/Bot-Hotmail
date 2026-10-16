@@ -91,6 +91,8 @@
 <% if (!chInSp) { %><button type="button" class="ch-fab ch-<%= CH.position %>" data-chat-open aria-label="<%= CH.title %>"><%- I('chat') %><span class="ch-badge" data-chat-badge hidden></span></button><% } %><% } %>
 <script src="/js/slow.js?v=<%= locals.assetV || 1 %>" defer></script>
 <script src="/js/main.js?v=<%= locals.assetV || 1 %>" defer></script>
+<% const FXc = locals.siteFx; if (FXc) { %><div id="siteFx" hidden data-fx="<%= JSON.stringify({ keys: FXc.keys, dens: FXc.dens, mobile: FXc.mobile, burst: (locals.gtagEvents || []).some(e => e.e === 'purchase' || e.e === 'deposit') }) %>"></div>
+<script src="/js/fx.js?v=<%= locals.assetV || 1 %>" defer></script><% } %>
 <% const G = locals.s || {}; const gid = G.ga4_id || G.gads_id; if (gid && !locals.preview) { %>
 <script async src="https://www.googletagmanager.com/gtag/js?id=<%= encodeURIComponent(gid) %>"></script>
 <script src="/js/gtag-init.js?v=<%= locals.assetV || 1 %>" defer data-ga4="<%= G.ga4_id || '' %>" data-ads="<%= G.gads_id || '' %>"

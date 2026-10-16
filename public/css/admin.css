@@ -1432,3 +1432,28 @@ button.a-chat-av.a-chat-who { color: #fff; font-weight: 800; display: flex; alig
 .a-ap-filter select { width: auto; }
 .a-ap-ui { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 18px; }
 .a-ap-ui small { display: block; }
+
+/* Giao diện -> Hiệu ứng */
+.a-fx-gen { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin-bottom: 8px; }
+.a-fx-gen .a-check { margin: 0; }
+.a-fx-dens { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.a-fx-dens > span { color: var(--muted); font-size: .85rem; margin-right: 2px; }
+.a-fx-seg { position: relative; margin: 0; cursor: pointer; }
+.a-fx-seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.a-fx-seg span { display: inline-block; padding: 5px 12px; border: 1px solid var(--border); border-radius: 99px; font-size: .85rem; }
+.a-fx-seg input:checked + span { background: linear-gradient(135deg, var(--primary), var(--primary2)); color: #fff; border-color: transparent; }
+.a-fx-seg input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 2px; }
+.a-fx-list { display: grid; gap: 10px; }
+.a-fx-row { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; }
+.a-fx-row.is-off .a-fx-opts { opacity: .6; }
+.a-fx-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.a-fx-name { flex: 1; min-width: 160px; display: flex; flex-direction: column; }
+.a-fx-st { font-size: .75rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: #eef0f5; color: var(--muted); white-space: nowrap; }
+.a-fx-st.is-live { background: #dcfce7; color: #15803d; }
+.a-fx-st.is-wait { background: #fef3c7; color: #b45309; }
+.a-fx-st.is-done { background: #fee2e2; color: #b91c1c; }
+.a-fx-opts { display: grid; grid-template-columns: 210px 210px minmax(0, 1fr); gap: 8px 12px; }
+.a-fx-opts label { margin: 0; display: flex; flex-direction: column; gap: 3px; font-size: .8rem; color: var(--muted); }
+.a-fx-opts input { width: 100%; }
+@media (max-width: 760px) { .a-fx-opts { grid-template-columns: 1fr 1fr; } .a-fx-text { grid-column: 1 / -1; } }
+@media (max-width: 420px) { .a-fx-opts { grid-template-columns: 1fr; } }

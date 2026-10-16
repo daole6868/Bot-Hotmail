@@ -148,6 +148,12 @@ app.use(security.flash);
 app.use(security.csrf);
 app.use(security.loadUser);
 app.use(shield.late); // lớp 2: đã đăng nhập -> đếm theo tài khoản; có cookie nhưng chưa đăng nhập -> đếm theo IP
+// Giao diện -> Hiệu ứng dịp lễ (admin thêm ?fx=mã để xem thử 1 hiệu ứng)
+const siteFx = require('./src/services/site-fx');
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/admin')) res.locals.siteFx = siteFx.forPage(req.user && req.user.role === 'admin' && typeof req.query.fx === 'string' ? req.query.fx : null);
+  next();
+});
 
 // Popup "Nạp tiền thành công": tiền về lúc khách đang ở trang khác -> hiện ở lần mở trang tiếp theo (1 lần)
 const depositSvc = require('./src/services/deposit');
