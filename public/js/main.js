@@ -148,7 +148,7 @@
     let cur = 0;
     thumbs.forEach((t, i) => t.addEventListener('click', () => {
       cur = i;
-      main.src = t.src;
+      main.src = t.dataset.full || t.src; // ô nhỏ dùng ảnh thu nhỏ, ảnh lớn dùng ảnh gốc
       thumbs.forEach((x) => x.classList.toggle('active', x === t));
     }));
 

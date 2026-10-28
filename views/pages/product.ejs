@@ -13,7 +13,7 @@
     </div>
     <% if (p.imageList.length > 1) { %>
       <div class="gallery-thumbs">
-        <% p.imageList.forEach((img, i) => { %><img src="<%= img %>" alt="Ảnh <%= i + 1 %>" class="<%= i === 0 ? 'active' : '' %>" loading="lazy"><% }) %>
+        <% p.imageList.forEach((img, i) => { %><img src="<%= sz(img, 'card') %>" data-full="<%= img %>" alt="Ảnh <%= i + 1 %>" class="<%= i === 0 ? 'active' : '' %>" loading="lazy"><% }) %>
       </div>
     <% } %>
   </section>

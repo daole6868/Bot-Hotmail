@@ -345,8 +345,6 @@ function addColumn(table, col, def) {
   return true;
 }
 addColumn('products', 'sort_order', 'INTEGER NOT NULL DEFAULT 0');
-// Màu vòng bo cung mệnh của nhân vật (Quản lý ảnh -> Cung mệnh)
-addColumn('hoyo_assets', 'ring', "TEXT NOT NULL DEFAULT ''");
 // Popup "Nạp tiền thành công": seen_at = lúc khách đã thấy thông báo (đơn cũ coi như đã thấy)
 if (addColumn('deposits', 'seen_at', 'INTEGER')) db.exec("UPDATE deposits SET seen_at = completed_at WHERE status = 'success'");
 // Loại danh mục: vip = mỗi acc bán 1 lần ; reroll = 1 sản phẩm chứa nhiều acc, mua nhiều lần tới khi hết
@@ -620,6 +618,9 @@ addColumn('users', 'ctv_paused', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('users', 'ctv_bank', 'TEXT'); // JSON { code, acc, owner } — lần rút gần nhất
 addColumn('products', 'owner_id', 'INTEGER'); // NULL = hàng của shop
 addColumn('boost_orders', 'parent_id', 'INTEGER'); // danh mục Cày thuê / Nạp game của đơn
+// Danh mục con cày thuê thuộc 1 danh mục "Cày thuê" (categories.sale_type = 'boost'); phải có trước bước điền dữ liệu bảng sales bên dưới
+addColumn('boost_categories', 'parent_id', 'INTEGER REFERENCES categories(id) ON DELETE CASCADE');
+db.exec('CREATE INDEX IF NOT EXISTS idx_bcat_parent ON boost_categories(parent_id, is_active, sort_order)');
 addColumn('boost_orders', 'ctv_id', 'INTEGER'); // CTV nhận & thực hiện đơn
 db.exec(`
   CREATE TABLE IF NOT EXISTS ctv_grants (
@@ -812,6 +813,8 @@ db.exec(`
     version TEXT,
     last_seen INTEGER NOT NULL
   );`);
+// Màu vòng bo cung mệnh của nhân vật (Quản lý ảnh -> Cung mệnh)
+addColumn('hoyo_assets', 'ring', "TEXT NOT NULL DEFAULT ''");
 addColumn('daily_stats', 'topup_revenue', 'INTEGER NOT NULL DEFAULT 0');
 addColumn('daily_stats', 'topup_orders', 'INTEGER NOT NULL DEFAULT 0');
 // Thẻ mã giảm giá thấp hơn: kích cỡ mặc định cũ 600x350 -> 600x260 (1 lần)
@@ -819,8 +822,6 @@ if (!db.prepare("SELECT 1 FROM settings WHERE key = 'mig_coupon_260'").get()) {
   db.prepare("UPDATE settings SET value = '600x260' WHERE key = 'coupon_size' AND value = '600x350'").run();
   db.prepare("INSERT OR REPLACE INTO settings(key, value) VALUES('mig_coupon_260', '1')").run();
 } // Zalo / SĐT / Facebook để shop liên hệ khách
-addColumn('boost_categories', 'parent_id', 'INTEGER REFERENCES categories(id) ON DELETE CASCADE');
-db.exec('CREATE INDEX IF NOT EXISTS idx_bcat_parent ON boost_categories(parent_id, is_active, sort_order)');
 {
   // Danh mục con tạo trước khi có cấp "Cày thuê" -> gom vào 1 danh mục Cày thuê mới của đúng game
   const orphans = db.prepare('SELECT DISTINCT game_id FROM boost_categories WHERE parent_id IS NULL').all();

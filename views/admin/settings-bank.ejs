@@ -65,10 +65,12 @@
         <span>Lần quét gần nhất: <b><%= acnAgo || 'chưa có' %></b></span>
         <% if (s.acn_last_msg) { %><span><%= s.acn_last_msg %></span><% } %>
       </div>
-      <button class="a-btn" formaction="/admin/settings/bank/acn-scan" formnovalidate <%= acnHasKey ? '' : 'disabled' %>><%- I('refresh') %> Quét ngay</button>
+      <button class="a-btn" form="acnScanForm" <%= acnHasKey ? '' : 'disabled' %>><%- I('refresh') %> Quét ngay</button>
     </div>
   </div>
   <p class="a-field-hint">Bật cả 2 thì chạy song song: NIFY cộng tiền ngay, APICANHAN bắt lại nếu NIFY lỡ gửi. Cùng 1 lần chuyển khoản chỉ được cộng 1 lần. Xem mọi giao dịch ở mục <a href="/admin/bank">GD ngân hàng</a>.</p>
   <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu cài đặt bank</button></div>
 </form>
+<%# Nút "Quét ngay" thuộc form riêng: Enter trong form trên luôn là Lưu, không chạy quét %>
+<form method="post" action="/admin/settings/bank/acn-scan" id="acnScanForm" hidden><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form>
 <%- include('_footer') %>

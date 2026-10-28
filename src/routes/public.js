@@ -197,11 +197,13 @@ router.get('/game/:slug/:cat', (req, res, next) => {
   for (const n of q.c) { where.push(has('c5', 'c4')); params.push(hoyo.nkey(n), hoyo.nkey(n)); }
   for (const n of q.w) { where.push(has('w5', 'w4')); params.push(hoyo.nkey(n), hoyo.nkey(n)); }
   const order = { default: 'p.sort_order, p.id DESC', new: 'p.id DESC', price_asc: 'p.price ASC', price_desc: 'p.price DESC', popular: 'p.sold_count DESC, p.views DESC', lv_desc: "json_extract(p.acc_detail, '$.lv') DESC, p.id DESC" }[q.sort];
+  // Reroll đã hết kho (vẫn để khách thấy nhãn "Hết hàng") luôn xếp sau các sản phẩm còn hàng
+  const soldOutLast = category.sale_type === 'reroll' ? "(p.type = 'stock' AND NOT EXISTS (SELECT 1 FROM product_stock s WHERE s.product_id = p.id AND s.is_sold = 0)), " : '';
 
   const result = paginate(db, {
     select: PRODUCT_SELECT,
     from: 'products p JOIN categories c ON c.id = p.category_id JOIN games g ON g.id = c.game_id',
-    where: 'WHERE ' + where.join(' AND '), params, order: 'ORDER BY ' + order,
+    where: 'WHERE ' + where.join(' AND '), params, order: 'ORDER BY ' + soldOutLast + order,
     page: toInt(req.query.page, 1, 1), perPage: F.perPage,
   });
   result.rows.forEach(decorate);
