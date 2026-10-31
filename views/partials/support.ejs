@@ -1,0 +1,28 @@
+<%# Nút / thanh Hỗ trợ (Admin -> Giao diện -> Hỗ trợ). sp = cấu hình đã lọc %>
+<% const pos = sp.mode === 'side' ? sp.side : sp.corner; %>
+<div class="sp sp-<%= sp.mode %> sp-<%= pos %> sp-dev-<%= sp.device %>" data-support data-auto="<%= sp.auto %>" data-once="<%= sp.once ? 1 : 0 %>" style="--sp-c:<%= sp.color %>">
+  <button type="button" class="sp-btn" data-sp-toggle aria-expanded="false" aria-label="<%= sp.label %>">
+    <%- I('headset') %><% if (sp.mode === 'side') { %><span><%= sp.label %></span><% } %><% if (locals.chat) { %><span class="ch-badge" data-chat-badge hidden></span><% } %>
+  </button>
+  <div class="sp-panel" role="dialog" aria-label="<%= sp.title %>">
+    <div class="sp-head">
+      <div><b><%= sp.title %></b><% if (sp.subtitle) { %><small><i class="sp-dot"></i><%= sp.subtitle %></small><% } %></div>
+      <button type="button" class="sp-x" data-sp-close aria-label="Đóng"><%- I('x') %></button>
+    </div>
+    <div class="sp-items">
+      <% if (locals.chat) { %>
+        <a class="sp-item" href="#chat" data-chat-open>
+          <span class="sp-ic sp-ic-chat"><%- I('chat') %></span>
+          <span class="sp-tx"><b><%= locals.chat.title %></b><small>Nhắn tin trực tiếp trên web</small></span>
+          <span class="ch-badge sp-item-badge" data-chat-badge hidden></span>
+        </a>
+      <% } %>
+      <% sp.items.forEach(it => { %>
+        <a class="sp-item" href="<%= it.href %>"<% if (it.ext) { %> target="_blank" rel="noopener nofollow"<% } %>>
+          <span class="sp-ic" style="background:<%= it.color %>"><%- I(it.icon) %></span>
+          <span class="sp-tx"><b><%= it.title %></b><% if (it.desc) { %><small><%= it.desc %></small><% } %></span>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</div>

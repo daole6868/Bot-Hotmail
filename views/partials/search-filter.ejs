@@ -1,0 +1,53 @@
+<%# Bộ lọc tìm kiếm trang danh mục (Admin -> Giao diện -> Bộ lọc tìm kiếm) %>
+<% const F = filter.F, f = F.fields, hg = filter.hg; %>
+<% const wLabel = hg && f.weapons.label === 'Vũ khí' && filter.game ? filter.game.w : f.weapons.label; %>
+<% const lvLabel = hg && f.lv.label === 'AR' && filter.game ? filter.game.lv : f.lv.label; %>
+<form class="sf card" method="get" data-sf data-mode="<%= F.mode %>">
+  <div class="sf-grid">
+    <% if (f.q.on) { %>
+      <div class="sf-field sf-wide"><label><%= f.q.label %></label>
+        <div class="sf-search"><%- I('search') %><input type="text" name="q" value="<%= query.q %>" placeholder="<%= f.q.ph %>" maxlength="60"></div></div>
+    <% } %>
+    <% if (f.sort.on) { %>
+      <div class="sf-field"><label><%= f.sort.label %></label>
+        <select name="sort"><% F.sorts.filter(k => k !== 'lv_desc' || hg).forEach(k => { %><option value="<%= k %>" <%= query.sort === k ? 'selected' : '' %>><%= filter.sortNames[k] || k %></option><% }) %></select></div>
+    <% } %>
+    <% if (f.price.on) { %>
+      <div class="sf-field"><label><%= f.price.label %></label>
+        <select name="price"><option value=""><%= f.price.ph %></option><% F.prices.forEach((p, i) => { %><option value="<%= i %>" <%= query.price === String(i) ? 'selected' : '' %>><%= p.l %></option><% }) %></select></div>
+    <% } %>
+    <% if (hg && f.lv.on) { %>
+      <div class="sf-field"><label><%= lvLabel %></label>
+        <input type="number" name="lv" min="0" max="999" value="<%= query.lv || '' %>" placeholder="<%= f.lv.ph %>"></div>
+    <% } %>
+    <% if (hg && f.server.on) { %>
+      <div class="sf-field"><label><%= f.server.label %></label>
+        <select name="server"><option value=""><%= f.server.ph %></option><% F.servers.forEach(sv => { %><option value="<%= sv.v %>" <%= query.server === sv.v ? 'selected' : '' %>><%= sv.l %></option><% }) %></select></div>
+    <% } %>
+    <% [['chars', 'c', filter.chars, f.chars.label, f.chars.ph], ['weapons', 'w', filter.weapons, wLabel, f.weapons.ph]].forEach(([k, name, items, label, ph]) => { %>
+      <% if (hg && f[k].on && items.length) { %>
+        <div class="sf-field"><label><%= label %></label>
+          <div class="ms" data-ms data-name="<%= name %>" data-ph="<%= ph %>" data-items="<%= JSON.stringify(items) %>">
+            <button type="button" class="ms-btn" data-ms-btn><span class="ms-val" data-ms-val><%= query[name].length ? query[name].join(', ') : ph %></span><%- I('caret-down') %></button>
+            <div class="ms-panel" data-ms-panel hidden>
+              <div class="ms-search"><%- I('search') %><input type="text" placeholder="<%= ph %>" data-ms-q autocomplete="off"></div>
+              <div class="ms-list" data-ms-list></div>
+            </div>
+            <span data-ms-inputs><% query[name].forEach(v => { %><input type="hidden" name="<%= name %>" value="<%= v %>"><% }) %></span>
+          </div></div>
+      <% } %>
+    <% }) %>
+  </div>
+  <div class="sf-foot">
+    <% if (F.modeToggle) { %>
+      <div class="sf-mode" data-sf-modes>
+        <button type="button" data-sf-mode="scroll"><%- I('download') %> Cuộn liên tục</button>
+        <button type="button" data-sf-mode="page"><%- I('list') %> Phân trang</button>
+      </div>
+    <% } %>
+    <div class="sf-btns">
+      <a class="btn btn-ghost" href="?"><%- I('x') %> Xóa lọc</a>
+      <button class="btn btn-primary"><%- I('search') %> Tìm kiếm</button>
+    </div>
+  </div>
+</form>

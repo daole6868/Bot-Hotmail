@@ -1,0 +1,106 @@
+<%- include('_header') %>
+<form method="post" action="/admin/popup" enctype="multipart/form-data" class="a-form a-pp-form" data-pp-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <textarea name="content" hidden data-pp-content><%= cfg.content %></textarea>
+  <div class="a-pp-layout">
+    <div class="a-pp-main">
+      <div class="a-card">
+        <h3><%- I('eye') %> Hiển thị</h3>
+        <label class="a-check a-sp-enable"><input type="checkbox" name="enabled" value="1" <%= cfg.enabled ? 'checked' : '' %>> <b>Bật Popup ngoài web</b></label>
+        <div class="a-row">
+          <div><label>Hiện ở</label><select name="pages"><option value="home" <%= cfg.pages !== 'all' ? 'selected' : '' %>>Chỉ trang chủ</option><option value="all" <%= cfg.pages === 'all' ? 'selected' : '' %>>Mọi trang</option></select></div>
+          <div><label>Hiện sau khi vào trang (giây)</label><input type="number" name="delay" min="0" max="60" value="<%= cfg.delay %>"></div>
+          <div><label>Khách đóng rồi hiện lại sau (giờ)</label><input type="number" name="repeat" min="0" max="720" value="<%= cfg.repeat %>"></div>
+        </div>
+        <p class="a-field-hint">Hiện lại sau 0 giờ = lần nào vào trang cũng hiện. Mỗi lần lưu, popup sẽ hiện lại cho mọi khách.</p>
+      </div>
+
+      <div class="a-card">
+        <h3><%- I('square') %> Khung popup</h3>
+        <div class="a-row">
+          <div><label>Chiều rộng (px)</label><input type="number" name="width" min="260" max="1200" value="<%= cfg.width %>" data-pp></div>
+        </div>
+      </div>
+
+      <div class="a-card">
+        <h3><%- I('image') %> Ảnh</h3>
+        <div class="a-pp-imgrow">
+          <div class="a-upload-preview a-pp-thumb" data-preview-box>
+            <% if (cfg.image) { %><img src="<%= cfg.image %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có ảnh</span><% } %>
+          </div>
+          <div class="a-grow a-minw0">
+            <input type="file" name="popup_image" accept="image/*" data-preview-input data-pp-file>
+            <% if (cfg.image) { %><label class="a-check"><input type="checkbox" name="remove_image" value="1" data-pp> Xóa ảnh</label><% } %>
+            <label>Link khi bấm vào ảnh <small class="a-muted">(không bắt buộc)</small></label>
+            <input name="img_link" maxlength="300" value="<%= cfg.img_link %>" placeholder="/game/wuthering-waves hoặc https://...">
+          </div>
+        </div>
+        <div class="a-row">
+          <div><label>Vị trí ảnh</label><select name="img_pos" data-pp><option value="top" <%= cfg.img_pos !== 'bottom' ? 'selected' : '' %>>Trên nội dung</option><option value="bottom" <%= cfg.img_pos === 'bottom' ? 'selected' : '' %>>Dưới nội dung</option></select></div>
+          <div><label>Kiểu ảnh</label><select name="img_style" data-pp><option value="inset" <%= cfg.img_style !== 'full' ? 'selected' : '' %>>Trong khung, bo góc</option><option value="full" <%= cfg.img_style === 'full' ? 'selected' : '' %>>Tràn viền</option></select></div>
+          <div><label>Độ rộng ảnh (% khung)</label><input type="number" name="img_w" min="20" max="100" value="<%= cfg.img_w %>" data-pp></div>
+          <div><label>Tỉ lệ cắt ảnh (Rộng × Cao)</label>
+            <div class="a-pp-ratio"><input type="number" name="img_rw" min="0" max="4000" value="<%= cfg.img_rw %>" data-pp><span>×</span><input type="number" name="img_rh" min="0" max="4000" value="<%= cfg.img_rh %>" data-pp></div>
+          </div>
+        </div>
+        <p class="a-field-hint">Tỉ lệ để 0 × 0 = giữ nguyên ảnh gốc, không cắt.</p>
+      </div>
+
+      <div class="a-card">
+        <h3><%- I('edit') %> Tiêu đề</h3>
+        <input name="title" maxlength="150" value="<%= cfg.title %>" placeholder="VD: Khuyến mãi nạp game tháng 10" data-pp>
+        <div class="a-row">
+          <div><label>Màu chữ</label><div class="a-pp-tc"><label class="a-check"><input type="checkbox" name="title_theme" value="1" <%= cfg.title_theme !== false ? 'checked' : '' %> data-pp> <span>Theo giao diện</span></label><input type="color" name="title_color" value="<%= cfg.title_color %>" data-pp <%= cfg.title_theme !== false ? 'hidden' : '' %>></div></div>
+          <div><label>Cỡ chữ (px)</label><input type="number" name="title_size" min="12" max="60" value="<%= cfg.title_size %>" data-pp></div>
+          <div><label>Căn lề</label><select name="title_align" data-pp><% [['left', 'Trái'], ['center', 'Giữa'], ['right', 'Phải']].forEach(([v, l]) => { %><option value="<%= v %>" <%= cfg.title_align === v ? 'selected' : '' %>><%= l %></option><% }) %></select></div>
+        </div>
+      </div>
+
+      <div class="a-card">
+        <h3><%- I('list') %> Nội dung</h3>
+        <div class="a-editor a-pp-editor">
+          <div class="a-editor-bar" data-pp-bar>
+            <button type="button" data-cmd="bold" title="In đậm"><b>B</b></button>
+            <button type="button" data-cmd="italic" title="In nghiêng"><i>I</i></button>
+            <button type="button" data-cmd="underline" title="Gạch chân"><u>U</u></button>
+            <button type="button" data-cmd="strikeThrough" title="Gạch ngang"><s>S</s></button>
+            <span class="a-editor-sep"></span>
+            <label class="a-pp-color" title="Màu chữ"><span>A</span><input type="color" value="#e11d48" data-pp-color="foreColor"></label>
+            <label class="a-pp-color a-pp-hl" title="Màu nền chữ"><span>A</span><input type="color" value="#fde047" data-pp-color="hiliteColor"></label>
+            <select data-pp-size title="Cỡ chữ"><option value="">Cỡ chữ</option><% [12, 14, 16, 18, 20, 24, 28, 32, 40].forEach(n => { %><option value="<%= n %>"><%= n %>px</option><% }) %></select>
+            <span class="a-editor-sep"></span>
+            <button type="button" data-cmd="justifyLeft" title="Căn trái">⇤</button>
+            <button type="button" data-cmd="justifyCenter" title="Căn giữa">↔</button>
+            <button type="button" data-cmd="justifyRight" title="Căn phải">⇥</button>
+            <button type="button" data-cmd="insertUnorderedList" title="Danh sách chấm">• —</button>
+            <button type="button" data-cmd="insertOrderedList" title="Danh sách số">1.</button>
+            <span class="a-editor-sep"></span>
+            <button type="button" data-cmd="link" title="Gắn link"><%- I('link') %></button>
+            <button type="button" data-cmd="unlink" title="Bỏ link">⊘</button>
+            <button type="button" data-cmd="removeFormat" title="Xóa định dạng">Tx</button>
+            <button type="button" data-cmd="undo" title="Hoàn tác">↶</button>
+            <button type="button" data-cmd="redo" title="Làm lại">↷</button>
+          </div>
+          <div class="a-editor-area" contenteditable="true" data-pp-editor><%- cfg.content || '<p></p>' %></div>
+        </div>
+      </div>
+
+      <div class="a-card">
+        <h3><%- I('send') %> Nút bấm</h3>
+        <div class="a-row">
+          <div><label>Chữ trên nút <small class="a-muted">(để trống = ẩn)</small></label><input name="btn_text" maxlength="60" value="<%= cfg.btn_text %>" placeholder="VD: Xem ngay" data-pp></div>
+          <div><label>Link</label><input name="btn_link" maxlength="300" value="<%= cfg.btn_link %>" placeholder="để trống = bấm để đóng popup"></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="a-pp-side">
+      <div class="a-card">
+        <h3><%- I('monitor') %> Xem trước</h3>
+        <div class="a-pp-stage"><div class="a-pp-box" data-pp-preview></div></div>
+        <button class="a-btn a-primary a-pp-save"><%- I('save') %> Lưu Popup</button>
+      </div>
+    </aside>
+  </div>
+</form>
+<%- include('_footer') %>

@@ -1,0 +1,59 @@
+/* Hiệu ứng dịp lễ (Admin -> Giao diện -> Hiệu ứng). Chỉ tải khi có hiệu ứng đang bật. */
+.fx-ribbon { --ra: #b3121f; --rm: #d61f2c; --rc: #ffd66b; position: relative; z-index: 1; text-align: center; padding: 6px 12px; font: 700 15px/1.35 'Be Vietnam Pro', system-ui, sans-serif; color: var(--rc); background: linear-gradient(90deg, transparent, var(--ra) 14%, var(--rm) 50%, var(--ra) 86%, transparent); text-shadow: 0 1px 0 rgba(0, 0, 0, .35); letter-spacing: .2px }
+.fx-ribbon b[data-fx-cd] { display: inline-block; margin-left: 8px; padding: 1px 9px; border-radius: 999px; background: rgba(0, 0, 0, .28); font-variant-numeric: tabular-nums; white-space: nowrap }
+.fx-ribbon small { font-weight: 600; opacity: .9; margin-left: 6px }
+.fx-ribbon.is-marquee { overflow: hidden; white-space: nowrap; background: linear-gradient(90deg, var(--ra), var(--rm)); padding-inline: 0 }
+.fx-ribbon.is-marquee .fx-mq { display: inline-block; padding-left: 100%; animation: fxrun 20s linear infinite }
+@keyframes fxrun { to { transform: translateX(-100%) } }
+@media (max-width: 640px) { .fx-ribbon { font-size: 13px; padding: 5px 10px } }
+
+.fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 45; overflow: hidden }
+.fx-cv { position: absolute; inset: 0; width: 100%; height: 100% }
+.fx-deco { position: absolute; inset: 0 }
+.fx-deco > * { position: absolute }
+.fx-deco svg { display: block; width: 100%; height: auto }
+
+/* Tết: đèn lồng đung đưa hai bên dưới đầu trang */
+.fx-deco .lantern { top: calc(var(--fx-top) - 2px); width: 42px; transform-origin: 50% 0; animation: fxswing 3.2s ease-in-out infinite }
+.fx-deco .lantern.l { left: 14px } .fx-deco .lantern.r { right: 14px; animation-delay: -1.6s }
+@keyframes fxswing { 0%, 100% { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } }
+/* Trung Thu + Halloween: trăng */
+.fx-deco .moon { top: calc(var(--fx-top) + 26px); right: 5%; width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle at 38% 36%, #fff8d6, #ffe08a 45%, #f3b844 75%); box-shadow: 0 0 60px 18px rgba(255, 214, 107, .35), 0 0 140px 50px rgba(255, 190, 60, .15); opacity: .9 }
+.fx-deco .moon::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 62% 58%, rgba(200, 140, 40, .25) 0 9%, transparent 10%), radial-gradient(circle at 40% 66%, rgba(200, 140, 40, .2) 0 6%, transparent 7%), radial-gradient(circle at 66% 30%, rgba(200, 140, 40, .18) 0 5%, transparent 6%) }
+.fx-deco .moon.hw { background: radial-gradient(circle at 40% 38%, #fff3d6, #f4c27a 55%, #c9773a); box-shadow: 0 0 70px 20px rgba(244, 160, 80, .28) }
+/* Halloween */
+.fx-deco .web { top: var(--fx-top); left: 0; width: 150px; opacity: .5 }
+.fx-deco .spider { right: 16%; top: var(--fx-top); width: 1px; height: 120px; background: linear-gradient(rgba(220, 215, 235, .6), rgba(220, 215, 235, .3)); animation: fxdrop 6s ease-in-out infinite }
+.fx-deco .spider svg { position: absolute; bottom: -24px; left: -17px; width: 34px; animation: fxlegs 1.2s ease-in-out infinite }
+@keyframes fxdrop { 0%, 100% { height: 60px } 50% { height: 150px } }
+@keyframes fxlegs { 0%, 100% { transform: rotate(-4deg) } 50% { transform: rotate(4deg) } }
+.fx-deco .vignette { inset: 0; background: radial-gradient(ellipse at center, transparent 60%, rgba(110, 30, 160, .28) 100%) }
+.fx-deco .pumpkin { bottom: 12px; left: 14px; width: 54px }
+.fx-deco .fog { left: -20%; right: -20%; bottom: -30px; height: 170px; background: radial-gradient(ellipse 30% 60% at 20% 70%, rgba(190, 170, 220, .2), transparent 70%), radial-gradient(ellipse 35% 55% at 60% 80%, rgba(170, 150, 210, .18), transparent 70%), radial-gradient(ellipse 25% 50% at 90% 70%, rgba(190, 170, 220, .16), transparent 70%); animation: fxfog 18s ease-in-out infinite alternate }
+@keyframes fxfog { to { transform: translateX(8%) } }
+/* Giáng Sinh: dây đèn dưới đầu trang + mũ Noel trên logo */
+.fx-deco .garland { left: 0; right: 0; top: calc(var(--fx-top) - 6px); width: 100%; height: 36px }
+.fx-deco .garland .b { animation: fxblink 1.4s steps(2, jump-none) infinite }
+.fx-deco .garland .b:nth-of-type(3n+1) { animation-delay: -.45s } .fx-deco .garland .b:nth-of-type(3n+2) { animation-delay: -.9s }
+@keyframes fxblink { 0% { opacity: 1 } 100% { opacity: .25 } }
+.logo.fx-hat { position: relative }
+.logo .snowcap { position: absolute; top: -12px; left: -8px; width: 30px; transform: rotate(-18deg); pointer-events: none }
+/* Vu Lan: mặt nước + Ông Táo: ánh sáng từ trên cao */
+.fx-deco .water { left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(180deg, rgba(20, 40, 80, 0), rgba(18, 38, 78, .35) 30%, rgba(8, 18, 40, .55)); overflow: hidden }
+.fx-deco .water::after { content: ""; position: absolute; inset: 20px 0 0; background: repeating-linear-gradient(180deg, transparent 0 7px, rgba(160, 200, 255, .08) 7px 8px); animation: fxshim 4s linear infinite }
+@keyframes fxshim { to { transform: translateY(8px) } }
+.fx-deco .rays { inset: 0; background: radial-gradient(ellipse 60% 30% at 50% 0%, rgba(255, 210, 120, .16), transparent 70%), linear-gradient(100deg, transparent 38%, rgba(255, 220, 140, .05) 44%, transparent 50%), linear-gradient(78deg, transparent 56%, rgba(255, 220, 140, .045) 61%, transparent 67%) }
+/* Viền thẻ sản phẩm phát sáng */
+@property --fxang { syntax: "<angle>"; initial-value: 0deg; inherits: false }
+body.fx-glow .product-card { border-color: transparent; background: linear-gradient(var(--card), var(--card)) padding-box, conic-gradient(from var(--fxang), var(--primary2), var(--accent), #22d3ee, var(--primary2)) border-box; animation: fxspin 4s linear infinite }
+@keyframes fxspin { to { --fxang: 360deg } }
+
+@media (max-width: 640px) {
+  .fx-deco .lantern { width: 30px } .fx-deco .lantern.l { left: 6px } .fx-deco .lantern.r { right: 6px }
+  .fx-deco .moon { width: 70px; height: 70px; right: 12px }
+  .fx-deco .web { width: 96px } .fx-deco .pumpkin { width: 40px }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-deco *, .fx-deco *::after, .fx-ribbon .fx-mq, body.fx-glow .product-card { animation: none !important }
+  .fx-ribbon.is-marquee .fx-mq { padding-left: 0 }
+}

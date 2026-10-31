@@ -1,0 +1,1799 @@
+{
+ "game": "genshin",
+ "chars": {
+  "Chiori": {
+   "1": {
+    "name": "Sáu Khổ Lụa Là",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/687b004eb5282205731bfeec748a7ab4.png"
+   },
+   "2": {
+    "name": "Năm Màu Thuốc Nhuộm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7810963646104025baeffff725555acc.png"
+   },
+   "3": {
+    "name": "Bốn Bộ Trang Sức",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/531b1857f19c204797ca0882c05a37ed.png"
+   },
+   "4": {
+    "name": "Ba Phần Cung Kính",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/76a71ef897a51a55594f008bc420a6a6.png"
+   },
+   "5": {
+    "name": "Hai Tầng Trang Phục",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f31a93d78f6a3da4dedfb3bbad1fb8ae.png"
+   },
+   "6": {
+    "name": "Một Lòng Tuân Thủ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/fa6ca2baf7ceb7920ee59393bbccf9d2.png"
+   }
+  },
+  "Arlecchino": {
+   "1": {
+    "name": "\"Tất Cả Thù Và Nợ Do Ta Tự Trả...\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/22a8db2011e884d5d6d7bb4eabbea258.png"
+   },
+   "2": {
+    "name": "\"Tất Cả Thưởng Và Phạt Do Ta Tự Ra...\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/940c6bedf8738af00743df72eb6639d2.png"
+   },
+   "3": {
+    "name": "\"Ngươi Sẽ Trở Thành Thành Viên Mới Của Gia Đình Ta...\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/fbaaa4f7be7375ebaef455a9ce50a932.png"
+   },
+   "4": {
+    "name": "\"Sau Này, Các Ngươi Yêu Thương Tương Trợ Nhau...\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/97c02869569dbcd06e6c85a5e297765c.png"
+   },
+   "5": {
+    "name": "\"Vì Một Mình Khác Gì Với Đã Chết...\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/3edaaddd75aa9ebdcbb82a894c3f7ba5.png"
+   },
+   "6": {
+    "name": "\"Từ Nay Về Sau, Chúng Ta Sẽ Cùng Đón Cuộc Sống Mới.\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1275f47572431685fd9ca6b6fd7ec49d.png"
+   }
+  },
+  "Neuvillette": {
+   "1": {
+    "name": "Khởi Đầu Của Tôn Quý",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ee46811f355b04470301e75887343cf6.png"
+   },
+   "2": {
+    "name": "Mệnh Lệnh Của Pháp Luật",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c51abfbec3f6066ff3b56cd391132f19.png"
+   },
+   "3": {
+    "name": "Mô Phỏng Của Cổ Xưa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/43615c2e302d7d7d4918a47c25a0a112.png"
+   },
+   "4": {
+    "name": "Vinh Quang Của Xót Thương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/319854868cf2d73e2b9439e94fb7c3d7.png"
+   },
+   "5": {
+    "name": "Phán Quyết Của Công Lý",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/aca9b6bb4b1a6126cb84f0653d6ee621.png"
+   },
+   "6": {
+    "name": "Đền Bù Của Phẫn Nộ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2f594b03eb9b06dc4715eadcfdd992a3.png"
+   }
+  },
+  "Furina": {
+   "1": {
+    "name": "\"Như Chú Chim Bất Kham, Tình Yêu Miễn Cầu Xin.\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4b40280ad1aafd607fffdb5ef002d5e4.png"
+   },
+   "2": {
+    "name": "\"Phụ Nữ Dễ Thích Nghi, Như Phận Bèo Trong Nước.\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/eedde82310959b43981f48c07b956144.png"
+   },
+   "3": {
+    "name": "\"Bí Mật Giấu Trong Lòng, Không Ai Biết Tên Ta.\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/57a6608d0046afb4c8f0772af78c7421.png"
+   },
+   "4": {
+    "name": "\"Không Ở Trong U Uất, Nào Biết Quý Sự Sống!\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b0d0b52299de826df77e79a1ac91d104.png"
+   },
+   "5": {
+    "name": "\"Giờ Ta Đã Phát Giác, Người Đó Tên Là...!\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/8fdd9d5439e0a827e156eb172460e2a1.png"
+   },
+   "6": {
+    "name": "\"Cùng Nghe Ta Ca Tụng, Nâng Ly Rượu Tình Yêu!\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/db0c0527afda99a4e0ca73cc66347809.png"
+   }
+  },
+  "Hu Tao": {
+   "1": {
+    "name": "Cánh Bướm Bay Nghiêng Về Chân Trời",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b68156ebbc2b4d280a1dcb85a13c4f99.png"
+   },
+   "2": {
+    "name": "Mưa Về Bất An",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/efbcf69944c154861fbd756b86ff9134.png"
+   },
+   "3": {
+    "name": "Huyết Sắc Vấn Vương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1975e9ed5e86c3c15665040c1d79d3ec.png"
+   },
+   "4": {
+    "name": "Hoa Phòng Bầu Bạn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ae4b27db76afef6e0597243d744d5dad.png"
+   },
+   "5": {
+    "name": "Đốt Hoa Làm Hương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/79640d30c1e989413fc5e21486d932d8.png"
+   },
+   "6": {
+    "name": "U Điệp Lưu Lại Một Chút Hương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/69f6def4e9eff822510a873ec8ef3612.png"
+   }
+  },
+  "Odette": {
+   "1": {
+    "name": "\"Sớm Mai Chưa Từng Nhảy Múa, Nàng Ngắm Nhìn Bóng Đổ\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/9f1f159ca49893228d2e06d3d62e8524.png"
+   },
+   "2": {
+    "name": "\"Nàng Muốn Thấy Giấc Mơ Thiên Nga Tuyết Chưa Từng Thấy\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/d784bba3f9e4af77562accb3e302d6b2.png"
+   },
+   "3": {
+    "name": "\"Phải Đuổi Theo Cơn Gió Gào Thét, Một Mình Bay Lên\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/6c392f4add5121ec45bd14b26bb9a471.png"
+   },
+   "4": {
+    "name": "\"Bay Lên, Rơi Xuống Bầu Trời Xanh Mơ Hồ Và Rực Cháy\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/b7eca52b127de72ec626ec5607812102.png"
+   },
+   "5": {
+    "name": "\"Xem Kìa, Ta Đã Tạm Biệt Nỗi Đau Của Bụi Và Đất\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/2178defb6dd3a5be90431252978ecd26.png"
+   },
+   "6": {
+    "name": "\"Vươn Tay, Chạm Vào Gương Mặt Vĩnh Hằng Của Vòm Trời\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/ecb524f8a443bff48279bdcad3e9ba56.png"
+   }
+  },
+  "Vesna": {
+   "1": {
+    "name": "Bữa Tiệc Tiễn Đông",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/71711cd1598a001ffcbc3e565fccdd95.png"
+   },
+   "2": {
+    "name": "Vũ Điệu Đón Xuân",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/9bfe7227048168a6191a341b58af7beb.png"
+   },
+   "3": {
+    "name": "Cháy Bỏng Dâng Hiến",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/80d0d1c5eaa8d483f85e2a6ced11495e.png"
+   },
+   "4": {
+    "name": "Vinh Quang Tiền Nhân",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/f856b92769c4b7a96332ed28d5c0fb55.png"
+   },
+   "5": {
+    "name": "Trọng Trách Quý Tộc",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/7fdd7b7f72512d8e92a8965e5e89b813.png"
+   },
+   "6": {
+    "name": "Tấm Lòng Sắt Son",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/931536cfba9ddecde0b17e8648cdfb30.png"
+   }
+  },
+  "Vodyanitsa": {
+   "1": {
+    "name": "Bọt Nước Dưới Ánh Đèn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/839d3a336e1d9775f10ae627000e194d.png"
+   },
+   "2": {
+    "name": "Dư Âm Xuyên Gió Tuyết",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/99bbe8aaf139b9b95246f9b47c058f9a.png"
+   },
+   "3": {
+    "name": "Tiếng Vang Vọng Sớm Xuân",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/d4bfa5d57499882496d7f77badbac46e.png"
+   },
+   "4": {
+    "name": "Lời Thì Thầm Sóng Biếc",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/fa1643a5a7a6bc5acbe31c64255bc505.png"
+   },
+   "5": {
+    "name": "Cùng Chìm Xuống Hồ Sâu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/daca997c3343854e5243d037493abea6.png"
+   },
+   "6": {
+    "name": "Khúc Hoan Ca Bất Tận",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31695/693fe77987316f399e71e24654ad13f8.png"
+   }
+  },
+  "Sandrone": {
+   "1": {
+    "name": "Vàng Ròng Chưa Tàn, Hoàng Hôn Đã Xa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458e6/964725ccf13cb41d8a8f3a5e78e753bd.png"
+   },
+   "2": {
+    "name": "Nhìn Lại Gương Xưa, Năm Tháng Nhẹ Trôi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458e6/8e3cea9ec36c544eb74ebcc83b3f77c6.png"
+   },
+   "3": {
+    "name": "Không Than Trời Lặn, Không Giận Trăng Lên",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458e6/0a76613a1ae1ba766b2ea70d31f8846d.png"
+   },
+   "4": {
+    "name": "Thế Sự Là Số, Ngày Đêm Lại Qua",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458e6/0316c7c31ae6b20b3487ca4aa752fd9a.png"
+   },
+   "5": {
+    "name": "Vạn Vật Tro Tàn, Duy Lý Khai Sáng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458e6/6e9998cbd9ccac92de17715a1e7f80c0.png"
+   },
+   "6": {
+    "name": "Thủy Tiên Tỉnh Mộng, Mong Đợi Bình Minh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458e6/403a18b3aee3be65d37ba72d0decf9e5.png"
+   }
+  },
+  "Nicole": {
+   "1": {
+    "name": "\"Đừng Sợ Hãi, Đứa Con Nhân Loại Được Yêu Thương\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/04e2ba6c1f2d8b82007b62de92a21038.png"
+   },
+   "2": {
+    "name": "\"Tôi Sẽ Chỉ Dạy, Dẫn Dắt Con Đường Nên Đi\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/5f9baf02d522df862876180c40d2129b.png"
+   },
+   "3": {
+    "name": "\"Là Ngọn Đèn Bầu Bạn, Là Ánh Sáng Phía Trước\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/a85d71f4dcd4d4c6af776b14da4dd097.png"
+   },
+   "4": {
+    "name": "\"Dù Là Trái Hay Phải, Dù Là Đi Hướng Nào\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/f465be87ad40c48867878336dc6e8f09.png"
+   },
+   "5": {
+    "name": "\"Có Nhiều Điều Muốn Nói, Luôn Kề Cận Bên Vai\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/cb32ff85b195d039b817fcd1fb6c784a.png"
+   },
+   "6": {
+    "name": "\"Đừng Do Dự, Đây Chính Là Con Đường Đúng Đắn\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/48fde468f40fe78c152c6019f2ec5217.png"
+   }
+  },
+  "Linnea": {
+   "1": {
+    "name": "Phân Loại Chưa Hoàn Thiện",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cc2/728952e12588954478b9d0dccc80238d.png"
+   },
+   "2": {
+    "name": "Chỉ Dụ Vui Và Buồn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cc2/af3f5deb0de90f18765ed6e798f255a8.png"
+   },
+   "3": {
+    "name": "Trang Ghi Chép Náo Nhiệt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cc2/909ed544bb63e70354a4246356ee85b8.png"
+   },
+   "4": {
+    "name": "Trực Giác Của Chuyên Gia",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cc2/21eeb626df5b5c7dcc8da0f3dbfd6150.png"
+   },
+   "5": {
+    "name": "Quà Chia Tay Đất Tiên",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cc2/c2ecbf8c0bfd9998e9c298972d439bc0.png"
+   },
+   "6": {
+    "name": "Mộng Khuyển Săn Hoàng Kim",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cc2/36f21b547df27a9b493f0959599d868d.png"
+   }
+  },
+  "Lohen": {
+   "1": {
+    "name": "Làn Gió Nhẹ Khi Xưa, Mang Theo Đầy Bi Ca",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/99c2b9ec9df64448d52879b984cbb092.png"
+   },
+   "2": {
+    "name": "Phàm Là Kẻ Bay Cao, Đều Sẽ Bị Nhắm Đến",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/465ab5df733422e13801b59f5a8ca17e.png"
+   },
+   "3": {
+    "name": "Chỉ Lưỡi Đao Sắc Bén, Mới Có Thể Chữa Lành",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/5711854ca18af759f654aab9d2567d63.png"
+   },
+   "4": {
+    "name": "Tình Yêu Như Ánh Sáng, Tan Biến Như Khúc Hát",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/95a93c9f3307b748eca3037374c60614.png"
+   },
+   "5": {
+    "name": "Chẳng Thể Nào Nhìn Thấu, Cũng Chẳng Thể Chất Vấn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/37ba9e1902cca227bfb85c9cc581b9f7.png"
+   },
+   "6": {
+    "name": "Thân Lạc Hồn Tiêu Tan, Chỉ Còn Lại Niềm Vui",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9d3/07ab0e9e5e7711ae1e2162c64c946dd0.png"
+   }
+  },
+  "Varka": {
+   "1": {
+    "name": "\"Đến Đây Bạn Hiền, Chúng Ta Cùng Nhảy Múa Dưới Trăng\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3488/416499204f47355d9e785b193de5d0e4.png"
+   },
+   "2": {
+    "name": "\"Đợi Khi Trời Sáng, Chúng Ta Bước Vào Cuộc Hành Trình\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3488/d2c108d5ec05cf6d0feda65c239c0b4f.png"
+   },
+   "3": {
+    "name": "\"Lẽ Nào Bạn Hỡi, Ta Lại Uống Ly Rượu Đắng Cay?\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3488/f2ccd807337b8948627c9dcf0f913bdc.png"
+   },
+   "4": {
+    "name": "\"Không Ai Cướp Được, Tự Do Ca Hát Của Chúng Ta\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3488/28ca8d88fd0ec4b70eccdc307d188d4a.png"
+   },
+   "5": {
+    "name": "\"Rượu Ngon Rót Đầy, Những Bạo Chúa Đến Rồi Lại Đi\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3488/f19368f14ca919df0ccc71e69b9ff2b4.png"
+   },
+   "6": {
+    "name": "\"Mondstadt Của Ta, Sừng Sững Như Thuở Ban Xưa Ấy\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3488/2c53827ba41e78404b49ca1024d73be1.png"
+   }
+  },
+  "Zibai": {
+   "1": {
+    "name": "Xuất Bột Nhiên Nhi Nhập Liêu Nhiên",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/6a1690865fbf95e51fa32b919a75e6cc.png"
+   },
+   "2": {
+    "name": "Hóa Vu Sinh Nhi Tử Vu Thi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/b12ade3240739acb9020fadfac9d2eb1.png"
+   },
+   "3": {
+    "name": "Giải Thiên Thao Nhi Đọa Kỳ Trật",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/4b743bd75b5b9bd288e7fc6a80f1455b.png"
+   },
+   "4": {
+    "name": "Hồn Phách Vãng Nhi Thân Tòng Chi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/2858642f249a8cb59bd90eb4520e953e.png"
+   },
+   "5": {
+    "name": "Minh Kiến Vô Trị Chí Bất Luận",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/40240906648c62952e9ee441fffc0f70.png"
+   },
+   "6": {
+    "name": "Thiên Địa Hốt Như Nhất Viễn Hành",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/d69e6116beb8c4bafc19845364ca62c7.png"
+   }
+  },
+  "Columbina": {
+   "1": {
+    "name": "Chiếu Sáng Biển Hoa, Ẩn Mình Giữa Núi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/a7fdc9d92426d9f223658a34705f8ea8.png"
+   },
+   "2": {
+    "name": "Tô Sáng Đêm Đen, Đồng Hành Xa Xôi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/29aaa0951ea68cca05fdfa55350f89c3.png"
+   },
+   "3": {
+    "name": "Ánh Sáng Ngưng Đọng, Dậy Sóng Trong Mơ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/f5fdaaca6d700c1dcd78e8ce3c116356.png"
+   },
+   "4": {
+    "name": "Biển Mây Mịt Mù, Bóng Cây Núi Đá",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/3785acafcf9b7f0afcefe6ea93a8d52e.png"
+   },
+   "5": {
+    "name": "Vạn Vật Tĩnh Mịch, Chỉ Nghe Người Hát",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/893ad9b25ef60b56ce30e5b97c149ca6.png"
+   },
+   "6": {
+    "name": "Đêm Đen U Tối, Theo Chân Ánh Trăng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6966dce8/f8fd87b17d6d86a5192fbb79aa82a45b.png"
+   }
+  },
+  "Durin": {
+   "1": {
+    "name": "Đất Đỏ Nghịch Chuyển",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/692f7dcc/cf3589764ffeba96ea22f1b29ff55b8f.png"
+   },
+   "2": {
+    "name": "Tầm Nhìn Vô Tận",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/692f7dcc/fb04502683340c1d5d10aaa5279ce7e8.png"
+   },
+   "3": {
+    "name": "Gương Lửa Hiển Hiện",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/692f7dcc/9faabf53a909f7842e6357631de6ae8c.png"
+   },
+   "4": {
+    "name": "Cội Nguồn Dâng Trào",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/692f7dcc/0d79d4817c07ac5014f04293fec0c66c.png"
+   },
+   "5": {
+    "name": "Vết Nứt Rực Lửa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/692f7dcc/af73e2be41323b308c1e24f33e12e167.png"
+   },
+   "6": {
+    "name": "Song Trùng Tái Sinh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/692f7dcc/58e967918afb1d933cd190650aa57a4a.png"
+   }
+  },
+  "Nefer": {
+   "1": {
+    "name": "Kế Hoạch Là Khởi Đầu Của Thành Bại",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68f81ec9/ec3ac22e2c583adcd2b38a580ed6ed4d.png"
+   },
+   "2": {
+    "name": "Quan Sát Chuẩn Bị Là Ưu Thế",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68f81ec9/e7331156a8f53a8bb2911cf623ae857f.png"
+   },
+   "3": {
+    "name": "Dấu Vết Dối Trá Che Sự Thật",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68f81ec9/22b881813a3ddb250ebce2cc5fa08ba4.png"
+   },
+   "4": {
+    "name": "Tấm Lưới Mê Hoặc Kéo Vào Bẫy",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68f81ec9/49d592eb08772c3d9a1c62069bfdedef.png"
+   },
+   "5": {
+    "name": "Cơ Hội Chỉ Đến Trong Khoảnh Khắc",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68f81ec9/299dbece9f2b7bee0018b72dfa3f4fa6.png"
+   },
+   "6": {
+    "name": "Thời Khắc Nghịch Chuyển Để Chiến Thắng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68f81ec9/ee123ae15fea2259512471b4aba67cf9.png"
+   }
+  },
+  "Flins": {
+   "1": {
+    "name": "Vén Lên Bức Màn Tuyết",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/e18338b849a45a3b12faa98ed5d7e720.png"
+   },
+   "2": {
+    "name": "Vượt Qua Bức Tường Ma",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/3214c15d2874fbefe1a77c333fca258f.png"
+   },
+   "3": {
+    "name": "Khách Lạ Giữa Đêm Khuya",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/6ecef7fc0d8b3435652a62288e784b9d.png"
+   },
+   "4": {
+    "name": "Đêm Núi Rừng Gào Thét",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/da9c0a65844ce0e5049a5864f680a5c5.png"
+   },
+   "5": {
+    "name": "Bóng Hình Kẻ Lưu Đày",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/120b996f1d4401e250c001f7a47d63af.png"
+   },
+   "6": {
+    "name": "Vũ Khúc Của Cái Chết",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/a64f284ea4d67eb4ee1f304874ed3a90.png"
+   }
+  },
+  "Lauma": {
+   "1": {
+    "name": "\"Hỡi Đôi Môi, Hãy Dệt Và Ngân Nga Khúc Hát\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/1470a78b37ecf3dffe62df49b4f266a9.png"
+   },
+   "2": {
+    "name": "\"Đan Thành Lời Răn Và Câu Chuyện Cực Bắc\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/bfc68104e4504e9d45129458ff7a337c.png"
+   },
+   "3": {
+    "name": "\"Đừng Đi Theo Sự Xảo Quyệt Của Hồ Ly\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/499a98f5f2a24971d1bd522fcf6e44de.png"
+   },
+   "4": {
+    "name": "\"Chớ Tham Lam Uy Quyền Của Gấu Lớn\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/84bd04319db29a5ad9f083fcf8698798.png"
+   },
+   "5": {
+    "name": "\"Nếu Có Thể Chứng Kiến Sự Thật\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/d1e9c47dd6566ac8d113a1d3e2004920.png"
+   },
+   "6": {
+    "name": "\"Nguyện Dâng Máu Lệ Tặng Ánh Trăng\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b9/5d9c9a0ab70115362b2c6e3e6e40c59b.png"
+   }
+  },
+  "Ineffa": {
+   "1": {
+    "name": "Bộ Xử Lý Hiệu Chỉnh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/688960d4/424c334f5717369aacd2dc0287f285e8.png"
+   },
+   "2": {
+    "name": "Mô Đun Hỗ Trợ Dọn Dẹp",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/688960d4/8a191e0d02d83ddd406fb91ad334ee19.png"
+   },
+   "3": {
+    "name": "Trình Giả Lập Cảm Xúc",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/688960d4/8769e8a55b380a2eff4e9a3c79249337.png"
+   },
+   "4": {
+    "name": "Con Đường Không Sắc Lệnh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/688960d4/b3740694d9a1e7ceb7ae66bc937d504a.png"
+   },
+   "5": {
+    "name": "Vượt Qua Giấc Mơ Gương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/688960d4/d9d484a99b232aac06b86c1b00ff0b49.png"
+   },
+   "6": {
+    "name": "Buổi Bình Minh Ban Tặng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/688960d4/78c71751777f01448e15893bc9fe1c2b.png"
+   }
+  },
+  "Skirk": {
+   "1": {
+    "name": "Yên Viễn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6851f3c1/7def8edfe9710704048404f717a31884.png"
+   },
+   "2": {
+    "name": "Trụy Uyên",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6851f3c1/88f08da906a2c36e4f9325904e908534.png"
+   },
+   "3": {
+    "name": "Tội Duyên",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6851f3c1/87a014c0c8927495a94aaa2cb6d83665.png"
+   },
+   "4": {
+    "name": "Lưu Đoạn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6851f3c1/b4b735a9d509de8d7c81287cac5a8d13.png"
+   },
+   "5": {
+    "name": "Kết Nguyện",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6851f3c1/3b53a7bf2fa5c22b2a900bc191cd8c17.png"
+   },
+   "6": {
+    "name": "Chí Nguyên",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6851f3c1/51737f1ed0ebd44cea2978f71d1129d5.png"
+   }
+  },
+  "Escoffier": {
+   "1": {
+    "name": "Vũ Điệu Trước Bữa Ăn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/681a94b4/ddd51fba93712bca406744c153e76cfc.png"
+   },
+   "2": {
+    "name": "Nghệ Thuật Hầm Thơm Ngon",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/681a94b4/c47a58b1c1e93ae53084f72e88ecfe76.png"
+   },
+   "3": {
+    "name": "Ma Thuật Nướng Sốt Caramel",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/681a94b4/5bed9f296a49a1446fbf1ca9c43737cd.png"
+   },
+   "4": {
+    "name": "Công Thức Hương Thảo Thần Bí",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/681a94b4/80a4830698a107c9cc269442949517e2.png"
+   },
+   "5": {
+    "name": "Giao Hưởng Mùi Vị Ngàn Loại Sốt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/681a94b4/ce9f4f800fe113b1389e21126a22960a.png"
+   },
+   "6": {
+    "name": "Tiệc Trà Rực Rỡ Sắc Màu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/681a94b4/52f51d10e3e864553ed78e235d763e58.png"
+   }
+  },
+  "Varesa": {
+   "1": {
+    "name": "Nhiệt Huyết Cháy Mãi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67e335b4/1b5ad275fddfcc65cea70207c0d0aa4d.png"
+   },
+   "2": {
+    "name": "Cực Hạn Ngút Trời",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67e335b4/dcf48470aef66abc459898cd10978ff7.png"
+   },
+   "3": {
+    "name": "Quyết Tâm Bất Khuất",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67e335b4/40d94f0cc3aea29a5ad2b9bbb01b2edf.png"
+   },
+   "4": {
+    "name": "Dũng Cảm Xông Pha",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67e335b4/f61328d17b962ed0fad5d27999e57ab8.png"
+   },
+   "5": {
+    "name": "Tâm Niệm Ấm Áp",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67e335b4/748c546f47253f29a59c0845ef01b365.png"
+   },
+   "6": {
+    "name": "Chính Nghĩa Khải Hoàn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67e335b4/0531a680aacd43429458e235a1a797a1.png"
+   }
+  },
+  "Yumemizuki Mizuki": {
+   "1": {
+    "name": "Sương Mù Mờ Ảo Như Nước Xa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/9cbacb975b253ab308377542c9a6f3c2.png"
+   },
+   "2": {
+    "name": "Như Từng Gặp Nhau Trong Giấc Mộng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/708e7f6bbfecbe4d69a60a387ea5617e.png"
+   },
+   "3": {
+    "name": "Bình Minh Ló Dạng Mặt Trăng Tan",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/068269ba30952dc5c4e0d26f952b21e6.png"
+   },
+   "4": {
+    "name": "Dòng Suối Ấm Áp Hương Hoa Nồng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/df8b4b04fe35a696b0044305a4e8871c.png"
+   },
+   "5": {
+    "name": "Như Buổi Hoàng Hôn Chờ Trăng Về",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f2b8a412861bb76ac10e505ac5e1ef4e.png"
+   },
+   "6": {
+    "name": "Nỗi Nhớ Quanh Quẩn Vướng Trong Tim",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/661a75c69a0efb5857824e3b3c6f078c.png"
+   }
+  },
+  "Citlali": {
+   "1": {
+    "name": "Lưỡi Đao Của Centzon Mimixcoah",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/44e1b82405787cb396c9aa4f55209a0a.png"
+   },
+   "2": {
+    "name": "Gian Lao Của Kẻ Nuốt Tim",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c9836e698a008bb83859cb48bf433dab.png"
+   },
+   "3": {
+    "name": "Vương Miện Của Mãng Xà Mây",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f0b5506e5baf19c30649fb9842860dcf.png"
+   },
+   "4": {
+    "name": "Xương Hồn Của Kẻ Thách Thức",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/aeb1e49eeddc50badffaf93966f1c7b9.png"
+   },
+   "5": {
+    "name": "Lời Nguyền Của Nemontemi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/fe29a3e0a227973f4427b3a44e062a13.png"
+   },
+   "6": {
+    "name": "Khế Ước Của Teoiztac",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f0fd4c6641623e574ab53b105041ece0.png"
+   }
+  },
+  "Mavuika": {
+   "1": {
+    "name": "Giảng Giải Của Dạ Thần",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d699e564df753acaea625f89c229e360.png"
+   },
+   "2": {
+    "name": "Cái Giá Của Tro Tàn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/52826573d72e985e31d9b4b524f0128f.png"
+   },
+   "3": {
+    "name": "Nắng Cháy Của Mặt Trời",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0f4de24556e2a2e82ccc0b8277f72874.png"
+   },
+   "4": {
+    "name": "Giác Ngộ Của Lãnh Đạo",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ade5135f9c5226192f637eb835271847.png"
+   },
+   "5": {
+    "name": "Hàm Ý Của Sự Thật",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/eb5e77788e9060dd5cd2dd3cb3c00704.png"
+   },
+   "6": {
+    "name": "Giải Phóng \"Tên Của Nhân Loại\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/69ae9a47278e5afa0d88e2c0ba7679e0.png"
+   }
+  },
+  "Chasca": {
+   "1": {
+    "name": "Hộp Đạn, Vòng Quay Rộn Ràng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b1352451d216805246ecaca34afec42f.png"
+   },
+   "2": {
+    "name": "Nòng Súng, Khói Lửa Rực Cháy",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4a82c8e7723d04f0cf20c7fcb082a682.png"
+   },
+   "3": {
+    "name": "Dây Cương, Khống Chế Toàn Diện",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4da857100e5ae46c410f4a9b3eba59ae.png"
+   },
+   "4": {
+    "name": "Tia Lửa, Phát Bắn Bất Ngờ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e7bd8b25683eea0c26c197f6856648d8.png"
+   },
+   "5": {
+    "name": "Vành Mũ, Đường Nét Của Cát",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d01e6fe4b1888b5da60b1828a6d5b008.png"
+   },
+   "6": {
+    "name": "Đối Đầu, Vinh Quang Chiến Đấu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7dafdaf008b457039c84ade83d007369.png"
+   }
+  },
+  "Xilonen": {
+   "1": {
+    "name": "Giai Điệu Của Ngày Nghỉ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e7ba891b0e9e880cd221addb4593a715.png"
+   },
+   "2": {
+    "name": "Hòa Tấu Của Chiucue",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/889b68505aa92d2eeaedb169c16a0e93.png"
+   },
+   "3": {
+    "name": "Vòng Lặp Của Tonalpohualli",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f1f9b6478bfda9080152afb8b608bf2a.png"
+   },
+   "4": {
+    "name": "Nhạc Trance Của Suchitl",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/49eb7aa91107644d37a3a25af4b82805.png"
+   },
+   "5": {
+    "name": "Khoảng Lặng Của Tlaltecuhtli",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/8ed856ab6bbc19732c35a69ad36af760.png"
+   },
+   "6": {
+    "name": "Vũ Hội Đêm Vĩnh Hằng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e225f48b9c7c86cdf065735854a5fbe0.png"
+   }
+  },
+  "Mualani": {
+   "1": {
+    "name": "\"Meztli\" Nhàn Nhã...",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/13bc2dea731913c3f0acb1485bfc1cb8.png"
+   },
+   "2": {
+    "name": "Mualani, Dốc Toàn Lực!",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e18100d2d8f7d417fa7e0ee18ee69f7d.png"
+   },
+   "3": {
+    "name": "Lướt Sóng Trên Biển Hân Hoan",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e32ef6a33f9d640914f6427766011dc1.png"
+   },
+   "4": {
+    "name": "Cá Mập Ăn Bóng Nước",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b286517c1dff0db769c42f01e0dd2208.png"
+   },
+   "5": {
+    "name": "Ván Lướt Sóng Cùng Mẫu Đang Bán",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0e2701a2fa2a4437ae1c825211beeb33.png"
+   },
+   "6": {
+    "name": "Tinh Thần Cư Dân Suối Nước",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/cd5e6e6d1a0edc9a8153d2a86389a889.png"
+   }
+  },
+  "Kinich": {
+   "1": {
+    "name": "Mỏ Của Chim Vẹt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a91b1647109da3e027bf25c78607aeb0.png"
+   },
+   "2": {
+    "name": "Chi Của Bọ Hổ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/99f9c284e07816f0c17346ad11034df0.png"
+   },
+   "3": {
+    "name": "Vuốt Của Protosuchian",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/cba6c54a7d791b2141afbf7c8c1a4264.png"
+   },
+   "4": {
+    "name": "Lông Của Chim Ruồi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/84f83c19021888303a9279cbdbc75323.png"
+   },
+   "5": {
+    "name": "Đuôi Của Khỉ Hú",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/542640c54d80764f59aeb4f8e81532b0.png"
+   },
+   "6": {
+    "name": "Hình Dạng Thụy Thú",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c96ddc2394d209f42b03f8e5accec1f8.png"
+   }
+  },
+  "Emilie": {
+   "1": {
+    "name": "Hương Hoa Nhẹ Nhàng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c9b03d9c10f454eea5274b9bfcc73f5a.png"
+   },
+   "2": {
+    "name": "Tinh Hoa Hồ Quang",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/46fa92d07ec00f0451bb486972e3e77e.png"
+   },
+   "3": {
+    "name": "Tinh Chất Nồng Nàn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/5ff9abb0acb9454d025fb7359f10678e.png"
+   },
+   "4": {
+    "name": "Tâm Sắc Lumidouce",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/591d85c49e473cfc92f06158cab86785.png"
+   },
+   "5": {
+    "name": "Hương Thơm Sương Sớm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/348e4f34c37f8850a8c9be00b06dbdcc.png"
+   },
+   "6": {
+    "name": "Dư Hương Marcotte",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f46ab8661711f3c6496f81b8c76dfc48.png"
+   }
+  },
+  "Clorinde": {
+   "1": {
+    "name": "\"Từ Nay, Tôi Vượt Qua Bức Màn Che Bóng Của Ngọn Nến\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/5a58946bcb2b91698204a77dbcaf9d81.png"
+   },
+   "2": {
+    "name": "\"Từ Nay, Đối Mặt Với Nguy Cơ Của Đêm Dài\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/5366f848122d5ca26eb529a69db9e6e6.png"
+   },
+   "3": {
+    "name": "\"Tôi Sẽ Khắc Ghi Lời Thề Của Ban Ngày\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/634e08c168aadef0475a04c8a3461e36.png"
+   },
+   "4": {
+    "name": "\"Để Ghi Nhớ Nước Mắt, Sinh Mệnh Và Tình Yêu\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/9b5b4184828e89f7098f4b7e7c88fd8f.png"
+   },
+   "5": {
+    "name": "\"Và Ghi Nhớ Bình Minh Rồi Cũng Sẽ Đến\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/5dca8022c09a5c38a34464e50d720d71.png"
+   },
+   "6": {
+    "name": "\"Vì Thế, Tôi Sẽ Không Bao Giờ Từ Bỏ Hy Vọng\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6e487d9b6288cb520043464bd7d6dde0.png"
+   }
+  },
+  "Sigewinne": {
+   "1": {
+    "name": "\"Tinh Linh Vui Vẻ Nhất, Liệu Có Hiểu Được Lo Âu?\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/96b7fc692764465d06434e88dae63b92.png"
+   },
+   "2": {
+    "name": "\"Tinh Linh Nhân Từ Nhất, Liệu Có Hóa Giải Thù Địch?\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0ae201f32d2fb7e9dd129d2d7974bf22.png"
+   },
+   "3": {
+    "name": "\"Tinh Linh Khỏe Mạnh Nhất, Liệu Có Chữa Khỏi Bệnh Tật?\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c8e0c369dc5eb60428a12587a0213cda.png"
+   },
+   "4": {
+    "name": "\"Tinh Linh Xinh Đẹp Nhất, Liệu Có Miễn Dịch Hao Mòn?\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a94592f00644021cd4f37c19cb505981.png"
+   },
+   "5": {
+    "name": "\"Tinh Linh Hạnh Phúc Nhất, Liệu Có Xóa Bỏ Giày Vò?\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/216dcb8455a31e4752df666de06fa261.png"
+   },
+   "6": {
+    "name": "\"Tinh Linh Lung Linh Nhất, Liệu Có Cầu Nguyện Cho Tôi?\"",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/adb9c03204298eff83b5abceef9939d7.png"
+   }
+  },
+  "Xianyun": {
+   "1": {
+    "name": "Tá Phong Tẩy Trần Duyên",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/688685523b1028edaee8bc7571ea2c9c.png"
+   },
+   "2": {
+    "name": "Hạc Lệ Viễn Nhân Gian",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/58705ccc008d18d80cd0014b47a8d782.png"
+   },
+   "3": {
+    "name": "Tạo Hóa Hữu Tinh Nguyệt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c0698c224d3cbe2756b1f5d7cac467c1.png"
+   },
+   "4": {
+    "name": "Áo Diệu Phanh Thử Châu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4406b3e6b1d4c9f0a9ee5508d796404d.png"
+   },
+   "5": {
+    "name": "Toàn Bộ Hà Úy Thượng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0c72632f804cd8a320f7812ced7544fc.png"
+   },
+   "6": {
+    "name": "Tri Thị Lưu Vân Tiên",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/410f9c36d0fa28acf0847ad6afe019e3.png"
+   }
+  },
+  "Navia": {
+   "1": {
+    "name": "Cảm Nhận Cự Ly Của Thiếu Nữ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/db5082f9d2acea3f505fbb27dfffae94.png"
+   },
+   "2": {
+    "name": "Thừa Thắng Truy Kích Của Chỉ Huy",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/72bb5bcb4fb1765e80d01a1d0d542eca.png"
+   },
+   "3": {
+    "name": "Tầm Nhìn Rộng Mở Của Doanh Nhân",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c79ee6efd571ee9659cea62893a701ca.png"
+   },
+   "4": {
+    "name": "Bất Khuất Tuyệt Đối Của Lời Thề",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/282d732bd34bbffb1febf0d901cec3db.png"
+   },
+   "5": {
+    "name": "Ý Chí Kiên Quyết Của Đàm Phán",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b5fb14a6763189f558b9e204fbf85d4b.png"
+   },
+   "6": {
+    "name": "Linh Hoạt Uyển Chuyển Của Hội Trưởng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a67c55b6030949801fd7c322503a4b57.png"
+   }
+  },
+  "Wriothesley": {
+   "1": {
+    "name": "Trừng Trị Kẻ Hành Ác",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/35b4ff32a04cd142895742eb7634a3c9.png"
+   },
+   "2": {
+    "name": "Bắt Trói Kẻ Hung Bạo",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/3316c5fa26a13c43560314607fe77942.png"
+   },
+   "3": {
+    "name": "Khiển Trách Kẻ Dối Gian",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a8fcb03ac9a0789de3585397e587bcd2.png"
+   },
+   "4": {
+    "name": "Cứu Rỗi Người Khốn Khổ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4e92149310f62dba35128bf322f889aa.png"
+   },
+   "5": {
+    "name": "Thương Xót Người Oan Ức",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7f9409e78a5ba5d18e66084dedb3d742.png"
+   },
+   "6": {
+    "name": "Trân Trọng Người Vô Tội",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6bc34175dc892e70afbe56c7c5f8019a.png"
+   }
+  },
+  "Lyney": {
+   "1": {
+    "name": "Tay Nghề Biến Đổi Kỳ Diệu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/5d708e5f3b2596f73c89e0e75e37c0f6.png"
+   },
+   "2": {
+    "name": "Câu Kéo Lời Ngon Tiếng Ngọt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/09c7e54d202b70a24f3fcd21656e0909.png"
+   },
+   "3": {
+    "name": "Thủ Pháp Linh Hoạt Bí Ẩn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/86664f5e03bcd9620cccbaae9ed4c512.png"
+   },
+   "4": {
+    "name": "Mưu Đồ Luyện Tập Thành Thạo",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d6ea0b5c34583081ed139ab29eaf9208.png"
+   },
+   "5": {
+    "name": "Kỹ Thuật Xuyên Thấu Bí Mật",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/532eee56b50a2cb27665e44448efefef.png"
+   },
+   "6": {
+    "name": "Nụ Cười Dối Lòng Bí Ẩn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/764024b68c99cf61f82f079d6fc67a29.png"
+   }
+  },
+  "Baizhu": {
+   "1": {
+    "name": "Khư Ngâm Chí Vi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/44b839c71d7e0a9b96c0463532b4a80d.png"
+   },
+   "2": {
+    "name": "Động Tĩnh Tinh Minh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/49593015b1c11540b3aad95b2840ded1.png"
+   },
+   "3": {
+    "name": "Bát Chính Định Khí",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6659f02d4b97d874243986a35ae55a21.png"
+   },
+   "4": {
+    "name": "Pháp Cổ Quan Minh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ad500c0b9e459dec2d0fb96214abc199.png"
+   },
+   "5": {
+    "name": "Doanh Hư Tàng Tượng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/233bb1b87a319f7ff1b0d440a3239d87.png"
+   },
+   "6": {
+    "name": "Chân Tà Hợp Ly",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/03bb2eacf0767464f15a9ba9eb4a0ea3.png"
+   }
+  },
+  "Dehya": {
+   "1": {
+    "name": "Ánh Lửa Đỏ Sáng Chói",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/dd95faf27ffff198b05b2814ffe9ba05.png"
+   },
+   "2": {
+    "name": "Lưỡi Đao Cát Lấp Lánh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2744d0c1a5bc18df7f5f2d5755f715f6.png"
+   },
+   "3": {
+    "name": "Lửa Phẫn Nộ Lây Lan",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/abbb6d6541cf5ba522405c1e39641e48.png"
+   },
+   "4": {
+    "name": "Lời Tuân Thủ Vững Vàng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/9936367e859b473fe6182896260864a9.png"
+   },
+   "5": {
+    "name": "Kẻ Săn Mồi Xuất Chúng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7a2903833a441306e58feb53af0cf843.png"
+   },
+   "6": {
+    "name": "Móng Vuốt Lửa Càn Quét",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d961e431f07d47ece8724f241eac6365.png"
+   }
+  },
+  "Alhaitham": {
+   "1": {
+    "name": "Trực Quan",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/28244ec2c7999d48748aa0b90d7cd780.png"
+   },
+   "2": {
+    "name": "Tranh Luận",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/47050f4e568270e9f54a86c55183749b.png"
+   },
+   "3": {
+    "name": "Phủ Định",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/8767d089a47790b1b6ced24868257c8c.png"
+   },
+   "4": {
+    "name": "Sáng Tỏ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/16b4b8bc90f37430859fd6766450f55e.png"
+   },
+   "5": {
+    "name": "Minh Mẫn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a2c3b4d3227d0deb372c1a275d5cec30.png"
+   },
+   "6": {
+    "name": "Lẽ Phải",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0b6700b2a4f23f382726a345a9b02057.png"
+   }
+  },
+  "Kẻ Lang Thang": {
+   "1": {
+    "name": "Chương Đầu - Sải Bước Theo Gió Bão",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7ef93885cce4af20403f91c8bf275b5f.png"
+   },
+   "2": {
+    "name": "Chương Hai - Trăng Bạc Cùng Sóng Xanh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2dba377a31f4c451220a0fba315362a8.png"
+   },
+   "3": {
+    "name": "Chương Ba - Khúc Hoàng Hôn Vĩnh Hằng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/9f9781eecd87bd736461300508b359c2.png"
+   },
+   "4": {
+    "name": "Chương Bốn - Trôi Dạt Khúc Nguyệt Hoa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/5efb1c38018a4eaa6b4710f6701acfb0.png"
+   },
+   "5": {
+    "name": "Chương Cuối - Hiện Tại Trong Quá Khứ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/01070efdf66874e02d9c5bcc941dc6ef.png"
+   },
+   "6": {
+    "name": "Lời Chúc - Màn Sương Nghiêng Gió Rừng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1c900e1303f494f264f68dc6748b803a.png"
+   }
+  },
+  "Nahida": {
+   "1": {
+    "name": "Hạt Giống Ẩn Chứa Tri Thức",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b27cdb8a7cffc5c1dc6d367fc77cc5b4.png"
+   },
+   "2": {
+    "name": "Rễ Cây Chờ Đợi Thiện Kiến",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7364f8780acfc79c294ab68a96467775.png"
+   },
+   "3": {
+    "name": "Mầm Chồi Thấm Dần Thành Tựu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/69c59bc5a580a9fc8b1eefedcfe2a997.png"
+   },
+   "4": {
+    "name": "Thân Nhánh Ước Lượng Thực Hành",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2efd166504e080ba5b3ab84a34738896.png"
+   },
+   "5": {
+    "name": "Nhành Lá Phá Giải Ngu Muội",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2a8497fb42c4b871fdc589abd5cf839e.png"
+   },
+   "6": {
+    "name": "Quả Mọng Thấu Hiểu Vạn Vật",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/905c1c58626145fff59d603e57b545ea.png"
+   }
+  },
+  "Cyno": {
+   "1": {
+    "name": "Lập Nghi - Phủ Lãm Trú Minh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/76d2f793c58416078748137e13d1f4bb.png"
+   },
+   "2": {
+    "name": "Lệnh Nghi - Dẫn Yết Quy Linh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ac8e3f3e23137806f8aa55d42a9cf2a2.png"
+   },
+   "3": {
+    "name": "Luật Nghi - Hành Độ Thệ Trừng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c6c25d46fa455e2fd6a87b39c2d644de.png"
+   },
+   "4": {
+    "name": "Tuần Nghi - Siển Hộ Cấm Võng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/5d774fdcb0d4ef4f74f4ee0c9aff2603.png"
+   },
+   "5": {
+    "name": "U Nghi - Thệ Vãng Tinh Mang",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/210377452126b2219a23f7d9621c8ed5.png"
+   },
+   "6": {
+    "name": "Vũ Nghi - Tài Lạc Quân Hành",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/06eaf73d7ca89a575c8b5027acd6a326.png"
+   }
+  },
+  "Nilou": {
+   "1": {
+    "name": "Bước Dạo Trăng Khuyết",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f7a00444b69a620f0f853252e57b8f7b.png"
+   },
+   "2": {
+    "name": "Mưa Hoa Trời Sao",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e97ae9d57ffe4c5458cfa46f5dd03650.png"
+   },
+   "3": {
+    "name": "Vũ Đạo Phản Chiếu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/bee9ae21e91311aab6e91b54431cbc08.png"
+   },
+   "4": {
+    "name": "Tiết Tấu Sóng Gợn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/bf051f308d082b53bb464d76497d1235.png"
+   },
+   "5": {
+    "name": "Ánh Sáng Xoay Vần",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/708270e40cd64244d2775302b2d9c653.png"
+   },
+   "6": {
+    "name": "Cung Đàn Ngăn Sương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b6a9e8bd5959c55ea4a57076787bdae3.png"
+   }
+  },
+  "Tighnari": {
+   "1": {
+    "name": "Từ Gốc Rễ Định Ban Sơ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d804bc36d8bbebfa7cdbaeadff80486d.png"
+   },
+   "2": {
+    "name": "Từ Mầm Chồi Hiểu Ngọn Nguồn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1a18356546567798576fdf4520801316.png"
+   },
+   "3": {
+    "name": "Từ Thân Nhánh Biết Vạn Vật",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/856a4ec5c6d681329f724d6e7e1bda84.png"
+   },
+   "4": {
+    "name": "Từ Phiến Lá Giải Thịnh Suy",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/619dd13c24a278c56ab4d8677d0b70b8.png"
+   },
+   "5": {
+    "name": "Từ Cánh Hoa Tìm Giác Ngộ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f0628f550ee83798d989666ab428309d.png"
+   },
+   "6": {
+    "name": "Từ Cây Trái Luận Nhân Quả",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e1c90b88397082010440451d36c04554.png"
+   }
+  },
+  "Kamisato Ayato": {
+   "1": {
+    "name": "Kyouka Fuushi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/65d63cf2740f8f53f54ac7050c071b77.png"
+   },
+   "2": {
+    "name": "Suối Nguồn Thế Giới",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1f4569291e0766548987ad7993d4430b.png"
+   },
+   "3": {
+    "name": "Vô Ý Thưởng Hoa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/3b1e81ba08df43b11d7e24be5add6c15.png"
+   },
+   "4": {
+    "name": "Dòng Chảy Vô Hạn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/acf3374ccd25f089492bdc3f89d21e36.png"
+   },
+   "5": {
+    "name": "Vạn Thủy Nhất Lộ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d57dc1a7a73906d9974eb7b61ccb7576.png"
+   },
+   "6": {
+    "name": "Ngọn Nguồn Bất Tận",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c81d56afa0b3251a08bad20f18c48856.png"
+   }
+  },
+  "Shenhe": {
+   "1": {
+    "name": "Tâm Trai",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1c4546f768e85d6de189950eb22c5329.png"
+   },
+   "2": {
+    "name": "Định Mông",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/8d8409a1169b3688106eaf1f234d15c3.png"
+   },
+   "3": {
+    "name": "Tiềm Hư",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e2d9e90e8236bdeff1272f069cb8e809.png"
+   },
+   "4": {
+    "name": "Quan Sát",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a50a2ff9c852f8edc01359a0a2492b81.png"
+   },
+   "5": {
+    "name": "Hóa Thần",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/48b3adcbaa009bf6f4714bae68b98031.png"
+   },
+   "6": {
+    "name": "Vong Huyền",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7d9d84bb956520add3e4b1c287565383.png"
+   }
+  },
+  "Yelan": {
+   "1": {
+    "name": "Kẻ Toan Tính, Lâm Trận Cẩn Thận",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/79a625162c02ba875614d70af449112e.png"
+   },
+   "2": {
+    "name": "Kẻ Nhập Cuộc, Càng Đông Càng Tốt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e2e1f017ac1e72e716f5ae43c139da60.png"
+   },
+   "3": {
+    "name": "Kẻ Nâng Ly, Cẩn Thận Chiêu Trò",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1fd6369023b9f2af5aff78a98d45fd6b.png"
+   },
+   "4": {
+    "name": "Kẻ Giảo Hoạt, Đánh Lận Con Đen",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/19c668ebeebcca7a3b3e705caed0e532.png"
+   },
+   "5": {
+    "name": "Kẻ Làm Cái, Biến Hóa Ảo Diệu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b27ecb7942b77837ec503f09f2c676d4.png"
+   },
+   "6": {
+    "name": "Kẻ Thắng Cuộc, Gom Sạch Tất Cả",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/aabeab496e61aed869b26758624d3c86.png"
+   }
+  },
+  "Yae Miko": {
+   "1": {
+    "name": "Biên Niên Sử Hồ Ly",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/055848b8ebe0aa1db8907bab7473fdd5.png"
+   },
+   "2": {
+    "name": "Tiếng Gọi Đêm Trăng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/33ddb13fb64e1b95135e4632345e14b5.png"
+   },
+   "3": {
+    "name": "Thất Diệu Biến Hóa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2157ec23407b456a667cb47c1fd97aa9.png"
+   },
+   "4": {
+    "name": "Anh Đào Dẫn Lôi Chương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/94400f9693765010df2f09b358df01ca.png"
+   },
+   "5": {
+    "name": "Giễu Cợt Nham Hiểm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e6408da7aaf878c80e546786a85436d5.png"
+   },
+   "6": {
+    "name": "Cấm Thuật Daisesshou",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/3d414571a2e69081a686439a521c6f56.png"
+   }
+  },
+  "Arataki Itto": {
+   "1": {
+    "name": "Đứng Lại, Ta Nói Cho Nghe",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0b950dfad50fbddfa633d0793aa362ad.png"
+   },
+   "2": {
+    "name": "Gọi Anh Em, Đánh Hội Đồng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7d6dcf158bc2e102f942992899a4f8f9.png"
+   },
+   "3": {
+    "name": "Có Ta Ở Đây, Đừng Sợ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c75524069e10ad49f0d70678159e4afe.png"
+   },
+   "4": {
+    "name": "Cơm Nước Trại Giam Ngon Thật!",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/30bae40b4e8f7545989aa5c964cff723.png"
+   },
+   "5": {
+    "name": "Mười Năm Vang Danh Hanamizaka",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ac9bf80782a3ac4904ad74ec28bb7d01.png"
+   },
+   "6": {
+    "name": "Bổn Đại Gia Là Arataki Itto",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2a7140336cb4f6131442db46aa49c0ee.png"
+   }
+  },
+  "Sangonomiya Kokomi": {
+   "1": {
+    "name": "Vệt Nước Sắc Bén",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/867fdcee8a33c9840d2e09c2b8fe3699.png"
+   },
+   "2": {
+    "name": "Sóng Cuộn Dâng Trào",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/bac98f57f58ccfaccdc9c07238c88d47.png"
+   },
+   "3": {
+    "name": "Con Thuyền Dưới Ánh Trăng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/78f0d03f6ef3e541854d4c8b84de0906.png"
+   },
+   "4": {
+    "name": "Vầng Trăng Ngắm Biển",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/abe5467fd1d1a34f37d0779422f83d44.png"
+   },
+   "5": {
+    "name": "Nước Tụ Về Nguồn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/76af3ddd290bb81e4e12b8c4c8e93c3d.png"
+   },
+   "6": {
+    "name": "Trái Tim San Hô",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b3f4cebb8d37b28fcaca797e7a368950.png"
+   }
+  },
+  "Raiden Shogun": {
+   "1": {
+    "name": "Lời Tiên Tri Đen Tối",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f17cd5dc61c73061ede93d51956f0c22.png"
+   },
+   "2": {
+    "name": "Càn Quét Thiên Hạ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/76c73193742083b9f2d3027e988ce052.png"
+   },
+   "3": {
+    "name": "Chuyện Xưa Kể Lại",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ca3d4d1630c6c33e7356b059d0243f61.png"
+   },
+   "4": {
+    "name": "Thờ Phụng Lẽ Phải",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/8247d2fab83fac3a678c3b9fbe4024a2.png"
+   },
+   "5": {
+    "name": "Shogun Giáng Lâm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0723727ae35ee702b1ba7304a4182884.png"
+   },
+   "6": {
+    "name": "Kế Thừa Ước Nguyện",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0742118dc3b400dee32d535b619abdb5.png"
+   }
+  },
+  "Eula": {
+   "1": {
+    "name": "Ảo Ảnh Của Sóng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ed22f00388749d25a823030678d5d5f3.png"
+   },
+   "2": {
+    "name": "Thiếu Nữ Của Bọt Biển",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b71f8bf49eb4909dc882f6a85035e4ea.png"
+   },
+   "3": {
+    "name": "Huyết Mạch Của Lawrence",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1745597c572c34e2cbf634c33d2b6235.png"
+   },
+   "4": {
+    "name": "Sức Mạnh Của Kẻ Tự Ti",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b0fa6ae61ce317f13452d09fe720625b.png"
+   },
+   "5": {
+    "name": "Tố Chất Kỵ Sĩ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ee8d1173a1d57bcfc4d196dda05ecf0f.png"
+   },
+   "6": {
+    "name": "Nghĩa Vụ Cao Quý",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/94950718eede0de23ac2d059f6e5cb73.png"
+   }
+  },
+  "Yoimiya": {
+   "1": {
+    "name": "Xích Ngọc Lưu Kim",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/9270bb4ac1cd3dc327c09ea8815bb92d.png"
+   },
+   "2": {
+    "name": "Biển Đèn Đưa Lửa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b3a5751fb4086aa34b6fe7734700f87d.png"
+   },
+   "3": {
+    "name": "Ảo Thuật Che Mắt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c25ef165b75564bc8f350491b3b5b68c.png"
+   },
+   "4": {
+    "name": "Chuyên Viên Pháo Hoa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6c375ce42b9b247b3a45eea7c91e702b.png"
+   },
+   "5": {
+    "name": "Đêm Hội Mùa Hè",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/7be8aac8160a0c4d0333250f5ed645bc.png"
+   },
+   "6": {
+    "name": "Chòm Sao Băng Naganohara",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2f05726e6784e6e1bf61e56d720b3538.png"
+   }
+  },
+  "Kaedehara Kazuha": {
+   "1": {
+    "name": "Sắc Đỏ Vạn Dặm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/10e416cf647722e7ceaa05052d6397c0.png"
+   },
+   "2": {
+    "name": "Bão Tố Yamaarashi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/f7e2f952bed2c9a6b32ccc94dc5de052.png"
+   },
+   "3": {
+    "name": "Phong Tụ Kỳ Đàm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/dd7104c5db26abdd7d8e896097d79494.png"
+   },
+   "4": {
+    "name": "Oozora Genpou",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4217c202348573cea4b4e884792aebc3.png"
+   },
+   "5": {
+    "name": "Trí Tuệ Bansei",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/146e27f5c0de2a8b5e83f7371decec67.png"
+   },
+   "6": {
+    "name": "Lá Phong Đỏ Thẫm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0bde90e6064e9afec6b6271bcb7f33bf.png"
+   }
+  },
+  "Keqing": {
+   "1": {
+    "name": "Sấm Sét Trừng Phạt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c7b7ffdf2dbe89edd546adc1fdfc9a9e.png"
+   },
+   "2": {
+    "name": "Nghiêm Nghị Hà Khắc",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/b1359e0dc4d754fc24a44ea842286721.png"
+   },
+   "3": {
+    "name": "Trèo Tháp",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4c2b0e279b847ee73e92706f715be0e1.png"
+   },
+   "4": {
+    "name": "Điều Luật",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/65f1e34dce51a5f01bf6b08c956393f3.png"
+   },
+   "5": {
+    "name": "Đèn Di Chuyển",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6fb340a66d2709163a308696d4234c00.png"
+   },
+   "6": {
+    "name": "Sao Liêm Trinh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/759b5e77937365a07cf804649e20fcad.png"
+   }
+  },
+  "Mona": {
+   "1": {
+    "name": "Tiên Tri Chìm Đắm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/9a101261cbb13900b5b8fb0eb12f81d8.png"
+   },
+   "2": {
+    "name": "Tinh Nguyệt Liên Châu",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/647dd9be1905c43d30a0864de1bccfbc.png"
+   },
+   "3": {
+    "name": "Thiên Văn Trường Tồn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c63dbf14ee05e289708064904ac57547.png"
+   },
+   "4": {
+    "name": "Tiên Tri Diệt Chủng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c0eee3b794c86d95f35973471af81931.png"
+   },
+   "5": {
+    "name": "Số Phận Trêu Ngươi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/67f9784bf7c62d491439cb93a3457219.png"
+   },
+   "6": {
+    "name": "Tình Cảnh Đen Đủi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a2104e026a687702bb67de99aaed604b.png"
+   }
+  },
+  "Albedo": {
+   "1": {
+    "name": "Hoa Địa Đàng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c62646f6672a64fcd7197754013acfea.png"
+   },
+   "2": {
+    "name": "Liên Đại Hiển Sinh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/871d9b527f5830026e44fb535a519c6e.png"
+   },
+   "3": {
+    "name": "Ánh Sáng Mặt Trời",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/5482f7841e17aa195a4a90b9f9dd8ef1.png"
+   },
+   "4": {
+    "name": "Sự Giáng Thế Của Thần",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/248297dd85222dc18a51b86f67cc60b0.png"
+   },
+   "5": {
+    "name": "Thủy Triều Cổ Đại",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/655750b4cf41863464fb23da007538a5.png"
+   },
+   "6": {
+    "name": "Đất Tinh Khiết",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/fa0224af7cf559c075991bb6ea3b6d3d.png"
+   }
+  },
+  "Ganyu": {
+   "1": {
+    "name": "Ẩm Lộ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6c3b5520b366012aa91d75cd4ff3f413.png"
+   },
+   "2": {
+    "name": "Hoạch Lân",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/062a1c860b16a189081b5784460fec2a.png"
+   },
+   "3": {
+    "name": "Vân Hành",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ddc89d50b7e2a4c1e40f0685c190bb73.png"
+   },
+   "4": {
+    "name": "Tây Thú",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/baba9fcc9edae04e0b4dfa63c1e78922.png"
+   },
+   "5": {
+    "name": "Trảm Thảo",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/fff238f477e734b5192adaa621ca4292.png"
+   },
+   "6": {
+    "name": "Lữ Trùng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e8b61cd0b784fcc2a0dd4a62d7828029.png"
+   }
+  },
+  "Qiqi": {
+   "1": {
+    "name": "Trở Lại Nghèo Khổ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/73f183f0c1cbf45ddcd071bfaf7bf5fd.png"
+   },
+   "2": {
+    "name": "Giá Rét Thấu Xương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/aa28bad0f2cdaa527524515d0bb7eb8c.png"
+   },
+   "3": {
+    "name": "Thăng Thiên Bảo Cáo",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e52b91a082b381dbe7e75197af1135c4.png"
+   },
+   "4": {
+    "name": "Thiên Uy Áp Chúng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d53c7ae470ae8379c64f74abe618d748.png"
+   },
+   "5": {
+    "name": "Sen Hồng Chớm Nở",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d7190fa4b24a8ebb3cfcecf59f088d2b.png"
+   },
+   "6": {
+    "name": "Khởi Tử Hồi Sinh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/8a6d23687737c0b03dc4eb13b44cc271.png"
+   }
+  },
+  "Tartaglia": {
+   "1": {
+    "name": "Trang Phục Ma Vương - Ngăn Sóng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/00584bfb953ae50b352d152b4e47a9eb.png"
+   },
+   "2": {
+    "name": "Trang Phục Ma Vương - Sóng Ngầm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/2577a0f803cc3d9f71a5179d213fac30.png"
+   },
+   "3": {
+    "name": "Tai Họa Vực Sâu - Nguồn Gốc Tranh Giành",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1d2bee3c6f562cd6956e1451e279397d.png"
+   },
+   "4": {
+    "name": "Tai Họa Vực Sâu - Bắn Nước",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ecdf25912e60922b9f93cc7ef5ef88b0.png"
+   },
+   "5": {
+    "name": "Kỹ Năng Thượng Thừa - Chém Nước Chặt Mưa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/208282c97c0c01bc7a8f765b17655a76.png"
+   },
+   "6": {
+    "name": "Kỹ Năng Thượng Thừa - Thiên Sứ Tai Ương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c73cca7cbe56d5f0561ad965fb67e677.png"
+   }
+  },
+  "Zhongli": {
+   "1": {
+    "name": "Nham, Lục Hợp Dẫn Thành Cốt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/3a8ab4f63bc2f8ef78b739799a7c0fe4.png"
+   },
+   "2": {
+    "name": "Thạch, Bát Hoang Ngọc Minh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1d7f92f356378652786fe2b9c07385b0.png"
+   },
+   "3": {
+    "name": "Khuê Chương, Khó Khăn Không Lùi Bước",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c7278e1bd20b8b205651811d0faf969e.png"
+   },
+   "4": {
+    "name": "Hoàng Tông, Phá Nhưng Không Mất Kiên Cường",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ac568f763d100ea3ce31d697c5622248.png"
+   },
+   "5": {
+    "name": "Thương Bích, Kiên Cường Như Lẽ Trời",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/bf30f0f1c13f72161563b6be19a0cd07.png"
+   },
+   "6": {
+    "name": "Thiên Ngọc, Lễ Thiên Địa Tứ Phương",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/3632e6e24f30886fb347bb12170e30f0.png"
+   }
+  },
+  "Klee": {
+   "1": {
+    "name": "Vụ Nổ Liên Hoàn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/45c4d064d46c18e929a75a36cfeebbcd.png"
+   },
+   "2": {
+    "name": "Mảnh Đạn Vỡ Vụn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0c32a5f235d5a94b265f8ee53a416a0f.png"
+   },
+   "3": {
+    "name": "Đặc Chế Klee",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/61ab1a01aaa1cb858bd53dcfc0f7316a.png"
+   },
+   "4": {
+    "name": "Toàn Lực Khai Hỏa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/cea7d2f6a49b03c74ea596431af3d38b.png"
+   },
+   "5": {
+    "name": "Ngôi Sao Ném Bom",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4a7c5a11fe840baeb861407e8158289f.png"
+   },
+   "6": {
+    "name": "Toàn Bộ Hỏa Lực",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a02780c73c6902b894cb9900fbb6880c.png"
+   }
+  },
+  "Xiao": {
+   "1": {
+    "name": "Hoại Kiếp - Hủy Hoại Tam Giới",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/82cef1d9d14f991cb8d81d954982da88.png"
+   },
+   "2": {
+    "name": "Không Kiếp - Hư Không Hoa Khai",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ff0e981b04840b76623de60540c4fbcd.png"
+   },
+   "3": {
+    "name": "Hàng Ma - Phẫn Nộ Hiện Rõ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/eb64c1cb66602f12761fdff73a89706b.png"
+   },
+   "4": {
+    "name": "Thần Thông - Chư Khổ Diệt Tận",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/70a312964955f0d4d6bb537a77c9c403.png"
+   },
+   "5": {
+    "name": "Thành Kiếp - Vô Minh Tăng Trưởng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/d8395fbf2cf0b87aa6893369e39cdd5a.png"
+   },
+   "6": {
+    "name": "Hàng Ma - Hộ Pháp Dạ Xoa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e55fae6db14634c82995f92c942031a9.png"
+   }
+  },
+  "Venti": {
+   "1": {
+    "name": "Mũi Tên Gió",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/db36f373fa8ac5595c9b95620afe131d.png"
+   },
+   "2": {
+    "name": "Tình Yêu Gió Lạnh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/1a69fd751b454ee0980354ed7f7661a1.png"
+   },
+   "3": {
+    "name": "Tập Thơ Thiên Phong",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6c128d200e30accb716d8a2f660cd5ca.png"
+   },
+   "4": {
+    "name": "Cơn Gió Tự Do",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/193ed3b467cddccaaef534f1e4f15421.png"
+   },
+   "5": {
+    "name": "Hợp Tấu Trời Cao",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/203cbe3eb5ffde5fa4866ed3d5a8f463.png"
+   },
+   "6": {
+    "name": "Bão Chiến Tranh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e91f4e62d3fa339c36bb3f769a946b67.png"
+   }
+  },
+  "Diluc": {
+   "1": {
+    "name": "Cắt Đứt Tội Lỗi",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/af61a83a4968976df172bb3917f46e12.png"
+   },
+   "2": {
+    "name": "Than Hồng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/0033638c3b0ba239d8550535c6996874.png"
+   },
+   "3": {
+    "name": "Ngọn Lửa Thép",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/80f04be6ac78b5f02b976251ae722f76.png"
+   },
+   "4": {
+    "name": "Lòng Như Lửa Đốt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/19a3fb056c428edb754bf919f9ec2911.png"
+   },
+   "5": {
+    "name": "Phượng Hoàng Lúc Bình Minh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/72b36aab5a9dd59cc826dd4616569fed.png"
+   },
+   "6": {
+    "name": "Kiếm Lửa Diệt Trừ Tà Ác",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/ab022d85fdc28c9b53bf95840b7d5883.png"
+   }
+  },
+  "Nhà Lữ Hành": {
+   "1": {
+    "name": "Băng Ngưng Ảm Đạm",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/93a2e34b7c1158d2fdfa90cf213c24db.png"
+   },
+   "2": {
+    "name": "Băng Rơi Ngân Vang",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/205c1741d3ad0f006abc488396539515.png"
+   },
+   "3": {
+    "name": "Băng Sắc Cắt Vàng",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/4266bcbd36ee43010bfe62b106087916.png"
+   },
+   "4": {
+    "name": "Băng Cứng Không Tan",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/4dbf0d87f39b5de6b214353683062311.png"
+   },
+   "5": {
+    "name": "Băng Sương Buốt Giá",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/3cd86a0303aaf2c90040712a98b2ecc0.png"
+   },
+   "6": {
+    "name": "Băng Sáng Tàn Sát",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba982/3086ff53c07143ce7deecf5bd973c4ab.png"
+   }
+  },
+  "Jean": {
+   "1": {
+    "name": "Cơn Bão Gió Lốc",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6c707dc3d379de0c4d774905dffd35eb.png"
+   },
+   "2": {
+    "name": "Lá Khiên Bảo Vệ",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/4b565e4306345ea8033801c4afd9922d.png"
+   },
+   "3": {
+    "name": "Khi Gió Tây Về",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e184958f6d61100c47c1b82fceab52f7.png"
+   },
+   "4": {
+    "name": "Lãnh Thổ Bồ Công Anh",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c6f3fdeaaf2f5a7e21f061bde1c05b89.png"
+   },
+   "5": {
+    "name": "Ngọn Gió Mạnh Thổi Qua",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/cef2ee01ba53db39625fb52689b7e0e3.png"
+   },
+   "6": {
+    "name": "Nanh Sư Tử Chăm Lo Muôn Dân!",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a92446b784fdaf38f331154a32536f9f.png"
+   }
+  },
+  "Kamisato Ayaka": {
+   "1": {
+    "name": "Anh Đào Sương Giá",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/39d70d5102c2661acdd2178e028aa352.png"
+   },
+   "2": {
+    "name": "Tam Trùng Tuyết Môn",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/e39e8610bedd8dddbed61e3c38652635.png"
+   },
+   "3": {
+    "name": "Bạch Hoa Cẩm Họa",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/a27edc12c2607903d75d224ff5e317bb.png"
+   },
+   "4": {
+    "name": "Doanh Khuyết Lưu Phản",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/975bd03e9fdba9e62edcb07ab7bcff3e.png"
+   },
+   "5": {
+    "name": "Hoa Vân Chung Nhập Nguyệt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/c56d015c8d9e0cb5f073d35daf2c06fb.png"
+   },
+   "6": {
+    "name": "Gian Thủy Nguyệt",
+    "icon": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f721/6d598f2ef57b4150b3b48807951521dd.png"
+   }
+  }
+ }
+}

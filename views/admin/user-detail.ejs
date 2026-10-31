@@ -1,0 +1,62 @@
+<%- include('_header') %>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3><%= u.username %> <%- u.status === 'banned' ? '<span class="a-tag red">Bị khóa</span>' : '' %></h3>
+    <table class="a-table a-kv">
+      <tr><th>ID</th><td><%= u.id %></td></tr>
+      <tr><th>Email</th><td><%= u.email || '—' %></td></tr>
+      <tr><th>Vai trò</th><td><% if (u.role === 'admin') { %><span class="a-tag purple">Admin</span><% } else if (u.ctv_role === 'manager') { %><span class="a-tag red">Quản lý</span><% } else if (u.ctv_role === 'seller') { %><span class="a-tag blue">CTV bán hàng</span><% } %><% if (u.role !== 'admin' && u.staff) { %> <span class="a-tag green">CSKH</span><% } %><% if (u.role !== 'admin' && !u.ctv_role && !u.staff) { %>User<% } %><% if (u.ctv_paused && (u.ctv_role || u.staff)) { %> <span class="a-tag">Tạm dừng</span><% } %><% if (u.role !== 'admin' && (u.ctv_role || u.staff) ) { %> <a href="/admin/ctv/<%= u.id %>" class="a-small">Xem CTV</a><% } %></td></tr>
+      <tr><th>Số dư</th><td><b><%= H.money(u.balance) %></b></td></tr>
+      <tr><th>Tổng nạp / Chi tiêu</th><td><%= H.money(u.total_deposit) %> / <%= H.money(u.total_spent) %></td></tr>
+      <tr><th>Đăng ký</th><td><%= H.fmtDate(u.created_at) %> · IP <%= u.register_ip || '' %></td></tr>
+      <tr><th>Đăng nhập cuối</th><td><%= u.last_login_at ? H.fmtDate(u.last_login_at) + (u.last_login_ip ? ' · IP ' + u.last_login_ip : '') : 'Chưa đăng nhập' %></td></tr>
+      <% if (u.ban_reason) { %><tr><th>Lý do khóa</th><td><%= u.ban_reason %></td></tr><% } %>
+      <% if (u.locked_until) { %><tr><th>Khóa đăng nhập đến</th><td><%= H.fmtDate(u.locked_until) %></td></tr><% } %>
+    </table>
+    <% if (sameIp.length) { %><p class="a-small"><%- I('alert') %> Tài khoản cùng IP: <% sameIp.forEach(x => { %><a href="/admin/users/<%= x.id %>"><%= x.username %></a> <% }) %></p><% } %>
+  </div>
+  <div class="a-card">
+    <h3>Thao tác</h3>
+    <form method="post" action="/admin/users/<%= u.id %>/balance" class="a-inline" data-confirm="Xác nhận điều chỉnh số dư?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="number" name="amount" required placeholder="+ cộng / - trừ (đ)">
+      <input name="note" maxlength="200" placeholder="Ghi chú">
+      <button class="a-btn a-primary">Cập nhật số dư</button>
+    </form>
+    <% if (u.role !== 'admin') { %>
+    <form method="post" action="/admin/users/<%= u.id %>/ban" class="a-inline" data-confirm="<%= u.status === 'active' ? 'Khóa' : 'Mở khóa' %> tài khoản này?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (u.status === 'active') { %><input name="reason" maxlength="200" placeholder="Lý do khóa"><button class="a-btn a-danger"><%- I('lock') %> Khóa tài khoản</button>
+      <% } else { %><button class="a-btn a-primary"><%- I('unlock') %> Mở khóa</button><% } %>
+    </form>
+    <form method="post" action="/admin/users/<%= u.id %>/reset-password" class="a-inline" data-confirm="Đặt lại mật khẩu ngẫu nhiên?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn"><%- I('key') %> Đặt lại mật khẩu</button></form>
+    <% } %>
+    <% if (u.locked_until) { %><form method="post" action="/admin/users/<%= u.id %>/unlock" class="a-inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn">Mở khóa đăng nhập</button></form><% } %>
+  </div>
+</div>
+<% const empty = (n, cols) => n ? '' : `<tr><td colspan="${cols}" class="a-muted">Chưa có</td></tr>`;
+   const dst = { pending: ['yellow', 'Chờ'], success: ['green', 'Thành công'], cancelled: ['', 'Hủy'], expired: ['red', 'Quá hạn'] };
+   const btl = { deposit: 'Nạp tiền', purchase: 'Mua hàng', boost: 'Cày thuê', topup: 'Nạp game', refund: 'Hoàn tiền', admin: 'Điều chỉnh' }; %>
+<div class="a-grid-2">
+  <div class="a-card"><h3>Đơn hàng gần đây</h3>
+    <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Tổng</th><th>Trạng thái</th><th>Lúc</th></tr></thead>
+    <%- empty(orders.length, 5) %>
+    <% orders.forEach(o => { %><tr><td><%= o.order_code %></td><td class="a-small"><%= o.product_title %></td><td><%= H.money(o.total) %></td><td><%- o.status === 'completed' ? '<span class="a-tag green">Thành công</span>' : '<span class="a-tag red">Đã hoàn</span>' %></td><td class="a-small a-muted"><%= H.fmtDate(o.created_at).slice(0, 5) %><br><%= H.fmtDate(o.created_at).slice(11) %></td></tr><% }) %></table></div>
+  </div>
+  <div class="a-card"><h3>Nạp tiền gần đây</h3>
+    <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Mã</th><th>Yêu cầu</th><th>Thực nhận</th><th>Trạng thái</th><th>Lúc</th></tr></thead>
+    <%- empty(deposits.length, 5) %>
+    <% deposits.forEach(d => { const st = dst[d.status] || ['', d.status]; %><tr><td><%= d.code %></td><td><%= H.money(d.amount) %></td><td><%= d.received ? H.money(d.received) : '' %></td><td><span class="a-tag <%= st[0] %>"><%= st[1] %></span></td><td class="a-small a-muted"><%= H.fmtDate(d.created_at) %></td></tr><% }) %></table></div>
+  </div>
+  <div class="a-card"><h3>Biến động số dư</h3>
+    <div class="a-table-wrap"><table class="a-table"><thead><tr><th>Nội dung</th><th>Số tiền</th><th>Số dư sau</th><th>Lúc</th></tr></thead>
+    <%- empty(balanceLogs.length, 4) %>
+    <% balanceLogs.forEach(l => { %><tr><td class="a-small"><b><%= btl[l.type] || l.type %></b> · <%= l.note %></td><td class="<%= l.amount >= 0 ? 'a-green' : 'a-red' %>"><%= l.amount >= 0 ? '+' : '' %><%= H.money(l.amount) %></td><td><%= H.money(l.balance_after) %></td><td class="a-small a-muted"><%= H.fmtDate(l.created_at) %></td></tr><% }) %></table></div>
+  </div>
+  <div class="a-card"><h3>Lịch sử đăng nhập</h3>
+    <div class="a-table-wrap"><table class="a-table"><thead><tr><th>IP</th><th>Kết quả</th><th>Thiết bị</th><th>Lúc</th></tr></thead>
+    <%- empty(logins.length, 4) %>
+    <% logins.forEach(l => { %><tr><td><%= l.ip %></td><td><%- l.success ? '<span class="a-tag green">Thành công</span>' : '<span class="a-tag red">Sai mật khẩu</span>' %></td><td class="a-small a-trunc"><%= l.user_agent %></td><td class="a-small a-muted"><%= H.fmtDate(l.created_at) %></td></tr><% }) %></table></div>
+  </div>
+</div>
+<%- include('_footer') %>

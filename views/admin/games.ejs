@@ -1,0 +1,39 @@
+<%- include('_header') %>
+<div class="a-card a-card-flush">
+  <div class="a-card-head a-pad">
+    <div>
+      <h3>Danh sách game</h3>
+      <p class="a-muted a-small">Bấm mũi tên để đổi thứ tự hiển thị ngoài trang chủ. Tắt công tắc để ẩn game.</p>
+    </div>
+    <button type="button" class="a-btn a-primary" data-modal-url="/admin/games/form" data-modal-title="Thêm game"><%- I('plus') %> Thêm game</button>
+  </div>
+  <div class="a-table-wrap">
+    <table class="a-table a-table-lg">
+      <thead><tr><th class="a-w-move"></th><th>Game</th><th class="a-num">Danh mục</th><th class="a-num">Sản phẩm</th><th class="a-center">Hiển thị</th><th class="a-right">Thao tác</th></tr></thead>
+      <tbody>
+      <% if (!games.length) { %><tr><td colspan="6" class="a-empty">Chưa có game nào. Bấm “Thêm game” để bắt đầu.</td></tr><% } %>
+      <% games.forEach((g, i) => { %>
+        <tr>
+          <td><%- include('partials/move', { kind: 'games', id: g.id, first: i === 0, last: i === games.length - 1 }) %></td>
+          <td>
+            <div class="a-item">
+              <%- include('partials/thumb', { img: g.image, name: g.name, color: g.color, size: '' }) %>
+              <div><b><%= g.name %></b> <% if (g.is_hot) { %><span class="a-tag red">HOT</span><% } %><div class="a-muted a-small a-trunc"><%= g.description || '/game/' + g.slug %></div></div>
+            </div>
+          </td>
+          <td class="a-num"><a href="/admin/categories#game-<%= g.id %>"><%= g.cat_count %></a></td>
+          <td class="a-num"><a href="/admin/vip#game-<%= g.id %>"><%= g.product_count.toLocaleString('vi-VN') %></a></td>
+          <td class="a-center"><%- include('partials/switch', { kind: 'games', id: g.id, on: g.is_active, disabled: false }) %></td>
+          <td class="a-right">
+            <div class="a-actions">
+              <button type="button" class="a-icon-btn" data-modal-url="/admin/games/form?id=<%= g.id %>" data-modal-title="Sửa game" title="Sửa"><%- I('edit') %></button>
+              <form method="post" action="/admin/games/<%= g.id %>/delete" data-confirm="Xóa game “<%= g.name %>” cùng toàn bộ danh mục và sản phẩm chưa bán?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+            </div>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('_footer') %>

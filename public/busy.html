@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="10">
+<title>Đang đông khách</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; background: #0f0d1a; color: #e9e6ff; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; }
+  .box { max-width: 380px; padding: 28px 22px; border-radius: 18px; background: #1d1933; border: 1px solid #2f2952; }
+  h1 { margin: 0 0 8px; font-size: 1.25rem; }
+  p { margin: 0; color: #a39cc9; font-size: .95rem; }
+  .dot { display: inline-block; width: 10px; height: 10px; margin: 18px 4px 0; border-radius: 50%; background: #8b5cf6; animation: b 1s infinite alternate; }
+  .dot:nth-child(2) { animation-delay: .2s; } .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes b { to { opacity: .2; transform: translateY(-4px); } }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>Đang có rất nhiều khách truy cập</h1>
+    <p>Trang sẽ tự tải lại sau 10 giây. Bạn vui lòng chờ một chút nhé.</p>
+    <div><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  </div>
+</body>
+</html>

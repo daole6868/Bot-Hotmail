@@ -1,0 +1,110 @@
+<%- include('_header') %>
+<% const fmtT = (t) => t ? new Date(t * 1000).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '—'; %>
+<% if (checking) { %><div class="a-alert a-alert-error"><%- I('alert') %> Có <b><%= checking %></b> đơn không rõ kết quả cần kiểm tra. <a href="/admin/api-shop/orders?status=checking">Xem ngay</a></div><% } %>
+<div class="a-grid-2">
+  <form method="post" action="/admin/api-shop/settings" class="a-card a-form" autocomplete="off">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h3><%- I('link') %> Kết nối web nguồn</h3>
+    <label>Địa chỉ web nguồn</label>
+    <input name="url" value="<%= c.url %>" placeholder="https://1smail.shop">
+    <label>API key <% if (key) { %><small class="a-muted">(đang dùng <%= key %>)</small><% } %></label>
+    <input name="api_key" type="password" maxlength="300" placeholder="<%= key ? 'Để trống nếu không đổi' : 'Dán API key lấy ở web nguồn' %>" autocomplete="new-password">
+    <% if (key) { %><label class="a-check"><input type="checkbox" name="remove_key" value="1"> <span>Gỡ API key (ngừng bán toàn bộ hàng API)</span></label><% } %>
+    <div class="a-row">
+      <div><label>Lãi mặc định (%)</label><input type="number" name="markup" min="0" max="1000" value="<%= c.markup %>"></div>
+      <div><label>Báo Telegram khi số dư nguồn dưới (đ)</label><input type="number" name="low" min="0" step="1000" value="<%= c.low %>"></div>
+    </div>
+    <div class="a-btn-row">
+      <button class="a-btn a-primary"><%- I('save') %> Lưu</button>
+      <% if (key) { %><button type="button" class="a-btn" data-ap-test><%- I('refresh') %> Kiểm tra kết nối</button><% } %>
+    </div>
+    <div class="a-small" data-ap-test-out hidden></div>
+  </form>
+  <div class="a-card">
+    <h3><%- I('gamepad') %> Mục hiển thị trên web</h3>
+    <% if (game) { %>
+      <p>Đang hiện ở mục <b><%= game.name %></b> <%= game.is_active ? '' : '(đang ẩn)' %> — <a href="/game/<%= game.slug %>" target="_blank" rel="noopener">xem trên web</a></p>
+      <p class="a-muted a-small">Đổi tên, ảnh, thứ tự, ẩn / hiện mục ở <a href="/admin/games">Sản phẩm → Game</a>.</p>
+    <% } else { %>
+      <form method="post" action="/admin/api-shop/game" class="a-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Tên mục (hiện cùng cấp với các game)</label>
+        <div class="a-inline-form"><input name="name" maxlength="80" value="Mail số lượng lớn"><button class="a-btn a-primary"><%- I('plus') %> Tạo mục</button></div>
+      </form>
+      <% if (apiGames.length) { %>
+        <form method="post" action="/admin/api-shop/game" class="a-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label>Hoặc dùng mục đã có</label>
+          <div class="a-inline-form"><select name="game_id"><% apiGames.forEach(g => { %><option value="<%= g.id %>"><%= g.name %></option><% }) %></select><button class="a-btn">Chọn</button></div>
+        </form>
+      <% } %>
+    <% } %>
+    <h3 class="a-mt"><%- I('refresh') %> Đồng bộ</h3>
+    <p class="a-small">Lần gần nhất: <b><%= fmtT(sync && sync.at) %></b><% if (sync && sync.n) { %> · <%= sync.cats %> chuyên mục, <%= sync.n %> sản phẩm<% } %>
+      <% if (sync && sync.error) { %><br><span class="a-text-err">Lỗi: <%= sync.error %></span><% } %></p>
+    <p class="a-small a-muted">Giá vốn & tồn kho tự cập nhật 5 phút / lần.</p>
+    <% if (key) { %><form method="post" action="/admin/api-shop/sync"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn"><%- I('download') %> Đồng bộ ngay</button></form><% } %>
+  </div>
+</div>
+
+<form method="post" action="/admin/api-shop/ui" class="a-card a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <h3><%- I('palette') %> Giao diện trang khách & lưu đơn</h3>
+  <div class="a-ap-ui">
+    <div><label>Cỡ chữ tên sản phẩm (px)</label><div class="a-row"><div><small class="a-muted">Máy tính · mặc định <%= UI.namePc %></small><input type="number" name="namePc" step="0.5" min="10" max="32" value="<%= c.ui.namePc %>"></div><div><small class="a-muted">Điện thoại · mặc định <%= UI.nameMb %></small><input type="number" name="nameMb" step="0.5" min="10" max="28" value="<%= c.ui.nameMb %>"></div></div></div>
+    <div><label>Cỡ chữ mô tả (px)</label><div class="a-row"><div><small class="a-muted">Máy tính · mặc định <%= UI.descPc %></small><input type="number" name="descPc" step="0.5" min="9" max="24" value="<%= c.ui.descPc %>"></div><div><small class="a-muted">Điện thoại · mặc định <%= UI.descMb %></small><input type="number" name="descMb" step="0.5" min="9" max="22" value="<%= c.ui.descMb %>"></div></div></div>
+    <div><label>Khoảng cách dòng <small class="a-muted">(mặc định <%= UI.lh %>, nhỏ hơn = sát hơn)</small></label><input type="number" name="lh" step="0.05" min="1" max="2.2" value="<%= c.ui.lh %>"></div>
+    <div><label>Lưu dữ liệu đơn (ngày) <small class="a-muted">(0 = giữ mãi)</small></label><input type="number" name="keepDays" min="0" max="3650" value="<%= c.keepDays %>"><small class="a-muted">Quá hạn web tự xóa dữ liệu hàng, đơn vẫn còn để đối soát. Khách được nhắc tải về.</small></div>
+  </div>
+  <div class="a-btn-row"><button class="a-btn a-primary"><%- I('save') %> Lưu</button><button class="a-btn" name="reset" value="1" data-confirm="Về cỡ chữ & số ngày lưu mặc định?">Mặc định</button></div>
+</form>
+
+<div class="a-card a-card-flush">
+  <div class="a-card-head a-pad a-ap-head">
+    <h3><%- I('box') %> Sản phẩm <small class="a-muted"><%= counts.active || 0 %> đang bán / <%= counts.total || 0 %> · <%= counts.instock || 0 %> còn hàng</small></h3>
+    <form method="get" class="a-ap-filter">
+      <input name="q" value="<%= q %>" placeholder="Tìm tên, mô tả, mã...">
+      <select name="show" data-autosubmit><option value="">Tất cả</option><option value="on" <%= show === 'on' ? 'selected' : '' %>>Đang bán</option><option value="off" <%= show === 'off' ? 'selected' : '' %>>Đang tắt</option><option value="stock" <%= show === 'stock' ? 'selected' : '' %>>Còn hàng</option></select>
+      <button class="a-btn a-btn-sm">Lọc</button>
+    </form>
+    <form method="post" action="/admin/api-shop/products-bulk" class="a-ap-bulk">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button name="act" value="on-stock" class="a-btn a-btn-sm" data-confirm="Bật bán tất cả sản phẩm còn hàng?">Bật tất cả còn hàng</button>
+      <button name="act" value="off-all" class="a-btn a-btn-sm a-danger-soft" data-confirm="Tắt bán tất cả sản phẩm?">Tắt tất cả</button>
+      <button name="act" value="reset-price" class="a-btn a-btn-sm" data-confirm="Bỏ giá đặt riêng, mọi sản phẩm dùng giá vốn + <%= c.markup %>%?">Bỏ giá riêng</button>
+    </form>
+  </div>
+  <% if (!groups.length) { %><div class="a-empty"><%= key ? 'Chưa có sản phẩm. Bấm "Đồng bộ ngay".' : 'Nhập API key rồi bấm Lưu, sau đó Đồng bộ.' %></div><% } %>
+  <% groups.forEach(({ cat, items }) => { %>
+    <div class="a-ap-cat" data-ap-cat="<%= cat.src_id %>">
+      <% if (cat.icon) { %><img src="<%= cat.icon %>" alt="" width="32" height="32"><% } %>
+      <input name="title" value="<%= cat.title || '' %>" placeholder="<%= cat.name || 'Chuyên mục ' + cat.src_id %>" maxlength="120" title="Tên hiển thị (để trống = tên gốc)">
+      <label class="a-switch" title="Hiện chuyên mục"><input type="checkbox" name="is_active" <%= cat.is_active ? 'checked' : '' %>><span></span></label>
+      <input name="sort_order" type="number" value="<%= cat.sort_order %>" class="a-ap-sort" title="Thứ tự">
+      <small class="a-muted">#<%= cat.src_id %> · <%= items.length %> sản phẩm</small>
+      <i class="a-ap-ok" hidden></i>
+    </div>
+    <div class="a-table-wrap"><table class="a-table a-nocards a-ap-table">
+      <thead><tr><th>Bán</th><th>Sản phẩm</th><th>Giá vốn</th><th>Giá bán <small>(trống = +<%= c.markup %>%)</small></th><th>Kho</th><th>Mỗi đơn</th><th>Đã bán</th><th>Thứ tự</th></tr></thead>
+      <tbody>
+        <% items.forEach(p => { const pr = priceOf(p); %>
+          <tr data-ap-row="<%= p.id %>" class="<%= p.is_active ? '' : 'a-row-off' %>">
+            <td><label class="a-switch"><input type="checkbox" name="is_active" <%= p.is_active ? 'checked' : '' %>><span></span></label></td>
+            <td class="a-ap-name">
+              <input name="title" value="<%= p.title || '' %>" placeholder="<%= p.name || 'Sản phẩm ' + p.src_id %>" maxlength="200">
+              <small class="a-muted" title="<%= p.description %>">#<%= p.src_id %> · <%= String(p.description || '').replace(/\s+/g, ' ').slice(0, 90) %></small>
+              <% if (p.removed) { %><span class="a-badge warn">Đã gỡ ở web nguồn</span><% } else if (p.paused) { %><span class="a-badge warn" title="<%= p.paused %>">Tạm ngừng: <%= p.paused %></span><% } else if (!p.stock) { %><span class="a-badge">Hết hàng</span><% } %>
+            </td>
+            <td><%= H.money(Math.ceil(p.cost)) %><% if (p.cost % 1) { %><small class="a-muted"> (<%= p.cost %>)</small><% } %></td>
+            <td><input name="price" type="number" min="0" value="<%= p.price || '' %>" placeholder="<%= pr %>" class="a-ap-price"> <b class="a-ap-cur" title="Giá khách thấy"><%= H.money(pr) %></b><% if (losing(p)) { %> <span class="a-badge warn">Lỗ</span><% } %></td>
+            <td><%= p.stock.toLocaleString('vi-VN') %></td>
+            <td class="a-nowrap"><%= p.min_qty.toLocaleString('vi-VN') %>–<%= p.max_qty.toLocaleString('vi-VN') %></td>
+            <td><%= p.sold_count.toLocaleString('vi-VN') %></td>
+            <td><input name="sort_order" type="number" value="<%= p.sort_order %>" class="a-ap-sort"><i class="a-ap-ok" hidden></i></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+  <% }) %>
+</div>
+<%- include('_footer') %>

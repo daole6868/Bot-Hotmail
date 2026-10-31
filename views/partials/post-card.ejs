@@ -1,0 +1,10 @@
+<%# 1 thẻ bài viết. it %>
+<a href="/tin-tuc/<%= it.slug %>" class="card post-card">
+  <div class="post-thumb"><% const img = it.cover || it.game_image; if (img) { %><img src="<%= img %>" alt="<%= it.title %>" loading="lazy"><% } else { %><span><%- I('g-book') %></span><% } %>
+    <% if (it.cat_name) { %><span class="post-cat"><%= it.cat_name %></span><% } %></div>
+  <div class="post-body">
+    <h3><%= it.title %></h3>
+    <% if (it.excerpt) { %><p class="muted small"><%= it.excerpt %></p><% } %>
+    <div class="post-meta muted small"><span><%- I('clock') %> <%= H.fmtDate(it.published_at).slice(0, 10) %></span><span><%- I('eye') %> <%= (it.views || 0).toLocaleString('vi-VN') %></span></div>
+  </div>
+</a>

@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <div class="auth-icon"><%- I('mail') %></div>
+    <h1>Xác minh email</h1>
+    <p class="muted center">Chúng tôi đã gửi <b>mã 6 số</b> tới <b><%= email %></b>. Nhập mã để hoàn tất đăng ký (hiệu lực 10 phút).</p>
+    <% if (locals.error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <% if (locals.info) { %><div class="alert alert-success"><%= info %></div><% } %>
+    <form method="post" action="/register/verify" autocomplete="off">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="label">Mã xác minh <span class="req">*</span></label>
+      <input type="text" name="code" class="otp-input" inputmode="numeric" pattern="[0-9 ]{6,7}" maxlength="7" required autofocus autocomplete="one-time-code" placeholder="••••••">
+      <button class="btn btn-lg btn-block btn-primary"><%- I('check') %> Xác minh & tạo tài khoản</button>
+    </form>
+    <form method="post" action="/register/resend" class="center">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-ghost btn-sm" data-resend-wait="<%= wait %>" <%= wait > 0 ? 'disabled' : '' %>>Gửi lại mã<%= wait > 0 ? ` (${wait}s)` : '' %></button>
+    </form>
+    <form method="post" action="/register/cancel" class="center">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <p class="muted small">Không thấy email? Kiểm tra mục <b>Spam / Quảng cáo</b>. Nhập sai email? <button class="linkish">Đăng ký lại</button></p>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>
