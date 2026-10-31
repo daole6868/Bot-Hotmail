@@ -617,6 +617,15 @@
     const f = e.target;
     if (f.hasAttribute('data-validate') && !validateForm(f)) { e.preventDefault(); return; }
     if (f.dataset.confirm && !confirm(f.dataset.confirm)) { e.preventDefault(); return; }
+    // Đơn cày thuê / nạp game: chọn "Đã hủy" sẽ hoàn tiền cho khách -> hỏi lại (đơn đã hoàn thành thì cảnh báo rõ hơn)
+    if (f.hasAttribute('data-bo-status') && f.querySelector('input[name=status]:checked')?.value === 'cancelled') {
+      const amt = f.dataset.boTotal;
+      const msg = f.dataset.boCur === 'done'
+        ? `Đơn này ĐÃ HOÀN THÀNH.\nHủy sẽ hoàn ${amt} vào số dư khách (tiền của CTV làm đơn, nếu có, sẽ bị trừ lại).\n\nChắc chắn hủy và hoàn tiền?`
+        : `Hủy đơn và hoàn ${amt} vào số dư khách?`;
+      if (!confirm(msg)) { e.preventDefault(); return; }
+      f.elements.confirm_cancel.value = '1';
+    }
     const sb = e.submitter;
     if (sb && sb.dataset.confirm && !f.dataset.confirm && !confirm(sb.dataset.confirm)) { e.preventDefault(); return; }
     if (f.dataset.submitting) { e.preventDefault(); return; }

@@ -56,8 +56,8 @@
       <% if (o.status === 'cancelled') { %>
         <p class="a-muted">Đơn đã hủy<%= o.refunded ? ' và đã hoàn ' + H.money(o.total) + ' cho khách' : '' %>.</p>
       <% } else { %>
-      <form method="post" action="/admin/boost/orders/<%= o.id %>/status" class="a-form" enctype="multipart/form-data" data-bo-status>
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <form method="post" action="/admin/boost/orders/<%= o.id %>/status" class="a-form" enctype="multipart/form-data" data-bo-status data-bo-cur="<%= o.status %>" data-bo-total="<%= H.money(o.total) %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="confirm_cancel" value="">
         <div class="a-bo-status">
           <% Object.entries(STATUS).forEach(([k, v]) => { %>
             <label class="a-bo-st"><input type="radio" name="status" value="<%= k %>" <%= k === o.status ? 'checked' : '' %>><span class="a-tag <%= v.tone %>"><%= v.label %></span></label>

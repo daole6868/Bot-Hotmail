@@ -278,6 +278,8 @@ router.post('/orders/:id/status', (req, res) => {
   const status = String(req.body.status || '');
   const msg = str(req.body.message, 1000);
   if (status === 'need_info' && !msg) return back(req, res, 'error', 'Hãy ghi rõ khách cần bổ sung thông tin gì', '/admin/boost/orders/' + id);
+  // Hủy = hoàn tiền cho khách: chỉ làm khi đã bấm đồng ý ở hộp xác nhận
+  if (status === 'cancelled' && req.body.confirm_cancel !== '1') return back(req, res, 'error', 'Chưa xác nhận hủy đơn. Bấm Cập nhật lại và chọn đồng ý để hủy, hoàn tiền.', '/admin/boost/orders/' + id);
   if (req.perm === 'seller') {
     const cur = orderById(id);
     if (!canSeeOrder(req, cur)) return back(req, res, 'error', 'Đơn này đã có CTV khác nhận', '/admin/boost/orders');
