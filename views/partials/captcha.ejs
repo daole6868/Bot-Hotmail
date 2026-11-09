@@ -1,0 +1,10 @@
+<% if (locals.turnstileSiteKey) { %>
+  <div class="cf-turnstile" data-sitekey="<%= turnstileSiteKey %>" data-theme="dark"></div>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<% } else { %>
+  <label class="label">Mã xác nhận <span class="req">*</span></label>
+  <div class="captcha-row">
+    <input type="text" name="captcha" required maxlength="6" autocomplete="off" placeholder="Nhập 5 ký tự">
+    <img src="/captcha.svg?<%= Date.now() %>" alt="captcha" class="captcha" data-refresh-captcha title="Bấm để đổi mã">
+  </div>
+<% } %>

@@ -1,0 +1,39 @@
+<%- include('_header') %>
+<div class="a-ctv-top">
+  <div class="a-chat-tabs a-ctv-tabs">
+    <% [['pending', 'Chờ chuyển'], ['paid', 'Đã chuyển'], ['rejected', 'Từ chối']].forEach(([k, l]) => { %>
+      <a href="/admin/ctv/withdrawals?status=<%= k %>" class="<%= status === k ? 'on' : '' %>"><%= l %> <i><%= counts[k] || 0 %></i></a>
+    <% }) %>
+  </div>
+  <a href="/admin/ctv" class="a-btn a-soft"><%- I('users') %> Danh sách CTV</a>
+</div>
+<% if (!result.rows.length) { %><div class="a-card a-empty">Không có lệnh rút nào.</div><% } %>
+<div class="a-wd-list">
+<% result.rows.forEach(w => { const info = 'RUT ' + w.code; %>
+  <div class="a-card a-wd">
+    <% if (w.status === 'pending') { %>
+      <img class="a-wd-qr" loading="lazy" alt="QR" src="https://img.vietqr.io/image/<%= encodeURIComponent(w.bank_code) %>-<%= encodeURIComponent(w.bank_acc) %>-compact2.png?amount=<%= w.amount %>&addInfo=<%= encodeURIComponent(info) %>&accountName=<%= encodeURIComponent(w.bank_owner) %>">
+    <% } %>
+    <div class="a-wd-body">
+      <div class="a-wd-head"><b><%= H.money(w.amount) %></b><span class="a-tag <%= w.status === 'paid' ? 'green' : w.status === 'rejected' ? 'red' : 'yellow' %>"><%= w.status === 'paid' ? 'Đã chuyển' : w.status === 'rejected' ? 'Từ chối' : 'Chờ chuyển' %></span></div>
+      <table class="a-table a-kv a-kv-compact">
+        <tr><th>CTV</th><td><a href="/admin/ctv/<%= w.user_id %>"><%= w.username %></a></td></tr>
+        <tr><th>Ngân hàng</th><td><%= bankName(w.bank_code) %></td></tr>
+        <tr><th>Số tài khoản</th><td><code><%= w.bank_acc %></code> <button type="button" class="a-icon-btn" data-copy="<%= w.bank_acc %>" title="Sao chép"><%- I('copy') %></button></td></tr>
+        <tr><th>Chủ tài khoản</th><td><b><%= w.bank_owner %></b></td></tr>
+        <tr><th>Nội dung CK</th><td><code><%= info %></code> <button type="button" class="a-icon-btn" data-copy="<%= info %>" title="Sao chép"><%- I('copy') %></button></td></tr>
+        <tr><th>Mã lệnh / lúc tạo</th><td><%= w.code %> · <%= H.fmtDate(w.created_at) %></td></tr>
+        <% if (w.handled_at) { %><tr><th>Xử lý</th><td><%= w.handler || '' %> · <%= H.fmtDate(w.handled_at) %><%= w.note ? ' · ' + w.note : '' %></td></tr><% } %>
+      </table>
+      <% if (w.status === 'pending') { %>
+        <div class="a-wd-acts">
+          <form method="post" action="/admin/ctv/withdrawals/<%= w.id %>/paid" data-confirm="Xác nhận ĐÃ chuyển <%= H.money(w.amount) %> cho <%= w.username %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-primary"><%- I('check') %> Đã chuyển khoản</button></form>
+          <form method="post" action="/admin/ctv/withdrawals/<%= w.id %>/reject" class="a-wd-reject"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input name="note" required maxlength="300" placeholder="Lý do từ chối"><button class="a-btn a-danger-soft"><%- I('x') %> Từ chối</button></form>
+        </div>
+      <% } %>
+    </div>
+  </div>
+<% }) %>
+</div>
+<%- include('_pagination') %>
+<%- include('_footer') %>

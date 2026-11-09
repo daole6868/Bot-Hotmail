@@ -1,0 +1,24 @@
+<%- include('_header') %>
+<div class="a-card">
+  <form class="a-filter" method="get">
+    <input name="q" value="<%= query.q %>" placeholder="Username, email hoặc IP">
+    <select name="status"><option value="">-- Trạng thái --</option><option value="active" <%= query.status === 'active' ? 'selected' : '' %>>Hoạt động</option><option value="banned" <%= query.status === 'banned' ? 'selected' : '' %>>Bị khóa</option></select>
+    <select name="sort"><option value="">Mới nhất</option><option value="balance" <%= query.sort === 'balance' ? 'selected' : '' %>>Số dư cao</option><option value="deposit" <%= query.sort === 'deposit' ? 'selected' : '' %>>Nạp nhiều</option><option value="spent" <%= query.sort === 'spent' ? 'selected' : '' %>>Chi tiêu nhiều</option></select>
+    <button class="a-btn">Lọc</button>
+  </form>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Số dư</th><th>Tổng nạp</th><th>Chi tiêu</th><th>Vai trò</th><th>Trạng thái</th><th>Đăng nhập cuối</th><th></th></tr></thead>
+    <% result.rows.forEach(u => { %>
+      <tr>
+        <td><%= u.id %></td><td><b><%= u.username %></b></td><td class="a-small"><%= u.email || '' %></td>
+        <td><b><%= H.money(u.balance) %></b></td><td><%= H.money(u.total_deposit) %></td><td><%= H.money(u.total_spent) %></td>
+        <td><% if (u.role === 'admin') { %><span class="a-tag purple">Admin</span><% } else if (u.ctv_role === 'manager') { %><span class="a-tag red">Quản lý</span><% } else if (u.ctv_role === 'seller') { %><span class="a-tag blue">CTV bán hàng</span><% } %><% if (u.role !== 'admin' && u.staff) { %> <span class="a-tag green">CSKH</span><% } %><% if (u.role !== 'admin' && !u.ctv_role && !u.staff) { %>User<% } %><% if (u.ctv_paused && (u.ctv_role || u.staff)) { %> <span class="a-tag">Tạm dừng</span><% } %></td>
+        <td><%- u.status === 'active' ? '<span class="a-tag green">Hoạt động</span>' : '<span class="a-tag red">Khóa</span>' %></td>
+        <td class="a-small a-muted"><%= H.fmtDate(u.last_login_at) %><div><%= u.last_login_ip || '' %></div></td>
+        <td><a href="/admin/users/<%= u.id %>" class="a-btn a-xs">Chi tiết</a></td>
+      </tr>
+    <% }) %>
+  </table></div>
+  <%- include('_pagination') %>
+</div>
+<%- include('_footer') %>

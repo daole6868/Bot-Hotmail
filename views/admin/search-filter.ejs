@@ -1,0 +1,42 @@
+<%- include('_header') %>
+<form method="post" action="/admin/search-filter" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-card">
+    <h3><%- I('search') %> Ô lọc</h3>
+    <p class="a-field-hint">AR, Máy chủ, Nhân vật, Vũ khí chỉ hiện ở danh mục Acc VIP của Genshin / Star Rail / ZZZ. Danh sách nhân vật, vũ khí lấy từ Quản lý ảnh của đúng game đó.</p>
+    <div class="a-table-wrap"><table class="a-table a-nocards a-sf-table">
+      <thead><tr><th>Hiện</th><th>Ô lọc</th><th>Tên hiển thị</th><th>Chữ gợi ý</th></tr></thead>
+      <% Object.entries(FIELDS).forEach(([k, d]) => { const f = c.fields[k]; %>
+        <tr>
+          <td><label class="a-switch"><input type="checkbox" name="on_<%= k %>" value="1" <%= f.on ? 'checked' : '' %>><span></span></label></td>
+          <td class="a-muted a-small"><%= d.label %></td>
+          <td><input name="label_<%= k %>" maxlength="40" value="<%= f.label %>"></td>
+          <td><input name="ph_<%= k %>" maxlength="60" value="<%= f.ph %>"></td>
+        </tr>
+      <% }) %>
+    </table></div>
+  </div>
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('money') %> Mệnh giá</h3>
+      <label>Mỗi dòng: <code>Tên | Từ | Đến</code> <small class="a-muted">(Đến = 0: không giới hạn)</small></label>
+      <textarea name="prices" rows="9"><%= c.prices.map(p => `${p.l} | ${p.min} | ${p.max}`).join('\n') %></textarea>
+      <h3 class="a-mt"><%- I('list') %> Sắp xếp hiện cho khách</h3>
+      <div class="a-sf-sorts"><% SORTS.forEach(([k, l]) => { %><label class="a-check"><input type="checkbox" name="sorts" value="<%= k %>" <%= c.sorts.includes(k) ? 'checked' : '' %>> <span><%= l %></span></label><% }) %></div>
+    </div>
+    <div class="a-card">
+      <h3><%- I('globe') %> Máy chủ</h3>
+      <label>Mỗi dòng: <code>Tên hiển thị | Giá trị</code></label>
+      <textarea name="servers" rows="5"><%= c.servers.map(s => `${s.l} | ${s.v}`).join('\n') %></textarea>
+      <p class="a-field-hint">Giá trị phải khớp máy chủ trong Chi tiết tài khoản: Asia, America, Europe, TW/HK/MO.</p>
+      <h3 class="a-mt"><%- I('layers') %> Kiểu tải danh sách</h3>
+      <div class="a-row">
+        <div><label>Mặc định</label><select name="mode"><option value="scroll" <%= c.mode === 'scroll' ? 'selected' : '' %>>Cuộn liên tục</option><option value="page" <%= c.mode === 'page' ? 'selected' : '' %>>Phân trang</option></select></div>
+        <div><label>Số acc mỗi lần tải</label><input type="number" name="perPage" min="4" max="60" value="<%= c.perPage %>"></div>
+      </div>
+      <label class="a-check a-mt0"><input type="checkbox" name="modeToggle" value="1" <%= c.modeToggle ? 'checked' : '' %>> <span>Cho khách tự đổi Cuộn liên tục / Phân trang</span></label>
+    </div>
+  </div>
+  <button class="a-btn a-primary"><%- I('save') %> Lưu bộ lọc</button>
+</form>
+<%- include('_footer') %>

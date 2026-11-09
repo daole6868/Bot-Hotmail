@@ -1,0 +1,4 @@
+<section class="section">
+  <div class="section-head"><h2><%- I('g-book') %> <%= block.title || 'Tin tức & Hướng dẫn' %></h2><a href="/tin-tuc" class="muted small">Xem tất cả <%- I('chevron-right') %></a></div>
+  <div class="post-grid"><% block.posts.forEach(it => { %><%- include('../post-card', { it }) %><% }) %></div>
+</section>

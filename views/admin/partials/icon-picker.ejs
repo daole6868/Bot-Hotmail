@@ -1,0 +1,11 @@
+<%# Chọn icon + màu: icons, value, colorValue %>
+<div class="a-icon-pick" style="--ic:<%= colorValue %>">
+  <div class="a-icon-grid">
+    <% icons.forEach(n => { %><label title="<%= n %>"><input type="radio" name="icon" value="<%= n %>" <%= n === value ? 'checked' : '' %>><span><%- I(n) %></span></label><% }) %>
+  </div>
+  <div class="a-icon-color">
+    <label>Màu icon</label>
+    <input type="color" name="icon_color" value="<%= colorValue %>" data-icon-color>
+    <div class="a-chip-row"><% ['#8b5cf6','#3b82f6','#06b6d4','#22c55e','#f59e0b','#f97316','#ef4444','#ec4899','#eab308','#94a3b8'].forEach(c => { %><button type="button" class="a-color-dot" style="background:<%= c %>" data-icon-color-set="<%= c %>" aria-label="<%= c %>"></button><% }) %></div>
+  </div>
+</div>

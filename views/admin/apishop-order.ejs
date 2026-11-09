@@ -1,0 +1,51 @@
+<%- include('_header') %>
+<% const fmtT = (t) => t ? new Date(t * 1000).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '—'; const CLS = { completed: 'ok', refunded: '', checking: 'warn', processing: 'warn' }; %>
+<p><a href="/admin/api-shop/orders">← Đơn hàng API</a></p>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3><%- I('bag') %> <%= o.code %> <span class="a-ap-st <%= o.status %>"><%= STATUS[o.status] || o.status %></span></h3>
+    <div class="a-kv-mini">
+      <div><span>Khách</span><b><%= o.username %></b></div>
+      <div><span>Sản phẩm</span><b><%= o.title %></b></div>
+      <div><span>Số lượng</span><b><%= o.qty.toLocaleString('vi-VN') %><%= o.status === 'completed' ? ' (đã giao ' + o.delivered.toLocaleString('vi-VN') + ')' : '' %></b></div>
+      <div><span>Đơn giá</span><b><%= H.money(o.unit_price) %></b></div>
+      <div><span>Khách trả</span><b><%= H.money(o.total) %></b></div>
+      <% if (o.refunded) { %><div><span>Đã hoàn</span><b><%= H.money(o.refunded) %></b></div><% } %>
+      <div><span>Giá vốn</span><b><%= o.cost ? H.money(o.cost) : '—' %></b></div>
+      <div><span>Mã đơn bên nguồn</span><b><%= o.trans_id || '—' %></b></div>
+      <div><span>Số dư nguồn trước / sau</span><b><%= o.src_balance_before != null ? H.money(o.src_balance_before) : '?' %> / <%= o.src_balance_after != null ? H.money(o.src_balance_after) : '?' %></b></div>
+      <div><span>Thời gian</span><b><%= fmtT(o.created_at) %></b></div>
+      <% if (o.msg) { %><div><span>Ghi chú</span><b><%= o.msg %></b></div><% } %>
+    </div>
+  </div>
+  <div class="a-card">
+    <% if (o.status === 'checking') { %>
+      <h3><%- I('alert') %> Không rõ kết quả</h3>
+      <p class="a-small">Lúc mua bị mất kết nối với web nguồn. Vào lịch sử đơn bên web nguồn kiểm tra quanh thời điểm <b><%= fmtT(o.created_at) %></b> (số lượng <%= o.qty %>, so sánh số dư trước / sau ở bên trái):</p>
+      <ul class="a-small"><li>Nếu bên nguồn <b>đã tạo đơn</b>: sao chép dữ liệu hàng, dán vào ô dưới rồi bấm Giao hàng.</li><li>Nếu <b>không có đơn</b>: bấm Hoàn tiền.</li></ul>
+      <form method="post" action="/admin/api-shop/orders/<%= o.id %>/deliver" class="a-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <textarea name="data" rows="6" placeholder="Mỗi dòng 1 sản phẩm"></textarea>
+        <button class="a-btn a-primary" data-confirm="Giao dữ liệu này cho khách?"><%- I('check') %> Giao hàng</button>
+      </form>
+    <% } %>
+    <% if (o.status !== 'refunded' && o.refunded < o.total) { %>
+      <form method="post" action="/admin/api-shop/orders/<%= o.id %>/refund" class="a-form a-mt">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Hoàn tiền <%= H.money(o.total - o.refunded) %> cho khách</label>
+        <input name="reason" maxlength="200" placeholder="Lý do (khách thấy trong lịch sử số dư)">
+        <button class="a-btn a-danger-soft" data-confirm="Hoàn <%= H.money(o.total - o.refunded) %> cho khách?"><%- I('refresh') %> Hoàn tiền</button>
+      </form>
+    <% } %>
+  </div>
+</div>
+<% if (o.purged_at) { %><div class="a-card a-muted">Dữ liệu hàng đã tự xóa lúc <%= fmtT(o.purged_at) %> (quá số ngày lưu).</div><% } %>
+<% if (lineCount) { %>
+<div class="a-card">
+  <h3><%- I('list') %> Dữ liệu đã giao <small class="a-muted"><%= lineCount.toLocaleString('vi-VN') %> dòng<%= lineCount > preview.length ? ', hiện ' + preview.length + ' dòng đầu' : '' %></small></h3>
+  <textarea rows="10" readonly class="a-mono"><%= preview.join('\n') %></textarea>
+  <% if (o.fmt) { %><p class="a-small a-muted">Định dạng: <%= o.fmt %></p><% } %>
+  <div class="a-btn-row"><a class="a-btn" href="/admin/api-shop/orders/<%= o.id %>/data.txt"><%- I('download') %> Tải dữ liệu gốc</a><a class="a-btn" href="/admin/api-shop/orders/<%= o.id %>/data.txt?type=mp"><%- I('download') %> Tải mail|pass</a></div>
+</div>
+<% } %>
+<%- include('_footer') %>

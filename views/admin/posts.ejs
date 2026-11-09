@@ -1,0 +1,42 @@
+<%- include('_header') %>
+<div class="a-section-head">
+  <div><h3>Bài viết</h3><p class="a-muted a-small">Bài đã đăng hiện ở <a href="/tin-tuc" target="_blank" rel="noopener">/tin-tuc</a> và tự thêm vào sitemap cho Google.</p></div>
+  <div class="a-actions"><a class="a-btn a-primary" href="/admin/posts/new"><%- I('plus') %> Viết bài mới</a></div>
+</div>
+<div class="a-chip-row a-mb">
+  <a class="a-btn a-xs <%= !query.status ? 'a-primary' : '' %>" href="/admin/posts">Tất cả <b><%= counts.total || 0 %></b></a>
+  <a class="a-btn a-xs <%= query.status === 'published' ? 'a-primary' : '' %>" href="/admin/posts?status=published">Đã đăng <b><%= counts.published || 0 %></b></a>
+  <a class="a-btn a-xs <%= query.status === 'scheduled' ? 'a-primary' : '' %>" href="/admin/posts?status=scheduled">Hẹn giờ <b><%= counts.scheduled || 0 %></b></a>
+  <a class="a-btn a-xs <%= query.status === 'draft' ? 'a-primary' : '' %>" href="/admin/posts?status=draft">Nháp <b><%= counts.draft || 0 %></b></a>
+</div>
+<div class="a-card">
+  <form class="a-filter" method="get">
+    <input type="hidden" name="status" value="<%= query.status %>">
+    <input name="q" value="<%= query.q %>" placeholder="Tìm tiêu đề, từ khóa">
+    <select name="cat"><option value="">-- Chuyên mục --</option><% cats.forEach(c => { %><option value="<%= c.id %>" <%= query.cat === c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select>
+    <button class="a-btn">Lọc</button>
+  </form>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Bài viết</th><th>Chuyên mục</th><th>Trạng thái</th><th class="a-num">Lượt xem</th><th>Cập nhật</th><th class="a-right">Thao tác</th></tr></thead>
+    <% if (!result.rows.length) { %><tr><td colspan="6" class="a-empty">Chưa có bài viết.</td></tr><% } %>
+    <% result.rows.forEach(p => { const sch = p.status === 'published' && p.published_at > Date.now() / 1000; %>
+      <tr>
+        <td><div class="a-item">
+          <% if (p.cover) { %><img src="<%= p.cover %>" class="a-avatar sm" alt="" loading="lazy"><% } %>
+          <div><a href="/admin/posts/<%= p.id %>/edit"><b><%= p.title %></b></a><div class="a-muted a-small"><%= p.focus_kw ? 'Từ khóa: ' + p.focus_kw : '' %><%= p.game_name ? ' · ' + p.game_name : '' %></div></div>
+        </div></td>
+        <td class="a-small"><%= p.cat_name || '—' %></td>
+        <td><span class="a-tag <%= p.status === 'draft' ? '' : sch ? 'yellow' : 'green' %>"><%= p.status === 'draft' ? 'Nháp' : sch ? 'Hẹn ' + H.fmtDate(p.published_at) : 'Đã đăng' %></span></td>
+        <td class="a-num"><%= p.views.toLocaleString('vi-VN') %></td>
+        <td class="a-small a-muted"><%= H.fmtDate(p.updated_at) %></td>
+        <td class="a-right"><div class="a-actions">
+          <a class="a-icon-btn" href="/tin-tuc/<%= p.slug %>?preview=1" target="_blank" rel="noopener" title="Xem"><%- I('eye') %></a>
+          <a class="a-icon-btn" href="/admin/posts/<%= p.id %>/edit" title="Sửa"><%- I('edit') %></a>
+          <form method="post" action="/admin/posts/<%= p.id %>/delete" data-confirm="Xóa bài “<%= p.title %>”?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+        </div></td>
+      </tr>
+    <% }) %>
+  </table></div>
+  <%- include('_pagination') %>
+</div>
+<%- include('_footer') %>

@@ -1,0 +1,7 @@
+<% const initials = String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase(); %>
+<% /* ảnh tự vẽ khi khởi tạo quá nhỏ ở cỡ avatar -> hiện chữ viết tắt */ %>
+<% if (locals.img && !String(img).startsWith('/img/catalog/')) { %>
+  <img src="<%= img %>" alt="" class="a-avatar <%= locals.size || '' %>" loading="lazy">
+<% } else { %>
+  <span class="a-avatar a-avatar-txt <%= locals.size || '' %>" style="--c: <%= locals.color || '#4f7df0' %>"><%= initials %></span>
+<% } %>

@@ -1,0 +1,161 @@
+<%- include('_header') %>
+<% const kb = (n) => n ? (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB') : '—'; %>
+<% const TABN = [['games', 'Ảnh game'], ['cats', 'Danh mục lớn'], ['subcats', 'Danh mục nhỏ'], ['products', 'Ảnh sản phẩm'], ['hoyo', 'Nhân vật & vũ khí'], ['const', 'Cung mệnh']]; %>
+<div class="a-ctv-tabs a-img-tabs">
+  <% TABN.forEach(([k, l]) => { %><a href="/admin/images?tab=<%= k %>" class="<%= tab === k ? 'on' : '' %>"><%= l %></a><% }) %>
+</div>
+
+<% if (locals.rows) { %>
+  <% const total = rows.reduce((a, r) => a + r.size, 0); %>
+  <p class="a-muted a-small"><%= rows.filter(r => r.image).length %>/<%= rows.length %> có ảnh · <%= kb(total) %></p>
+  <% if (!rows.length) { %><div class="a-card a-empty">Chưa có mục nào</div><% } %>
+  <div class="a-img-grid">
+    <% rows.forEach(r => { %>
+      <div class="a-card a-img-item">
+        <div class="a-img-thumb"><% if (r.image) { %><img src="<%= r.image %>" alt="" loading="lazy"><% } else { %><span class="a-muted"><%- I('image') %></span><% } %></div>
+        <div class="a-img-meta"><b title="<%= r.name %>"><%= r.name %></b><small class="a-muted"><%= r.game_name || '' %><%= r.game_name ? ' · ' : '' %><%= kb(r.size) %></small></div>
+        <div class="a-img-acts">
+          <form method="post" action="/admin/images/slot/<%= tab %>/<%= r.id %>/replace" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label class="a-btn a-btn-sm"><%- I('image') %> <%= r.image ? 'Thay' : 'Thêm' %><input type="file" name="image" accept="image/*" hidden data-img-auto></label>
+          </form>
+          <% if (r.image) { %><form method="post" action="/admin/images/slot/<%= tab %>/<%= r.id %>/remove" data-confirm="Xóa ảnh của <%= r.name %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa ảnh"><%- I('trash') %></button></form><% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<% if (tab === 'products') { %>
+  <form method="get" class="a-card a-filter-bar a-img-filter">
+    <input type="hidden" name="tab" value="products">
+    <input name="q" value="<%= q %>" placeholder="Tên hoặc mã sản phẩm">
+    <select name="status"><option value="">Tất cả trạng thái</option><% [['available', 'Đang bán'], ['sold', 'Đã bán'], ['hidden', 'Ẩn']].forEach(([v, l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select>
+    <button class="a-btn">Lọc</button>
+  </form>
+  <div class="a-card a-card-flush"><div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Ảnh</th><th>Sản phẩm</th><th>Số ảnh</th><th>Dung lượng</th><th></th></tr></thead>
+    <% if (!result.rows.length) { %><tr><td colspan="5" class="a-empty">Không có sản phẩm nào có ảnh</td></tr><% } %>
+    <% result.rows.forEach(r => { %><tr>
+      <td><div class="a-img-strip"><% r.list.slice(0, 4).forEach(i => { %><img src="<%= i %>" alt="" loading="lazy"><% }) %></div></td>
+      <td><b>#<%= r.code %></b> <%= r.title %><div class="a-small a-muted"><%= r.game_name %> › <%= r.cat_name %> · <%= r.status === 'sold' ? 'Đã bán' : r.status === 'hidden' ? 'Ẩn' : 'Đang bán' %></div></td>
+      <td><%= r.list.length %></td>
+      <td><%= kb(r.size) %></td>
+      <td class="a-right"><div class="a-actions">
+        <a href="#" class="a-btn a-xs" data-modal-url="/admin/products/form?id=<%= r.id %>" data-modal-title="Sửa sản phẩm">Sửa</a>
+        <form method="post" action="/admin/images/products/<%= r.id %>/clear" data-confirm="Xóa toàn bộ <%= r.list.length %> ảnh của #<%= r.code %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger-soft">Xóa ảnh</button></form>
+      </div></td>
+    </tr><% }) %>
+  </table></div></div>
+  <%- include('_pagination', { result }) %>
+<% } %>
+
+<% if (tab === 'hoyo') { %>
+  <div class="a-img-pills">
+    <% Object.entries(GAMES).forEach(([k, g]) => { %><a href="/admin/images?tab=hoyo&game=<%= k %>&kind=<%= kind %>" class="<%= game === k ? 'on' : '' %>"><%= g.name %> <i><%= (counts[k + 'char'] || 0) + (counts[k + 'weapon'] || 0) %></i></a><% }) %>
+  </div>
+  <div class="a-img-pills a-img-pills-sm">
+    <a href="/admin/images?tab=hoyo&game=<%= game %>&kind=char" class="<%= kind === 'char' ? 'on' : '' %>">Nhân vật <i><%= counts[game + 'char'] || 0 %></i></a>
+    <a href="/admin/images?tab=hoyo&game=<%= game %>&kind=weapon" class="<%= kind === 'weapon' ? 'on' : '' %>"><%= GAMES[game].w %> <i><%= counts[game + 'weapon'] || 0 %></i></a>
+  </div>
+
+  <div class="a-grid-2 a-img-tools">
+    <div class="a-card" data-img-import data-game="<%= game %>" data-kind="<%= kind %>">
+      <h3><%- I('download') %> Nạp ảnh từ HTML</h3>
+      <textarea rows="5" placeholder="Dán HTML các khối <%= kind === 'char' ? 'nhân vật' : GAMES[game].w.toLowerCase() %> từ trang HoYoLAB vào đây" data-img-html></textarea>
+      <div class="a-btn-row">
+        <button type="button" class="a-btn" data-img-check><%- I('search') %> Kiểm tra</button>
+        <button type="button" class="a-btn a-primary" data-img-run><%- I('download') %> Nạp ảnh</button>
+      </div>
+      <div class="a-small a-img-out" data-img-out hidden></div>
+    </div>
+    <form method="post" action="/admin/images/hoyo/add" enctype="multipart/form-data" class="a-card a-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="game" value="<%= game %>"><input type="hidden" name="kind" value="<%= kind %>">
+      <h3><%- I('plus') %> Thêm 1 <%= kind === 'char' ? 'nhân vật' : GAMES[game].w.toLowerCase() %></h3>
+      <div class="a-row">
+        <div><label>Tên</label><input name="name" required maxlength="60"></div>
+        <div><label>Độ hiếm</label><select name="rarity"><option value="5"><%= GAMES[game].r5 %></option><option value="4"><%= GAMES[game].r4 %></option><% if (GAMES[game].r3) { %><option value="3"><%= GAMES[game].r3 %></option><% } %><option value="0">Khác</option></select></div>
+      </div>
+      <label>Ảnh <small class="a-muted">(chọn file hoặc dán link ảnh HoYoverse)</small></label>
+      <div class="a-row">
+        <div><input type="file" name="image" accept="image/*"></div>
+        <div><input name="url" maxlength="500" placeholder="https://act-webstatic.hoyoverse.com/..."></div>
+      </div>
+      <button class="a-btn a-primary"><%- I('plus') %> Thêm</button>
+    </form>
+  </div>
+
+  <form method="get" class="a-img-search">
+    <input type="hidden" name="tab" value="hoyo"><input type="hidden" name="game" value="<%= game %>"><input type="hidden" name="kind" value="<%= kind %>">
+    <input name="q" value="<%= q %>" placeholder="Tìm tên..."><button class="a-btn">Tìm</button>
+    <span class="a-muted a-small"><%= total %> mục</span>
+  </form>
+  <% if (!assets.length) { %><div class="a-card a-empty">Chưa có ảnh nào. Dán HTML ở trên để nạp.</div><% } %>
+  <div class="a-lib-grid" data-lib-grid>
+    <%- include('partials/lib-items', { assets, libG: GAMES[game], libKind: kind }) %>
+  </div>
+  <% if (hasMore) { %><div class="a-lib-more"><button type="button" class="a-btn" data-lib-more data-next="<%= page + 1 %>">Tải thêm (<%= total - page * 120 %> mục)</button></div><% } %>
+<% } %>
+<% if (tab === 'const') { %>
+  <div class="a-img-pills">
+    <% Object.entries(GAMES).forEach(([k, g]) => { %><a href="/admin/images?tab=const&game=<%= k %>" class="<%= game === k ? 'on' : '' %>"><%= g.name %> <i><%= counts[k] || 0 %></i></a><% }) %>
+  </div>
+  <form method="get" class="a-img-search">
+    <input type="hidden" name="tab" value="const"><input type="hidden" name="game" value="<%= game %>">
+    <input name="q" value="<%= q %>" placeholder="Tìm nhân vật..."><button class="a-btn">Tìm</button>
+    <span class="a-muted a-small"><%= chars.length %> nhân vật · <%= chars.filter(c => c.n >= 6).length %> đủ 6 <%= LABEL[game].toLowerCase() %></span>
+  </form>
+  <% if (!chars.length) { %><div class="a-card a-empty">Chưa có nhân vật nào. Nạp nhân vật ở tab "Nhân vật &amp; vũ khí" trước.</div><% } %>
+  <div class="a-cst-grid" data-cst-app data-label="<%= LABEL[game] %>" data-palette="<%= JSON.stringify(PALETTES[game]) %>">
+    <% chars.forEach(c => { %>
+      <button type="button" class="a-cst-char r<%= c.rarity %>" data-cst-open="<%= c.id %>" style="--rc: <%= c.ring %>">
+        <img src="<%= c.icon %>" alt="" loading="lazy" width="72" height="72">
+        <b title="<%= c.name %>"><%= c.name %></b>
+        <small class="<%= c.n >= 6 ? 'full' : '' %>"><i></i><%= c.n %>/6</small>
+      </button>
+    <% }) %>
+  </div>
+  <div class="a-modal" data-cst-modal hidden>
+    <div class="a-modal-box a-cst-box" role="dialog" aria-modal="true">
+      <div class="a-modal-head"><h3 data-cst-title></h3><button type="button" class="a-icon-btn" data-cst-close title="Đóng"><%- I('x') %></button></div>
+      <div class="a-modal-body a-cst-body">
+        <div class="a-cst-stage" data-cst-stage>
+          <img class="a-cst-portrait" data-cst-portrait alt="">
+          <div class="a-cst-arc" data-cst-arc></div>
+        </div>
+        <div class="a-cst-side">
+          <div class="a-cst-sec">
+            <b>Màu vòng bo</b>
+            <div class="a-cst-pal" data-cst-pal></div>
+            <label class="a-cst-custom">Màu khác <input type="color" data-cst-color></label>
+          </div>
+          <div class="a-cst-sec" data-cst-edit hidden>
+            <b data-cst-edit-t></b>
+            <input name="name" maxlength="80" placeholder="Tên" data-cst-name>
+            <div class="a-row">
+              <div><input type="file" accept="image/*" data-cst-file></div>
+              <div><input maxlength="500" placeholder="hoặc link ảnh HoYoverse" data-cst-url></div>
+            </div>
+            <div class="a-btn-row">
+              <button type="button" class="a-btn a-primary a-btn-sm" data-cst-slot-save><%- I('save') %> Lưu ô</button>
+              <button type="button" class="a-btn a-btn-sm a-danger-soft" data-cst-slot-del><%- I('trash') %> Xóa ô</button>
+            </div>
+          </div>
+          <div class="a-cst-sec">
+            <b>Nạp từ HTML</b>
+            <textarea rows="4" data-cst-html placeholder="Dán HTML khối tên (ảnh + tên + số) từ HoYoLAB, có thể dán cả 6 khối một lần"></textarea>
+            <div class="a-btn-row">
+              <button type="button" class="a-btn a-btn-sm" data-cst-parse><%- I('search') %> Xem trước</button>
+              <button type="button" class="a-btn a-btn-sm a-primary" data-cst-import><%- I('download') %> Lưu</button>
+            </div>
+            <div class="a-small" data-cst-msg hidden></div>
+          </div>
+          <div class="a-cst-list" data-cst-list></div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } %>
+<script src="/js/admin-images.js?v=<%= locals.assetV || 1 %>" defer></script>
+<%- include('_footer') %>

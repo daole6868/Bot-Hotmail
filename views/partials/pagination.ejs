@@ -1,0 +1,14 @@
+<% if (result.pages > 1) {
+  const cur = result.page, last = result.pages;
+  const pages = [];
+  for (let i = Math.max(1, cur - 2); i <= Math.min(last, cur + 2); i++) pages.push(i);
+%>
+<nav class="pagination">
+  <% if (cur > 1) { %><a href="<%= H.pageUrl(query, cur - 1) %>"><%- I('chevron-left') %></a><% } %>
+  <% if (pages[0] > 1) { %><a href="<%= H.pageUrl(query, 1) %>">1</a><% if (pages[0] > 2) { %><span>…</span><% } %><% } %>
+  <% pages.forEach(i => { %><a href="<%= H.pageUrl(query, i) %>" class="<%= i === cur ? 'active' : '' %>"><%= i %></a><% }) %>
+  <% if (pages[pages.length - 1] < last) { %><% if (pages[pages.length - 1] < last - 1) { %><span>…</span><% } %><a href="<%= H.pageUrl(query, last) %>"><%= last %></a><% } %>
+  <% if (cur < last) { %><a href="<%= H.pageUrl(query, cur + 1) %>"><%- I('chevron-right') %></a><% } %>
+</nav>
+<% } %>
+<div class="muted small center">Tổng <%= result.total.toLocaleString('vi-VN') %> mục</div>

@@ -1,0 +1,7 @@
+
+<section class="section">
+  <div class="section-head"><h2><%- I('star') %> <%= block.title || 'Acc nổi bật' %></h2></div>
+  <div class="product-grid">
+    <% block.products.forEach(p => { %><%- include('../product-card', { p }) %><% }) %>
+  </div>
+</section>

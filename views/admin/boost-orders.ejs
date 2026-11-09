@@ -1,0 +1,32 @@
+<%- include('_header') %>
+<div class="a-chip-row a-mb">
+  <a class="a-btn a-xs <%= !query.status ? 'a-primary' : '' %>" href="<%= base %>">Tất cả</a>
+  <a class="a-btn a-xs <%= query.status === 'open' ? 'a-primary' : '' %>" href="<%= base %>?status=open">Chưa xong <b><%= (counts.received || 0) + (counts.processing || 0) + (counts.need_info || 0) %></b></a>
+  <% Object.entries(STATUS).forEach(([k, v]) => { %><a class="a-btn a-xs <%= query.status === k ? 'a-primary' : '' %>" href="<%= base %>?status=<%= k %>"><%= v.label %> <b><%= counts[k] || 0 %></b></a><% }) %>
+</div>
+<div class="a-card">
+  <form class="a-filter" method="get">
+    <input type="hidden" name="status" value="<%= query.status %>">
+    <input name="q" value="<%= query.q %>" placeholder="Mã đơn <%= kind === 'topup' ? 'NG' : 'CT' %>…, username">
+    <select name="game"><option value="">-- Game --</option><% games.forEach(g => { %><option value="<%= g.id %>" <%= query.game === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %></select>
+    <button class="a-btn">Lọc</button>
+  </form>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Mã đơn</th><th>Khách</th><th><%= kind === 'topup' ? 'Gói nạp' : 'Dịch vụ' %></th><th>Tổng</th><th>Trạng thái</th><% if (perm !== 'seller') { %><th>CTV</th><% } %><th>Đặt lúc</th><th></th></tr></thead>
+    <% if (!result.rows.length) { %><tr><td colspan="8" class="a-muted">Không có đơn</td></tr><% } %>
+    <% result.rows.forEach(o => { const st = STATUS[o.status]; %>
+      <tr>
+        <td><b><%= o.code %></b></td>
+        <td><%= o.username %></td>
+        <td class="a-trunc"><%= o.items %><div class="a-muted a-small"><%= o.game_name %></div></td>
+        <td><b><%= H.money(o.total) %></b></td>
+        <td><span class="a-tag <%= st.tone %>"><%= st.label %></span><% if (perm === 'seller' && o.ctv_id) { %> <span class="a-tag blue">Của bạn</span><% } %></td>
+        <% if (perm !== 'seller') { %><td class="a-small"><%= o.ctv_name || '—' %></td><% } %>
+        <td class="a-small a-muted"><%= H.fmtDate(o.created_at) %></td>
+        <td><a href="/admin/boost/orders/<%= o.id %>" class="a-btn a-xs">Xử lý</a></td>
+      </tr>
+    <% }) %>
+  </table></div>
+  <%- include('_pagination') %>
+</div>
+<%- include('_footer') %>

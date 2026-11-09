@@ -1,0 +1,77 @@
+<% const R = '<span class="req" title="Bắt buộc">*</span>'; const type = c ? c.sale_type : 'vip'; const locked = c && c.product_count > 0; %>
+<form method="post" action="/admin/categories/save" enctype="multipart/form-data" class="a-form a-cat-form" novalidate data-validate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="_back" value="">
+  <input type="hidden" name="id" value="<%= c ? c.id : '' %>">
+  <label>Thuộc game <%- R %></label>
+  <select name="game_id" required>
+    <% games.forEach(g => { %><option value="<%= g.id %>" <%= gameId === g.id ? 'selected' : '' %>><%= g.name %></option><% }) %>
+  </select>
+  <label>Tên danh mục <%- R %></label>
+  <input name="name" required maxlength="100" value="<%= c ? c.name : '' %>" placeholder="VD: Acc VIP Full Skin, Random 20K" autofocus>
+
+  <label>Loại danh mục <%- R %> <% if (locked) { %><small class="a-muted">(đã có hàng bên trong nên không đổi được)</small><% } %></label>
+  <div class="a-choice">
+    <label class="a-choice-item <%= locked && type !== 'vip' ? 'is-disabled' : '' %>">
+      <input type="radio" name="sale_type" value="vip" <%= type === 'vip' ? 'checked' : '' %> <%= locked && type !== 'vip' ? 'disabled' : '' %>>
+      <span class="a-choice-box"><span class="a-type-badge vip"><%- I('star') %> VIP</span><b>Mua 1 lần</b><small>Mỗi sản phẩm là 1 acc riêng (tài khoản + mật khẩu), bán xong là hết.</small></span>
+    </label>
+    <label class="a-choice-item <%= locked && type !== 'reroll' ? 'is-disabled' : '' %>">
+      <input type="radio" name="sale_type" value="reroll" <%= type === 'reroll' ? 'checked' : '' %> <%= locked && type !== 'reroll' ? 'disabled' : '' %>>
+      <span class="a-choice-box"><span class="a-type-badge reroll"><%- I('refresh') %> Reroll</span><b>Mua nhiều lần</b><small>Mỗi sản phẩm chứa nhiều acc, khách mua liên tục tới khi hết acc trong kho.</small></span>
+    </label>
+    <label class="a-choice-item <%= locked && type !== 'boost' ? 'is-disabled' : '' %>">
+      <input type="radio" name="sale_type" value="boost" <%= type === 'boost' ? 'checked' : '' %> <%= locked && type !== 'boost' ? 'disabled' : '' %>>
+      <span class="a-choice-box"><span class="a-type-badge boost"><%- I('g-swords') %> Cày thuê</span><b>Dịch vụ cày thuê</b><small>Bên trong có danh mục con (cày rank, cày level...), mỗi danh mục con chứa các gói.</small></span>
+    </label>
+    <label class="a-choice-item <%= locked && type !== 'topup' ? 'is-disabled' : '' %>">
+      <input type="radio" name="sale_type" value="topup" <%= type === 'topup' ? 'checked' : '' %> <%= locked && type !== 'topup' ? 'disabled' : '' %>>
+      <span class="a-choice-box"><span class="a-type-badge topup"><%- I('g-gem') %> Nạp game</span><b>Nạp game</b><small>Chứa thẳng các gói nạp (không có danh mục con). Khách nhập UID hoặc tài khoản.</small></span>
+    </label>
+  </div>
+
+  <div class="a-topup-only">
+    <label>Khách nhập thông tin nạp bằng <%- R %></label>
+    <div class="a-choice a-choice-2">
+      <label class="a-choice-item"><input type="radio" name="topup_method" value="uid" <%= topupMethod === 'uid' ? 'checked' : '' %>><span class="a-choice-box"><b>UID</b><small>Khách nhập UID (2 lần cho chắc), tên nhân vật, server. Shop không cần đăng nhập.</small></span></label>
+      <label class="a-choice-item"><input type="radio" name="topup_method" value="login" <%= topupMethod !== 'uid' ? 'checked' : '' %>><span class="a-choice-box"><b>LOG (tài khoản / mật khẩu)</b><small>Khách nhập tài khoản + mật khẩu game, shop đăng nhập để nạp. Được mã hóa và tự xóa như cày thuê.</small></span></label>
+    </div>
+  </div>
+
+  <div class="a-boost-only">
+    <% [['cat', 'Danh mục con'], ['pkg', 'Gói']].forEach(([lv, name]) => { const d = boostDisp[lv]; %>
+    <div class="<%= lv === 'cat' ? 'a-boost-cat' : '' %>">
+    <label>Hiển thị <%= name %> ngoài web</label>
+    <div class="a-row a-row-4">
+      <select name="<%= lv %>_mode" title="Kiểu hiển thị"><option value="image" <%= d.mode === 'image' ? 'selected' : '' %>>Kiểu Ảnh</option><option value="icon" <%= d.mode === 'icon' ? 'selected' : '' %>>Kiểu Icon</option></select>
+      <select name="<%= lv %>_cols_pc" title="Số cột trên PC (kiểu Ảnh)"><% [1,2,3,4,5,6].forEach(n => { %><option value="<%= n %>" <%= d.colsPc === n ? 'selected' : '' %>>PC: <%= n %> cột</option><% }) %></select>
+      <select name="<%= lv %>_cols_m" title="Số cột trên điện thoại (kiểu Ảnh)"><% [1,2,3].forEach(n => { %><option value="<%= n %>" <%= d.colsM === n ? 'selected' : '' %>>ĐT: <%= n %> cột</option><% }) %></select>
+      <input type="number" name="<%= lv %>_max" min="1" max="200" value="<%= d.max %>" title="Số ô hiện tối đa, nhiều hơn thì cuộn">
+    </div>
+    </div>
+    <% }) %>
+    <p class="a-field-hint">Kiểu Icon: hàng ngang, 1 cột trên điện thoại, 2 cột trên PC (bỏ qua số cột). Ô cuối: số ô hiện tối đa, nhiều hơn thì nằm trong khung cuộn.</p>
+  </div>
+
+  <label>Mô tả <small class="a-muted a-topup-only-inline">(Nạp game: hiện trong khung phía trên các gói)</small></label>
+  <textarea name="description" rows="2" maxlength="1000"><%= c ? c.description : '' %></textarea>
+  <label>Đường dẫn (slug) <small class="a-muted">để trống tự tạo</small></label>
+  <input name="slug" maxlength="80" value="<%= c ? c.slug : '' %>">
+  <div class="a-upload-row">
+    <div class="a-upload-preview" data-preview-box>
+      <% if (c && c.image) { %><img src="<%= c.image %>" alt=""><% } else { %><span class="a-muted"><%- I('image') %><br>Chưa có ảnh</span><% } %>
+    </div>
+    <div class="a-grow">
+      <label>Ảnh danh mục <small class="a-muted">(không bắt buộc, gợi ý 400×220)</small></label>
+      <input type="file" name="image" accept="image/*" data-preview-input>
+      <% if (c && c.image) { %><label class="a-check"><input type="checkbox" name="remove_image" value="1"> Xóa ảnh hiện tại</label><% } %>
+    </div>
+  </div>
+  <%- include('../partials/seo-fields', { it: c }) %>
+  <label class="a-check"><input type="checkbox" name="is_active" <%= !c || c.is_active ? 'checked' : '' %>> Hiển thị</label>
+  <div class="a-modal-foot">
+    <span class="a-muted a-small a-foot-note"><%- R %> là thông tin bắt buộc</span>
+    <button type="button" class="a-btn a-ghost" data-modal-close>Hủy</button>
+    <button class="a-btn a-primary"><%- I('save') %> <%= c ? 'Lưu thay đổi' : 'Thêm danh mục' %></button>
+  </div>
+</form>

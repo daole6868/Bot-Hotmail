@@ -1,0 +1,32 @@
+<%- include('_header') %>
+<div class="a-card">
+  <form class="a-filter" method="get">
+    <input name="q" value="<%= query.q %>" placeholder="Mã đơn, sản phẩm, username">
+    <select name="status"><option value="">-- Trạng thái --</option><option value="completed" <%= query.status === 'completed' ? 'selected' : '' %>>Thành công</option><option value="refunded" <%= query.status === 'refunded' ? 'selected' : '' %>>Đã hoàn</option></select>
+    <input type="date" name="from" value="<%= query.from %>" title="Từ ngày">
+    <input type="date" name="to" value="<%= query.to %>" title="Đến ngày">
+    <label class="a-check"><input type="checkbox" name="archived" value="1" <%= query.archived ? 'checked' : '' %>> Đơn lưu trữ</label>
+    <button class="a-btn">Lọc</button>
+    <a class="a-btn a-ghost" href="/admin/orders/export.csv<%= H.pageUrl(query, 1) %>"><%- I('download') %> Xuất CSV</a>
+  </form>
+  <div class="a-summary">Doanh thu theo bộ lọc: <b><%= H.money(sum) %></b></div>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Mã đơn</th><th>Khách</th><th>Sản phẩm</th><th>Giá</th><th>Giảm</th><th>Tổng</th><th>Trạng thái</th><th>Thời gian</th><th></th></tr></thead>
+    <% if (!result.rows.length) { %><tr><td colspan="9" class="a-muted">Không có đơn</td></tr><% } %>
+    <% result.rows.forEach(o => { %>
+      <tr>
+        <td><b><%= o.order_code %></b></td>
+        <td><a href="/admin/users/<%= o.user_id %>"><%= o.username %></a></td>
+        <td class="a-trunc"><%= o.product_title %><div class="a-muted a-small"><%= o.game_name %></div></td>
+        <td><%= H.money(o.price) %></td>
+        <td><%= o.discount ? '-' + H.money(o.discount) : '' %><div class="a-small a-muted"><%= o.coupon_code || '' %></div></td>
+        <td><b><%= H.money(o.total) %></b></td>
+        <td><%- o.status === 'completed' ? '<span class="a-tag green">Thành công</span>' : '<span class="a-tag red">Đã hoàn</span>' %></td>
+        <td class="a-small a-muted"><%= H.fmtDate(o.created_at) %></td>
+        <td><a href="/admin/orders/<%= o.id %><%= query.archived ? '?archived=1' : '' %>" class="a-btn a-xs">Chi tiết</a></td>
+      </tr>
+    <% }) %>
+  </table></div>
+  <%- include('_pagination') %>
+</div>
+<%- include('_footer') %>

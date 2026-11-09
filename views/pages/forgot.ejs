@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <div class="auth-icon"><%- I('key') %></div>
+    <h1>Quên mật khẩu</h1>
+    <% if (locals.sent) { %>
+      <div class="alert alert-success">Nếu thông tin khớp với một tài khoản có email, chúng tôi đã gửi <b>link đặt lại mật khẩu</b> tới email đó. Link có hiệu lực 30 phút.</div>
+      <p class="muted center small">Không thấy email? Kiểm tra mục <b>Spam / Quảng cáo</b> hoặc thử lại sau vài phút.</p>
+      <a href="/login" class="btn btn-block btn-ghost">Quay lại đăng nhập</a>
+    <% } else { %>
+      <p class="muted center">Nhập email hoặc tên đăng nhập của bạn, chúng tôi sẽ gửi link đặt lại mật khẩu về email đã đăng ký.</p>
+      <% if (locals.error) { %><div class="alert alert-error"><%= error %></div><% } %>
+      <% if (!ready) { %><div class="alert alert-warning">Shop chưa bật gửi email. Vui lòng liên hệ admin để được hỗ trợ lấy lại mật khẩu.</div><% } else { %>
+      <form method="post" action="/forgot">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+        <label class="label">Email hoặc tên đăng nhập <span class="req">*</span></label>
+        <input type="text" name="email" value="<%= form.email || '' %>" required maxlength="100" autofocus>
+        <%- include('../partials/captcha') %>
+        <button class="btn btn-lg btn-block btn-primary">Gửi link đặt lại</button>
+      </form>
+      <% } %>
+      <p class="center muted"><a href="/login">Quay lại đăng nhập</a></p>
+    <% } %>
+  </div>
+</div>
+<%- include('../partials/footer') %>

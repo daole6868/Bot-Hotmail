@@ -1,0 +1,14 @@
+<%- include('_header') %>
+<div class="a-card a-narrow">
+  <h3>Đổi mật khẩu admin</h3>
+  <form method="post" action="/user/password">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Mật khẩu hiện tại <span class="req">*</span></label><input type="password" name="current" required autocomplete="current-password">
+    <label>Mật khẩu mới <span class="req">*</span> <small class="a-muted">(≥ 8 ký tự, có chữ và số)</small></label><input type="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password">
+    <label>Nhập lại <span class="req">*</span></label><input type="password" name="password2" required minlength="8" maxlength="72" autocomplete="new-password">
+    <button class="a-btn a-primary a-submit">Cập nhật</button>
+  </form>
+  <p class="a-small"><a href="/user/security"><%- I('shield') %> Email, xác minh 2 lớp & thiết bị tin cậy của tài khoản admin</a></p>
+  <p class="a-muted a-small">Quên mật khẩu admin? Dùng “Quên mật khẩu” ở trang đăng nhập (cần đã cấu hình email), hoặc chạy lệnh <code>npm run reset-admin -- MatKhauMoi123</code> trên server.</p>
+</div>
+<%- include('_footer') %>

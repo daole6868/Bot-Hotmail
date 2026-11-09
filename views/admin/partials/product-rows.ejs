@@ -1,0 +1,55 @@
+<% const append = result.page > 1; %>
+<% if (!append) { %>
+<div class="a-table-wrap">
+<table class="a-table a-products">
+  <thead><tr>
+    <th class="a-w-check"><input type="checkbox" data-check-all aria-label="Chọn tất cả"></th>
+    <% if (sortable) { %><th class="a-w-move"></th><% } %>
+    <th>Sản phẩm</th><th class="a-num">Giá bán</th><th class="a-num">Giá gốc</th><th class="a-center">Kho / Trạng thái</th><th class="a-num">Xem / Bán</th><th class="a-center">Hiển thị</th><th class="a-right">Thao tác</th>
+  </tr></thead>
+  <tbody data-rows-body>
+<% } %>
+  <% if (!rows.length && !append) { %><tr><td colspan="9" class="a-empty">Chưa có sản phẩm nào.</td></tr><% } %>
+  <% rows.forEach((p, i) => { const imgs = H.parseJSON(p.images, []); const disc = p.old_price && p.old_price > p.price ? Math.round((1 - p.price / p.old_price) * 100) : 0;
+       const idx = (result.page - 1) * result.perPage + i; %>
+    <tr class="<%= p.status === 'hidden' ? 'a-row-off' : '' %>">
+      <td><input type="checkbox" name="ids" value="<%= p.id %>" form="bulkForm" aria-label="Chọn"></td>
+      <% if (sortable) { %><td><%- include('move', { kind: 'products', id: p.id, first: idx === 0, last: idx === result.total - 1 }) %></td><% } %>
+      <td>
+        <div class="a-item">
+          <% if (imgs[0]) { %><img src="<%= imgs[0] %>" class="a-thumb" alt="" loading="lazy"><% } %>
+          <div class="a-minw0">
+            <div class="a-prod-name"><b><%= p.title %></b>
+              <% if (p.is_featured) { %><span class="a-tag orange">Hot</span><% } %>
+              <% if (disc) { %><span class="a-tag red-solid">-<%= disc %>%</span><% } %>
+              <% if (p.created_at > Date.now() / 1000 - 3 * 86400) { %><span class="a-tag green">Mới</span><% } %>
+            </div>
+            <div class="a-muted a-small">#<%= p.code %><% if (showCategory) { %> · <%= p.game_name %> › <%= p.category_name %><% } %></div>
+          </div>
+        </div>
+      </td>
+      <td class="a-num a-price"><%= H.money(p.price) %></td>
+      <td class="a-num"><% if (p.old_price) { %><del class="a-muted"><%= H.money(p.old_price) %></del><% } else { %><span class="a-muted">—</span><% } %></td>
+      <td class="a-center">
+        <% if (p.status === 'sold') { %><span class="a-tag blue">Đã bán</span>
+        <% } else if (p.type === 'stock') { %><span class="a-tag <%= p.stock_left > 0 ? 'purple' : 'red' %>">Kho: <%= p.stock_left %></span>
+        <% } else { %><span class="a-tag">Acc</span><% } %>
+      </td>
+      <td class="a-num a-small"><%= p.views %> / <%= p.sold_count %></td>
+      <td class="a-center"><%- include('switch', { kind: 'products', id: p.id, on: p.status === 'available', disabled: p.status === 'sold' }) %></td>
+      <td class="a-right"><div class="a-actions">
+        <button type="button" class="a-icon-btn" data-modal-url="/admin/products/form?id=<%= p.id %>" data-modal-title="Sửa sản phẩm" title="Sửa"><%- I('edit') %></button>
+        <form method="post" action="/admin/products/<%= p.id %>/duplicate"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn" title="Nhân bản"><%- I('copy') %></button></form>
+        <% if (p.type === 'stock') { %><a class="a-icon-btn" href="/admin/products/<%= p.id %>/edit" title="Quản lý kho mã"><%- I('box') %></a><% } %>
+        <form method="post" action="/admin/products/<%= p.id %>/delete" data-confirm="Xóa sản phẩm “<%= p.title %>”?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-icon-btn a-icon-danger" title="Xóa"><%- I('trash') %></button></form>
+      </div></td>
+    </tr>
+  <% }) %>
+<% if (!append) { %>
+  </tbody>
+</table>
+</div>
+<% } %>
+<% if (categoryId && result.page < result.pages) { %>
+  <div class="a-more" data-more-wrap><button type="button" class="a-btn" data-load-more="<%= result.page + 1 %>">Xem thêm (còn <%= (result.total - result.page * result.perPage).toLocaleString('vi-VN') %>)</button></div>
+<% } %>

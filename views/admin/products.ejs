@@ -1,0 +1,63 @@
+<%- include('_header') %>
+<div class="a-card a-toolbar-card">
+  <form class="a-filter" method="get">
+    <div class="a-search"><%- I('search') %><input name="q" value="<%= query.q %>" placeholder="Tìm theo tên hoặc mã sản phẩm..."></div>
+    <select name="status" data-autosubmit>
+      <option value="">Chưa bán (đang bán + đang ẩn)</option>
+      <% [['available','Đang bán'],['hidden','Đang ẩn'],['sold','Đã bán (tra cứu)']].forEach(([v,l]) => { %><option value="<%= v %>" <%= query.status === v ? 'selected' : '' %>><%= l %></option><% }) %>
+    </select>
+    <button class="a-btn">Lọc</button>
+    <% if (query.q || query.status) { %><a class="a-btn a-ghost" href="<%= base %>">Xóa lọc</a><% } %>
+  </form>
+  <% if (saleType === 'vip') { %><p class="a-field-hint a-mb0">Acc VIP đã bán tự rời khỏi danh sách này. Tra cứu lại ở <a href="/admin/orders">Đơn hàng</a> (có đủ tên acc, giá, khách mua và thông tin đã giao) hoặc chọn lọc “Đã bán”.</p><% } %>
+</div>
+
+<!-- Thao tác hàng loạt: ô chọn trong bảng gắn vào form này qua thuộc tính form="bulkForm" -->
+<form method="post" action="/admin/products/bulk" id="bulkForm" class="a-bulk-bar" data-confirm="Thực hiện thao tác với các sản phẩm đã chọn?" hidden>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <span><b data-bulk-count>0</b> sản phẩm đã chọn</span>
+  <select name="action" required><option value="">-- Chọn thao tác --</option><option value="show">Bật hiển thị</option><option value="hide">Ẩn</option><option value="feature">Đánh dấu nổi bật</option><option value="unfeature">Bỏ nổi bật</option><option value="delete">Xóa (trừ SP đã bán)</option></select>
+  <button class="a-btn a-primary">Áp dụng</button>
+</form>
+
+<% if (result) { %>
+  <div class="a-card a-card-flush">
+    <div class="a-card-head a-pad"><h3>Kết quả tìm kiếm “<%= query.q %>”</h3><span class="a-muted a-small"><%= result.total.toLocaleString('vi-VN') %> sản phẩm</span></div>
+    <%- include('partials/product-rows', { rows: result.rows, result, categoryId: 0, showCategory: true, sortable: false }) %>
+    <div class="a-pad"><%- include('_pagination') %></div>
+  </div>
+<% } else { %>
+  <% if (!games.length) { %><div class="a-card a-empty">Chưa có game. <a href="/admin/games">Thêm game trước</a>.</div><% } %>
+  <% games.forEach(g => { %>
+  <section class="a-acc" id="game-<%= g.id %>" data-acc="prod-game-<%= g.id %>">
+    <div class="a-acc-head">
+      <button type="button" class="a-acc-toggle" data-acc-toggle>
+        <%- include('partials/thumb', { img: g.image, name: g.name, color: g.color, size: 'sm' }) %>
+        <span class="a-acc-title"><b><%= g.name %></b><small><%= g.cats.length %> danh mục · <%= g.product_count.toLocaleString('vi-VN') %> sản phẩm</small></span>
+        <span class="a-chevron"><%- I('caret-down') %></span>
+      </button>
+    </div>
+    <div class="a-acc-body a-acc-nested">
+      <% if (!g.cats.length) { %><div class="a-empty">Game chưa có danh mục <%= saleType === 'reroll' ? 'Reroll' : 'VIP' %>. <a href="/admin/categories#game-<%= g.id %>">Thêm danh mục</a></div><% } %>
+      <% g.cats.forEach(c => { %>
+      <section class="a-acc a-acc-sub" id="cat-<%= c.id %>" data-acc="prod-cat-<%= c.id %>"
+               data-rows-url="/admin/products/rows?category_id=<%= c.id %><%= query.status ? '&status=' + query.status : '' %>">
+        <div class="a-acc-head">
+          <button type="button" class="a-acc-toggle" data-acc-toggle>
+            <span class="a-folder"><%- I('folder') %></span>
+            <span class="a-acc-title"><b><%= c.name %> <% if (c.sale_type === 'reroll') { %><span class="a-type-badge reroll sm"><%- I('refresh') %> Reroll</span><% } else { %><span class="a-type-badge vip sm"><%- I('star') %> VIP</span><% } %></b><small><%= c.product_count.toLocaleString('vi-VN') %> sản phẩm<%= c.min_price != null ? ' · từ ' + H.money(c.min_price) : '' %></small></span>
+            <span class="a-chevron"><%- I('caret-down') %></span>
+          </button>
+          <div class="a-actions">
+            <% if (c.sale_type === 'vip') { %><button type="button" class="a-btn a-ghost a-sm" data-modal-url="/admin/products/import-form?category_id=<%= c.id %>" data-modal-title="Nhập nhiều acc – <%= c.name %>" title="Nhập nhiều acc"><%- I('inbox') %> <span class="a-hide-sm">Nhập nhiều</span></button><% } %>
+            <button type="button" class="a-btn a-soft a-sm" data-modal-url="/admin/products/form?category_id=<%= c.id %>" data-modal-title="Thêm sản phẩm – <%= c.name %>"><%- I('plus') %> Thêm sản phẩm</button>
+          </div>
+        </div>
+        <div class="a-acc-body" data-rows><div class="a-loading">Đang tải...</div></div>
+      </section>
+      <% }) %>
+    </div>
+  </section>
+  <% }) %>
+<% } %>
+<%- include('_footer') %>

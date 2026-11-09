@@ -1,0 +1,58 @@
+<%- include('_header') %>
+<form method="post" action="/admin/support" class="a-form a-sp-form" data-sp-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('headset') %> Hiển thị</h3>
+      <label class="a-check a-sp-enable"><input type="checkbox" name="enabled" value="1" <%= cfg.enabled ? 'checked' : '' %>> <b>Bật nút Hỗ trợ ngoài web</b></label>
+      <label>Kiểu hiển thị</label>
+      <div class="a-choice">
+        <label class="a-choice-item"><input type="radio" name="mode" value="side" <%= cfg.mode === 'side' ? 'checked' : '' %>><span class="a-choice-box"><b>Thanh bên</b><small>Dính sát cạnh trái / phải màn hình, thu lại thành 1 tab nhỏ.</small></span></label>
+        <label class="a-choice-item"><input type="radio" name="mode" value="corner" <%= cfg.mode !== 'side' ? 'checked' : '' %>><span class="a-choice-box"><b>Nút tròn ở góc</b><small>Icon hỗ trợ nổi ở 1 trong 4 góc, bấm để mở danh sách.</small></span></label>
+      </div>
+      <div class="a-sp-side">
+        <label>Cạnh màn hình</label>
+        <select name="side"><option value="left" <%= cfg.side === 'left' ? 'selected' : '' %>>Bên trái</option><option value="right" <%= cfg.side !== 'left' ? 'selected' : '' %>>Bên phải</option></select>
+      </div>
+      <div class="a-sp-corner">
+        <label>Góc màn hình</label>
+        <div class="a-sp-corners">
+          <% [['tl', 'Trên trái'], ['tr', 'Trên phải'], ['bl', 'Dưới trái'], ['br', 'Dưới phải']].forEach(([k, l]) => { %>
+            <label class="a-choice-item"><input type="radio" name="corner" value="<%= k %>" <%= cfg.corner === k ? 'checked' : '' %>><span class="a-choice-box a-sp-cbox a-sp-<%= k %>"><i></i><small><%= l %></small></span></label>
+          <% }) %>
+        </div>
+      </div>
+      <div class="a-row">
+        <div><label>Tự mở khi vào web rồi thu lại sau (giây)</label><input type="number" name="auto" min="0" max="60" value="<%= cfg.auto %>"></div>
+        <div><label>Hiện trên</label><select name="device"><option value="all" <%= cfg.device === 'all' ? 'selected' : '' %>>Điện thoại & PC</option><option value="pc" <%= cfg.device === 'pc' ? 'selected' : '' %>>Chỉ PC</option><option value="mobile" <%= cfg.device === 'mobile' ? 'selected' : '' %>>Chỉ điện thoại</option></select></div>
+      </div>
+      <p class="a-field-hint">Nhập 0 = không tự mở (khách bấm mới mở).</p>
+      <label class="a-check"><input type="checkbox" name="once" value="1" <%= cfg.once ? 'checked' : '' %>> Chỉ tự mở 1 lần mỗi lượt vào web (chuyển trang không mở lại)</label>
+    </div>
+    <div class="a-card">
+      <h3><%- I('edit') %> Nội dung & màu</h3>
+      <label>Tiêu đề khung</label>
+      <input name="title" maxlength="60" value="<%= cfg.title %>" placeholder="Hỗ trợ nhanh">
+      <label>Dòng phụ <small class="a-muted">(có chấm xanh, để trống = ẩn)</small></label>
+      <input name="subtitle" maxlength="80" value="<%= cfg.subtitle %>" placeholder="Phản hồi trong 5 phút">
+      <div class="a-row">
+        <div><label>Chữ trên tab thanh bên</label><input name="label" maxlength="20" value="<%= cfg.label %>" placeholder="Hỗ trợ"></div>
+        <div><label>Màu nút chính</label><input type="color" name="color" value="<%= cfg.color %>"></div>
+      </div>
+      <p class="a-field-hint">Lưu xong mở <a href="/" target="_blank" rel="noopener">trang chủ</a> để xem (tải lại trang).</p>
+    </div>
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-head"><h3><%- I('chat') %> Kênh liên hệ</h3><button type="button" class="a-btn a-soft" data-sp-add><%- I('plus') %> Thêm kênh</button></div>
+    <p class="a-muted a-small">Chọn nền tảng rồi nhập số điện thoại / tên trang / link — web tự tạo đường dẫn đúng. Kênh để trống giá trị hoặc tắt công tắc sẽ không hiện.</p>
+    <div class="a-sp-list" data-sp-list>
+      <% cfg.channels.forEach(ch => { %><%- include('partials/support-row', { ch, TYPES }) %><% }) %>
+    </div>
+    <% if (!cfg.channels.length) { %><p class="a-empty" data-sp-empty>Chưa có kênh nào.</p><% } %>
+  </div>
+  <template data-sp-tpl><%- include('partials/support-row', { ch: { type: 'zalo', title: '', desc: '', value: '', on: true }, TYPES }) %></template>
+  <script type="application/json" data-sp-types><%- JSON.stringify(Object.fromEntries(Object.entries(TYPES).map(([k, t]) => [k, { color: t.color, hint: t.hint, desc: t.desc, icon: I(t.icon) }]))).replace(/</g, '\\u003c') %></script>
+  <button class="a-btn a-primary"><%- I('save') %> Lưu cài đặt Hỗ trợ</button>
+</form>
+<%- include('_footer') %>

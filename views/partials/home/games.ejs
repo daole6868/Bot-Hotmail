@@ -1,0 +1,18 @@
+<section class="section">
+  <div class="section-head"><h2><%- I('gamepad') %> <%= block.title || 'Danh mục game' %></h2></div>
+  <div class="game-grid">
+    <% const CC = locals.cardCfg || {}, hideT = CC.al1 === 'hide', showS = CC.st1 !== false; %>
+    <% block.games.forEach(g => { %>
+      <a href="/game/<%= g.slug %>" class="card game-card<%= hideT && !showS ? ' is-bare' : '' %>" style="--c: <%= g.color %>">
+        <div class="thumb">
+          <img src="<%= g.image ? sz(g.image, 'card') : '/img/no-image.svg' %>" alt="<%= g.name %>" loading="lazy">
+          <% if (g.is_hot) { %><span class="ribbon hot">HOT</span><% } %>
+        </div>
+        <div class="card-body">
+          <h3<%- hideT ? ' class="sr-only"' : '' %>><%= g.name %></h3>
+          <% if (showS) { %><p class="card-stats"><span><b><%= g.product_count.toLocaleString('vi-VN') %></b> đang bán</span><span class="sold"><b><%= g.sold.toLocaleString('vi-VN') %></b> đã bán</span></p><% } %>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+</section>

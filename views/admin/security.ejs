@@ -1,0 +1,38 @@
+<%- include('_header') %>
+<div class="a-grid-2">
+  <div class="a-card">
+    <h3><%- I('shield') %> Cơ chế bảo vệ đang bật</h3>
+    <ul class="a-list">
+      <li><%- I('check') %> Mật khẩu băm bcrypt (cost 12), thông tin acc mã hóa AES-256-GCM</li>
+      <li><%- I('check') %> CSRF token cho mọi form, cookie HttpOnly + SameSite</li>
+      <li><%- I('check') %> Chống spam &amp; DDoS: giới hạn theo IP / theo tài khoản, tự khóa IP, ưu tiên khách đã đăng nhập khi quá tải (<a href="/admin/antispam">cài đặt</a>); giới hạn riêng cho đăng nhập, đăng ký, mua hàng, nạp tiền, thử mã KM</li>
+      <li><%- I('check') %> Khóa tài khoản 15 phút sau 5 lần sai mật khẩu; captcha sau 2 lần sai</li>
+      <li><%- I('check') %> Tự chặn IP khi brute-force (≥30 lần sai/giờ) hoặc bot điền honeypot</li>
+      <li><%- I('check') %> Trang admin trả 404 với người không phải admin; phiên admin tự hết hạn sau 60 phút không thao tác</li>
+      <li><%- I('check') %> Giao dịch mua/nạp dùng transaction khóa ghi — không mua trùng, không âm tiền, webhook không cộng 2 lần</li>
+      <li><%- I('check') %> Helmet CSP, chặn iframe, kiểm tra chữ ký file ảnh upload</li>
+      <li><%- I(whitelist.length ? 'check' : 'alert') %> Giới hạn IP admin: <%= whitelist.length ? whitelist.join(', ') : 'Chưa bật (đặt ADMIN_IP_WHITELIST trong .env)' %></li>
+    </ul>
+    <p class="a-small">IP hiện tại của bạn: <code><%= myIp %></code></p>
+    <h3>Tài khoản admin</h3>
+    <table class="a-table"><thead><tr><th>Tài khoản</th><th>Đăng nhập cuối</th></tr></thead><% admins.forEach(a => { %><tr><td><b><%= a.username %></b></td><td class="a-small"><%= H.fmtDate(a.last_login_at) %> · <%= a.last_login_ip || '' %></td></tr><% }) %></table>
+  </div>
+  <div class="a-card">
+    <h3>Chặn IP thủ công</h3>
+    <form method="post" action="/admin/security/block" class="a-inline">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input name="ip" required placeholder="Địa chỉ IP"><input type="number" name="minutes" min="0" placeholder="Phút (trống = vĩnh viễn)"><input name="reason" placeholder="Lý do">
+      <button class="a-btn a-danger">Chặn</button>
+    </form>
+    <h3>IP đăng nhập sai nhiều (24h)</h3>
+    <table class="a-table"><thead><tr><th>IP</th><th>Sai</th><th></th></tr></thead><% topFailIps.forEach(r => { %><tr><td><%= r.ip %></td><td><%= r.n %> lần</td><td>
+      <form method="post" action="/admin/security/block"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="ip" value="<%= r.ip %>"><input type="hidden" name="minutes" value="1440"><input type="hidden" name="reason" value="Đăng nhập sai nhiều"><button class="a-btn a-xs a-danger">Chặn 24h</button></form></td></tr><% }) %>
+      <% if (!topFailIps.length) { %><tr><td colspan="3" class="a-muted">Không có</td></tr><% } %></table>
+    <h3>Danh sách IP bị chặn (<%= blocks.length %>)</h3>
+    <table class="a-table"><thead><tr><th>IP</th><th>Lý do</th><th>Hết hạn</th><th></th></tr></thead>
+      <% blocks.forEach(b => { %><tr><td><%= b.ip %></td><td class="a-small"><%= b.reason %></td><td class="a-small"><%= b.expires_at ? H.fmtDate(b.expires_at) : 'Vĩnh viễn' %></td>
+        <td><form method="post" action="/admin/security/unblock"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="ip" value="<%= b.ip %>"><button class="a-btn a-xs">Bỏ chặn</button></form></td></tr><% }) %>
+    </table>
+  </div>
+</div>
+<%- include('_footer') %>

@@ -1,0 +1,67 @@
+<%- include('_header') %>
+<form method="post" action="/admin/products/save" enctype="multipart/form-data" class="a-grid-2">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="id" value="<%= p.id || '' %>">
+  <div class="a-card">
+    <h3>Thông tin sản phẩm</h3>
+    <label>Danh mục <span class="req">*</span></label>
+    <select name="category_id" required><% categories.forEach(c => { %><option value="<%= c.id %>" <%= p.category_id === c.id ? 'selected' : '' %>><%= c.game_name %> <%- I('chevron-right') %> <%= c.name %></option><% }) %></select>
+    <label>Loại sản phẩm <% if (p.id) { %><small class="a-muted">(không đổi được sau khi tạo)</small><% } %></label>
+    <select name="type" <%= p.id ? 'disabled' : '' %> data-type-select>
+      <option value="account" <%= p.type === 'account' ? 'selected' : '' %>>Acc game (mỗi acc bán 1 lần)</option>
+      <option value="stock" <%= p.type === 'stock' ? 'selected' : '' %>>Thẻ game / Acc random (kho nhiều mã)</option>
+    </select>
+    <label>Tên sản phẩm <span class="req">*</span></label><input name="title" required maxlength="200" value="<%= p.title || '' %>">
+    <label>Mã sản phẩm <small class="a-muted">để trống tự tạo</small></label><input name="code" maxlength="20" value="<%= p.code || '' %>">
+    <div class="a-row">
+      <div><label>Giá bán (đ) <span class="req">*</span></label><input type="number" name="price" required min="0" value="<%= p.price ?? '' %>"></div>
+      <div><label>Giá gốc (gạch ngang)</label><input type="number" name="old_price" min="0" value="<%= p.old_price || '' %>"></div>
+    </div>
+    <div class="a-row">
+      <div><label>Trạng thái</label>
+        <select name="status"><% [['available','Đang bán'],['hidden','Ẩn'],['sold','Đã bán']].forEach(([v,l]) => { %><option value="<%= v %>" <%= p.status === v ? 'selected' : '' %>><%= l %></option><% }) %></select></div>
+      <div><label>&nbsp;</label><label class="a-check"><input type="checkbox" name="is_featured" <%= p.is_featured ? 'checked' : '' %>> Nổi bật trang chủ</label></div>
+    </div>
+    <label>Mô tả</label><textarea name="description" rows="5" maxlength="5000"><%= p.description || '' %></textarea>
+
+  </div>
+
+  <div class="a-card">
+    <h3>Ảnh sản phẩm</h3>
+    <div class="a-images">
+      <% p.imageList.forEach(img => { %><label class="a-img-keep"><img src="<%= img %>"><span><input type="checkbox" name="keep_images" value="<%= img %>" checked> Giữ</span></label><% }) %>
+    </div>
+    <input type="file" name="images" accept="image/*" multiple>
+    <p class="a-muted a-small">Tối đa 10 ảnh, mỗi ảnh ≤ 8MB (tự nén). Bỏ tick "Giữ" để xóa ảnh cũ.</p>
+
+    <div data-type-account <%= p.type === 'stock' ? 'hidden' : '' %>>
+      <h3><%- I('key') %> Thông tin giao cho khách</h3>
+      <textarea name="credentials" rows="5" placeholder="Tài khoản: ...&#10;Mật khẩu: ...&#10;Email gốc: ..."><%= p.credentials || '' %></textarea>
+      <p class="a-muted a-small">Được mã hóa AES-256 trong database, chỉ hiện cho người đã mua.</p>
+    </div>
+    <div data-type-stock <%= p.type !== 'stock' ? 'hidden' : '' %>>
+      <h3><%- I('box') %> Thêm mã vào kho</h3>
+      <textarea name="stock_lines" rows="6" placeholder="Mỗi dòng 1 mã / 1 acc&#10;SERIAL|PIN&#10;user|pass"></textarea>
+      <p class="a-muted a-small">Mỗi dòng là 1 đơn vị hàng. Tự bỏ qua dòng trùng.</p>
+    </div>
+    <button class="a-btn a-primary a-lg"><%- I('save') %> Lưu sản phẩm</button>
+    <a href="<%= p.type === 'stock' ? '/admin/reroll' : '/admin/vip' %>" class="a-btn a-ghost">Quay lại</a>
+  </div>
+</form>
+
+<% if (stock) { %>
+<div class="a-card">
+  <div class="a-card-head"><h3>Kho mã: còn <%= stock.left %> / <%= stock.total %></h3></div>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>#</th><th>Dữ liệu</th><th>Trạng thái</th><th>Thêm lúc</th><th></th></tr></thead>
+    <% stock.rows.forEach(st => { %>
+      <tr><td><%= st.id %></td><td><code class="a-blur" data-reveal-click><%= st.data %></code></td>
+        <td><%- st.is_sold ? `<span class="a-tag blue">Đã bán (đơn ${st.order_id || ''})</span>` : '<span class="a-tag green">Còn</span>' %></td>
+        <td class="a-small a-muted"><%= H.fmtDate(st.created_at) %></td>
+        <td><% if (!st.is_sold) { %><form method="post" action="/admin/stock/<%= st.id %>/delete" data-confirm="Xóa mã này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="a-btn a-xs a-danger">Xóa</button></form><% } %></td></tr>
+    <% }) %>
+  </table></div>
+  <%- include('_pagination', { result: stock, query: {} }) %>
+</div>
+<% } %>
+<%- include('_footer') %>

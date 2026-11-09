@@ -1,0 +1,56 @@
+<%- include('_header') %>
+<form method="post" action="/admin/footer" class="a-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="a-grid-2">
+    <div class="a-card">
+      <h3><%- I('layers') %> Cột giới thiệu</h3>
+      <label>Tiêu đề <small class="a-muted">(trống = tên shop)</small></label>
+      <input name="footer_about_title" maxlength="100" value="<%= s.footer_about_title %>">
+      <label>Nội dung</label>
+      <textarea name="footer_about_text" rows="4" maxlength="1000"><%= s.footer_about_text %></textarea>
+
+      <h3 class="a-mt"><%- I('globe') %> Mạng xã hội <small class="a-muted a-small">(để trống = ẩn)</small></h3>
+      <div class="a-row">
+        <div><label>Facebook</label><input name="social_facebook" value="<%= s.social_facebook %>" placeholder="https://facebook.com/..."></div>
+        <div><label>Zalo (link hoặc số điện thoại)</label><input name="social_zalo" value="<%= s.social_zalo %>" placeholder="https://zalo.me/09..."></div>
+      </div>
+      <div class="a-row">
+        <div><label>TikTok</label><input name="social_tiktok" value="<%= s.social_tiktok %>" placeholder="https://tiktok.com/@..."></div>
+        <div><label>YouTube</label><input name="social_youtube" value="<%= s.social_youtube %>" placeholder="https://youtube.com/@..."></div>
+      </div>
+      <label>Telegram</label><input name="social_telegram" value="<%= s.social_telegram %>" placeholder="https://t.me/...">
+
+      <h3 class="a-mt">Dòng bản quyền (cuối trang)</h3>
+      <input name="footer_text" maxlength="300" value="<%= s.footer_text %>">
+    </div>
+
+    <div class="a-card">
+      <h3><%- I('list') %> Các cột liên kết</h3>
+      <p class="a-muted a-small">Bấm vào từng cột để mở. Mỗi mục gồm tên hiển thị và link (link để trống = chỉ hiện chữ). Để trống tiêu đề = ẩn cột.</p>
+      <input type="hidden" name="fc_rows" value="1">
+      <% [1, 2, 3].forEach(n => {
+           const items = String(s['footer_col' + n + '_links'] || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => { const i = l.lastIndexOf('|'); return { text: (i > 0 ? l.slice(0, i) : l).trim(), url: i > 0 ? l.slice(i + 1).trim() : '' }; });
+           const title = s['footer_col' + n + '_title']; %>
+        <details class="a-footer-col" data-fc="<%= n %>">
+          <summary><span class="a-fc-sum"><b>Cột <%= n + 1 %></b><span data-fc-title><%= title || '(đang ẩn)' %></span><small data-fc-count><%= items.length %> mục</small></span><%- I('chevron-right') %></summary>
+          <label>Tiêu đề cột</label>
+          <input name="footer_col<%= n %>_title" maxlength="100" value="<%= title %>" placeholder="VD: Hỗ trợ (để trống = ẩn cột)" data-fc-title-in>
+          <label>Các mục</label>
+          <div class="a-fc-list" data-fc-list>
+            <% items.forEach(it => { %>
+            <div class="a-fc-row" data-fc-row>
+              <input name="fc<%= n %>_name" maxlength="120" value="<%= it.text %>" placeholder="Tên mục">
+              <input name="fc<%= n %>_url" maxlength="300" value="<%= it.url %>" placeholder="Link: /trang hoặc https://...">
+              <div class="a-fc-act"><button type="button" class="a-icon-btn" data-fc-up title="Lên">↑</button><button type="button" class="a-icon-btn" data-fc-down title="Xuống">↓</button><button type="button" class="a-icon-btn a-icon-danger" data-fc-del title="Xóa"><%- I('trash') %></button></div>
+            </div>
+            <% }) %>
+          </div>
+          <button type="button" class="a-btn a-soft a-xs" data-fc-add><%- I('plus') %> Thêm mục</button>
+          <template data-fc-tpl><div class="a-fc-row" data-fc-row><input name="fc<%= n %>_name" maxlength="120" placeholder="Tên mục"><input name="fc<%= n %>_url" maxlength="300" placeholder="Link: /trang hoặc https://..."><div class="a-fc-act"><button type="button" class="a-icon-btn" data-fc-up title="Lên">↑</button><button type="button" class="a-icon-btn" data-fc-down title="Xuống">↓</button><button type="button" class="a-icon-btn a-icon-danger" data-fc-del title="Xóa"><%- I('trash') %></button></div></div></template>
+        </details>
+      <% }) %>
+    </div>
+  </div>
+  <div class="a-sticky-save"><button class="a-btn a-primary a-lg"><%- I('save') %> Lưu footer</button> <a href="/" target="_blank" class="a-btn a-ghost"><%- I('globe') %> Xem ngoài web</a></div>
+</form>
+<%- include('_footer') %>

@@ -1,0 +1,31 @@
+<a href="/product/<%= p.code %>" class="card product-card<%= p.roll ? ' has-acc' : '' %>">
+  <div class="thumb">
+    <img src="<%= p.thumb || p.imageList[0] || '/img/no-image.svg' %>" alt="<%= p.title %>" loading="lazy">
+    <span class="code-tag">#<%= p.code %></span>
+    <% if (p.discountPercent) { %><span class="ribbon ribbon-right">-<%= p.discountPercent %>%</span><% } %>
+    <% if (p.type === 'stock' && !(p.stock_left > 0)) { %><span class="type-tag">Hết hàng</span><% } %>
+  </div>
+  <div class="card-body">
+    <% const ht = locals.ht === 'h2' ? 'h2' : 'h3', CC = locals.cardCfg || {}; %><<%= ht %> class="product-title<%= CC.al3 === 'hide' ? ' sr-only' : '' %>" title="<%= p.title %>"><%= p.title %></<%= ht %>>
+    <%# Reroll (kho nhiều acc): số còn / đã bán, bật tắt ở Admin -> Thẻ sản phẩm (cấp 3) %>
+    <% if (p.type === 'stock' && CC.st3 !== false) { %><p class="card-stats"><span><b><%= (p.stock_left || 0).toLocaleString('vi-VN') %></b> đang bán</span><span class="sold"><b><%= (p.sold_count || 0).toLocaleString('vi-VN') %></b> đã bán</span></p><% } %>
+    <% if (p.roll) { %>
+      <%# Icon nhân vật / vũ khí: mỗi loại 1 dòng, tự chạy ngang nối đuôi (main.js) %>
+      <% [p.roll.c, p.roll.w].filter(l => l.length).forEach(list => { %>
+        <div class="pc-roll<%= locals.cardCfg && !cardCfg.scroll ? ' static' : '' %>" <%- locals.cardCfg && !cardCfg.scroll ? '' : 'data-roll data-speed="' + (locals.cardCfg ? cardCfg.speed : 1.6) + '"' %>><div class="pc-track"><% list.forEach(it => { %><span class="pc-ic r<%= it.r %>" title="<%= it.n %>"><% if (it.i) { %><img src="<%= it.i %>" alt="<%= it.n %>" loading="lazy" width="34" height="34"><% } else { %><%= it.n.slice(0, 1) %><% } %></span><% }) %></div></div>
+      <% }) %>
+    <% } %>
+    <% if (p.attrList.length) { %>
+      <ul class="attrs<%= p.roll ? ' attrs-acc' : '' %>">
+        <% p.attrList.slice(0, 4).forEach(a => { %><li><span><%= a.k %></span><b><%= a.v %></b></li><% }) %>
+      </ul>
+    <% } %>
+    <div class="buy-row">
+      <div class="price-box">
+        <% if (p.old_price && p.old_price > p.price) { %><del><%= H.money(p.old_price) %></del><% } %>
+        <strong class="price"><%= H.money(p.price) %></strong>
+      </div>
+      <span class="btn btn-primary btn-view" aria-hidden="true"><%- I('chevron-right') %></span>
+    </div>
+  </div>
+</a>
