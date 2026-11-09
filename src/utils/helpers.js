@@ -129,8 +129,13 @@ function couponLayout(settings) {
   return { w, h, pc, mobile, tablet: Math.min(pc, 3), vertical: w / h < 1.15 };
 }
 
+/** Màu icon cày thuê / nạp game: màu mặc định lúc tạo (tím danh mục, cam gói) hoặc trống -> theo "Màu chính" giao diện của khách */
+function icColor(c) {
+  return !c || /^#(8b5cf6|f59e0b)$/i.test(c) ? 'var(--primary-ink)' : c;
+}
+
 module.exports = {
-  couponLayout, formatDelivered, bannerSize, BANNER_DEFAULT_SIZE,
+  icColor, couponLayout, formatDelivered, bannerSize, BANNER_DEFAULT_SIZE,
   slugify, money, fmtDate, fmtDuration, toInputDate, fromInputDate, now, toInt, str, bool,
   paginate, pageUrl, parseJSON, clientIp, escapeCsv,
 };

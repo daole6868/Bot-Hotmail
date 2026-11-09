@@ -1,12 +1,9 @@
 <%- include('../partials/header') %>
 
-<div class="tabs-scroll">
-  <% siblings.forEach(c => { %>
-    <a href="/game/<%= game.slug %>/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><%= c.name %></a>
-  <% }) %>
+<%# Đầu trang cùng kiểu trang Nạp game / gói Cày thuê: biểu tượng + tên danh mục · tên game %>
+<div class="bp-head">
+  <h1><%- I(category.sale_type === 'reroll' ? 'refresh' : 'star') %> <%= category.name %> <span class="muted"><span class="sep">·</span> <%= game.name %> · <%= result.total.toLocaleString('vi-VN') %> sản phẩm</span></h1>
 </div>
-
-<div class="section-head"><h1><%= category.name %> <span class="muted small">(<%= result.total %> sản phẩm)</span></h1></div>
 
 <%- include('../partials/search-filter', { filter, query }) %>
 

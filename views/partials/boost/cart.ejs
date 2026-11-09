@@ -5,7 +5,7 @@
   <% } %>
   <% cart.items.forEach(it => { %>
     <div class="ck-row" data-cart-row="<%= it.id %>">
-      <span class="bx-ico bx-ico-sm" style="--ic:<%= it.icon_color %>"><%- I(it.icon) %></span>
+      <span class="bx-ico bx-ico-sm" style="--ic:<%= H.icColor(it.icon_color) %>"><%- I(it.icon) %></span>
       <div class="ck-info">
         <b><%= it.name %></b>
         <span class="muted small"><%= it.category_name %> · <%= H.money(it.price) %>/<%= it.unit %></span>

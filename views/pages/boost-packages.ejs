@@ -3,11 +3,11 @@
    const loginUrl = '/login?next=' + encodeURIComponent(here);
    const kName = topup ? 'nạp game' : 'cày thuê'; %>
 <div class="bp-head">
-  <% if (topup) { %><h1><%- I('g-gem') %> <%= parent.name %> <span class="muted">· <%= game.name %></span></h1>
-  <% } else { %><h1><%- I(category.icon) %> <%= category.name %> <span class="muted">· <%= parent.name %></span></h1><% } %>
+  <% if (topup) { %><h1><%- I('g-gem') %> <%= parent.name %> <span class="muted"><span class="sep">·</span> <%= game.name %></span></h1>
+  <% } else { %><h1><%- I(category.icon) %> <%= category.name %> <span class="muted"><span class="sep">·</span> <%= parent.name %></span></h1><% } %>
   <% if (siblings.length > 1) { %>
     <div class="bp-chips">
-      <% siblings.forEach(c => { %><a href="/game/<%= game.slug %>/<%= parent.slug %>/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><span style="color:<%= c.icon_color %>"><%- I(c.icon) %></span> <%= c.name %></a><% }) %>
+      <% siblings.forEach(c => { %><a href="/game/<%= game.slug %>/<%= parent.slug %>/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><span style="color:<%= H.icColor(c.icon_color) %>"><%- I(c.icon) %></span> <%= c.name %></a><% }) %>
     </div>
   <% } %>
 </div>

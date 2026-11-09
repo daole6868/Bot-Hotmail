@@ -1,6 +1,6 @@
 /* ============ ShopAcc - giao diện khách ============ */
 :root {
-  /* Nền "mực đêm" + hệ màu độ hiếm gacha: vàng 5★ = hành động / giá / VIP, tím 4★ = hàng thường / đường dẫn */
+  /* Nền "mực đêm". Mọi màu nhấn (nút, giá, đường dẫn, số liệu) đi theo "Màu chính" trong Cài đặt giao diện (theme-init.js) */
   --bg: #0c1019;
   --bg2: #121827;
   --card: #171e2f;
@@ -8,14 +8,10 @@
   --border: #29334c;
   --text: #e8ebf3;
   --muted: #9aa3ba;
-  --r5: #e3ae4f;
-  --r5-deep: #b9822a;
-  --r4: #ab8fe8;
-  --r4-deep: #7b5fc8;
   --primary: #dba443;
   --primary2: #f0c46c;
-  --accent: var(--r5);
-  --accent2: var(--r5-deep);
+  --accent: var(--primary-ink);
+  --accent2: var(--primary);
   --green: #22c55e;
   --red: #ef4444;
   --blue: #3b82f6;
@@ -27,8 +23,8 @@
   --text-strong: #fff;
   --on-primary: #1d1404;
   --primary-ink: var(--primary2);
-  --link: var(--r4);
-  --link-hover: color-mix(in srgb, var(--r4) 60%, #fff);
+  --link: var(--primary-ink);
+  --link-hover: color-mix(in srgb, var(--primary-ink) 70%, var(--text-strong));
   --primary-soft: color-mix(in srgb, var(--primary2) 55%, #fff);
   --topbar-bg: color-mix(in srgb, var(--bg) 92%, transparent);
   --catbar-bg: color-mix(in srgb, var(--bg2) 80%, transparent);
@@ -58,8 +54,8 @@ code { background: var(--card2); padding: 2px 6px; border-radius: calc(6px * var
 .btn:hover { filter: brightness(1.12); color: var(--text-strong); transform: translateY(-1px); }
 .btn-primary { background: var(--primary); color: var(--on-primary); }
 .btn-primary:hover { color: var(--on-primary); }
-.btn-accent { background: var(--r5); color: #1d1404; }
-.btn-accent:hover { color: #1d1404; }
+.btn-accent { background: var(--primary); color: var(--on-primary); }
+.btn-accent:hover { color: var(--on-primary); }
 .btn-danger { background: var(--red); color: #fff; }
 .btn-ghost { background: transparent; border: 1px solid var(--border); }
 .btn-sm { padding: 7px 12px; font-size: .88rem; } .btn-xs { padding: 4px 9px; font-size: .78rem; border-radius: calc(7px * var(--rk)); }
@@ -361,11 +357,11 @@ del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
 .user-nav a, .catbar a, .dropdown-menu a { display: inline-flex; align-items: center; gap: 6px; }
 .dropdown-menu a { display: flex; }
 
-/* ---------- Số liệu trên thẻ game / danh mục: 1 dòng "12 đang bán · 3 đã bán" ---------- */
-.card-stats { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: .86rem; color: var(--muted); line-height: 1.4; }
-.card-stats span + span::before { content: "·"; margin-right: 8px; color: var(--border); font-weight: 700; }
+/* ---------- Số liệu "đang bán / đã bán" trên thẻ (bật tắt theo cấp: Admin -> Thẻ sản phẩm) ---------- */
+.card-stats { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; font-size: .86rem; color: var(--muted); line-height: 1.4; }
+.card-stats span { white-space: nowrap; }
 .card-stats b { color: var(--text-strong); font-weight: 700; font-variant-numeric: tabular-nums; }
-.card-stats .sold b { color: var(--t-green, #4ade80); }
+.card-stats .sold b { color: var(--primary-ink); }
 .game-card h3, .cat-card h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- Footer tùy chỉnh ---------- */
@@ -455,7 +451,7 @@ a.card:hover .btn-view { filter: brightness(1.1); }
 .pd-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: .85rem; }
 .pd-meta span { display: inline-flex; align-items: center; gap: 5px; }
 .pd-meta b { color: var(--text); }
-.pd-price { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border-radius: calc(14px * var(--rk)); background: color-mix(in srgb, var(--r5) 9%, var(--card)); border: 1px solid color-mix(in srgb, var(--r5) 32%, var(--border)); }
+.pd-price { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border-radius: calc(14px * var(--rk)); background: color-mix(in srgb, var(--primary) 9%, var(--card)); border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--border)); }
 .pd-price-label { font-size: .78rem; color: var(--muted); margin-bottom: 2px; }
 .pd-price .price { font-size: 2rem; line-height: 1.1; }
 .pd-old { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
@@ -521,8 +517,7 @@ a.card:hover .btn-view { filter: brightness(1.1); }
   .product-card .attrs { font-size: .75rem; padding: 6px 8px; gap: 3px; }
   /* Danh mục: bỏ "Chỉ từ" cho gọn */
   .cat-price { display: none !important; }
-  .card-stats { font-size: .8rem; gap: 2px 6px; }
-  .card-stats span + span::before { margin-right: 6px; }
+  .card-stats { font-size: .8rem; gap: 2px 10px; }
   /* Giá + nút mũi tên cùng 1 hàng */
   .buy-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
   .price-box .price { font-size: .95rem; }
@@ -609,8 +604,6 @@ html[data-theme="light"] {
   --text-strong: #0a0d16; --shadow: 0 6px 20px rgba(22, 27, 41, .08); --shadow-hover: 0 10px 26px rgba(22, 27, 41, .14);
   --primary-ink: color-mix(in srgb, var(--primary) 66%, #000);
   --primary-soft: color-mix(in srgb, var(--primary) 80%, #000);
-  --r5: #c58a1f; --r5-deep: #9a6a10; --r4: #6c4fc2; --r4-deep: #563aa8;
-  --link: #5f43b8; --link-hover: #432b94;
   --t-green: #15803d; --t-red: #b91c1c; --t-blue: #1d4ed8; --t-yellow: #a16207;
 }
 html[data-theme="light"][data-bg="purple"] { --bg: #f6f4fd; --bg2: #eeeaf9; --card: #fff; --card2: #f1eefb; --border: #e1dbf3; --muted: #6b6590; --text: #1e1a33; }
@@ -619,7 +612,6 @@ html[data-theme="light"][data-bg="gray"]  { --bg: #f4f4f5; --bg2: #ececee; --car
 html[data-theme="light"][data-bg="zinc"]  { --bg: #fafafa; --bg2: #f0f0f1; --card: #fff; --card2: #f4f4f5; --border: #e4e4e7; --muted: #71717a; --text: #09090b; }
 html[data-theme="light"][data-bg="stone"] { --bg: #f7f5f3; --bg2: #eeebe7; --card: #fff; --card2: #f3f0ec; --border: #e7e2dc; --muted: #78716c; --text: #1c1917; }
 html[data-theme="light"] .card { box-shadow: var(--shadow); }
-html[data-theme="light"] .price, html[data-theme="light"] .hl { color: #93640a; }
 html[data-theme="dark"] { color-scheme: dark; }
 
 /* =====================================================================
@@ -896,7 +888,7 @@ form :is(input, select, textarea, .captcha-row, .pw-wrap, .cf-turnstile) + :is(.
 .text-ok { color: var(--t-green); } .text-err { color: var(--t-red); } .right { text-align: right; }
 .boost-tile .thumb { display: grid; place-items: center; background: color-mix(in srgb, var(--primary) 14%, var(--bg2)); }
 .boost-tile-art .ico { width: 64px; height: 64px; color: var(--primary-ink); }
-.boost-tile-badge { position: absolute; top: 8px; left: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 99px; background: var(--accent); color: #1a1300; font-size: .72rem; font-weight: 800; }
+.boost-tile-badge { position: absolute; top: 8px; left: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 99px; background: var(--primary); color: var(--on-primary); font-size: .75rem; font-weight: 800; }
 .boost-tile-badge .ico { width: 13px; height: 13px; }
 
 .bx-list { position: relative; --cols: var(--cols-pc, 4); --gap: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(max(var(--min-w, 160px), calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols))), 1fr)); gap: var(--gap); margin-bottom: 18px; }
@@ -940,7 +932,7 @@ a.bx-icon { align-items: center; }
 .bx-add-ico.added { background: var(--t-green, #22c55e); }
 .bx-side { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; text-align: right; }
 .bx-side .ico { width: 18px; height: 18px; color: var(--muted); }
-.bx-incart { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 99px; background: var(--accent); color: #1a1300; font-size: .72rem; font-weight: 800; vertical-align: 2px; }
+.bx-incart { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 99px; background: var(--primary); color: var(--on-primary); font-size: .75rem; font-weight: 800; vertical-align: 2px; }
 .bx-incart .ico { width: 12px; height: 12px; }
 .bx-thumb .bx-incart { position: absolute; top: 8px; right: 8px; }
 .bx-badge { position: absolute; top: -1px; left: -1px; z-index: 1; max-width: 70%; padding: 2px 9px; border-radius: var(--radius) 0 calc(10px * var(--rk)) 0; background: #dc2626; color: #fff; font-size: .75rem; font-weight: 800; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
@@ -1346,7 +1338,6 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 /* Thẻ Acc VIP có dữ liệu HoYoLAB: dòng icon nhân vật / vũ khí tự chạy ngang + 4 thông tin dạng chấm */
 .product-card.has-acc .product-title { font-size: var(--pc-title, 14.4px); min-height: 2.5em; }
 .product-card.has-acc .price-box .price { font-size: var(--pc-price, 16px); }
-.product-card.has-acc .btn-view { font-size: var(--pc-btn, 13px); }
 .pc-roll { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); }
 .product-card .card-body > .pc-roll + .pc-roll { margin-top: -4px !important; }
 .pc-track { display: flex; width: max-content; }
@@ -1363,7 +1354,7 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
 .product-card .attrs.attrs-acc li::before { content: '•'; color: var(--muted); }
 .product-card .attrs.attrs-acc span::after { content: ':'; }
 .product-card .attrs.attrs-acc b { text-align: left; }
-@media (max-width: 560px) { .pc-ic { width: var(--mb-ic, 21px); height: var(--mb-ic, 21px); margin-right: 3px; border-radius: calc(5px * var(--rk)); font-size: .6rem; } .product-card .card-body > .pc-roll + .pc-roll { margin-top: -6px !important; } .product-card .attrs.attrs-acc { grid-template-columns: auto auto; justify-content: space-between; gap: 1px 6px; font-size: var(--mb-info, 9.3px); } .product-card .attrs.attrs-acc li { gap: 3px; } .product-card.has-acc .product-title { font-size: var(--mb-title, 11.8px); min-height: 2.4em; } .product-card.has-acc .price-box .price { font-size: var(--mb-price, 12.5px); } .product-card.has-acc .btn-view { padding: 5px 9px; font-size: var(--mb-btn, 11.2px); } }
+@media (max-width: 560px) { .pc-ic { width: var(--mb-ic, 21px); height: var(--mb-ic, 21px); margin-right: 3px; border-radius: calc(5px * var(--rk)); font-size: .6rem; } .product-card .card-body > .pc-roll + .pc-roll { margin-top: -6px !important; } .product-card .attrs.attrs-acc { grid-template-columns: auto auto; justify-content: space-between; gap: 1px 6px; font-size: var(--mb-info, 9.3px); } .product-card .attrs.attrs-acc li { gap: 3px; } .product-card.has-acc .product-title { font-size: var(--mb-title, 11.8px); min-height: 2.4em; } .product-card.has-acc .price-box .price { font-size: var(--mb-price, 12.5px); } }
 .pc-roll.static { overflow-x: auto; scrollbar-width: none; }
 .pc-roll.static::-webkit-scrollbar { display: none; }
 
@@ -1444,4 +1435,37 @@ html.ch-lock:has(.ch-backdrop.open), html.ch-lock:has(.ch-backdrop.open) body { 
   .as-datas { grid-template-columns: 1fr; gap: 10px; }
   .as-dbox { padding: 10px; }
   .as-data { max-height: 170px; font-size: 11px; }
+}
+
+/* =====================================================================
+   Tiêu đề + số liệu theo cấp (Admin -> Giao diện -> Thẻ sản phẩm)
+   Cấp 1 game · 2 danh mục · 3 acc / reroll / dịch vụ cày thuê · 4 gói. Biến --alN / --jcN do card-ui.js xuất.
+   ===================================================================== */
+.game-card h3 { text-align: var(--al1, left); }
+.game-card .card-stats { justify-content: var(--jc1, flex-start); }
+.cat-card h3, .cat-card .card-desc { text-align: var(--al2, left); }
+.cat-card .card-stats { justify-content: var(--jc2, flex-start); }
+.product-card .product-title, .bx-cat h3 { text-align: var(--al3, left); }
+.product-card .card-stats, .bx-cat .card-stats { justify-content: var(--jc3, flex-start); }
+.bx-pkg h3, .bx-pkg .bx-desc { text-align: var(--al4, left); }
+.bx-pkg .bx-sub, .bx-pkg .bx-eta, .bx-pkg .bx-foot { justify-content: var(--jc4, flex-start); }
+/* Đầu trang (Acc VIP / Reroll / Nạp game / gói Cày thuê): điện thoại cho dòng phụ xuống hàng riêng, không mở đầu bằng dấu chấm */
+@media (max-width: 720px) { .bp-head h1 > .muted { flex-basis: 100%; } .bp-head h1 .sep { display: none; } }
+/* Thẻ dịch vụ cày thuê dùng chung bố cục thẻ danh mục: tên -> số liệu -> "Chỉ từ ... giá" */
+.bx-cat .price-row { margin: 0; align-items: center; }
+.bx-cat.bx-image .bx-body > .card-stats { margin-top: auto; }
+.bx-cat.bx-image .bx-body > .card-stats + .bx-foot { margin-top: 0; }
+/* Ẩn tiêu đề + tắt số liệu: khung ôm sát ảnh, không để khoảng trống */
+.game-card.is-bare { padding-bottom: 10px; }
+.game-card.is-bare .card-body { padding: 0; gap: 0; }
+@media (max-width: 720px) {
+  .game-card.is-bare, .cat-card.is-bare { padding-bottom: 7px; }
+  .cat-card.is-bare .card-body { display: none; }
+}
+/* Nút mũi tên thẻ Acc VIP: cỡ theo "Nút mũi tên" trong Thẻ sản phẩm */
+.product-card.has-acc .btn-view { width: calc(var(--pc-btn, 13px) * 2.9); height: calc(var(--pc-btn, 13px) * 2.9); }
+.product-card.has-acc .btn-view .ico { width: calc(var(--pc-btn, 13px) * 1.5); height: calc(var(--pc-btn, 13px) * 1.5); }
+@media (max-width: 560px) {
+  .product-card.has-acc .btn-view { width: calc(var(--mb-btn, 11.2px) * 2.9); height: calc(var(--mb-btn, 11.2px) * 2.9); }
+  .product-card.has-acc .btn-view .ico { width: calc(var(--mb-btn, 11.2px) * 1.5); height: calc(var(--mb-btn, 11.2px) * 1.5); }
 }

@@ -2,34 +2,40 @@
   1 ô danh mục / gói cày thuê / nạp game.  it, kind: 'cat' | 'pkg', mode: 'image' | 'icon', href (danh mục), inCart (số lượng trong giỏ), loginUrl, topup
 %>
 <% const isCat = kind === 'cat';
-   const icoBox = `<span class="bx-ico" style="--ic:${it.icon_color || '#8b5cf6'}">${I(it.icon || 'star')}</span>`;
+   const icC = H.icColor(it.icon_color); // màu mặc định -> theo màu giao diện, màu admin tự chọn giữ nguyên
+   const icoBox = `<span class="bx-ico" style="--ic:${icC}">${I(it.icon || 'star')}</span>`;
+   const CC = locals.cardCfg || {}, isTp = typeof topup !== 'undefined' && topup;
+   const hideT = isCat && CC.al3 === 'hide';
+   const statsHtml = isCat && CC.st3 !== false
+     ? `<p class="card-stats"><span><b>${(it.package_count || 0).toLocaleString('vi-VN')}</b> gói</span><span class="sold"><b>${(it.sold || 0).toLocaleString('vi-VN')}</b> ${isTp ? 'đã nạp' : 'đã thuê'}</span></p>` : '';
    const priceHtml = isCat
      ? (it.min_price != null ? `<span class="muted small">Từ</span> <b class="price">${H.money(it.min_price)}</b>` : '<span class="muted small">Chưa có gói</span>')
      : `${it.old_price && it.old_price > it.price ? `<del class="muted small">${H.money(it.old_price)}</del> ` : ''}<b class="price">${H.money(it.price)}</b><span class="muted small">/${it.unit}</span>`;
 %>
 <% const hasBadge = !isCat && !!it.badge;
-   const loginTxt = typeof topup !== 'undefined' && topup ? 'Đăng nhập để nạp' : 'Đăng nhập để thuê'; %>
+   const loginTxt = isTp ? 'Đăng nhập để nạp' : 'Đăng nhập để thuê'; %>
 <% if (isCat) { %>
-  <a href="<%= href %>" class="bx-item bx-<%= mode %> card">
+  <a href="<%= href %>" class="bx-item bx-cat bx-<%= mode %> card">
     <% if (mode === 'image') { %>
-      <div class="bx-thumb"><% if (it.image) { %><img src="<%= it.image %>" alt="<%= it.name %>" loading="lazy"><% } else { %><span class="bx-thumb-ico" style="--ic:<%= it.icon_color %>"><%- I(it.icon) %></span><% } %></div>
+      <div class="bx-thumb"><% if (it.image) { %><img src="<%= it.image %>" alt="<%= it.name %>" loading="lazy"><% } else { %><span class="bx-thumb-ico" style="--ic:<%= icC %>"><%- I(it.icon) %></span><% } %></div>
       <div class="bx-body">
-        <h3><%= it.name %></h3>
-        <div class="bx-foot"><span class="bx-price"><%- priceHtml %></span><span class="bx-meta"><%- I('layers') %> <%= it.package_count %> gói</span></div>
+        <h3<%- hideT ? ' class="sr-only"' : '' %>><%= it.name %></h3>
+        <%- statsHtml %>
+        <div class="price-row bx-foot"><span class="muted small">Chỉ từ</span><strong class="price"><%= it.min_price != null ? H.money(it.min_price) : 'Liên hệ' %></strong></div>
       </div>
     <% } else { %>
       <%- icoBox %>
       <div class="bx-body">
-        <h3><%= it.name %></h3>
-        <p class="muted small bx-desc"><%= it.package_count %> gói dịch vụ</p>
+        <h3<%- hideT ? ' class="sr-only"' : '' %>><%= it.name %></h3>
+        <%- statsHtml %>
       </div>
       <div class="bx-side"><span class="bx-price"><%- priceHtml %></span><%- I('chevron-right') %></div>
     <% } %>
   </a>
 <% } else { %>
-  <div class="bx-item bx-<%= mode %> card<%= it.is_paused ? ' is-paused' : '' %>" data-pkg="<%= it.id %>">
+  <div class="bx-item bx-pkg bx-<%= mode %> card<%= it.is_paused ? ' is-paused' : '' %>" data-pkg="<%= it.id %>">
     <% if (mode === 'image') { %>
-      <div class="bx-thumb"><% if (it.image) { %><img src="<%= it.image %>" alt="<%= it.name %>" loading="lazy"><% } else { %><span class="bx-thumb-ico" style="--ic:<%= it.icon_color %>"><%- I(it.icon) %></span><% } %>
+      <div class="bx-thumb"><% if (it.image) { %><img src="<%= it.image %>" alt="<%= it.name %>" loading="lazy"><% } else { %><span class="bx-thumb-ico" style="--ic:<%= icC %>"><%- I(it.icon) %></span><% } %>
         <% if (inCart) { %><span class="bx-incart" data-incart><%- I('cart') %> <%= inCart %></span><% } %><% if (hasBadge) { %><span class="bx-badge"><%= it.badge %></span><% } %></div>
       <div class="bx-body">
         <h3><%= it.name %></h3>

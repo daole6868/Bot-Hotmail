@@ -222,9 +222,8 @@ router.get('/game/:slug/:cat', (req, res, next) => {
   if (q.server) pageQuery.server = q.server;
   if (q.c.length) pageQuery.c = q.c;
   if (q.w.length) pageQuery.w = q.w;
-  const siblings = db.prepare('SELECT name, slug FROM categories WHERE game_id = ? AND is_active = 1 ORDER BY sort_order, id').all(game.id);
   res.render('pages/category', {
-    title: `${category.name} - ${game.name}`, game, category, siblings, result, query: q, filter, pageQuery,
+    title: `${category.name} - ${game.name}`, game, category, result, query: q, filter, pageQuery,
     seoTitle: category.seo_title, metaDesc: category.seo_desc || category.description || `${category.name} ${game.name}: ${result.total} tài khoản đang bán, giá chỉ từ ${result.rows.length ? Math.min(...result.rows.map((r) => r.price)).toLocaleString('vi-VN') + 'đ' : 'rẻ'}. Giao acc tự động 24/7.`,
     metaImage: category.image || game.image,
     breadcrumb: [{ name: game.name, url: `/game/${game.slug}` }, { name: category.name }],

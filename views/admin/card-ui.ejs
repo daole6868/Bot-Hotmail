@@ -20,6 +20,20 @@
     </div>
   </div>
   <div class="a-card">
+    <h3><%- I('layers') %> Tiêu đề & số liệu theo cấp</h3>
+    <div class="a-table-wrap"><table class="a-table a-nocards">
+      <thead><tr><th>Cấp</th><th>Căn tiêu đề</th><th>Hiện "đang bán / đã bán"</th></tr></thead>
+      <% LEVELS.forEach(([n, label, hint, stats]) => { %>
+        <tr>
+          <td><b><%= label %></b><br><small class="a-muted"><%= hint %></small></td>
+          <td><select name="al<%= n %>" aria-label="Căn tiêu đề <%= label %>"><% Object.entries(ALIGNS).filter(([k]) => !(k === 'hide' && n === 4)).forEach(([k, l]) => { %><option value="<%= k %>" <%= c['al' + n] === k ? 'selected' : '' %>><%= l %></option><% }) %></select></td>
+          <td><% if (stats) { %><label class="a-check a-mt0"><input type="checkbox" name="st<%= n %>" value="1" <%= c['st' + n] ? 'checked' : '' %>> <span>Bật</span></label><% } else { %><span class="a-muted">Không có</span><% } %></td>
+        </tr>
+      <% }) %>
+    </table></div>
+    <p class="a-field-hint">Tắt số liệu (hoặc chọn Ẩn tiêu đề) thì thẻ tự co lại, không để khoảng trống.</p>
+  </div>
+  <div class="a-card">
     <h3><%- I('image') %> Cỡ icon & chữ thẻ Acc VIP <small class="a-muted">(px)</small></h3>
     <div class="a-table-wrap"><table class="a-table a-nocards">
       <thead><tr><th>Phần</th><th>Máy tính</th><th>Điện thoại</th></tr></thead>
