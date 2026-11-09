@@ -1,21 +1,21 @@
 <%- include('../partials/header') %>
 <% const inCart = Object.fromEntries(cart.items.map((i) => [i.id, i.qty]));
    const loginUrl = '/login?next=' + encodeURIComponent(here);
-   const kName = topup ? 'nạp game' : 'cày thuê'; %>
-<div class="bp-head">
-  <% if (topup) { %><h1><%- I('g-gem') %> <%= parent.name %> <span class="muted"><span class="sep">·</span> <%= game.name %></span></h1>
-  <% } else { %><h1><%- I(category.icon) %> <%= category.name %> <span class="muted"><span class="sep">·</span> <%= parent.name %></span></h1><% } %>
-  <% if (siblings.length > 1) { %>
-    <div class="bp-chips">
-      <% siblings.forEach(c => { %><a href="/game/<%= game.slug %>/<%= parent.slug %>/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><span style="color:<%= H.icColor(c.icon_color) %>"><%- I(c.icon) %></span> <%= c.name %></a><% }) %>
-    </div>
-  <% } %>
-</div>
+   const kName = topup ? 'nạp game' : 'cày thuê';
+   const CC = locals.cardCfg || {}, showHero = topup ? CC.hero2 !== false : CC.hero3 === true; %>
+<%# Nạp game là cấp 2, trang gói của dịch vụ cày thuê là cấp 3 %>
+<%- include('../partials/page-head', { hero: showHero, img: (topup ? parent.image : category.image || parent.image) || game.image,
+  name: topup ? parent.name : category.name, sub: topup ? game.name : parent.name, desc: showHero ? desc : '', icon: topup ? 'g-gem' : category.icon, color: game.color }) %>
+<% if (siblings.length > 1) { %>
+  <div class="bp-chips">
+    <% siblings.forEach(c => { %><a href="/game/<%= game.slug %>/<%= parent.slug %>/<%= c.slug %>" class="chip <%= c.slug === category.slug ? 'active' : '' %>"><span style="color:<%= H.icColor(c.icon_color) %>"><%- I(c.icon) %></span> <%= c.name %></a><% }) %>
+  </div>
+<% } %>
 
 <div class="bp-layout" data-boost-page data-game="<%= game.id %>"<% if (topup) { %> data-cat="<%= parent.id %>"<% } %>>
   <section class="bp-main">
     <div class="bp-box card">
-      <% if (desc) { %><div class="bp-desc prewrap"><%= desc %></div><% } %>
+      <% if (desc && !showHero) { %><div class="bp-desc prewrap"><%= desc %></div><% } %>
       <% if (!packages.length) { %><div class="bp-empty muted"><%= topup ? 'Chưa có gói nạp nào.' : 'Danh mục này chưa có gói dịch vụ nào.' %></div><% } %>
       <% if (packages.length) { %>
       <div class="bx-list bx-list-<%= disp.mode %>" style="--cols-pc:<%= disp.colsPc %>;--cols-m:<%= disp.colsM %>" data-scroll-max="<%= disp.max %>">

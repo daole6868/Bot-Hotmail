@@ -1,0 +1,20 @@
+<%#
+  Đầu trang dùng chung cho các cấp (trang game, Acc VIP / Reroll, Cày thuê, Nạp game, dịch vụ cày thuê):
+  bật = khung giới thiệu (ảnh + tên + dòng phụ + mô tả), tắt = dòng tiêu đề gọn (biểu tượng + tên · dòng phụ).
+  Bật tắt theo cấp: Admin -> Giao diện -> Thẻ sản phẩm -> Khung giới thiệu đầu trang.
+  Tham số: hero, img, name, sub, desc, icon, color
+%>
+<% if (hero) { %>
+<section class="page-hero" style="--c: <%= color || 'var(--primary)' %>">
+  <% if (img) { %><img src="<%= sz(img, 'wide') %>" alt="<%= name %>"><% } %>
+  <div class="page-hero-text">
+    <h1><%= name %></h1>
+    <% if (sub) { %><p class="page-hero-sub"><%= sub %></p><% } %>
+    <% if (desc) { %><p class="page-hero-desc"><%= desc %></p><% } %>
+  </div>
+</section>
+<% } else { %>
+<div class="bp-head">
+  <h1><%- I(icon || 'folder') %> <%= name %><% if (sub) { %> <span class="muted"><span class="sep">·</span> <%= sub %></span><% } %></h1>
+</div>
+<% } %>

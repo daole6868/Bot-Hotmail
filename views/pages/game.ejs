@@ -1,12 +1,6 @@
 <%- include('../partials/header') %>
 
-<section class="page-hero" style="--c: <%= game.color %>">
-  <% if (game.image) { %><img src="<%= sz(game.image, 'wide') %>" alt="<%= game.name %>"><% } %>
-  <div>
-    <h1><%= game.name %></h1>
-    <p><%= game.description %></p>
-  </div>
-</section>
+<%- include('../partials/page-head', { hero: (locals.cardCfg || {}).hero1 !== false, img: game.image, name: game.name, sub: '', desc: game.description, icon: 'gamepad', color: game.color }) %>
 
 <section class="section">
   <div class="section-head"><h2><%- I('folder') %> Danh mục <%= game.name %></h2></div>

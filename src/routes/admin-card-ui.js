@@ -8,12 +8,13 @@ const H = require('../utils/helpers');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  res.render('admin/card-ui', { title: 'Thẻ sản phẩm', c: cu.cfg(), D: cu.DEFAULTS, SIZES: cu.SIZES, LEVELS: cu.LEVELS, ALIGNS: cu.ALIGNS });
+  res.render('admin/card-ui', { title: 'Thẻ sản phẩm', c: cu.cfg(), D: cu.DEFAULTS, SIZES: cu.SIZES, LEVELS: cu.LEVELS, ALIGNS: cu.ALIGNS, HEROES: cu.HEROES });
 });
 
 router.post('/', (req, res) => {
   const b = req.body;
   const sw = {}; cu.LEVELS.forEach(([n, , , stats]) => { if (stats) sw['st' + n] = !!b['st' + n]; });
+  cu.HEROES.forEach(([n]) => { sw['hero' + n] = !!b['hero' + n]; });
   const c = b.reset ? {} : cu.normalize({ ...b, ...sw, icons: !!b.icons, scroll: !!b.scroll });
   setSetting('card_cfg', JSON.stringify(c));
   require('./public').clearCache();

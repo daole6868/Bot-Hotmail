@@ -1,8 +1,5 @@
 <%- include('../partials/header') %>
-<section class="page-hero" style="--c: <%= game.color %>">
-  <% const heroImg = parent.image || game.image; if (heroImg) { %><img src="<%= sz(heroImg, 'wide') %>" alt="<%= parent.name %>"><% } %>
-  <div><h1><%= parent.name %></h1><% if (parent.description) { %><p><%= parent.description %></p><% } %></div>
-</section>
+<%- include('../partials/page-head', { hero: (locals.cardCfg || {}).hero2 !== false, img: parent.image || game.image, name: parent.name, sub: game.name, desc: parent.description, icon: 'g-swords', color: game.color }) %>
 <section class="section">
   <div class="section-head"><h2><%- I('g-swords') %> Chọn dịch vụ</h2></div>
   <% if (!categories.length) { %><div class="empty">Chưa có dịch vụ nào.</div><% } %>

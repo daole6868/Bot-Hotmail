@@ -168,7 +168,10 @@ a.card:hover .thumb img { transform: scale(1.06); }
 del { color: var(--muted); font-size: .82rem; margin-right: 6px; }
 .page-hero { display: flex; align-items: center; gap: 20px; padding: 20px; border-radius: var(--radius); background: color-mix(in srgb, var(--c) 16%, var(--card)); border: 1px solid var(--border); margin-bottom: 22px; }
 .page-hero img { width: 200px; border-radius: calc(12px * var(--rk)); aspect-ratio: 16/10; object-fit: cover; }
-.page-hero p { margin: 0; color: var(--text); }
+.page-hero-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.page-hero-text > * { margin: 0; }
+.page-hero-sub { color: var(--muted); font-size: .95rem; }
+.page-hero-desc { color: var(--text); white-space: pre-line; }
 .empty { padding: 40px; text-align: center; color: var(--muted); background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius); margin-bottom: 18px; }
 
 /* ---------- Coupons ---------- */
@@ -942,14 +945,15 @@ a.bx-icon { align-items: center; }
 .bx-item.is-paused { opacity: .7; }
 [data-boost-add].added { background: var(--t-green, #22c55e); }
 
-.bp-head h1 { font-size: 1.4rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 6px; }
+.bp-head { margin-bottom: 14px; }
+.bp-head h1 { font-size: 1.4rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; }
 .bp-head h1 .muted { font-size: 1rem; font-weight: 500; }
 .bp-head p { margin: 0 0 10px; }
 .bp-chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px; scrollbar-width: none; }
 .bp-chips::-webkit-scrollbar { display: none; }
 .bp-chips .chip { display: inline-flex; align-items: center; gap: 6px; }
 .bp-chips .chip .ico { width: 15px; height: 15px; }
-.bp-chips .chip.active span { color: #fff !important; }
+.bp-chips .chip.active span { color: var(--on-primary) !important; }
 .bp-layout { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 20px; align-items: start; }
 .bp-side { position: sticky; top: 84px; max-height: calc(100vh - 100px); overflow-y: auto; scrollbar-width: thin; border-radius: var(--radius); }
 .bp-cart { margin: 0; }

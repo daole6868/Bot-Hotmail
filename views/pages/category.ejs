@@ -1,9 +1,9 @@
 <%- include('../partials/header') %>
 
-<%# Đầu trang cùng kiểu trang Nạp game / gói Cày thuê: biểu tượng + tên danh mục · tên game %>
-<div class="bp-head">
-  <h1><%- I(category.sale_type === 'reroll' ? 'refresh' : 'star') %> <%= category.name %> <span class="muted"><span class="sep">·</span> <%= game.name %> · <%= result.total.toLocaleString('vi-VN') %> sản phẩm</span></h1>
-</div>
+<% const cDesc = (category.description || '').trim(); %>
+<%- include('../partials/page-head', { hero: (locals.cardCfg || {}).hero2 !== false, img: category.image || game.image, name: category.name,
+  sub: game.name + ' · ' + result.total.toLocaleString('vi-VN') + ' sản phẩm', desc: cDesc && cDesc !== category.name + ' - ' + game.name && cDesc !== category.name ? cDesc : '',
+  icon: category.sale_type === 'reroll' ? 'refresh' : 'star', color: game.color }) %>
 
 <%- include('../partials/search-filter', { filter, query }) %>
 

@@ -20,8 +20,15 @@ const LEVELS = [
   [4, 'Cấp 4 · Gói', 'Gói cày thuê, gói nạp game', false],
 ];
 const ALIGNS = { left: 'Trái', center: 'Giữa', right: 'Phải', hide: 'Ẩn' };
+// Khung giới thiệu đầu trang (ảnh + tên + mô tả) theo cấp: [cấp, nhãn, gồm trang nào, mặc định]
+const HEROES = [
+  [1, 'Cấp 1 · Trang game', 'trang mở ra khi bấm vào 1 game', true],
+  [2, 'Cấp 2 · Trang danh mục', 'Acc VIP, Reroll, Cày thuê, Nạp game', true],
+  [3, 'Cấp 3 · Trang dịch vụ cày thuê', 'trang gói của từng dịch vụ con trong Cày thuê', false],
+];
 const DEFAULTS = { colsPc: 4, colsMb: 2, icons: true, scroll: true, maxIcons: 20, speed: 1.6 };
 LEVELS.forEach(([n, , , stats]) => { DEFAULTS['al' + n] = 'left'; if (stats) DEFAULTS['st' + n] = true; });
+HEROES.forEach(([n, , , on]) => { DEFAULTS['hero' + n] = on; });
 SIZES.forEach(([k, , pc, mb]) => { DEFAULTS[k + 'Pc'] = pc; DEFAULTS[k + 'Mb'] = mb; });
 
 const num = (v, d, min, max) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n * 10) / 10)) : d; };
@@ -37,6 +44,7 @@ function normalize(c = {}) {
     o['al' + n] = ALIGNS[a] && !(a === 'hide' && n === 4) ? a : 'left'; // gói luôn hiện tên
     if (stats) o['st' + n] = c['st' + n] !== false;
   });
+  HEROES.forEach(([n, , , on]) => { o['hero' + n] = c['hero' + n] === undefined ? on : !!c['hero' + n]; });
   o.colsPc = Math.round(o.colsPc); o.colsMb = Math.round(o.colsMb); o.maxIcons = Math.round(o.maxIcons);
   SIZES.forEach(([k, , pc, mb, min, max]) => { o[k + 'Pc'] = num(c[k + 'Pc'], pc, min, max); o[k + 'Mb'] = num(c[k + 'Mb'], mb, min, max); });
   return o;
@@ -59,4 +67,4 @@ function load() {
   return memo;
 }
 
-module.exports = { SIZES, LEVELS, ALIGNS, DEFAULTS, normalize, cfg: () => load().cfg, css: () => load().css };
+module.exports = { SIZES, LEVELS, ALIGNS, HEROES, DEFAULTS, normalize, cfg: () => load().cfg, css: () => load().css };

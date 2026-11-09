@@ -34,6 +34,13 @@
     <p class="a-field-hint">Tắt số liệu (hoặc chọn Ẩn tiêu đề) thì thẻ tự co lại, không để khoảng trống.</p>
   </div>
   <div class="a-card">
+    <h3><%- I('image') %> Khung giới thiệu đầu trang</h3>
+    <p class="a-field-hint">Khung có ảnh, tên và mô tả ở đầu trang. Tắt thì đầu trang chỉ còn 1 dòng tiêu đề gọn.</p>
+    <% HEROES.forEach(([n, label, hint]) => { %>
+      <label class="a-check"><input type="checkbox" name="hero<%= n %>" value="1" <%= c['hero' + n] ? 'checked' : '' %>> <span><b><%= label %></b> <small class="a-muted">(<%= hint %>)</small></span></label>
+    <% }) %>
+  </div>
+  <div class="a-card">
     <h3><%- I('image') %> Cỡ icon & chữ thẻ Acc VIP <small class="a-muted">(px)</small></h3>
     <div class="a-table-wrap"><table class="a-table a-nocards">
       <thead><tr><th>Phần</th><th>Máy tính</th><th>Điện thoại</th></tr></thead>
