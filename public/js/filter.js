@@ -64,7 +64,8 @@
   const more = $('[data-sf-more]');
   if (!grid) return;
   let mode = form.dataset.mode;
-  try { mode = localStorage.getItem('sf_mode') || mode; } catch (e) { /* bỏ qua */ }
+  // Chỉ dùng lựa chọn đã lưu của khách khi admin bật nút đổi chế độ; tắt thì luôn theo cài đặt admin
+  if (form.querySelector('[data-sf-modes]')) { try { mode = localStorage.getItem('sf_mode') || mode; } catch (e) { /* bỏ qua */ } }
   let io = null;
   let busy = false;
   async function loadMore() {

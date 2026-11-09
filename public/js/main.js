@@ -19,6 +19,16 @@
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const csrf = $('meta[name="csrf-token"]')?.content || '';
 
+  // Thanh thông báo: đứng yên nếu vừa chỗ, chỉ chạy chữ khi dài hơn thanh
+  $$('.marquee').forEach((m) => {
+    const sp = m.firstElementChild; if (!sp) return;
+    const fit = () => {
+      m.classList.remove('run');
+      if (sp.scrollWidth > m.clientWidth + 2) { m.classList.add('run'); m.style.setProperty('--mq-d', Math.max(12, Math.round((sp.scrollWidth + m.clientWidth) / 70)) + 's'); }
+    };
+    fit(); let mt; window.addEventListener('resize', () => { clearTimeout(mt); mt = setTimeout(fit, 200); });
+  });
+
   function toast(msg, color) {
     const t = document.createElement('div');
     t.className = 'toast';

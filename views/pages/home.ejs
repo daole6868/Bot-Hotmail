@@ -3,6 +3,7 @@
   // Trang chủ vẽ theo "Bố cục trang chủ" trong admin: thứ tự, bật/tắt từng khối, khối banner tự thêm
   const HOME_BLOCKS = ['slider', 'strip', 'games', 'coupons', 'featured', 'recent', 'banner', 'boost', 'posts'];
 %>
+<% { const S = locals.s || {}; const sn = S.site_name || 'ShopAcc'; %><h1 class="sr-only"><%= S.seo_title || (sn + (S.site_slogan ? ' - ' + S.site_slogan : '')) %></h1><% } %>
 <% blocks.forEach(block => { if (HOME_BLOCKS.includes(block.type)) { %>
 <%- include('../partials/home/' + block.type, { block }) %>
 <% } }) %>

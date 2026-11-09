@@ -25,7 +25,7 @@ const DEFAULTS = {
   ],
   servers: [{ l: 'Asia', v: 'Asia' }, { l: 'Europe', v: 'Europe' }, { l: 'America', v: 'America' }, { l: 'TW, HK, MO', v: 'TW/HK/MO' }],
   sorts: SORTS.map(([k]) => k),
-  mode: 'scroll', modeToggle: true, perPage: 12,
+  mode: 'scroll', modeToggle: false, perPage: 12,
 };
 
 const int = (v, d, min, max) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : d; };
@@ -42,7 +42,7 @@ function cfg(s = getSettings()) {
     servers: Array.isArray(c.servers) && c.servers.length ? c.servers : DEFAULTS.servers,
     sorts: Array.isArray(c.sorts) && c.sorts.length ? c.sorts.filter((k) => SORTS.some(([x]) => x === k)) : DEFAULTS.sorts,
     mode: c.mode === 'page' ? 'page' : 'scroll',
-    modeToggle: c.modeToggle !== false,
+    modeToggle: c.modeToggle === true,
     perPage: int(c.perPage, 12, 4, 60),
   };
 }

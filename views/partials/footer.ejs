@@ -26,7 +26,7 @@
 <footer class="footer">
   <div class="container footer-grid" style="--cols: <%= footerCols.length %>">
     <div class="footer-about">
-      <% if (S2.footer_about_title || !S2.logo) { %><h4><%= S2.footer_about_title || S2.site_name || 'ShopAcc' %></h4>
+      <% if (S2.footer_about_title || !S2.logo) { %><h2 class="footer-title"><%= S2.footer_about_title || S2.site_name || 'ShopAcc' %></h2>
       <% } else { %><a href="/" class="footer-logo"><img src="<%= sz(S2.logo, 'logo') %>" alt="<%= S2.site_name || 'Logo' %>"></a><% } %>
       <p><%= S2.footer_about_text || S2.site_description %></p>
       <% if (socials.length) { %>
@@ -37,7 +37,7 @@
     </div>
     <% footerCols.forEach(c => { %>
       <div>
-        <h4><%= c.title %></h4>
+        <h2 class="footer-title"><%= c.title %></h2>
         <ul>
           <% c.items.forEach(it => { %><li><% if (it.url) { %><a href="<%= it.url %>"<%- /^https?:/i.test(it.url) ? ' target="_blank" rel="noopener nofollow"' : '' %>><%= it.text %></a><% } else { %><%= it.text %><% } %></li><% }) %>
         </ul>

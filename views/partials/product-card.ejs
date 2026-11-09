@@ -6,7 +6,7 @@
     <% if (p.type === 'stock') { %><span class="type-tag"><%= p.stock_left > 0 ? 'Còn ' + p.stock_left.toLocaleString('vi-VN') + ' acc' : 'Hết hàng' %></span><% } %>
   </div>
   <div class="card-body">
-    <h3 class="product-title" title="<%= p.title %>"><%= p.title %></h3>
+    <% const ht = locals.ht === 'h2' ? 'h2' : 'h3'; %><<%= ht %> class="product-title" title="<%= p.title %>"><%= p.title %></<%= ht %>>
     <% if (p.roll) { %>
       <%# Icon nhân vật / vũ khí: mỗi loại 1 dòng, tự chạy ngang nối đuôi (main.js) %>
       <% [p.roll.c, p.roll.w].filter(l => l.length).forEach(list => { %>
@@ -23,7 +23,7 @@
         <% if (p.old_price && p.old_price > p.price) { %><del><%= H.money(p.old_price) %></del><% } %>
         <strong class="price"><%= H.money(p.price) %></strong>
       </div>
-      <span class="btn btn-primary btn-view">Xem<span class="hide-xs"> ngay</span></span>
+      <span class="btn btn-primary btn-view" aria-hidden="true"><%- I('chevron-right') %></span>
     </div>
   </div>
 </a>

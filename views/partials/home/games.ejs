@@ -9,11 +9,7 @@
         </div>
         <div class="card-body">
           <h3><%= g.name %></h3>
-          <div class="stat-boxes">
-            <div class="stat-box"><span class="stat-label"><%- I('cart') %> Đang bán</span><b><%= g.product_count.toLocaleString('vi-VN') %></b></div>
-            <div class="stat-box sold"><span class="stat-label"><%- I('check') %> Đã bán</span><b><%= g.sold.toLocaleString('vi-VN') %></b></div>
-          </div>
-          <span class="btn btn-block btn-primary">Xem ngay</span>
+          <p class="card-stats"><span><b><%= g.product_count.toLocaleString('vi-VN') %></b> đang bán</span><span class="sold"><b><%= g.sold.toLocaleString('vi-VN') %></b> đã bán</span></p>
         </div>
       </a>
     <% }) %>
